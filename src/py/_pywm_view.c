@@ -54,6 +54,14 @@ long _pywm_views_remove(struct wm_view* view){
     return handle;
 }
 
+long _pywm_views_get_handle(struct wm_view* view){
+    for(struct _pywm_view* it = views.first_view; it; it=it->next_view){
+        if(it->view == view) return it->handle;
+    }
+
+    return 0;
+}
+
 struct wm_view* _pywm_views_from_handle(long handle){
     for(struct _pywm_view* view = views.first_view; view; view=view->next_view){
         if(view->handle == handle) return view->view;

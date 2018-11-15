@@ -17,6 +17,7 @@ class PyWMView:
         """
         self.wm = wm
         self.box = view_get_box(self._handle)
+        self.focused = False
 
     def focus(self):
         view_focus(self._handle)
@@ -38,5 +39,11 @@ class PyWMView:
     Virtual methods
     """
 
+    def main(self):
+        pass
+
     def destroy(self):
+        pass
+
+    def on_focus_change(self):
         pass

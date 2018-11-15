@@ -179,6 +179,14 @@ void wm_callback_destroy_view(struct wm_view* view){
     return (*wm.callback_destroy_view)(view);
 }
 
+void wm_callback_view_focused(struct wm_view* view){
+    if(!wm.callback_view_focused){
+        return;
+    }
+
+    return (*wm.callback_view_focused)(view);
+}
+
 void wm_callback_update(){
     if(!wm.callback_update){
         return;

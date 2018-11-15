@@ -53,9 +53,10 @@ static void handle_new_xdg_surface(struct wl_listener* listener, void* data){
     wlr_xdg_surface_ping(surface);
 
     struct wm_view* view = calloc(1, sizeof(struct wm_view));
-    wm_view_init_xdg(view, server, surface);
-
     wl_list_insert(&server->wm_views, &view->link);
+
+    /* This might end up calling functions that require the view to be in the list */
+    wm_view_init_xdg(view, server, surface);
 }
 
 #ifdef PYWM_XWAYLAND

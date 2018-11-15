@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <wlr/util/log.h>
+#include "wm/wm.h"
 #include "wm/wm_seat.h"
 #include "wm/wm_view.h"
 #include "wm/wm_server.h"
@@ -39,7 +40,7 @@ void wm_seat_init(struct wm_seat* seat, struct wm_server* server, struct wm_layo
 void wm_seat_destroy(struct wm_seat* seat) {
     wl_list_remove(&seat->destroy.link);
 
-    // TODO
+    /* TODO */
 }
 
 void wm_seat_add_input_device(struct wm_seat* seat, struct wlr_input_device* input_device){
@@ -101,6 +102,8 @@ void wm_seat_focus_surface(struct wm_seat* seat, struct wlr_surface* surface){
     struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat->wlr_seat);
     wlr_seat_keyboard_notify_enter(seat->wlr_seat, surface,
             keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
+
+    wm_callback_view_focused(view);
 }
 
 void wm_seat_dispatch_key(struct wm_seat* seat, struct wlr_input_device* input_device, struct wlr_event_keyboard_key* event){

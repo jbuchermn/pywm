@@ -20,6 +20,7 @@ struct _pywm_views {
 
 void _pywm_views_init();
 long _pywm_views_add(struct wm_view* view);
+long _pywm_views_get_handle(struct wm_view* view);
 long _pywm_views_remove(struct wm_view* view);
 
 struct wm_view* _pywm_views_from_handle(long handle);

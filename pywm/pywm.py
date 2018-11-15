@@ -53,6 +53,7 @@ class PyWM:
         register("modifiers", self._modifiers)
         register("init_view", self._init_view)
         register("destroy_view", self._destroy_view)
+        register("view_focused", self._view_focused)
 
         self._view_class = view_class
 
@@ -114,7 +115,7 @@ class PyWM:
     def _init_view(self, handle):
         view = self._view_class(self, handle)
         self.views += [view]
-        self.on_new_view(view)
+        view.main()
 
     @callback
     def _destroy_view(self, handle):
@@ -122,6 +123,16 @@ class PyWM:
             if view._handle == handle:
                 view.destroy()
         self.views = [v for v in self.views if v._handle != handle]
+
+    @callback
+    def _view_focused(self, handle):
+        for view in self.views:
+            focused = view._handle == handle
+            if focused != view.focused:
+                view.focused = focused
+                view.on_focus_change()
+            else:
+                view.focused = focused
 
     def on_widget_destroy(self, widget):
         self.widgets = [v for v in self.widgets if id(v) != id(widget)]
@@ -149,9 +160,6 @@ class PyWM:
     """
 
     def main(self):
-        pass
-
-    def on_new_view(self, view):
         pass
 
     def on_layout_change(self):

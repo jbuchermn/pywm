@@ -122,6 +122,14 @@ static void call_destroy_view(struct wm_view* view){
     }
 }
 
+static void call_view_focused(struct wm_view* view){
+    if(callbacks.destroy_view){
+        long handle = _pywm_views_get_handle(view);
+        PyObject* args = Py_BuildValue("(l)", handle);
+        call_void(callbacks.view_focused, args);
+    }
+}
+
 static void call_ready(){
     if(callbacks.ready){
         call_void(callbacks.ready, NULL);
@@ -141,6 +149,7 @@ void _pywm_callbacks_init(){
     get_wm()->callback_axis = &call_axis;
     get_wm()->callback_init_view = &call_init_view;
     get_wm()->callback_destroy_view = &call_destroy_view;
+    get_wm()->callback_view_focused = &call_view_focused;
     get_wm()->callback_ready = &call_ready;
 }
 
@@ -161,6 +170,8 @@ PyObject** _pywm_callbacks_get(const char* name){
         return &callbacks.init_view;
     }else if(!strcmp(name, "destroy_view")){
         return &callbacks.destroy_view;
+    }else if(!strcmp(name, "view_focused")){
+        return &callbacks.view_focused;
     }else if(!strcmp(name, "layout_change")){
         return &callbacks.layout_change;
     }else if(!strcmp(name, "ready")){
