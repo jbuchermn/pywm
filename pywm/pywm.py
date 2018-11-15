@@ -37,7 +37,7 @@ def callback(func):
 
 
 class PyWM:
-    def __init__(self, view_class=PyWMView):
+    def __init__(self, view_class=PyWMView, **kwargs):
         global _instance
         if _instance is not None:
             raise Exception("Can only have one instance!")
@@ -59,6 +59,7 @@ class PyWM:
         """
         Consider these read-only
         """
+        self.config = kwargs
         self.views = []
         self.widgets = []
         self.width = 0
@@ -129,8 +130,8 @@ class PyWM:
     Public API
     """
 
-    def run(self, **kwargs):
-        run(**kwargs)
+    def run(self):
+        run(**self.config)
 
     def terminate(self):
         terminate()
