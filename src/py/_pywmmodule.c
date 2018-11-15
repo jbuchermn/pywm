@@ -10,14 +10,32 @@
 #include "py/_pywm_view.h"
 #include "py/_pywm_widget.h"
 
+static void sigsegv_handler(int sig) {
+    void *array[10];
+    size_t size;
+
+    size = backtrace(array, 10);
+    fprintf(stderr, "Error: signal %d:\n", sig);
+    backtrace_symbols_fd(array, size, STDERR_FILENO);
+    exit(1);
+}
+
+
 static bool cursor_update_pending = false;
+static bool terminate_pending = false;
 
 static void handle_update(){
     if(cursor_update_pending){
         wm_update_cursor();
         cursor_update_pending = false;
     }
+
+    if(terminate_pending){
+        wm_terminate();
+    }
+
     _pywm_widgets_update();
+    _pywm_views_update();
 }
 
 static PyObject* _pywm_update_cursor(PyObject* self, PyObject* args){
@@ -28,7 +46,17 @@ static PyObject* _pywm_update_cursor(PyObject* self, PyObject* args){
 }
 
 
+static PyObject* _pywm_terminate(PyObject* self, PyObject* args){
+    terminate_pending = true;
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
+    /* Dubug: Print stacktrace upon segfault */
+    signal(SIGSEGV, sigsegv_handler);
+
     int status;
 
     double output_scale = 1.;
@@ -66,14 +94,6 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
     return Py_BuildValue("i", status);
 }
 
-static PyObject* _pywm_terminate(PyObject* self, PyObject* args){
-    wm_terminate();
-    wm_destroy();
-
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-
 static PyObject* _pywm_register(PyObject* self, PyObject* args){
     const char* name;
     PyObject* callback;
@@ -108,16 +128,16 @@ static PyMethodDef _pywm_methods[] = {
     { "terminate",              _pywm_terminate,              METH_VARARGS,                   "Terminate compositor"  },
     { "register",               _pywm_register,               METH_VARARGS,                   "Register callback"  },
     { "update_cursor",          _pywm_update_cursor,          METH_VARARGS,                   "Update cursor position within clients after moving a client"  },
-    { "view_get_box",           _pywm_view_get_box,           METH_VARARGS,                   "" },
-    { "view_get_dimensions",    _pywm_view_get_dimensions,    METH_VARARGS,                   "" },
-    { "view_get_info",          _pywm_view_get_info,          METH_VARARGS,                   "" },
-    { "view_set_box",           _pywm_view_set_box,           METH_VARARGS,                   "" },
-    { "view_set_dimensions",    _pywm_view_set_dimensions,    METH_VARARGS,                   "" },
+    { "view_get_box",           _pywm_view_get_box,           METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "view_get_dimensions",    _pywm_view_get_dimensions,    METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "view_get_info",          _pywm_view_get_info,          METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "view_set_box",           _pywm_view_set_box,           METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "view_set_dimensions",    _pywm_view_set_dimensions,    METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
     { "view_focus",             _pywm_view_focus,             METH_VARARGS,                   "" },
     { "widget_create",          _pywm_widget_create,          METH_VARARGS,                   "" },
-    { "widget_destroy",         _pywm_widget_destroy,         METH_VARARGS,                   "" },
-    { "widget_set_box",         _pywm_widget_set_box,         METH_VARARGS,                   "" },
-    { "widget_set_layer",       _pywm_widget_set_layer,       METH_VARARGS,                   "" },
+    { "widget_destroy",         _pywm_widget_destroy,         METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "widget_set_box",         _pywm_widget_set_box,         METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "widget_set_layer",       _pywm_widget_set_layer,       METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
     { "widget_set_pixels",      _pywm_widget_set_pixels,      METH_VARARGS,                   "" },
 
     { NULL, NULL, 0, NULL }

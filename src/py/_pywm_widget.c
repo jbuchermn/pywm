@@ -54,6 +54,14 @@ long _pywm_widgets_remove(struct wm_widget* widget){
     return handle;
 }
 
+long _pywm_widgets_get_handle(struct wm_widget* widget){
+    for(struct _pywm_widget* it = widgets.first_widget; it; it=it->next_widget){
+        if(it->widget == widget) return it->handle;
+    }
+
+    return 0;
+}
+
 struct _pywm_widget* _pywm_widgets_container_from_handle(long handle){
 
     for(struct _pywm_widget* widget = widgets.first_widget; widget; widget=widget->next_widget){

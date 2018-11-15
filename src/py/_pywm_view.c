@@ -16,6 +16,8 @@ void _pywm_view_init(struct _pywm_view* _view, struct wm_view* view){
     _view->handle = handle;
     _view->view = view;
     _view->next_view = NULL;
+    _view->focus_pending = false;
+    _view->dimensions_pending = false;
 }
 
 long _pywm_views_add(struct wm_view* view){
@@ -62,12 +64,22 @@ long _pywm_views_get_handle(struct wm_view* view){
     return 0;
 }
 
-struct wm_view* _pywm_views_from_handle(long handle){
+struct _pywm_view* _pywm_views_container_from_handle(long handle){
+
     for(struct _pywm_view* view = views.first_view; view; view=view->next_view){
-        if(view->handle == handle) return view->view;
+        if(view->handle == handle) return view;
     }
 
     return NULL;
+}
+
+struct wm_view* _pywm_views_from_handle(long handle){
+    struct _pywm_view* view = _pywm_views_container_from_handle(handle);
+    if(!view){
+        return NULL;
+    }
+
+    return view->view;
 }
 
 PyObject* _pywm_view_get_box(PyObject* self, PyObject* args){
@@ -161,13 +173,15 @@ PyObject* _pywm_view_set_dimensions(PyObject* self, PyObject* args){
         return NULL;
     }
 
-    struct wm_view* view = _pywm_views_from_handle(handle);
+    struct _pywm_view* view = _pywm_views_container_from_handle(handle);
     if(!view){
         PyErr_SetString(PyExc_TypeError, "View has been destroyed");
         return NULL;
     }
 
-    wm_view_request_size(view, width, height);
+    view->dimensions_pending = true;
+    view->dimensions.width = width;
+    view->dimensions.height = height;
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -180,14 +194,28 @@ PyObject* _pywm_view_focus(PyObject* self, PyObject* args){
         return NULL;
     }
 
-    struct wm_view* view = _pywm_views_from_handle(handle);
+    struct _pywm_view* view = _pywm_views_container_from_handle(handle);
     if(!view){
         PyErr_SetString(PyExc_TypeError, "View has been destroyed");
         return NULL;
     }
 
-    wm_focus_view(view);
+    view->focus_pending = true;
 
     Py_INCREF(Py_None);
     return Py_None;
+}
+
+void _pywm_views_update(){
+    for(struct _pywm_view* view=views.first_view; view; view=view->next_view){
+        if(view->focus_pending){
+            wm_focus_view(view->view);
+            view->focus_pending = false;
+        }
+
+        if(view->dimensions_pending){
+            wm_view_request_size(view->view, view->dimensions.width, view->dimensions.height);
+            view->dimensions_pending = false;
+        }
+    }
 }
