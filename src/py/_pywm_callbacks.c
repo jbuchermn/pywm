@@ -14,25 +14,20 @@ static struct _pywm_callbacks callbacks = { 0 };
  * Helpers
  */
 static bool call_bool(PyObject* callable, PyObject* args){
-    PyGILState_STATE gil = PyGILState_Ensure();
     PyObject *_result = PyEval_CallObject(callable, args);
-    Py_XDECREF(args); // Needs to happen inside lock
-    PyGILState_Release(gil);
+    Py_XDECREF(args);
 
     int result = false;
     if(!_result || _result == Py_None || !PyArg_Parse(_result, "b", &result)){
         wlr_log(WLR_DEBUG, "Python error: Expected boolean return");
     }
     Py_XDECREF(_result);
-
     return result;
 }
 
 static void call_void(PyObject* callable, PyObject* args){
-    PyGILState_STATE gil = PyGILState_Ensure();
     PyObject *_result = PyEval_CallObject(callable, args);
     Py_XDECREF(args);
-    PyGILState_Release(gil);
 
     if(!_result){
         wlr_log(WLR_DEBUG, "Python error: Exception thrown");
@@ -45,16 +40,21 @@ static void call_void(PyObject* callable, PyObject* args){
  */
 static void call_layout_change(struct wm_layout* layout){
     if(callbacks.layout_change){
+        PyGILState_STATE gil = PyGILState_Ensure();
         struct wlr_box* box = wlr_output_layout_get_box(layout->wlr_output_layout, NULL);
         PyObject* args = Py_BuildValue("(ii)", box->width, box->height);
         call_void(callbacks.layout_change, args);
+        PyGILState_Release(gil);
     }
 }
 
 static bool call_key(struct wlr_event_keyboard_key* event, const char* keysyms){
     if(callbacks.key){
+        PyGILState_STATE gil = PyGILState_Ensure();
         PyObject* args = Py_BuildValue("(iiis)", event->time_msec, event->keycode, event->state, keysyms);
-        return call_bool(callbacks.key, args);
+        bool result = call_bool(callbacks.key, args);
+        PyGILState_Release(gil);
+        return result;
     }
 
     return false;
@@ -62,8 +62,11 @@ static bool call_key(struct wlr_event_keyboard_key* event, const char* keysyms){
 
 static bool call_modifiers(struct wlr_keyboard_modifiers* modifiers){
     if(callbacks.modifiers){
+        PyGILState_STATE gil = PyGILState_Ensure();
         PyObject* args = Py_BuildValue("(iiii)", modifiers->depressed, modifiers->latched, modifiers->locked, modifiers->group);
-        return call_bool(callbacks.modifiers, args);
+        bool result = call_bool(callbacks.modifiers, args);
+        PyGILState_Release(gil);
+        return result;
     }
 
     return false;
@@ -71,8 +74,11 @@ static bool call_modifiers(struct wlr_keyboard_modifiers* modifiers){
 
 static bool call_motion(double delta_x, double delta_y, uint32_t time_msec){
     if(callbacks.motion){
+        PyGILState_STATE gil = PyGILState_Ensure();
         PyObject* args = Py_BuildValue("(idd)", time_msec, delta_x, delta_y);
-        return call_bool(callbacks.motion, args);
+        bool result = call_bool(callbacks.motion, args);
+        PyGILState_Release(gil);
+        return result;
     }
 
     return false;
@@ -80,8 +86,11 @@ static bool call_motion(double delta_x, double delta_y, uint32_t time_msec){
 
 static bool call_motion_absolute(double x, double y, uint32_t time_msec){
     if(callbacks.motion_absolute){
+        PyGILState_STATE gil = PyGILState_Ensure();
         PyObject* args = Py_BuildValue("(idd)", time_msec, x, y);
-        return call_bool(callbacks.motion_absolute, args);
+        bool result = call_bool(callbacks.motion_absolute, args);
+        PyGILState_Release(gil);
+        return result;
     }
 
     return false;
@@ -89,8 +98,11 @@ static bool call_motion_absolute(double x, double y, uint32_t time_msec){
 
 static bool call_button(struct wlr_event_pointer_button* event){
     if(callbacks.button){
+        PyGILState_STATE gil = PyGILState_Ensure();
         PyObject* args = Py_BuildValue("(iii)", event->time_msec, event->button, event->state);
-        return call_bool(callbacks.button, args);
+        bool result = call_bool(callbacks.button, args);
+        PyGILState_Release(gil);
+        return result;
     }
 
     return false;
@@ -98,9 +110,12 @@ static bool call_button(struct wlr_event_pointer_button* event){
 
 static bool call_axis(struct wlr_event_pointer_axis* event){
     if(callbacks.axis){
+        PyGILState_STATE gil = PyGILState_Ensure();
         PyObject* args = Py_BuildValue("(iiidi)", event->time_msec, event->source, event->orientation,
                 event->delta, event->delta_discrete);
-        return call_bool(callbacks.axis, args);
+        bool result = call_bool(callbacks.axis, args);
+        PyGILState_Release(gil);
+        return result;
     }
 
     return false;
@@ -109,30 +124,38 @@ static bool call_axis(struct wlr_event_pointer_axis* event){
 static void call_init_view(struct wm_view* view){
     if(callbacks.init_view){
         long handle = _pywm_views_add(view);
+        PyGILState_STATE gil = PyGILState_Ensure();
         PyObject* args = Py_BuildValue("(l)", handle);
         call_void(callbacks.init_view, args);
+        PyGILState_Release(gil);
     }
 }
 
 static void call_destroy_view(struct wm_view* view){
     if(callbacks.destroy_view){
         long handle = _pywm_views_remove(view);
+        PyGILState_STATE gil = PyGILState_Ensure();
         PyObject* args = Py_BuildValue("(l)", handle);
         call_void(callbacks.destroy_view, args);
+        PyGILState_Release(gil);
     }
 }
 
 static void call_view_focused(struct wm_view* view){
-    if(callbacks.destroy_view){
+    if(callbacks.view_focused){
         long handle = _pywm_views_get_handle(view);
+        PyGILState_STATE gil = PyGILState_Ensure();
         PyObject* args = Py_BuildValue("(l)", handle);
         call_void(callbacks.view_focused, args);
+        PyGILState_Release(gil);
     }
 }
 
 static void call_ready(){
     if(callbacks.ready){
+        PyGILState_STATE gil = PyGILState_Ensure();
         call_void(callbacks.ready, NULL);
+        PyGILState_Release(gil);
     }
 }
 
