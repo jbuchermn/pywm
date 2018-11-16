@@ -57,6 +57,9 @@ class PyWM:
 
         self._view_class = view_class
 
+        self._last_absolute_x = None
+        self._last_absolute_y = None
+
         """
         Consider these read-only
         """
@@ -81,11 +84,23 @@ class PyWM:
 
     @callback
     def _motion(self, time_msec, delta_x, delta_y):
+        delta_x /= self.width
+        delta_y /= self.height
         return self.on_motion(time_msec, delta_x, delta_y)
 
     @callback
     def _motion_absolute(self, time_msec, x, y):
-        return self.on_motion_absolute(time_msec, x, y)
+        if self._last_absolute_x is not None:
+            x -= self._last_absolute_x
+            y -= self._last_absolute_y
+            self._last_absolute_x += x
+            self._last_absolute_y += y
+        else:
+            self._last_absolute_x = x
+            self._last_absolute_y = y
+            x = 0
+            y = 0
+        return self.on_motion(time_msec, x, y)
 
     @callback
     def _button(self, time_msec, button, state):
@@ -166,9 +181,6 @@ class PyWM:
         pass
 
     def on_motion(self, time_msec, delta_x, delta_y):
-        return False
-
-    def on_motion_absolute(self, time_msec, x, y):
         return False
 
     def on_button(self, time_msec, button, state):
