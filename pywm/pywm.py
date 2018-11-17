@@ -3,6 +3,7 @@ import time
 from threading import Thread
 
 from .pywm_view import PyWMView
+from .multitouch import Multitouch
 
 from ._pywm import (  # noqa E402
     run,
@@ -60,6 +61,15 @@ class PyWM:
         self._last_absolute_x = None
         self._last_absolute_y = None
 
+        self._multitouch_main = None
+        self._multitouch_last = None
+        self._multitouch_captured = False
+        if 'multitouch' in kwargs:
+            self._multitouch_main = Multitouch(kwargs['multitouch'],
+                                               self._multitouch)
+
+            del kwargs['multitouch']
+
         """
         Consider these read-only
         """
@@ -76,6 +86,8 @@ class PyWM:
         """
         time.sleep(.1)
 
+        if self._multitouch_main is not None:
+            self._multitouch_main.start()
         self.main()
 
     @callback
@@ -84,12 +96,18 @@ class PyWM:
 
     @callback
     def _motion(self, time_msec, delta_x, delta_y):
+        if self._multitouch_captured:
+            return True
+
         delta_x /= self.width
         delta_y /= self.height
         return self.on_motion(time_msec, delta_x, delta_y)
 
     @callback
     def _motion_absolute(self, time_msec, x, y):
+        if self._multitouch_captured:
+            return True
+
         if self._last_absolute_x is not None:
             x -= self._last_absolute_x
             y -= self._last_absolute_y
@@ -104,10 +122,16 @@ class PyWM:
 
     @callback
     def _button(self, time_msec, button, state):
+        if self._multitouch_captured:
+            return True
+
         return self.on_button(time_msec, button, state)
 
     @callback
     def _axis(self, time_msec, source, orientation, delta, delta_discrete):
+        if self._multitouch_captured:
+            return True
+
         return self.on_axis(time_msec, source, orientation, delta,
                             delta_discrete)
 
@@ -152,6 +176,18 @@ class PyWM:
     def on_widget_destroy(self, widget):
         self.widgets = [v for v in self.widgets if id(v) != id(widget)]
 
+    def _multitouch(self, touches):
+        if touches is not None and self._multitouch_last is None:
+            self._multitouch_captured = self.on_multitouch_begin(touches)
+        elif touches is None and self._multitouch_last is not None:
+            if self._multitouch_captured:
+                self.on_multitouch_end()
+                self._multitouch_captured = False
+        elif touches is not None and self._multitouch_captured:
+            self.on_multitouch_update(touches)
+
+        self._multitouch_last = touches
+
     """
     Public API
     """
@@ -160,6 +196,8 @@ class PyWM:
         run(**self.config)
 
     def terminate(self):
+        if self._multitouch_main is not None:
+            self._multitouch_main.stop()
         terminate()
 
     def create_widget(self, widget_class, *args, **kwargs):
@@ -188,6 +226,15 @@ class PyWM:
 
     def on_axis(self, time_msec, source, orientation, delta, delta_discrete):
         return False
+
+    def on_multitouch_begin(self, touches):
+        return False
+
+    def on_multitouch_end(self):
+        pass
+
+    def on_multitouch_update(self, touches):
+        pass
 
     def on_key(self, time_msec, keycode, state, keysyms):
         """
