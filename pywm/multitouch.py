@@ -1,36 +1,24 @@
-import struct
+import evdev
 from threading import Thread
-
-_event_format = "llHHi"
-_event_size = struct.calcsize(_event_format)
-# _event_codes = {
-#     0: "abs_x",
-#     1: "abs_y",
-#     24: "abs_pressure",
-#     28: "abs_tool_width",
-#     47: "abs_mt_slot",
-#     53: "abs_mt_position_x",
-#     54: "abs_mt_position_y",
-#     57: "abs_mt_tracking_id",
-#     58: "abs_mt_pressure",
-# }
 
 
 class Touch:
-    def __init__(self, slot, tracking_id, on_update):
+    def __init__(self, parent, slot, tracking_id):
+        self.parent = parent
         self.slot = slot
         self.id = tracking_id
-        self.on_update = on_update
         self.x = -1
         self.y = -1
 
     def process(self, ev_code, ev_value):
         if ev_code == 53:
-            self.x = ev_value
+            self.x = (ev_value - self.parent.min_x) / \
+                (self.parent.max_x - self.parent.min_x)
         elif ev_code == 54:
-            self.y = ev_value
+            self.y = (ev_value - self.parent.min_y) / \
+                (self.parent.max_y - self.parent.min_y)
 
-        self.on_update()
+        self.parent.update()
 
     def __repr__(self):
         return "Touch(id=%d, slot=%d, x=%d, y=%d)" % \
@@ -40,25 +28,26 @@ class Touch:
 class Multitouch(Thread):
     def __init__(self, filename, on_update):
         super().__init__()
-        self._fd = open(filename, 'rb')
+        self._device = evdev.InputDevice(filename)
         self._touches = []
         self._on_update = on_update
         self._state = 0
         self._running = True
 
+        self.min_x = None
+        self.max_x = None
+        self.min_y = None
+        self.max_y = None
+        for code, info in self._device.capabilities()[3]:
+            if code == 53:
+                self.min_x = info.min
+                self.max_x = info.max
+            if code == 54:
+                self.min_y = info.min
+                self.max_y = info.max
+
     def close(self):
         self.fd.close()
-
-    def next_event(self):
-        ev_sec, ev_usec, ev_type, ev_code, ev_value = \
-            0, 0, 0, 0, 0
-
-        while ev_type != 3:
-            raw = self._fd.read(_event_size)
-            ev_sec, ev_usec, ev_type, ev_code, ev_value = \
-                struct.unpack(_event_format, raw)
-
-        return ev_code, ev_value
 
     def update(self):
         if len(self._touches) < 2 \
@@ -73,29 +62,51 @@ class Multitouch(Thread):
             self._on_update(ts)
 
     def run(self):
-        current_slot = -1
-        while self._running:
-            ev_code, ev_value = self.next_event()
-            if ev_code == 47:
-                current_slot = ev_value
-            elif ev_code == 57:
-                if ev_value == -1:
+        current_slot = 0
+        for event in self._device.read_loop():
+            if not self._running:
+                break
+            if not event.type == 3:
+                continue
+
+            if event.code == 47:
+                current_slot = event.value
+            elif event.code == 57:
+                if event.value == -1:
                     self._touches = [t for t in self._touches
                                      if t.slot != current_slot]
                     self.update()
 
                 else:
                     if current_slot != -1:
-                        self._touches += [Touch(current_slot, ev_value,
-                                                self.update)]
+                        self._touches += [Touch(self, current_slot,
+                                                event.value)]
             else:
                 touch = [t for t in self._touches if
                          t.slot == current_slot]
                 for t in touch:
-                    t.process(ev_code, ev_value)
+                    t.process(event.code, event.value)
 
     def stop(self):
         self._running = False
+
+
+def find_multitouch(device_name, callback):
+    with open('/proc/bus/input/devices', 'r') as data:
+        found = False
+        for d in data:
+            if d.startswith("N: Name="):
+                name = d.split('"')[1]
+
+                if device_name in name:
+                    found = True
+            elif d.startswith("H: Handlers=") and found:
+                handlers = d.split("=")[1].split()
+                for h in handlers:
+                    if h.startswith("event"):
+                        return Multitouch('/dev/input/' + h, callback)
+
+    return None
 
 
 if __name__ == '__main__':
@@ -108,9 +119,13 @@ if __name__ == '__main__':
             last = 0
         else:
             if len(touches) != last:
-                print([(t.id, t.slot) for t in touches])
+                print([(t.id, t.slot, t.x, t.y) for t in touches])
                 last = len(touches)
 
-    mt = Multitouch('/dev/input/event9', callback)
-    mt.run()
+    name = "SynPS/2"
+    mt = find_multitouch(name, callback)
+    if mt is None:
+        print("No multitouch device named %s found" % name)
+    else:
+        mt.run()
 

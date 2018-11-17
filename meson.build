@@ -35,6 +35,7 @@ wayland_cursor = dependency('wayland-cursor')
 wayland_egl    = dependency('wayland-egl')
 wayland_protos = dependency('wayland-protocols', version: '>=1.14')
 xkbcommon      = dependency('xkbcommon')
+libinput       = dependency('libinput')
 pixman         = dependency('pixman-1')
 pthread        = meson.get_compiler('c').find_library('pthread')
 math           = meson.get_compiler('c').find_library('m')
@@ -48,6 +49,7 @@ deps = [
     wayland_server,
     server_protos,
     xkbcommon,
+    libinput,
     pixman,
     pthread,
     math

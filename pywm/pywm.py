@@ -3,7 +3,7 @@ import time
 from threading import Thread
 
 from .pywm_view import PyWMView
-from .multitouch import Multitouch
+from .multitouch import find_multitouch
 
 from ._pywm import (  # noqa E402
     run,
@@ -65,8 +65,8 @@ class PyWM:
         self._multitouch_last = None
         self._multitouch_captured = False
         if 'multitouch' in kwargs:
-            self._multitouch_main = Multitouch(kwargs['multitouch'],
-                                               self._multitouch)
+            self._multitouch_main = find_multitouch(kwargs['multitouch'],
+                                                    self._multitouch)
 
             del kwargs['multitouch']
 

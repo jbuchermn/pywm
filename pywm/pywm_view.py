@@ -20,20 +20,35 @@ class PyWMView:
         self.focused = False
 
     def focus(self):
-        view_focus(self._handle)
+        try:
+            view_focus(self._handle)
+        except Exception:
+            pass
 
     def set_box(self, x, y, w, h):
-        view_set_box(self._handle, x, y, w, h)
+        try:
+            view_set_box(self._handle, x, y, w, h)
+        except Exception:
+            pass
         self.box = (x, y, w, h)
 
     def get_info(self):
-        return view_get_info(self._handle)
+        try:
+            return view_get_info(self._handle)
+        except Exception:
+            return "Destroyed", "", "", False
 
     def get_dimensions(self):
-        return view_get_dimensions(self._handle)
+        try:
+            return view_get_dimensions(self._handle)
+        except Exception:
+            return 0, 0
 
     def set_dimensions(self, width, height):
-        view_set_dimensions(self._handle, round(width), round(height))
+        try:
+            view_set_dimensions(self._handle, round(width), round(height))
+        except Exception:
+            pass
 
     """
     Virtual methods

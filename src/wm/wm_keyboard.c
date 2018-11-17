@@ -59,7 +59,6 @@ static void handle_modifiers(struct wl_listener* listener, void* data){
 void wm_keyboard_init(struct wm_keyboard* keyboard, struct wm_seat* seat, struct wlr_input_device* input_device){
     keyboard->wm_seat = seat;
     keyboard->wlr_input_device = input_device;
-    input_device->data = keyboard;
 
     /* Configuration */
 	struct xkb_rule_names rules = { 0 };
