@@ -17,3 +17,4 @@ from .pywm_widget import (  # noqa F401
 )
 
 from .pywm_background_widget import PyWMBackgroundWidget  # noqa F401
+from .pywm_cairo_widget import PyWMCairoWidget  # noqa

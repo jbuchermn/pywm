@@ -8,7 +8,7 @@ from ._pywm import (
 
 
 PYWM_LAYER_BACK = 0
-PYWM_LAYER_FRONT = 0
+PYWM_LAYER_FRONT = 1
 
 PYWM_FORMATS = dict()
 
