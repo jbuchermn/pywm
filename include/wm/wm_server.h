@@ -52,6 +52,7 @@ void wm_server_destroy(struct wm_server* server);
 void wm_server_surface_at(struct wm_server* server, double at_x, double at_y, 
         struct wlr_surface** result, double* result_sx, double* result_sy);
 struct wm_view* wm_server_view_for_surface(struct wm_server* server, struct wlr_surface* surface);
+struct wm_view* wm_server_root_view_for_pid(struct wm_server* server, pid_t pid);
 
 /* passes ownership to caller, no need to unregister, simply destroy */
 struct wm_widget* wm_server_create_widget(struct wm_server* server);

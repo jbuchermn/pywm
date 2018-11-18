@@ -22,6 +22,10 @@ struct wm_view {
 
     bool mapped;
 
+    /* Only set for XWayland views at the moment */
+    struct wm_view* parent;
+    pid_t pid;
+
     double display_x;
     double display_y;
     double display_width;
@@ -45,6 +49,7 @@ void wm_view_destroy(struct wm_view* view);
 void wm_view_set_box(struct wm_view* view, double x, double y, double width, double height);
 void wm_view_get_info(struct wm_view* view, const char** title, const char** app_id, const char** role);
 
+void wm_view_get_display_box(struct wm_view* view, double* display_x, double* display_y, double* display_width, double* display_height);
 void wm_view_request_size(struct wm_view* view, int width, int height);
 void wm_view_get_size(struct wm_view* view, int* width, int* height);
 void wm_view_focus(struct wm_view* view, struct wm_seat* seat);

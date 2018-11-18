@@ -260,6 +260,15 @@ struct wm_view* wm_server_view_for_surface(struct wm_server* server, struct wlr_
     return NULL;
 }
 
+struct wm_view* wm_server_root_view_for_pid(struct wm_server* server, pid_t pid){
+    struct wm_view* view;
+    wl_list_for_each(view, &server->wm_views, link){
+        if(view->pid == pid && view->parent == NULL) return view;
+    }
+
+    return NULL;
+}
+
 struct wm_widget* wm_server_create_widget(struct wm_server* server){
     struct wm_widget* widget = calloc(1, sizeof(struct wm_widget));
     wm_widget_init(widget, server);

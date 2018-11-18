@@ -45,9 +45,26 @@ static void handle_xwayland_map(struct wl_listener* listener, void* data){
     const char* role;
     wm_view_get_info(view, &title, &app_id, &role);
     wlr_log(WLR_DEBUG, "New wm_view (xwayland): %s, %s, %s", title, app_id, role);
-    wm_callback_init_view(view);
+
+    pid_t pid = view->wlr_xwayland_surface->pid;
+    struct wm_view* parent = wm_server_root_view_for_pid(view->wm_server, pid);
+    if(parent){
+        const char* title;
+        const char* app_id; 
+        const char* role;
+        wm_view_get_info(parent, &title, &app_id, &role);
+        wlr_log(WLR_DEBUG, "Is child of view %s, %s, %s", title, app_id, role);
+
+        view->parent = parent;
+    }else{
+        wm_callback_init_view(view);
+    }
+
+    view->pid = pid;
+
 
     view->mapped = true;
+
 }
 
 static void handle_xwayland_unmap(struct wl_listener* listener, void* data){
@@ -58,6 +75,14 @@ static void handle_xwayland_unmap(struct wl_listener* listener, void* data){
 
 static void handle_xwayland_destroy(struct wl_listener* listener, void* data){
     struct wm_view* view = wl_container_of(listener, view, destroy);
+
+    struct wm_view* child;
+    wl_list_for_each(child, &view->wm_server->wm_views, link){
+        if(child->parent == view){
+            child->parent = NULL;
+        }
+    }
+
     wm_view_destroy(view);
     free(view);
 }
@@ -80,6 +105,8 @@ void wm_view_init_xdg(struct wm_view* view, struct wm_server* server, struct wlr
     wlr_log(WLR_DEBUG, "New wm_view (xdg): %s, %s, %s", title, app_id, role);
 
     view->mapped = false;
+    view->pid = 0;
+    view->parent = NULL;
 
     view->map.notify = &handle_xdg_map;
     wl_signal_add(&surface->events.map, &view->map);
@@ -107,6 +134,18 @@ void wm_view_init_xwayland(struct wm_view* view, struct wm_server* server, struc
     view->wlr_xwayland_surface = surface;
 
     view->mapped = false;
+    view->pid = 0;
+    view->parent = NULL;
+
+    /* If parent views are destroyed before children,
+     * the children become orphans and use their own display_...
+     * for positioning, therefore we initialise them to zero and do
+     * not display the orphans
+     */
+    view->display_x = 0;
+    view->display_y = 0;
+    view->display_width = 0;
+    view->display_height = 0;
 
     view->map.notify = &handle_xwayland_map;
     wl_signal_add(&surface->events.map, &view->map);
@@ -155,6 +194,35 @@ void wm_view_get_info(struct wm_view* view, const char** title, const char** app
 #endif
     }
 
+}
+
+void wm_view_get_display_box(struct wm_view* view, double* display_x, double* display_y, double* display_width, double* display_height){
+    if(view->parent){
+        wm_view_get_display_box(view->parent, display_x, display_y, display_width, display_height);
+
+        int pwidth, pheight;
+        wm_view_get_size(view->parent, &pwidth, &pheight);
+
+        double x_scale = pwidth / *display_width;
+        double y_scale = pheight / *display_height;
+
+        int width, height;
+        wm_view_get_size(view, &width, &height);
+
+        if(view->kind == WM_VIEW_XWAYLAND && view->wlr_xwayland_surface){
+            *display_x += view->wlr_xwayland_surface->x / x_scale;
+            *display_y += view->wlr_xwayland_surface->y / x_scale;
+        }
+
+        *display_width = width / x_scale;
+        *display_height = height / y_scale;
+
+    }else{
+        *display_x = view->display_x;
+        *display_y = view->display_y;
+        *display_width = view->display_width;
+        *display_height = view->display_height;
+    }
 }
 
 void wm_view_request_size(struct wm_view* view, int width, int height){

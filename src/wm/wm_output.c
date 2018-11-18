@@ -126,13 +126,16 @@ static void handle_frame(struct wl_listener* listener, void* data){
         int width, height;
         wm_view_get_size(view, &width, &height);
 
+        double display_x, display_y, display_width, display_height;
+        wm_view_get_display_box(view, &display_x, &display_y, &display_width, &display_height);
+
 		struct render_data rdata = {
 			.output = output,
 			.when = now,
-            .x = view->display_x,
-            .y = view->display_y,
-            .x_scale = view->display_width / width,
-            .y_scale = view->display_height / height
+            .x = display_x,
+            .y = display_y,
+            .x_scale = display_width / width,
+            .y_scale = display_height / height
 		};
 
 		wm_view_for_each_surface(view, render_surface, &rdata);

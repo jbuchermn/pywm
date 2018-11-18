@@ -36,24 +36,30 @@ long _pywm_views_add(struct wm_view* view){
 }
 
 long _pywm_views_remove(struct wm_view* view){
-    struct _pywm_view* remove;
+    struct _pywm_view* remove = NULL;
+
     if(views.first_view && views.first_view->view == view){
         remove = views.first_view;
         views.first_view = remove->next_view;
     }else{
         struct _pywm_view* prev;
         for(prev = views.first_view; prev && prev->next_view && prev->next_view->view != view; prev=prev->next_view);
-        assert(prev);
 
-        remove = prev->next_view;
-        prev->next_view = remove->next_view;
+        if(prev && prev->next_view){
+            remove = prev->next_view;
+            prev->next_view = remove->next_view;
+        }
     }
 
-    assert(remove);
-    long handle = remove->handle;
-    free(remove);
+    if(remove){
+        long handle = remove->handle;
+        free(remove);
 
-    return handle;
+        return handle;
+    }
+
+    return 0;
+
 }
 
 long _pywm_views_get_handle(struct wm_view* view){
