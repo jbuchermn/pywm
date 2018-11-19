@@ -54,11 +54,9 @@ static void render_surface(struct wlr_surface *surface, int sx, int sy, void *da
 		return;
 	}
 
-    double ox, oy;
-    wlr_output_layout_output_coords(output->wm_layout->wlr_output_layout, output->wlr_output, &ox, &oy);
 	struct wlr_box box = {
-		.x = round((ox + rdata->x + sx*rdata->x_scale) * output->wlr_output->scale),
-		.y = round((oy + rdata->y + sy*rdata->y_scale) * output->wlr_output->scale),
+		.x = round((rdata->x + sx*rdata->x_scale) * output->wlr_output->scale),
+		.y = round((rdata->y + sy*rdata->y_scale) * output->wlr_output->scale),
 		.width = round(surface->current.width * rdata->x_scale * output->wlr_output->scale),
 		.height = round(surface->current.height * rdata->y_scale * output->wlr_output->scale)
 	};
