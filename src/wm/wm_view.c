@@ -48,7 +48,7 @@ static void handle_xwayland_map(struct wl_listener* listener, void* data){
 
     pid_t pid = view->wlr_xwayland_surface->pid;
     struct wm_view* parent = wm_server_root_view_for_pid(view->wm_server, pid);
-    if(parent){
+    if(pid && parent){
         const char* title;
         const char* app_id; 
         const char* role;
