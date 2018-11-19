@@ -15,38 +15,24 @@
 #include "wm/wm.h"
 
 /*
- * Callbacks: Popup
- */
-static void popup_handle_map(struct wl_listener* listener, void* data){
-    struct wm_view_xdg_popup* popup = wl_container_of(listener, popup, map);
-    /*
-     * We don't actually do anything with the popups, merely a blueprint
-     */
-}
-
-static void popup_handle_unmap(struct wl_listener* listener, void* data){
-    struct wm_view_xdg_popup* popup = wl_container_of(listener, popup, unmap);
-}
-
-static void popup_handle_destroy(struct wl_listener* listener, void* data){
-    struct wm_view_xdg_popup* popup = wl_container_of(listener, popup, destroy);
-    wm_view_xdg_popup_destroy(popup);
-    free(popup);
-}
-
-static void popup_handle_new_popup(struct wl_listener* listener, void* data){
-    struct wm_view_xdg_popup* popup = wl_container_of(listener, popup, new_popup);
-    struct wlr_xdg_popup* wlr_xdg_popup = data;
-
-    struct wm_view_xdg_popup* popup_new = calloc(1, sizeof(struct wm_view_xdg_popup));
-    wm_view_xdg_popup_init(popup_new, wlr_xdg_popup, popup->parent);
-}
-
-/*
- * Callbacks: View
+ * Callbacks
  */
 static void handle_map(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, map);
+
+    int min_w, max_w, min_h, max_h;
+    wm_view_get_size_constraints(&view->super, &min_w, &max_w, &min_h, &max_h);
+    if(min_w > 0 && (min_w == max_w) && min_h > 0 && (min_h = max_h)){
+        /*
+         * This view is actually a dialog (popup),
+         * so we don't tile it
+         */
+        wlr_xdg_toplevel_set_tiled(view->wlr_xdg_surface, 0);
+
+        /*
+         * TODO! Interaction with Python
+         */
+    }
 
     const char* title;
     const char* app_id; 
@@ -71,51 +57,15 @@ static void handle_destroy(struct wl_listener* listener, void* data){
     free(view);
 }
 
-static void handle_new_popup(struct wl_listener* listener, void* data){
-    struct wm_view_xdg* view = wl_container_of(listener, view, new_popup);
-    struct wlr_xdg_popup* wlr_xdg_popup = data;
-
-    struct wm_view_xdg_popup* popup = calloc(1, sizeof(struct wm_view_xdg_popup));
-    wm_view_xdg_popup_init(popup, wlr_xdg_popup, view);
-}
-
 
 /*
  * Class implementation
  */
-void wm_view_xdg_popup_init(struct wm_view_xdg_popup* popup, struct wlr_xdg_popup* wlr_xdg_popup, struct wm_view_xdg* parent){
-    popup->parent = parent;
-    wl_list_insert(&parent->popups, &popup->link);
-
-    popup->map.notify = &popup_handle_map;
-    wl_signal_add(&wlr_xdg_popup->base->events.map, &popup->map);
-
-    popup->unmap.notify = &popup_handle_unmap;
-    wl_signal_add(&wlr_xdg_popup->base->events.unmap, &popup->unmap);
-
-    popup->destroy.notify = &popup_handle_destroy;
-    wl_signal_add(&wlr_xdg_popup->base->events.destroy, &popup->destroy);
-
-    popup->new_popup.notify = &popup_handle_new_popup;
-    wl_signal_add(&wlr_xdg_popup->base->events.new_popup, &popup->new_popup);
-}
-
-void wm_view_xdg_popup_destroy(struct wm_view_xdg_popup* popup){
-    wl_list_remove(&popup->map.link);
-    wl_list_remove(&popup->unmap.link);
-    wl_list_remove(&popup->destroy.link);
-    wl_list_remove(&popup->new_popup.link);
-    wl_list_remove(&popup->link);
-}
-
 void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct wlr_xdg_surface* surface){
     wm_view_base_init(&view->super, server);
     view->super.vtable = &wm_view_xdg_vtable;
 
-    wl_list_init(&view->popups);
-
     view->wlr_xdg_surface = surface;
-
 
     view->map.notify = &handle_map;
     wl_signal_add(&surface->events.map, &view->map);
@@ -126,14 +76,7 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
     view->destroy.notify = &handle_destroy;
     wl_signal_add(&surface->events.destroy, &view->destroy);
 
-    view->new_popup.notify = &handle_new_popup;
-    wl_signal_add(&surface->events.new_popup, &view->new_popup);
-
     /* Get rid of white spaces around; therefore geometry.width/height should always equal current.width/height */
-    /*
-     * Problematic for toplevels that are actually popups; why the hell do apps create toplevels
-     * for save/... dialogs? Anyway.. see sway xdg_shell.c wants_floating()
-     */
     wlr_xdg_toplevel_set_tiled(surface, 15);
 }
 
@@ -143,7 +86,6 @@ static void wm_view_xdg_destroy(struct wm_view* super){
     wl_list_remove(&view->map.link);
     wl_list_remove(&view->unmap.link);
     wl_list_remove(&view->destroy.link);
-    wl_list_remove(&view->new_popup.link);
 
     wm_view_base_destroy(&view->super);
 }
