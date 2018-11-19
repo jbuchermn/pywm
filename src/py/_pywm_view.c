@@ -101,7 +101,10 @@ PyObject* _pywm_view_get_box(PyObject* self, PyObject* args){
         return NULL;
     }
 
-    return Py_BuildValue("(dddd)", view->display_x, view->display_y, view->display_height, view->display_width);
+    double x, y, w, h;
+    wm_view_get_box(view, &x, &y, &w, &h);
+
+    return Py_BuildValue("(dddd)", x, y, w, h);
 }
 
 PyObject* _pywm_view_get_dimensions(PyObject* self, PyObject* args){

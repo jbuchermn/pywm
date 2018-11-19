@@ -20,12 +20,6 @@ add_project_arguments(
 	language: 'c',
 )
 
-add_project_arguments(
-	'-DPYWM_XWAYLAND',
-	language: 'c',
-)
-
-
 
 # Dependencies
 wlroots        = dependency('wlroots')
@@ -66,6 +60,8 @@ sources = [
     'src/wm/wm_layout.c',
     'src/wm/wm_output.c',
     'src/wm/wm_view.c',
+    'src/wm/wm_view_xdg.c',
+    'src/wm/wm_view_xwayland.c',
     'src/wm/wm_widget.c',
     'src/wm/wm_config.c',
 ]

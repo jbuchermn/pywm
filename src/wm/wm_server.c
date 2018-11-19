@@ -19,7 +19,8 @@
 #include "wm/wm_server.h"
 #include "wm/wm.h"
 #include "wm/wm_seat.h"
-#include "wm/wm_view.h"
+#include "wm/wm_view_xdg.h"
+#include "wm/wm_view_xwayland.h"
 #include "wm/wm_layout.h"
 #include "wm/wm_widget.h"
 #include "wm/wm_config.h"
@@ -47,31 +48,25 @@ static void handle_new_xdg_surface(struct wl_listener* listener, void* data){
     struct wlr_xdg_surface* surface = data;
 
     if(surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL){
+        /* Popups should be handled by the parent */
         return;
     }
 
     wlr_xdg_surface_ping(surface);
 
-    struct wm_view* view = calloc(1, sizeof(struct wm_view));
-    wl_list_insert(&server->wm_views, &view->link);
-
-    /* This might end up calling functions that require the view to be in the list */
-    wm_view_init_xdg(view, server, surface);
+    struct wm_view_xdg* view = calloc(1, sizeof(struct wm_view_xdg));
+    wm_view_xdg_init(view, server, surface);
 }
 
-#ifdef PYWM_XWAYLAND
 static void handle_new_xwayland_surface(struct wl_listener* listener, void* data){
     struct wm_server* server = wl_container_of(listener, server, new_xwayland_surface);
     struct wlr_xwayland_surface* surface = data;
 
     wlr_xwayland_surface_ping(surface);
 
-    struct wm_view* view = calloc(1, sizeof(struct wm_view));
-    wm_view_init_xwayland(view, server, surface);
-
-    wl_list_insert(&server->wm_views, &view->link);
+    struct wm_view_xwayland* view = calloc(1, sizeof(struct wm_view_xwayland));
+    wm_view_xwayland_init(view, server, surface);
 }
-#endif
 
 static void handle_new_server_decoration(struct wl_listener* listener, void* data){
     /* struct wm_server* server = wl_container_of(listener, server, new_xdg_decoration); */
@@ -130,7 +125,6 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wlr_xdg_decoration_manager = wlr_xdg_decoration_manager_v1_create(server->wl_display);
     assert(server->wlr_xdg_decoration_manager);
 
-#ifdef PYWM_XWAYLAND
     server->wlr_xwayland = wlr_xwayland_create(server->wl_display, server->wlr_compositor, false);
     assert(server->wlr_xwayland);
 
@@ -147,7 +141,6 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
         wlr_xwayland_set_cursor(server->wlr_xwayland,
                 image->buffer, image->width * 4, image->width, image->height, image->hotspot_x, image->hotspot_y);
     }
-#endif
 
     /* Children */
     server->wm_layout = calloc(1, sizeof(struct wm_layout));
@@ -156,9 +149,7 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wm_seat = calloc(1, sizeof(struct wm_seat));
     wm_seat_init(server->wm_seat, server, server->wm_layout);
 
-#ifdef PYWM_XWAYLAND
     wlr_xwayland_set_seat(server->wlr_xwayland, server->wm_seat->wlr_seat);
-#endif
 
     /* Handlers */
     server->new_input.notify = handle_new_input;
@@ -176,7 +167,6 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->new_xdg_decoration.notify = handle_new_xdg_decoration;
     wl_signal_add(&server->wlr_xdg_decoration_manager->events.new_toplevel_decoration, &server->new_xdg_decoration);
 
-#ifdef PYWM_XWAYLAND
     server->new_xwayland_surface.notify = handle_new_xwayland_surface;
     wl_signal_add(&server->wlr_xwayland->events.new_surface, &server->new_xwayland_surface);
 
@@ -186,18 +176,10 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
      */
     server->xwayland_ready.notify = handle_ready;
     wl_signal_add(&server->wlr_xwayland->events.ready, &server->xwayland_ready);
-#else
-    /*
-     * Without XWayland we are ready immediately
-     */
-    handle_ready(NULL, NULL);
-#endif
 }
 
 void wm_server_destroy(struct wm_server* server){
-#ifdef PYWM_XWAYLAND
     wlr_xwayland_destroy(server->wlr_xwayland);
-#endif
     wl_display_destroy_clients(server->wl_display);
     wl_display_destroy(server->wl_display);
 }
@@ -212,11 +194,14 @@ void wm_server_surface_at(struct wm_server* server, double at_x, double at_y,
         int height;
         wm_view_get_size(view, &width, &height);
 
-        double scale_x = view->display_width/width;
-        double scale_y = view->display_height/height;
+        double display_x, display_y, display_width, display_height;
+        wm_view_get_box(view, &display_x, &display_y, &display_width, &display_height);
 
-        int view_at_x = round((at_x - view->display_x) / scale_x);
-        int view_at_y = round((at_y - view->display_y) / scale_y);
+        double scale_x = display_width/width;
+        double scale_y = display_height/height;
+
+        int view_at_x = round((at_x - display_x) / scale_x);
+        int view_at_y = round((at_y - display_y) / scale_y);
 
         double sx;
         double sy;
@@ -255,15 +240,6 @@ struct wm_view* wm_server_view_for_surface(struct wm_server* server, struct wlr_
         if(data.result){
             return view;
         }
-    }
-
-    return NULL;
-}
-
-struct wm_view* wm_server_root_view_for_pid(struct wm_server* server, pid_t pid){
-    struct wm_view* view;
-    wl_list_for_each(view, &server->wm_views, link){
-        if(view->pid == pid && view->parent == NULL) return view;
     }
 
     return NULL;

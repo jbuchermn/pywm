@@ -25,10 +25,8 @@ struct wm_server{
     struct wlr_xdg_shell* wlr_xdg_shell;
     struct wlr_server_decoration_manager* wlr_server_decoration_manager;
     struct wlr_xdg_decoration_manager_v1* wlr_xdg_decoration_manager;
-#ifdef PYWM_XWAYLAND
     struct wlr_xwayland* wlr_xwayland;
     struct wlr_xcursor_manager* wlr_xcursor_manager;
-#endif
 
     struct wm_seat* wm_seat;
     struct wm_layout* wm_layout;
@@ -40,10 +38,8 @@ struct wm_server{
     struct wl_listener new_xdg_surface;
     struct wl_listener new_server_decoration;
     struct wl_listener new_xdg_decoration;
-#ifdef PYWM_XWAYLAND
     struct wl_listener xwayland_ready;
     struct wl_listener new_xwayland_surface;
-#endif
 };
 
 void wm_server_init(struct wm_server* server, struct wm_config* config);
@@ -52,7 +48,6 @@ void wm_server_destroy(struct wm_server* server);
 void wm_server_surface_at(struct wm_server* server, double at_x, double at_y, 
         struct wlr_surface** result, double* result_sx, double* result_sy);
 struct wm_view* wm_server_view_for_surface(struct wm_server* server, struct wlr_surface* surface);
-struct wm_view* wm_server_root_view_for_pid(struct wm_server* server, pid_t pid);
 
 /* passes ownership to caller, no need to unregister, simply destroy */
 struct wm_widget* wm_server_create_widget(struct wm_server* server);

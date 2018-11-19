@@ -127,7 +127,7 @@ static void handle_frame(struct wl_listener* listener, void* data){
         wm_view_get_size(view, &width, &height);
 
         double display_x, display_y, display_width, display_height;
-        wm_view_get_display_box(view, &display_x, &display_y, &display_width, &display_height);
+        wm_view_get_box(view, &display_x, &display_y, &display_width, &display_height);
 
 		struct render_data rdata = {
 			.output = output,
