@@ -12,11 +12,11 @@ struct _pywm_view {
     struct _pywm_view* next_view;
 
     bool focus_pending;
-    bool dimensions_pending;
+    bool size_pending;
     struct {
         int width;
         int height;
-    } dimensions;
+    } size;
 };
 
 void _pywm_view_init(struct _pywm_view* _view, struct wm_view* view);
@@ -37,11 +37,12 @@ void _pywm_views_update();
 /*
  * Python functions
  */
+PyObject* _pywm_view_get_size_constraints(PyObject* self, PyObject* args);
 PyObject* _pywm_view_get_box(PyObject* self, PyObject* args);
-PyObject* _pywm_view_get_dimensions(PyObject* self, PyObject* args);
+PyObject* _pywm_view_get_size(PyObject* self, PyObject* args);
 PyObject* _pywm_view_get_info(PyObject* self, PyObject* args);
 PyObject* _pywm_view_set_box(PyObject* self, PyObject* args);
-PyObject* _pywm_view_set_dimensions(PyObject* self, PyObject* args);
+PyObject* _pywm_view_set_size(PyObject* self, PyObject* args);
 PyObject* _pywm_view_focus(PyObject* self, PyObject* args);
 
 #endif

@@ -17,7 +17,7 @@ void _pywm_view_init(struct _pywm_view* _view, struct wm_view* view){
     _view->view = view;
     _view->next_view = NULL;
     _view->focus_pending = false;
-    _view->dimensions_pending = false;
+    _view->size_pending = false;
 }
 
 long _pywm_views_add(struct wm_view* view){
@@ -88,6 +88,25 @@ struct wm_view* _pywm_views_from_handle(long handle){
     return view->view;
 }
 
+PyObject* _pywm_view_get_size_constraints(PyObject* self, PyObject* args){
+    long handle;
+    if(!PyArg_ParseTuple(args, "l", &handle)){
+        PyErr_SetString(PyExc_TypeError, "Arguments");
+        return NULL;
+    }
+
+    struct wm_view* view = _pywm_views_from_handle(handle);
+    if(!view){
+        PyErr_SetString(PyExc_TypeError, "View has been destroyed");
+        return NULL;
+    }
+
+    int min_w, max_w, min_h, max_h;
+    wm_view_get_size_constraints(view, &min_w, &max_w, &min_h, &max_h);
+
+    return Py_BuildValue("(iiii)", min_w, max_w, min_h, max_h);
+}
+
 PyObject* _pywm_view_get_box(PyObject* self, PyObject* args){
     long handle;
     if(!PyArg_ParseTuple(args, "l", &handle)){
@@ -107,7 +126,7 @@ PyObject* _pywm_view_get_box(PyObject* self, PyObject* args){
     return Py_BuildValue("(dddd)", x, y, w, h);
 }
 
-PyObject* _pywm_view_get_dimensions(PyObject* self, PyObject* args){
+PyObject* _pywm_view_get_size(PyObject* self, PyObject* args){
     long handle;
     if(!PyArg_ParseTuple(args, "l", &handle)){
         PyErr_SetString(PyExc_TypeError, "Arguments");
@@ -174,7 +193,7 @@ PyObject* _pywm_view_set_box(PyObject* self, PyObject* args){
     return Py_None;
 }
 
-PyObject* _pywm_view_set_dimensions(PyObject* self, PyObject* args){
+PyObject* _pywm_view_set_size(PyObject* self, PyObject* args){
     long handle;
     int width, height;
     if(!PyArg_ParseTuple(args, "lii", &handle, &width, &height)){
@@ -188,9 +207,9 @@ PyObject* _pywm_view_set_dimensions(PyObject* self, PyObject* args){
         return NULL;
     }
 
-    view->dimensions_pending = true;
-    view->dimensions.width = width;
-    view->dimensions.height = height;
+    view->size_pending = true;
+    view->size.width = width;
+    view->size.height = height;
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -222,9 +241,9 @@ void _pywm_views_update(){
             view->focus_pending = false;
         }
 
-        if(view->dimensions_pending){
-            wm_view_request_size(view->view, view->dimensions.width, view->dimensions.height);
-            view->dimensions_pending = false;
+        if(view->size_pending){
+            wm_view_request_size(view->view, view->size.width, view->size.height);
+            view->size_pending = false;
         }
     }
 }

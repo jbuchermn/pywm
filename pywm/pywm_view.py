@@ -1,9 +1,10 @@
 from ._pywm import (
     view_get_box,
-    view_get_dimensions,
+    view_get_size,
     view_get_info,
     view_set_box,
-    view_set_dimensions,
+    view_set_size,
+    view_get_size_constraints,
     view_focus
 )
 
@@ -38,15 +39,21 @@ class PyWMView:
         except Exception:
             return "Destroyed", "", "", False
 
-    def get_dimensions(self):
+    def get_size(self):
         try:
-            return view_get_dimensions(self._handle)
+            return view_get_size(self._handle)
         except Exception:
             return 0, 0
 
-    def set_dimensions(self, width, height):
+    def get_size_constraints(self):
         try:
-            view_set_dimensions(self._handle, round(width), round(height))
+            return view_get_size_constraints(self._handle)
+        except Exception:
+            return -1, -1, -1, -1
+
+    def set_size(self, width, height):
+        try:
+            view_set_size(self._handle, round(width), round(height))
         except Exception:
             pass
 

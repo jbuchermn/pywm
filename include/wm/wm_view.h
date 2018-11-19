@@ -36,6 +36,7 @@ struct wm_view_vtable {
     void (*get_box)(struct wm_view* view, double* x, double* y, double* width, double* height);
     void (*request_size)(struct wm_view* view, int width, int height);
     void (*get_size)(struct wm_view* view, int* width, int* height);
+    void (*get_size_constraints)(struct wm_view* view, int* min_width, int* max_width, int* min_height, int* max_height);
     void (*focus)(struct wm_view* view, struct wm_seat* seat);
     void (*set_activated)(struct wm_view* view, bool activated);
     struct wlr_surface* (*surface_at)(struct wm_view* view, double at_x, double at_y, double* sx, double* sy);
@@ -60,6 +61,10 @@ static inline void wm_view_get_box(struct wm_view* view, double* x, double* y, d
 
 static inline void wm_view_request_size(struct wm_view* view, int width, int height){
     (*view->vtable->request_size)(view, width, height);
+}
+
+static inline void wm_view_get_size_constraints(struct wm_view* view, int* min_width, int* max_width, int* min_height, int* max_height){
+    (*view->vtable->get_size_constraints)(view, min_width, max_width, min_height, max_height);
 }
 
 static inline void wm_view_get_size(struct wm_view* view, int* width, int* height){

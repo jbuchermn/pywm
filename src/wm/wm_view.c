@@ -50,6 +50,7 @@ struct wm_view_vtable wm_view_base_vtable = {
     .get_box = wm_view_base_get_box,
     .request_size = NULL,
     .get_size = NULL,
+    .get_size_constraints = NULL,
     .focus = NULL,
     .set_activated = NULL,
     .surface_at = NULL,

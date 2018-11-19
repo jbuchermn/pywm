@@ -124,21 +124,22 @@ static PyObject* _pywm_register(PyObject* self, PyObject* args){
 
 
 static PyMethodDef _pywm_methods[] = {
-    { "run",                    (PyCFunction)_pywm_run,       METH_VARARGS | METH_KEYWORDS,   "Start the compoitor in this thread" },
-    { "terminate",              _pywm_terminate,              METH_VARARGS,                   "Terminate compositor"  },
-    { "register",               _pywm_register,               METH_VARARGS,                   "Register callback"  },
-    { "update_cursor",          _pywm_update_cursor,          METH_VARARGS,                   "Update cursor position within clients after moving a client"  },
-    { "view_get_box",           _pywm_view_get_box,           METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "view_get_dimensions",    _pywm_view_get_dimensions,    METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "view_get_info",          _pywm_view_get_info,          METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "view_set_box",           _pywm_view_set_box,           METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "view_set_dimensions",    _pywm_view_set_dimensions,    METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "view_focus",             _pywm_view_focus,             METH_VARARGS,                   "" },
-    { "widget_create",          _pywm_widget_create,          METH_VARARGS,                   "" },
-    { "widget_destroy",         _pywm_widget_destroy,         METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "widget_set_box",         _pywm_widget_set_box,         METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "widget_set_layer",       _pywm_widget_set_layer,       METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "widget_set_pixels",      _pywm_widget_set_pixels,      METH_VARARGS,                   "" },
+    { "run",                       (PyCFunction)_pywm_run,           METH_VARARGS | METH_KEYWORDS,   "Start the compoitor in this thread" },
+    { "terminate",                 _pywm_terminate,                  METH_VARARGS,                   "Terminate compositor"  },
+    { "register",                  _pywm_register,                   METH_VARARGS,                   "Register callback"  },
+    { "update_cursor",             _pywm_update_cursor,              METH_VARARGS,                   "Update cursor position within clients after moving a client"  },
+    { "view_get_box",              _pywm_view_get_box,               METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "view_get_size",             _pywm_view_get_size,              METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "view_get_info",             _pywm_view_get_info,              METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "view_set_box",              _pywm_view_set_box,               METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "view_set_size",             _pywm_view_set_size,              METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "view_get_size_constraints", _pywm_view_get_size_constraints,  METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "view_focus",                _pywm_view_focus,                 METH_VARARGS,                   "" },
+    { "widget_create",             _pywm_widget_create,              METH_VARARGS,                   "" },
+    { "widget_destroy",            _pywm_widget_destroy,             METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "widget_set_box",            _pywm_widget_set_box,             METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "widget_set_layer",          _pywm_widget_set_layer,           METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "widget_set_pixels",         _pywm_widget_set_pixels,          METH_VARARGS,                   "" },
 
     { NULL, NULL, 0, NULL }
 };
