@@ -128,18 +128,6 @@ static PyMethodDef _pywm_methods[] = {
     { "terminate",                 _pywm_terminate,                  METH_VARARGS,                   "Terminate compositor"  },
     { "register",                  _pywm_register,                   METH_VARARGS,                   "Register callback"  },
     { "update_cursor",             _pywm_update_cursor,              METH_VARARGS,                   "Update cursor position within clients after moving a client"  },
-    { "view_get_box",              _pywm_view_get_box,               METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "view_get_size",             _pywm_view_get_size,              METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "view_get_info",             _pywm_view_get_info,              METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "view_set_box",              _pywm_view_set_box,               METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "view_set_size",             _pywm_view_set_size,              METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "view_get_size_constraints", _pywm_view_get_size_constraints,  METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "view_focus",                _pywm_view_focus,                 METH_VARARGS,                   "" },
-    { "widget_create",             _pywm_widget_create,              METH_VARARGS,                   "" },
-    { "widget_destroy",            _pywm_widget_destroy,             METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "widget_set_box",            _pywm_widget_set_box,             METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "widget_set_layer",          _pywm_widget_set_layer,           METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "widget_set_pixels",         _pywm_widget_set_pixels,          METH_VARARGS,                   "" },
 
     { NULL, NULL, 0, NULL }
 };
@@ -149,7 +137,7 @@ static struct PyModuleDef _pywm = {
     "_pywm",
     "",
     -1,
-    _pywm_methods,
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -157,5 +145,19 @@ static struct PyModuleDef _pywm = {
 };
 
 PyMODINIT_FUNC PyInit__pywm(void){
+    int n_methods = 0;
+    for(PyMethodDef* m = _pywm_methods; m->ml_name; m++) n_methods++;
+    for(PyMethodDef* m = _pywm_view_methods; m->ml_name; m++) n_methods++;
+    for(PyMethodDef* m = _pywm_widget_methods; m->ml_name; m++) n_methods++;
+
+    PyMethodDef* methods = calloc(n_methods + 1, sizeof(PyMethodDef));
+
+    PyMethodDef* cur = methods;
+    for(PyMethodDef* m = _pywm_methods; m->ml_name; m++) *cur++ = *m;
+    for(PyMethodDef* m = _pywm_view_methods; m->ml_name; m++) *cur++ = *m;
+    for(PyMethodDef* m = _pywm_widget_methods; m->ml_name; m++) *cur++ = *m;
+
+    assert(_pywm.m_methods == NULL);;
+    _pywm.m_methods = methods;
     return PyModule_Create(&_pywm);
 }

@@ -54,5 +54,7 @@ struct wm_view_vtable wm_view_base_vtable = {
     .focus = NULL,
     .set_activated = NULL,
     .surface_at = NULL,
-    .for_each_surface = NULL
+    .for_each_surface = NULL,
+    .is_floating = NULL,
+    .get_parent = NULL
 };

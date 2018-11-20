@@ -154,6 +154,16 @@ static void wm_view_xwayland_for_each_surface(struct wm_view* super, wlr_surface
     wlr_surface_for_each_surface(view->wlr_xwayland_surface->surface, iterator, user_data);
 }
 
+static bool wm_view_xwayland_is_floating(struct wm_view* super){
+    int min_w, max_w, min_h, max_h;
+    wm_view_get_size_constraints(super, &min_w, &max_w, &min_h, &max_h);
+    return min_w > 0 && min_h > 0 && min_w == max_w && min_h == max_h;
+}
+
+static struct wm_view* wm_view_xwayland_get_parent(struct wm_view* super){
+    return NULL;
+}
+
 struct wm_view_vtable wm_view_xwayland_vtable = {
     .destroy = wm_view_xwayland_destroy,
     .get_info = wm_view_xwayland_get_info,
@@ -166,4 +176,6 @@ struct wm_view_vtable wm_view_xwayland_vtable = {
     .set_activated = wm_view_xwayland_set_activated,
     .surface_at = wm_view_xwayland_surface_at,
     .for_each_surface = wm_view_xwayland_for_each_surface,
+    .is_floating = wm_view_xwayland_is_floating,
+    .get_parent = wm_view_xwayland_get_parent
 };

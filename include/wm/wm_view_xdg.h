@@ -13,6 +13,8 @@ struct wm_view_xdg {
 
     struct wlr_xdg_surface* wlr_xdg_surface;
 
+    bool floating;
+
     struct wl_listener map;
     struct wl_listener unmap;
     struct wl_listener destroy;

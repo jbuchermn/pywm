@@ -22,16 +22,13 @@ static void handle_map(struct wl_listener* listener, void* data){
 
     int min_w, max_w, min_h, max_h;
     wm_view_get_size_constraints(&view->super, &min_w, &max_w, &min_h, &max_h);
-    if(min_w > 0 && (min_w == max_w) && min_h > 0 && (min_h = max_h)){
-        /*
-         * This view is actually a dialog (popup),
-         * so we don't tile it
-         */
-        wlr_xdg_toplevel_set_tiled(view->wlr_xdg_surface, 0);
 
-        /*
-         * TODO! Interaction with Python
-         */
+    bool has_parent = view->wlr_xdg_surface->toplevel && view->wlr_xdg_surface->toplevel->parent;
+
+    /* Logic from sway */
+    if(has_parent || (min_w > 0 && (min_w == max_w) && min_h > 0 && (min_h = max_h))){
+        view->floating = true;
+        wlr_xdg_toplevel_set_tiled(view->wlr_xdg_surface, 0);
     }
 
     const char* title;
@@ -77,6 +74,7 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
     wl_signal_add(&surface->events.destroy, &view->destroy);
 
     /* Get rid of white spaces around; therefore geometry.width/height should always equal current.width/height */
+    view->floating = false;
     wlr_xdg_toplevel_set_tiled(surface, 15);
 }
 
@@ -168,6 +166,33 @@ static void wm_view_xdg_for_each_surface(struct wm_view* super, wlr_surface_iter
     wlr_xdg_surface_for_each_surface(view->wlr_xdg_surface, iterator, user_data);
 }
 
+static bool wm_view_xdg_is_floating(struct wm_view* super){
+    struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
+    return view->floating;
+}
+
+static struct wm_view* wm_view_xdg_get_parent(struct wm_view* super){
+    struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
+    struct wlr_xdg_surface* parent_surface = view->wlr_xdg_surface->toplevel ? view->wlr_xdg_surface->toplevel->parent : NULL;
+    if(!parent_surface){
+        return NULL;
+    }
+
+    struct wm_view* parent;
+    wl_list_for_each(parent, &view->super.wm_server->wm_views, link){
+        /* Only works for one-level inheritance! */
+        if(parent->vtable == view->super.vtable){
+            struct wm_view_xdg* parent_xdg = wm_cast(wm_view_xdg, parent);
+            if(parent_xdg->wlr_xdg_surface == parent_surface){
+                return parent;
+            }
+        }
+    }
+
+    wlr_log(WLR_DEBUG, "Warning! Could not find parent surface");
+    return NULL;
+}
+
 struct wm_view_vtable wm_view_xdg_vtable = {
     .destroy = wm_view_xdg_destroy,
     .get_info = wm_view_xdg_get_info,
@@ -180,4 +205,6 @@ struct wm_view_vtable wm_view_xdg_vtable = {
     .set_activated = wm_view_xdg_set_activated,
     .surface_at = wm_view_xdg_surface_at,
     .for_each_surface = wm_view_xdg_for_each_surface,
+    .is_floating = wm_view_xdg_is_floating,
+    .get_parent = wm_view_xdg_get_parent
 };

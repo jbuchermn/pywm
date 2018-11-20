@@ -5,7 +5,9 @@ from ._pywm import (
     view_set_box,
     view_set_size,
     view_get_size_constraints,
-    view_focus
+    view_focus,
+    view_is_floating,
+    view_get_parent
 )
 
 
@@ -19,6 +21,13 @@ class PyWMView:
         self.wm = wm
         self.box = view_get_box(self._handle)
         self.focused = False
+        self.parent = None
+        self.floating = view_is_floating(self._handle)
+
+        parent_handle = view_get_parent(self._handle)
+        for v in self.wm.views:
+            if v._handle == parent_handle:
+                self.parent = v
 
     def focus(self):
         try:

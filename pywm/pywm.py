@@ -161,6 +161,9 @@ class PyWM:
         for view in self.views:
             if view._handle == handle:
                 view.destroy()
+
+            if view.parent is not None and view.parent._handle == handle:
+                view.parent = None
         self.views = [v for v in self.views if v._handle != handle]
 
     @callback

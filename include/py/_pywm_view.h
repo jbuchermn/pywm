@@ -44,5 +44,9 @@ PyObject* _pywm_view_get_info(PyObject* self, PyObject* args);
 PyObject* _pywm_view_set_box(PyObject* self, PyObject* args);
 PyObject* _pywm_view_set_size(PyObject* self, PyObject* args);
 PyObject* _pywm_view_focus(PyObject* self, PyObject* args);
+PyObject* _pywm_view_is_floating(PyObject* self, PyObject* args);
+PyObject* _pywm_view_get_parent(PyObject* self, PyObject* args);
+
+PyMethodDef _pywm_view_methods[];
 
 #endif

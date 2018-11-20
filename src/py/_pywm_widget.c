@@ -199,3 +199,13 @@ void _pywm_widgets_update(){
         }
     }
 }
+
+PyMethodDef _pywm_widget_methods[] = {
+    { "widget_create",             _pywm_widget_create,              METH_VARARGS,                   "" },
+    { "widget_destroy",            _pywm_widget_destroy,             METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "widget_set_box",            _pywm_widget_set_box,             METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "widget_set_layer",          _pywm_widget_set_layer,           METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "widget_set_pixels",         _pywm_widget_set_pixels,          METH_VARARGS,                   "" },
+
+    { NULL, NULL, 0, NULL }
+};

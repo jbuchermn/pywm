@@ -6,6 +6,7 @@
 #include "wm/wm.h"
 #include "wm/wm_view.h"
 #include "py/_pywm_view.h"
+#include "wm/wm_view_xwayland.h"
 
 static struct _pywm_views views = { 0 };
 
@@ -70,6 +71,23 @@ long _pywm_views_get_handle(struct wm_view* view){
     return 0;
 }
 
+void _pywm_views_update(){
+    for(struct _pywm_view* view=views.first_view; view; view=view->next_view){
+        if(view->focus_pending){
+            wm_focus_view(view->view);
+            view->focus_pending = false;
+        }
+
+        if(view->size_pending){
+            wm_view_request_size(view->view, view->size.width, view->size.height);
+            view->size_pending = false;
+        }
+    }
+}
+
+/*
+ * Python methods
+ */
 struct _pywm_view* _pywm_views_container_from_handle(long handle){
 
     for(struct _pywm_view* view = views.first_view; view; view=view->next_view){
@@ -164,10 +182,7 @@ PyObject* _pywm_view_get_info(PyObject* self, PyObject* args){
     const char* role;
     wm_view_get_info(view, &title, &app_id, &role);
 
-    bool xwayland = false;
-#ifdef PYWM_XWAYLAND
-    xwayland = view->kind == WM_VIEW_XWAYLAND;
-#endif
+    bool xwayland = view->vtable == &wm_view_xwayland_vtable;
 
     return Py_BuildValue("(sssb)", title, app_id, role, xwayland);
 
@@ -234,16 +249,55 @@ PyObject* _pywm_view_focus(PyObject* self, PyObject* args){
     return Py_None;
 }
 
-void _pywm_views_update(){
-    for(struct _pywm_view* view=views.first_view; view; view=view->next_view){
-        if(view->focus_pending){
-            wm_focus_view(view->view);
-            view->focus_pending = false;
-        }
+PyObject* _pywm_view_is_floating(PyObject* self, PyObject* args){
+    long handle;
+    if(!PyArg_ParseTuple(args, "l", &handle)){
+        PyErr_SetString(PyExc_TypeError, "Arguments");
+        return NULL;
+    }
 
-        if(view->size_pending){
-            wm_view_request_size(view->view, view->size.width, view->size.height);
-            view->size_pending = false;
-        }
+    struct _pywm_view* view = _pywm_views_container_from_handle(handle);
+    if(!view){
+        PyErr_SetString(PyExc_TypeError, "View has been destroyed");
+        return NULL;
+    }
+
+    bool is_floating = wm_view_is_floating(view->view);
+    return Py_BuildValue("b", is_floating);
+}
+
+PyObject* _pywm_view_get_parent(PyObject* self, PyObject* args){
+    long handle;
+    if(!PyArg_ParseTuple(args, "l", &handle)){
+        PyErr_SetString(PyExc_TypeError, "Arguments");
+        return NULL;
+    }
+
+    struct _pywm_view* view = _pywm_views_container_from_handle(handle);
+    if(!view){
+        PyErr_SetString(PyExc_TypeError, "View has been destroyed");
+        return NULL;
+    }
+
+    struct wm_view* parent = wm_view_get_parent(view->view);
+    if(!parent){
+        return Py_BuildValue("l", 0);
+    }else{
+        long parent_handle = _pywm_views_get_handle(parent);
+        return Py_BuildValue("l", parent_handle);
     }
 }
+
+PyMethodDef _pywm_view_methods[] = {
+    { "view_get_box",              _pywm_view_get_box,               METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "view_get_size",             _pywm_view_get_size,              METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "view_get_info",             _pywm_view_get_info,              METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "view_set_box",              _pywm_view_set_box,               METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "view_set_size",             _pywm_view_set_size,              METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "view_get_size_constraints", _pywm_view_get_size_constraints,  METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
+    { "view_focus",                _pywm_view_focus,                 METH_VARARGS,                   "" },
+    { "view_is_floating",          _pywm_view_is_floating,           METH_VARARGS,                   "" },
+    { "view_get_parent",           _pywm_view_get_parent,            METH_VARARGS,                   "" },
+
+    { NULL, NULL, 0, NULL }
+};

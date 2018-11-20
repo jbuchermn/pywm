@@ -41,6 +41,8 @@ struct wm_view_vtable {
     void (*set_activated)(struct wm_view* view, bool activated);
     struct wlr_surface* (*surface_at)(struct wm_view* view, double at_x, double at_y, double* sx, double* sy);
     void (*for_each_surface)(struct wm_view* view, wlr_surface_iterator_func_t iterator, void* user_data);
+    bool (*is_floating)(struct wm_view* view);
+    struct wm_view* (*get_parent)(struct wm_view* view);
 };
 
 static inline void wm_view_destroy(struct wm_view* view){
@@ -85,6 +87,14 @@ static inline struct wlr_surface* wm_view_surface_at(struct wm_view* view, doubl
 
 static inline void wm_view_for_each_surface(struct wm_view* view, wlr_surface_iterator_func_t iterator, void* user_data){
     (*view->vtable->for_each_surface)(view, iterator, user_data);
+}
+
+static inline bool wm_view_is_floating(struct wm_view* view){
+    return (*view->vtable->is_floating)(view);
+}
+
+static inline struct wm_view* wm_view_get_parent(struct wm_view* view){
+    return (*view->vtable->get_parent)(view);
 }
 
 struct wm_view_vtable wm_view_base_vtable;
