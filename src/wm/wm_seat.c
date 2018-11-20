@@ -87,7 +87,9 @@ static void activate_surface(struct wlr_surface* surface, bool activated){
 
     if(wlr_surface_is_xdg_surface(surface)){
         struct wlr_xdg_surface* xdg_surface = wlr_xdg_surface_from_wlr_surface(surface);
-        wlr_xdg_toplevel_set_activated(xdg_surface, activated);
+        if(xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL){
+            wlr_xdg_toplevel_set_activated(xdg_surface, activated);
+        }
         return;
     }
 
@@ -106,7 +108,8 @@ void wm_seat_focus_surface(struct wm_seat* seat, struct wlr_surface* surface){
         return;
     }
 
-    activate_surface(prev, false);
+    /* Disabled as it breaks XWayland context menus... */
+    /* activate_surface(prev, false); */
     activate_surface(surface, true);
 
     struct wm_view* prev_view = wm_server_view_for_surface(seat->wm_server, prev);

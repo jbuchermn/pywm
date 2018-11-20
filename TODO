@@ -1,0 +1,17 @@
+* LibreOffice
+    -> Calc: drag to autofill
+    -> Change cursor
+
+* GIMP (XWayland)
+    -> Second context menus misplaced -> children of wm_view_xwayland_child
+    -> Drag color -> breaks
+    -> In general pretty much unusable
+
+* Chromium (XWayland)
+    -> Popups (Chromium does not set parent property)
+
+* XWayland
+    -> Detect modals as child-views (analogously to child-toplevels)
+
+* General
+    -> Random key-repeats? Have to Ctrl-C to be able to input again
