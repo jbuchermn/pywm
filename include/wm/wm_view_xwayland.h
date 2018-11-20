@@ -18,6 +18,7 @@ struct wm_view_xwayland_child {
     bool mapped;
 
     struct wl_listener map;
+    struct wl_listener request_configure;
     struct wl_listener unmap;
     struct wl_listener destroy;
 };
@@ -33,7 +34,15 @@ struct wm_view_xwayland {
 
     struct wl_list children;
 
+    /* To e used in case the view becomes a child upon mapping */
+    struct {
+        int x;
+        int y;
+    } configure_upon_child;
+    bool configure_upon_child_set;
+
     struct wl_listener map;
+    struct wl_listener request_configure;
     struct wl_listener unmap;
     struct wl_listener destroy;
 };

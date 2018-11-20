@@ -147,15 +147,6 @@ static void wm_view_xdg_focus(struct wm_view* super, struct wm_seat* seat){
     wm_seat_focus_surface(seat, view->wlr_xdg_surface->surface);
 }
 
-static void wm_view_xdg_set_activated(struct wm_view* super, bool activated){
-    struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
-    if(!view->wlr_xdg_surface){
-        return;
-    }
-    wlr_xdg_toplevel_set_activated(view->wlr_xdg_surface, activated);
-
-}
-
 static struct wlr_surface* wm_view_xdg_surface_at(struct wm_view* super, double at_x, double at_y, double* sx, double* sy){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
     return wlr_xdg_surface_surface_at(view->wlr_xdg_surface, at_x, at_y, sx, sy);
@@ -202,7 +193,6 @@ struct wm_view_vtable wm_view_xdg_vtable = {
     .get_size_constraints = wm_view_xdg_get_size_constraints,
     .get_size = wm_view_xdg_get_size,
     .focus = wm_view_xdg_focus,
-    .set_activated = wm_view_xdg_set_activated,
     .surface_at = wm_view_xdg_surface_at,
     .for_each_surface = wm_view_xdg_for_each_surface,
     .is_floating = wm_view_xdg_is_floating,
