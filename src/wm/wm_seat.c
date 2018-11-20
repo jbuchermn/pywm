@@ -89,13 +89,13 @@ void wm_seat_focus_surface(struct wm_seat* seat, struct wlr_surface* surface){
     }
 
     struct wm_view* prev_view = wm_server_view_for_surface(seat->wm_server, prev);
-    if(prev_view){
+    struct wm_view* view = wm_server_view_for_surface(seat->wm_server, surface);
+
+    if(prev_view && prev_view != view){
         wm_view_set_activated(prev_view, false);
     }
 
-
-    struct wm_view* view = wm_server_view_for_surface(seat->wm_server, surface);
-    if(view){
+    if(view && prev_view != view){
         wm_view_set_activated(view, true);
     }
 
