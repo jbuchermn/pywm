@@ -13,6 +13,57 @@
 #include "wm/wm_server.h"
 #include "wm/wm.h"
 
+static void try_to_find_parent(struct wm_view_xwayland* view){
+    struct wm_view_xwayland* parent = NULL;
+    
+    if(view->wlr_xwayland_surface->parent){
+        unsigned int parent_id = view->wlr_xwayland_surface->parent->window_id;
+        struct wm_view* it;
+        wl_list_for_each(it, &view->super.wm_server->wm_views, link){
+            if(it->vtable != view->super.vtable) continue;
+            struct wm_view_xwayland* it_xwayland = wm_cast(wm_view_xwayland, it);
+            if(it_xwayland->wlr_xwayland_surface->window_id == parent_id){
+                parent = it_xwayland;
+                goto Found;
+            }
+
+            struct wm_view_xwayland_child* sibling;
+            wl_list_for_each(sibling, &it_xwayland->children, link){
+                if(sibling->wlr_xwayland_surface->window_id == parent_id){
+                    parent = it_xwayland;
+                    goto Found;
+                }
+            }
+        }
+    }
+
+    if(view->wlr_xwayland_surface->pid){
+        struct wm_view* it;
+        wl_list_for_each(it, &view->super.wm_server->wm_views, link){
+            if(it->vtable != view->super.vtable) continue;
+            if(!it->mapped) continue;
+
+            struct wm_view_xwayland* it_xwayland = wm_cast(wm_view_xwayland, it);
+            if(it_xwayland == view) continue;
+
+            if(it_xwayland->wlr_xwayland_surface->pid == view->wlr_xwayland_surface->pid){
+                parent = it_xwayland;
+                goto Found;
+            }
+        }
+    }
+
+Found:
+
+    if(parent){
+        struct wm_view_xwayland_child* child = calloc(1, sizeof(struct wm_view_xwayland_child));
+
+        wm_view_xwayland_child_init(child, parent, view->wlr_xwayland_surface);
+        wm_view_destroy(&view->super);
+        free(view);
+    }
+}
+
 /*
  * Callbacks
  */
@@ -38,6 +89,25 @@ static void child_handle_destroy(struct wl_listener* listener, void* data){
     wm_view_xwayland_child_destroy(child);
 }
 
+static void handle_request_configure(struct wl_listener* listener, void* data){
+    struct wm_view_xwayland* view = wl_container_of(listener, view, request_configure);
+    struct wlr_xwayland_surface_configure_event* event = data;
+
+    wlr_xwayland_surface_configure(view->wlr_xwayland_surface, 0., 0., event->width, event->height);
+}
+
+static void handle_set_pid(struct wl_listener* listener, void* data){
+    struct wm_view_xwayland* view = wl_container_of(listener, view, set_pid);
+
+    try_to_find_parent(view);
+}
+
+static void handle_set_parent(struct wl_listener* listener, void* data){
+    struct wm_view_xwayland* view = wl_container_of(listener, view, set_parent);
+
+    try_to_find_parent(view);
+}
+
 static void handle_map(struct wl_listener* listener, void* data){
     struct wm_view_xwayland* view = wl_container_of(listener, view, map);
 
@@ -47,63 +117,8 @@ static void handle_map(struct wl_listener* listener, void* data){
     wm_view_get_info(&view->super, &title, &app_id, &role);
     wlr_log(WLR_DEBUG, "New wm_view (xwayland): %s, %s, %s", title, app_id, role);
 
-    if(view->wlr_xwayland_surface->parent){
-        unsigned int parent_id = view->wlr_xwayland_surface->parent->window_id;
-        struct wm_view* it;
-        struct wm_view_xwayland* parent = NULL;
-        wl_list_for_each(it, &view->super.wm_server->wm_views, link){
-            if(it->vtable != view->super.vtable) continue;
-            struct wm_view_xwayland* it_xwayland = wm_cast(wm_view_xwayland, it);
-            if(it_xwayland->wlr_xwayland_surface->window_id == parent_id){
-                parent = it_xwayland;
-                goto Found;
-            }
-
-            struct wm_view_xwayland_child* sibling;
-            wl_list_for_each(sibling, &it_xwayland->children, link){
-                if(sibling->wlr_xwayland_surface->window_id == parent_id){
-                    parent = it_xwayland;
-                    goto Found;
-                }
-            }
-        }
-
-Found:
-        if(parent){
-            struct wm_view_xwayland_child* child = calloc(1, sizeof(struct wm_view_xwayland_child));
-
-            int x=view->wlr_xwayland_surface->x;
-            int y=view->wlr_xwayland_surface->y;
-            if(view->configure_upon_child_set){
-                x = view->configure_upon_child.x;
-                y = view->configure_upon_child.y;
-            }
-
-            wm_view_xwayland_child_init(child, parent, view->wlr_xwayland_surface);
-            wm_view_destroy(&view->super);
-            free(view);
-
-            child->mapped = true;
-            wlr_xwayland_surface_configure(child->wlr_xwayland_surface, x, y, child->wlr_xwayland_surface->width, child->wlr_xwayland_surface->height);
-
-            return;
-        }
-    }
-
     wm_callback_init_view(&view->super);
-
     view->super.mapped = true;
-}
-
-static void handle_request_configure(struct wl_listener* listener, void* data){
-    struct wm_view_xwayland* view = wl_container_of(listener, view, request_configure);
-    struct wlr_xwayland_surface_configure_event* event = data;
-
-    wlr_xwayland_surface_configure(view->wlr_xwayland_surface, 0., 0., event->width, event->height);
-
-    view->configure_upon_child.x = event->x;
-    view->configure_upon_child.y = event->y;
-    view->configure_upon_child_set = true;
 }
 
 static void handle_unmap(struct wl_listener* listener, void* data){
@@ -143,6 +158,7 @@ void wm_view_xwayland_child_init(struct wm_view_xwayland_child* child, struct wm
 }
 
 void wm_view_xwayland_child_destroy(struct wm_view_xwayland_child* child){
+    wl_list_remove(&child->request_configure.link);
     wl_list_remove(&child->map.link);
     wl_list_remove(&child->unmap.link);
     wl_list_remove(&child->destroy.link);
@@ -158,24 +174,33 @@ void wm_view_xwayland_init(struct wm_view_xwayland* view, struct wm_server* serv
     wl_list_init(&view->children);
 
     view->wlr_xwayland_surface = surface;
-    view->configure_upon_child_set = false;
-
-    view->map.notify = &handle_map;
-    wl_signal_add(&surface->events.map, &view->map);
 
     view->request_configure.notify = &handle_request_configure;
     wl_signal_add(&surface->events.request_configure, &view->request_configure);
+
+    view->set_parent.notify = &handle_set_parent;
+    wl_signal_add(&surface->events.set_parent, &view->set_parent);
+
+    view->set_pid.notify = &handle_set_pid;
+    wl_signal_add(&surface->events.set_pid, &view->set_pid);
+
+    view->map.notify = &handle_map;
+    wl_signal_add(&surface->events.map, &view->map);
 
     view->unmap.notify = &handle_unmap;
     wl_signal_add(&surface->events.unmap, &view->unmap);
 
     view->destroy.notify = &handle_destroy;
     wl_signal_add(&surface->events.destroy, &view->destroy);
+
 }
 
 static void wm_view_xwayland_destroy(struct wm_view* super){
     struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
 
+    wl_list_remove(&view->request_configure.link);
+    wl_list_remove(&view->set_pid.link);
+    wl_list_remove(&view->set_parent.link);
     wl_list_remove(&view->map.link);
     wl_list_remove(&view->unmap.link);
     wl_list_remove(&view->destroy.link);
@@ -274,6 +299,7 @@ static void child_iterator(struct wlr_surface* surface, int sx, int sy, void* _d
     int child_x = data->child->wlr_xwayland_surface->x;
     int child_y = data->child->wlr_xwayland_surface->y;
 
+    printf("CHILD: %ld, %d, %d\n", data->child, child_x, child_y);
     data->iterator(surface, child_x + sx, child_y + sy, data->user_data); 
 }
 
@@ -284,8 +310,9 @@ static void wm_view_xwayland_for_each_surface(struct wm_view* super, wlr_surface
     }
     wlr_surface_for_each_surface(view->wlr_xwayland_surface->surface, iterator, user_data);
 
+    printf("-----\n");
     struct wm_view_xwayland_child* child;
-    wl_list_for_each(child, &view->children, link){
+    wl_list_for_each_reverse(child, &view->children, link){
         if(!child->mapped) continue;
 
         struct child_iterator_data data = {

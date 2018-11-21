@@ -7,8 +7,8 @@
     -> Drag color -> breaks
     -> In general pretty much unusable
 
-* Chromium (XWayland)
-    -> Popups (Chromium does not set parent property)
+* Firefox, Chromium (XWayland)
+    -> Weird behaviour when "Save as" dialog is too large, can only clikc "Cancel" not "Save"
 
 * XWayland
     -> Detect modals as child-views (analogously to child-toplevels)
