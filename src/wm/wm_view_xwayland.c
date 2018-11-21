@@ -299,7 +299,6 @@ static void child_iterator(struct wlr_surface* surface, int sx, int sy, void* _d
     int child_x = data->child->wlr_xwayland_surface->x;
     int child_y = data->child->wlr_xwayland_surface->y;
 
-    printf("CHILD: %ld, %d, %d\n", data->child, child_x, child_y);
     data->iterator(surface, child_x + sx, child_y + sy, data->user_data); 
 }
 
@@ -310,7 +309,6 @@ static void wm_view_xwayland_for_each_surface(struct wm_view* super, wlr_surface
     }
     wlr_surface_for_each_surface(view->wlr_xwayland_surface->surface, iterator, user_data);
 
-    printf("-----\n");
     struct wm_view_xwayland_child* child;
     wl_list_for_each_reverse(child, &view->children, link){
         if(!child->mapped) continue;
