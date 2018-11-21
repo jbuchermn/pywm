@@ -56,11 +56,18 @@ static void try_to_find_parent(struct wm_view_xwayland* view){
 Found:
 
     if(parent){
-        struct wm_view_xwayland_child* child = calloc(1, sizeof(struct wm_view_xwayland_child));
+        if(view->wlr_xwayland_surface->modal){
+            /* Child view */
+            view->floating = true;
+            view->parent = parent;
+        }else{
+            /* Tooltip, context-menu, more of a subsurface than a sub-view */
+            struct wm_view_xwayland_child* child = calloc(1, sizeof(struct wm_view_xwayland_child));
 
-        wm_view_xwayland_child_init(child, parent, view->wlr_xwayland_surface);
-        wm_view_destroy(&view->super);
-        free(view);
+            wm_view_xwayland_child_init(child, parent, view->wlr_xwayland_surface);
+            wm_view_destroy(&view->super);
+            free(view);
+        }
     }
 }
 
@@ -171,6 +178,8 @@ void wm_view_xwayland_init(struct wm_view_xwayland* view, struct wm_server* serv
 
     view->super.vtable = &wm_view_xwayland_vtable;
 
+    view->parent = NULL;
+    view->floating = false;
     wl_list_init(&view->children);
 
     view->wlr_xwayland_surface = surface;
@@ -324,13 +333,13 @@ static void wm_view_xwayland_for_each_surface(struct wm_view* super, wlr_surface
 }
 
 static bool wm_view_xwayland_is_floating(struct wm_view* super){
-    int min_w, max_w, min_h, max_h;
-    wm_view_get_size_constraints(super, &min_w, &max_w, &min_h, &max_h);
-    return min_w > 0 && min_h > 0 && min_w == max_w && min_h == max_h;
+    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
+    return view->floating;
 }
 
 static struct wm_view* wm_view_xwayland_get_parent(struct wm_view* super){
-    return NULL;
+    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
+    return view->parent ? &view->parent->super : NULL;
 }
 
 struct wm_view_vtable wm_view_xwayland_vtable = {

@@ -1,0 +1,27 @@
+* termite, gnome-mpv, gnome-calculator
+    -> No apparent issues
+
+* GIMP (XWayland)
+    -> Appears to be usable, however, not checked in detail
+
+* LibreOffice
+    -> Subsurface tooltips accept input which kills drag-to-autofill (calc) when hovering over
+        tooltips. IMHO that's a LibreOffice issue
+
+* Firefox, Chromium (XWayland)
+    -> Usable
+    -> Weird behaviour when "Save as" dialog is too large, can only clikc "Cancel" not "Save"
+
+* IntelliJ
+    -> Usable
+
+
+------- TODO -------
+
+* XWayland
+    -> Detect modals as child-views (analogously to child-toplevels)
+    -> Views are allowed to configure in any way they want (-> lots of overlapping modals and similar shit)
+
+* General
+    -> Random key-repeats? Have to Ctrl-C to be able to input again
+    -> Views change their minimal width/height after initial set; this is ignored leading to ugly scaling
