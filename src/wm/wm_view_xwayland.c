@@ -274,7 +274,7 @@ static struct wlr_surface* wm_view_xwayland_surface_at(struct wm_view* super, do
     struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
 
     struct wm_view_xwayland_child* child;
-    wl_list_for_each_reverse(child, &view->children, link){
+    wl_list_for_each(child, &view->children, link){
         if(!child->wlr_xwayland_surface->surface) continue;
 
         int child_x = child->wlr_xwayland_surface->x;
