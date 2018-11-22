@@ -40,7 +40,6 @@ static void handle_key(struct wl_listener* listener, void* data){
         return;
     }
 
-    printf("Dispatching %d, %s\n", event->state, keys);
     wm_seat_dispatch_key(keyboard->wm_seat, keyboard->wlr_input_device, event);
 }
 

@@ -137,9 +137,8 @@ class PyWM:
 
     @callback
     def _key(self, time_msec, keycode, state, keysyms):
+        print("[Key] %d %s" % (state, keysyms))
         result = self.on_key(time_msec, keycode, state, keysyms)
-        if not result:
-            print("[Dispatch] %d %s" % (state, keysyms))
         return result
 
     @callback
