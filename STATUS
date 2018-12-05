@@ -11,6 +11,7 @@
 * Firefox, Chromium (XWayland)
     -> Usable
     -> Weird behaviour when "Save as" dialog is too large, can only clikc "Cancel" not "Save"
+    -> Mouse clicks missing in fullscreen YT, seems to be related to scaling
 
 * IntelliJ
     -> Usable
