@@ -63,7 +63,10 @@ class PyWM:
 
         self._multitouch_main = None
         self._multitouch_last = None
-        self._multitouch_captured = False
+        """
+        Number indicates how many slots were captured
+        """
+        self._multitouch_captured = 0
         if 'multitouch' in kwargs:
             self._multitouch_main = find_multitouch(kwargs['multitouch'],
                                                     self._multitouch)
@@ -96,7 +99,7 @@ class PyWM:
 
     @callback
     def _motion(self, time_msec, delta_x, delta_y):
-        if self._multitouch_captured:
+        if self._multitouch_captured > 0:
             return True
 
         delta_x /= self.width
@@ -105,7 +108,7 @@ class PyWM:
 
     @callback
     def _motion_absolute(self, time_msec, x, y):
-        if self._multitouch_captured:
+        if self._multitouch_captured > 0:
             return True
 
         if self._last_absolute_x is not None:
@@ -122,14 +125,14 @@ class PyWM:
 
     @callback
     def _button(self, time_msec, button, state):
-        if self._multitouch_captured:
+        if self._multitouch_captured > 0:
             return True
 
         return self.on_button(time_msec, button, state)
 
     @callback
     def _axis(self, time_msec, source, orientation, delta, delta_discrete):
-        if self._multitouch_captured:
+        if self._multitouch_captured > 0:
             return True
 
         return self.on_axis(time_msec, source, orientation, delta,
@@ -183,13 +186,19 @@ class PyWM:
 
     def _multitouch(self, touches):
         if touches is not None and self._multitouch_last is None:
-            self._multitouch_captured = self.on_multitouch_begin(touches)
+            self._multitouch_captured = len(touches) if \
+                self.on_multitouch_begin(touches) else 0
         elif touches is None and self._multitouch_last is not None:
-            if self._multitouch_captured:
+            if self._multitouch_captured > 0:
                 self.on_multitouch_end()
-                self._multitouch_captured = False
-        elif touches is not None and self._multitouch_captured:
-            self.on_multitouch_update(touches)
+                self._multitouch_captured = 0
+        elif touches is not None and self._multitouch_captured > 0:
+            if len(touches) != self._multitouch_captured:
+                self.on_multitouch_end()
+                self._multitouch_captured = len(touches) if \
+                    self.on_multitouch_begin(touches) else 0
+            else:
+                self.on_multitouch_update(touches)
 
         self._multitouch_last = touches
 

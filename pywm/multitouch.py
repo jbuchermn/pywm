@@ -50,7 +50,7 @@ class Multitouch(Thread):
         self.fd.close()
 
     def update(self):
-        if len(self._touches) < 2 \
+        if len(self._touches) == 0 \
                 or min([t.x for t in self._touches]) < 0 \
                 or min([t.y for t in self._touches]) < 0:
             if self._state != 0:
