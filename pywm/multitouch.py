@@ -18,20 +18,35 @@ class Touch:
             self.y = (ev_value - self.parent.min_y) / \
                 (self.parent.max_y - self.parent.min_y)
 
-        self.parent.update()
-
     def __repr__(self):
         return "Touch(id=%d, slot=%d, x=%d, y=%d)" % \
             (self.id, self.slot, self.x, self.y)
+
+
+class Touches:
+    def __init__(self):
+        """
+        number may be larger than len(touches), as possibly
+        only the position of two touches is reported but also
+        the information that in fact three fingers are touching the pad
+        """
+        self.number = 1
+        self.touches = []
+
+    def add(self, touch):
+        self.touches += [touch]
+
+    def remove_slot(self, slot):
+        self.touches = [t for t in self.touches if t.slot != slot]
 
 
 class Multitouch(Thread):
     def __init__(self, filename, on_update):
         super().__init__()
         self._device = evdev.InputDevice(filename)
-        self._touches = []
+        self._touches = None
         self._on_update = on_update
-        self._state = 0
+        self._active = False
         self._running = True
 
         self.min_x = None
@@ -50,42 +65,65 @@ class Multitouch(Thread):
         self.fd.close()
 
     def update(self):
-        if len(self._touches) == 0 \
-                or min([t.x for t in self._touches]) < 0 \
-                or min([t.y for t in self._touches]) < 0:
-            if self._state != 0:
+        if self._touches is None \
+                or min([t.x for t in self._touches.touches]) < 0 \
+                or min([t.y for t in self._touches.touches]) < 0:
+            if self._active:
                 self._on_update(None)
-                self._state = 0
+                self._active = False
         else:
-            self._state = len(self._touches)
-            ts = sorted(self._touches, key=lambda t: t.slot)
-            self._on_update(ts)
+            self._active = True
+            self._on_update(self._touches)
 
     def run(self):
         current_slot = 0
         for event in self._device.read_loop():
             if not self._running:
                 break
-            if not event.type == 3:
-                continue
 
-            if event.code == 47:
-                current_slot = event.value
-            elif event.code == 57:
-                if event.value == -1:
-                    self._touches = [t for t in self._touches
-                                     if t.slot != current_slot]
-                    self.update()
+            if event.type == evdev.ecodes.SYN_REPORT:
+                self.update()
 
+            elif event.type == 1:
+                if event.code == evdev.ecodes.BTN_TOOL_DOUBLETAP \
+                        and event.value == 1:
+                    if self._touches is not None:
+                        self._touches.number = 2
+                elif event.code == evdev.ecodes.BTN_TOOL_TRIPLETAP \
+                        and event.value == 1:
+                    if self._touches is not None:
+                        self._touches.number = 3
+                elif event.code == evdev.ecodes.BTN_TOOL_QUADTAP \
+                        and event.value == 1:
+                    if self._touches is not None:
+                        self._touches.number = 4
+                elif event.code == evdev.ecodes.BTN_TOOL_QUINTTAP \
+                        and event.value == 1:
+                    if self._touches is not None:
+                        self._touches.number = 5
+
+            elif event.type == 3:
+                if event.code == 47:
+                    current_slot = event.value
+
+                elif event.code == 57:
+                    if event.value == -1:
+                        self._touches.remove_slot(current_slot)
+                        if len(self._touches.touches) == 0:
+                            self._touches = None
+
+                    else:
+                        if current_slot != -1:
+                            if self._touches is None:
+                                self._touches = Touches()
+                            self._touches.add(Touch(self, current_slot,
+                                                    event.value))
                 else:
-                    if current_slot != -1:
-                        self._touches += [Touch(self, current_slot,
-                                                event.value)]
-            else:
-                touch = [t for t in self._touches if
-                         t.slot == current_slot]
-                for t in touch:
-                    t.process(event.code, event.value)
+                    if self._touches is not None:
+                        touch = [t for t in self._touches.touches if
+                                 t.slot == current_slot]
+                        for t in touch:
+                            t.process(event.code, event.value)
 
     def stop(self):
         self._running = False
@@ -118,9 +156,9 @@ if __name__ == '__main__':
             print("Cancelled")
             last = 0
         else:
-            if len(touches) != last:
-                print([(t.id, t.slot, t.x, t.y) for t in touches])
-                last = len(touches)
+            print("--------- %d ---------" % (touches.number))
+            for t in touches.touches:
+                print("%d(%d): %f, %f" % (t.id, t.slot, t.x, t.y))
 
     name = "SynPS/2"
     mt = find_multitouch(name, callback)

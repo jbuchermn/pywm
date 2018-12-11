@@ -62,7 +62,6 @@ class PyWM:
         self._last_absolute_y = None
 
         self._multitouch_main = None
-        self._multitouch_last = None
         """
         Number indicates how many slots were captured
         """
@@ -140,7 +139,6 @@ class PyWM:
 
     @callback
     def _key(self, time_msec, keycode, state, keysyms):
-        print("[Key] %d %s" % (state, keysyms))
         result = self.on_key(time_msec, keycode, state, keysyms)
         return result
 
@@ -185,22 +183,24 @@ class PyWM:
         self.widgets = [v for v in self.widgets if id(v) != id(widget)]
 
     def _multitouch(self, touches):
-        if touches is not None and self._multitouch_last is None:
-            self._multitouch_captured = len(touches) if \
-                self.on_multitouch_begin(touches) else 0
-        elif touches is None and self._multitouch_last is not None:
+        if touches is None:
             if self._multitouch_captured > 0:
                 self.on_multitouch_end()
                 self._multitouch_captured = 0
-        elif touches is not None and self._multitouch_captured > 0:
-            if len(touches) != self._multitouch_captured:
-                self.on_multitouch_end()
-                self._multitouch_captured = len(touches) if \
+        else:
+            """
+            Only "upgrade" double- to triple-touch and so on; don't downgrade
+            triple- to double-touch. The reason is that frequently
+            during a triple-touch gesture
+            the driver/touchpad will lose track of one touch.
+            """
+            if touches.number > self._multitouch_captured:
+                if self._multitouch_captured > 0:
+                    self.on_multitouch_end()
+                self._multitouch_captured = touches.number if \
                     self.on_multitouch_begin(touches) else 0
-            else:
+            elif self._multitouch_captured > 0:
                 self.on_multitouch_update(touches)
-
-        self._multitouch_last = touches
 
     """
     Public API
