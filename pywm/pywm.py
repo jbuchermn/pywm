@@ -3,7 +3,7 @@ import time
 from threading import Thread
 
 from .pywm_view import PyWMView
-from .touchpad import create_touchpad
+from .touchpad import create_touchpad, GestureListener
 
 from ._pywm import (  # noqa E402
     run,
@@ -62,7 +62,7 @@ class PyWM:
         self._last_absolute_y = None
 
         self._touchpad_main = None
-        self._touchpad_main = create_touchpad(self._gesture, self._gesture_finished)
+        self._touchpad_main = create_touchpad(self._gesture)
         self._touchpad_captured = False
 
         """
@@ -177,6 +177,7 @@ class PyWM:
 
     def _gesture(self, gesture):
         self._touchpad_captured = self.on_gesture(gesture)
+        gesture.listener(GestureListener(None, self._gesture_finished))
 
     def _gesture_finished(self):
         self._touchpad_captured = False

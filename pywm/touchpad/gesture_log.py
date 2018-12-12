@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import time
 
 from touchpad import find_touchpad, Touchpad
-from gestures import Gestures
+from gestures import Gestures, GestureListener
 from sanitize_bogus_ids import SanitizeBogusIds
 
 
@@ -34,24 +34,31 @@ class GesturesLog:
         plt.close(fig)
 
     def on_gesture_lp_update(self, values):
-        if values is not None:
-            self.lp_ts += [time.time()]
-            self.lp_values += [values]
+        self.lp_ts += [time.time()]
+        self.lp_values += [values]
 
     def on_gesture_update(self, values):
-        if values is None:
-            self.plot()
-            self.ts = []
-            self.values = []
-            self.lp_ts = []
-            self.lp_values = []
-        else:
-            self.ts += [time.time()]
-            self.values += [values]
+        self.ts += [time.time()]
+        self.values += [values]
+
+    def on_gesture_terminate(self):
+        self.plot()
+        self.ts = []
+        self.values = []
+        self.lp_ts = []
+        self.lp_values = []
+
+    def on_gesture_replace(self, new_gesture):
+        self.ts = []
+        self.values = []
+        self.lp_ts = []
+        self.lp_values = []
 
     def on_update(self, gesture):
-        gesture.listener(self.on_gesture_update)
-        gesture.lp_listener(self.on_gesture_lp_update)
+        gesture.listener(GestureListener(self.on_gesture_update,
+                                         self.on_gesture_terminate,
+                                         self.on_gesture_lp_update,
+                                         self.on_gesture_replace))
 
 
 if __name__ == '__main__':

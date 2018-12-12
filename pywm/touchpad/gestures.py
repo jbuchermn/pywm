@@ -17,13 +17,40 @@ _lp_freq = 100.
 _lp_inertia = 0.85
 
 
+class GestureListener:
+    def __init__(self, on_update, on_terminate,
+                 on_lp_update=None, on_replace=None):
+        self._on_update = on_update
+        self._on_terminate = on_terminate
+        self._on_lp_update = on_lp_update
+        self._on_replace = on_replace
+
+    def update(self, values):
+        if self._on_update is not None:
+            self._on_update(values)
+
+    def lp_update(self, values):
+        if self._on_lp_update is not None:
+            self._on_lp_update(values)
+
+    def terminate(self, new_gesture=None):
+        if self._on_replace is None:
+            if self._on_terminate is not None:
+                self._on_terminate()
+        else:
+            if new_gesture is not None:
+                self._on_replace(new_gesture)
+            else:
+                if self._on_terminate is not None:
+                    self._on_terminate()
+
+
 class Gesture(Thread):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
 
         self._listeners = []
-        self._lp_listeners = []
 
         self._values = None
         self._lp = {}
@@ -34,9 +61,6 @@ class Gesture(Thread):
     def listener(self, l):
         self._listeners += [l]
 
-    def lp_listener(self, l):
-        self._lp_listeners += [l]
-
     def run(self):
         while self._running:
             if self._values is not None:
@@ -45,23 +69,20 @@ class Gesture(Thread):
                     if k not in self._lp:
                         self._lp[k] = Lowpass(_lp_inertia)
                     lp_values[k] = self._lp[k].next(self._values[k])
-                for l in self._lp_listeners:
-                    l(lp_values)
+                for l in self._listeners:
+                    l.lp_update(lp_values)
             time.sleep(1./_lp_freq)
 
-        for l in self._lp_listeners:
-            l(None)
-
-    def terminate(self):
+    def terminate(self, new_gesture):
         self._running = False
         self.join()
         for l in self._listeners:
-            l(None)
+            l.terminate(new_gesture=new_gesture)
 
     def update(self, values):
         self._values = values
         for l in self._listeners:
-            l(values)
+            l.update(values)
 
     @abstractmethod
     def process(self, update):
@@ -180,7 +201,6 @@ class HigherSwipeGesture(Gesture):
 class Gestures:
     def __init__(self, touchpad):
         self._listeners = []
-        self._finished_listeners = []
         self._active_gesture = None
 
         touchpad.listener(self.on_update)
@@ -188,43 +208,43 @@ class Gestures:
     def listener(self, l):
         self._listeners += [l]
 
-    def finished_listener(self, l):
-        self._finished_listeners += [l]
-
     def on_update(self, update):
+        terminating = False
         if self._active_gesture is not None:
             if not self._active_gesture.process(update):
-                self._active_gesture.terminate()
-                self._active_gesture = None
-                for l in self._finished_listeners:
-                    l()
+                terminating = True
 
-        if self._active_gesture is None:
+        new_gesture = None
+        if self._active_gesture is None or terminating:
             if update.n_touches == 1:
-                self._active_gesture = SingleFingerMoveGesture(self, update)
+                new_gesture = SingleFingerMoveGesture(self, update)
             elif update.n_touches == 2:
-                self._active_gesture = TwoFingerSwipePinchGesture(self, update)
+                new_gesture = TwoFingerSwipePinchGesture(self, update)
             elif update.n_touches > 2:
-                self._active_gesture = HigherSwipeGesture(self, update)
+                new_gesture = HigherSwipeGesture(self, update)
 
-            if self._active_gesture is not None:
-                for l in self._listeners:
-                    l(self._active_gesture)
+        if terminating:
+            self._active_gesture.terminate(new_gesture)
+            self._active_gesture = None
+
+        if new_gesture is not None:
+            for l in self._listeners:
+                l(new_gesture)
+            self._active_gesture = new_gesture
 
 
 if __name__ == '__main__':
     from touchpad import find_touchpad, Touchpad
     from sanitize_bogus_ids import SanitizeBogusIds
 
-    def gesture_callback(values):
-        if values is None:
-            print("---------- Terminated -------------")
-        else:
-            print(values)
-
     def callback(gesture):
         print("New Gesture: %s" % gesture.__class__)
-        gesture.listener(gesture_callback)
+        gesture.listener(GestureListener(
+            lambda values: print(values),
+            lambda: print("---- Terminated ----"),
+            lambda values: 0,
+            lambda _: print("---- Replaced ----")
+        ))
 
     event = find_touchpad()
     if event is None:

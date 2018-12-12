@@ -4,19 +4,18 @@ from .gestures import (  # noqa F401
     Gestures,
     SingleFingerMoveGesture,
     TwoFingerSwipePinchGesture,
-    HigherSwipeGesture
+    HigherSwipeGesture,
+    GestureListener
 )
 
 
-def create_touchpad(gesture_listener, gesture_finished_listener=None):
+def create_touchpad(gesture_listener):
     event = find_touchpad()
     if event is not None:
         touchpad = Touchpad(event)
         sanitize = SanitizeBogusIds(touchpad)
         gestures = Gestures(sanitize)
         gestures.listener(gesture_listener)
-        if gesture_finished_listener is not None:
-            gestures.finished_listener(gesture_finished_listener)
         return touchpad
     else:
         return None
