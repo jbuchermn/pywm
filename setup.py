@@ -18,4 +18,4 @@ setup(name='pywm',
       author='Jonas Bucher',
       author_email='j.bucher.mn@gmail.com',
       package_data={'pywm': ['_pywm.so']},
-      packages=['pywm'])
+      packages=['pywm', 'pywm.touchpad'])
