@@ -14,7 +14,7 @@ except Exception:
 
 _two_finger_min_dist = 0.1
 _lp_freq = 100.
-_lp_inertia = 0.9
+_lp_inertia = 0.85
 
 
 class Gesture(Thread):
@@ -81,7 +81,6 @@ class SingleFingerMoveGesture(Gesture):
 
     def process(self, update):
         if update.n_touches != 1 or len(update.touches) != 1:
-            self.terminate()
             return False
 
         self.update({
@@ -112,7 +111,6 @@ class TwoFingerSwipePinchGesture(Gesture):
 
     def process(self, update):
         if update.n_touches != 2:
-            self.terminate()
             return False
 
         if len(update.touches) != 2:
@@ -142,11 +140,9 @@ class HigherSwipeGesture(Gesture):
 
     def process(self, update):
         if update.n_touches > self.n_touches:
-            self.terminate()
             return False
 
         if update.n_touches == 0:
-            self.terminate()
             return False
 
         if len(update.touches) == 0:
@@ -198,6 +194,7 @@ class Gestures:
     def on_update(self, update):
         if self._active_gesture is not None:
             if not self._active_gesture.process(update):
+                self._active_gesture.terminate()
                 self._active_gesture = None
                 for l in self._finished_listeners:
                     l()
