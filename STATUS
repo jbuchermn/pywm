@@ -13,8 +13,13 @@
     -> Weird behaviour when "Save as" dialog is too large, can only clikc "Cancel" not "Save"
     -> Mouse clicks missing in fullscreen YT, seems to be related to scaling
 
-* IntelliJ
+* IntelliJ (XWayland)
     -> Usable
+
+* Matplotlib (XWayland)
+    -> Basically usable
+    -> However tooltips appear as extra views, which can possibly break the wm (High frequency animating
+        around), but is extremely annoying anyways
 
 
 ------- TODO -------
