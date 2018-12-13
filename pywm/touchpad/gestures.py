@@ -14,12 +14,12 @@ except Exception:
 
 _two_finger_min_dist = 0.1
 _lp_freq = 100.
-_lp_inertia = 0.85
+_lp_inertia = 0.8
 
 _validate_thresholds = {
-    'delta_x': .05,
-    'delta_y': .05,
-    'scale': .05
+    'delta_x': .1,
+    'delta_y': .1,
+    'scale': .1
 }
 
 _validate_centers = {
