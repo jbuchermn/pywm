@@ -202,8 +202,11 @@ class HigherSwipeGesture(Gesture):
         self._update = update
 
     def process(self, update):
-        if update.n_touches > self.n_touches:
-            return False
+        """
+        "Upgrade" three- to four-finger gesture and so on
+        """
+        # if update.n_touches > self.n_touches:
+        #     return False
 
         if update.n_touches == 0:
             return False
