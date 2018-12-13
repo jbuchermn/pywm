@@ -5,7 +5,8 @@ from .gestures import (  # noqa F401
     SingleFingerMoveGesture,
     TwoFingerSwipePinchGesture,
     HigherSwipeGesture,
-    GestureListener
+    GestureListener,
+    LowpassGesture
 )
 
 

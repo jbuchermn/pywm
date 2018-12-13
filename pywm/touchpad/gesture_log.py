@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import time
 
 from touchpad import find_touchpad, Touchpad
-from gestures import Gestures, GestureListener
+from gestures import Gestures, GestureListener, LowpassGesture
 from sanitize_bogus_ids import SanitizeBogusIds
 
 
@@ -26,7 +26,7 @@ class GesturesLog:
             plt.plot([t - self.ts[0] for t in self.ts],
                      [d[k] for d in self.values], '-o')
             plt.plot([t - self.ts[0] for t in self.lp_ts],
-                     [d[k] for d in self.lp_values], '-')
+                     [d[k] for d in self.lp_values], '-o')
 
         plt.show(block=False)
         plt.savefig('tmp.png')
@@ -48,17 +48,13 @@ class GesturesLog:
         self.lp_ts = []
         self.lp_values = []
 
-    def on_gesture_replace(self, new_gesture):
-        self.ts = []
-        self.values = []
-        self.lp_ts = []
-        self.lp_values = []
-
     def on_update(self, gesture):
-        gesture.listener(GestureListener(self.on_gesture_update,
-                                         self.on_gesture_terminate,
-                                         self.on_gesture_lp_update,
-                                         self.on_gesture_replace))
+        gesture.listener(GestureListener(
+            self.on_gesture_update,
+            None))
+        LowpassGesture(gesture).listener(GestureListener(
+            self.on_gesture_lp_update,
+            self.on_gesture_terminate))
 
 
 if __name__ == '__main__':

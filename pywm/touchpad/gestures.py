@@ -16,50 +16,62 @@ _two_finger_min_dist = 0.1
 _lp_freq = 100.
 _lp_inertia = 0.85
 
+_validate_thresholds = {
+    'delta_x': .05,
+    'delta_y': .05,
+    'scale': .05
+}
+
+_validate_centers = {
+    'delta_x': 0.,
+    'delta_y': 0.,
+    'scale': 1.
+}
+
 
 class GestureListener:
-    def __init__(self, on_update, on_terminate,
-                 on_lp_update=None, on_replace=None):
+    def __init__(self, on_update, on_terminate):
         self._on_update = on_update
         self._on_terminate = on_terminate
-        self._on_lp_update = on_lp_update
-        self._on_replace = on_replace
 
     def update(self, values):
         if self._on_update is not None:
             self._on_update(values)
 
-    def lp_update(self, values):
-        if self._on_lp_update is not None:
-            self._on_lp_update(values)
-
-    def terminate(self, new_gesture=None):
-        if self._on_replace is None:
-            if self._on_terminate is not None:
-                self._on_terminate()
-        else:
-            if new_gesture is not None:
-                self._on_replace(new_gesture)
-            else:
-                if self._on_terminate is not None:
-                    self._on_terminate()
+    def terminate(self):
+        if self._on_terminate is not None:
+            self._on_terminate()
 
 
-class Gesture(Thread):
-    def __init__(self, parent):
+class LowpassGesture(Thread):
+    def __init__(self, gesture):
         super().__init__()
-        self.parent = parent
 
+        self.gesture = gesture
         self._listeners = []
 
-        self._values = None
-        self._lp = {}
+        gesture.listener(GestureListener(
+            self.on_update,
+            self.on_terminate
+        ))
 
+        self._lp = {}
+        self._values = None
         self._running = True
         self.start()
 
     def listener(self, l):
         self._listeners += [l]
+
+    def on_update(self, values):
+        self._values = values
+
+    def on_terminate(self):
+        self._running = False
+        self.join()
+
+        for l in self._listeners:
+            l.terminate()
 
     def run(self):
         while self._running:
@@ -70,19 +82,43 @@ class Gesture(Thread):
                         self._lp[k] = Lowpass(_lp_inertia)
                     lp_values[k] = self._lp[k].next(self._values[k])
                 for l in self._listeners:
-                    l.lp_update(lp_values)
+                    l.update(lp_values)
             time.sleep(1./_lp_freq)
 
-    def terminate(self, new_gesture):
-        self._running = False
-        self.join()
+
+class Gesture:
+    def __init__(self, parent):
+        self.parent = parent
+        self.pending = True
+
+        self._listeners = []
+
+        self._offset = None
+
+    def listener(self, l):
+        self._listeners += [l]
+
+    def terminate(self):
         for l in self._listeners:
-            l.terminate(new_gesture=new_gesture)
+            l.terminate()
 
     def update(self, values):
-        self._values = values
-        for l in self._listeners:
-            l.update(values)
+        if self.pending:
+            validate = False
+            for k in values:
+                v = values[k]
+                if abs(v - _validate_centers[k]) > _validate_thresholds[k]:
+                    validate = True
+                    break
+
+            if validate:
+                self._offset = {k: values[k] - _validate_centers[k]
+                                for k in values}
+                self.pending = False
+
+        if not self.pending:
+            for l in self._listeners:
+                l.update({k: values[k] - self._offset[k] for k in values})
 
     @abstractmethod
     def process(self, update):
@@ -109,6 +145,9 @@ class SingleFingerMoveGesture(Gesture):
             'delta_y': update.touches[0][2] - self._initial_y,
         })
         return True
+
+    def __str__(self):
+        return "SingleFingerMove"
 
 
 class TwoFingerSwipePinchGesture(Gesture):
@@ -145,6 +184,9 @@ class TwoFingerSwipePinchGesture(Gesture):
         })
 
         return True
+
+    def __str__(self):
+        return "TwoFingerSwipePinch"
 
 
 class HigherSwipeGesture(Gesture):
@@ -197,6 +239,9 @@ class HigherSwipeGesture(Gesture):
         self._update = update
         return True
 
+    def __str__(self):
+        return "HigherSwipe(%d)" % self.n_touches
+
 
 class Gestures:
     def __init__(self, touchpad):
@@ -209,28 +254,26 @@ class Gestures:
         self._listeners += [l]
 
     def on_update(self, update):
-        terminating = False
+        was_pending = True
         if self._active_gesture is not None:
+            was_pending = self._active_gesture.pending
+
             if not self._active_gesture.process(update):
-                terminating = True
+                self._active_gesture.terminate()
+                self._active_gesture = None
 
-        new_gesture = None
-        if self._active_gesture is None or terminating:
+        if self._active_gesture is None:
             if update.n_touches == 1:
-                new_gesture = SingleFingerMoveGesture(self, update)
+                self._active_gesture = SingleFingerMoveGesture(self, update)
             elif update.n_touches == 2:
-                new_gesture = TwoFingerSwipePinchGesture(self, update)
+                self._active_gesture = TwoFingerSwipePinchGesture(self, update)
             elif update.n_touches > 2:
-                new_gesture = HigherSwipeGesture(self, update)
+                self._active_gesture = HigherSwipeGesture(self, update)
 
-        if terminating:
-            self._active_gesture.terminate(new_gesture)
-            self._active_gesture = None
-
-        if new_gesture is not None:
-            for l in self._listeners:
-                l(new_gesture)
-            self._active_gesture = new_gesture
+        if self._active_gesture is not None:
+            if was_pending and not self._active_gesture.pending:
+                for l in self._listeners:
+                    l(self._active_gesture)
 
 
 if __name__ == '__main__':
@@ -238,12 +281,10 @@ if __name__ == '__main__':
     from sanitize_bogus_ids import SanitizeBogusIds
 
     def callback(gesture):
-        print("New Gesture: %s" % gesture.__class__)
+        print("New Gesture: %s" % gesture)
         gesture.listener(GestureListener(
             lambda values: print(values),
-            lambda: print("---- Terminated ----"),
-            lambda values: 0,
-            lambda _: print("---- Replaced ----")
+            lambda: print("---- Terminated ----")
         ))
 
     event = find_touchpad()

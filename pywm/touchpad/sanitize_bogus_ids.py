@@ -57,16 +57,17 @@ class SanitizeBogusIds:
         """
         Implement replacements
         """
-        for j in range(len(new.touches)):
-            if min(coherence_matrix[:, j]) <= 1.:
-                old_corresp = np.argmin(coherence_matrix[:, j])
-                old_id = old.touches[old_corresp][0]
-                new_id = new.touches[j][0]
+        new_id_map = dict(self._id_map)
+        for i in range(len(old.touches)):
+            if min(coherence_matrix[i, :]) <= 1.:
+                new_corresp = np.argmin(coherence_matrix[i, :])
+                new_id = new.touches[new_corresp][0]
+                old_id = old.touches[i][0]
 
                 if old_id != new_id:
-                    i = self._id_map[old_id]
-                    del self._id_map[old_id]
-                    self._id_map[new_id] = i
+                    new_id_map[new_id] = self._id_map[old_id]
+
+        self._id_map = new_id_map
 
         """
         Implement new tracks
@@ -97,6 +98,4 @@ class SanitizeBogusIds:
         self._last_update = update
         if update.n_touches == 0:
             self._id_map.clear()
-
-
 
