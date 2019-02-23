@@ -33,3 +33,4 @@
 * General
     -> Views change their minimal width/height after initial set; this is ignored leading to ugly scaling
     -> Cursor not displayed initially (Open termite, fullscreen, open chromium, move cursor.. nothing there)
+    -> Natural Scrolling
