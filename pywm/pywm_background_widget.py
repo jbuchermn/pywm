@@ -20,7 +20,9 @@ class PyWMBackgroundWidget(PyWMWidget):
         im = scipy.misc.imread(path, flatten=False, mode='RGB')
         im_alpha = np.zeros(shape=(im.shape[0], im.shape[1], 4),
                             dtype=np.uint8)
-        im_alpha[:, :, 0:3] = im
+        im_alpha[:, :, 0] = im[:, :, 2]
+        im_alpha[:, :, 1] = im[:, :, 1]
+        im_alpha[:, :, 2] = im[:, :, 0]
         im_alpha[:, :, 3] = 255
 
         self.width = im_alpha.shape[1]
