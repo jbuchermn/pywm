@@ -1,5 +1,5 @@
 import numpy as np
-import scipy.misc
+from imageio import imread
 
 from .pywm_widget import (
     PyWMWidget,
@@ -17,7 +17,7 @@ class PyWMBackgroundWidget(PyWMWidget):
         super().__init__(wm)
 
         self.set_layer(PYWM_LAYER_BACK)
-        im = scipy.misc.imread(path, flatten=False, mode='RGB')
+        im = imread(path)
         im_alpha = np.zeros(shape=(im.shape[0], im.shape[1], 4),
                             dtype=np.uint8)
         im_alpha[:, :, 0] = im[:, :, 2]
