@@ -14,6 +14,8 @@
 #include "wm/wm_server.h"
 #include "wm/wm.h"
 
+struct wm_view_vtable wm_view_xdg_vtable;
+
 /*
  * Callbacks
  */

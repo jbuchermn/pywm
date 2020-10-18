@@ -182,7 +182,7 @@ PyObject* _pywm_view_get_info(PyObject* self, PyObject* args){
     const char* role;
     wm_view_get_info(view, &title, &app_id, &role);
 
-    bool xwayland = view->vtable == &wm_view_xwayland_vtable;
+    bool xwayland = wm_view_is_xwayland(view);
 
     return Py_BuildValue("(sssb)", title, app_id, role, xwayland);
 

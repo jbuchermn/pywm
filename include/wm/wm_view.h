@@ -92,7 +92,6 @@ static inline struct wm_view* wm_view_get_parent(struct wm_view* view){
     return (*view->vtable->get_parent)(view);
 }
 
-struct wm_view_vtable wm_view_base_vtable;
 
 
 #endif

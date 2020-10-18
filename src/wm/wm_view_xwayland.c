@@ -13,6 +13,8 @@
 #include "wm/wm_server.h"
 #include "wm/wm.h"
 
+struct wm_view_vtable wm_view_xwayland_vtable;
+
 static void try_to_find_parent(struct wm_view_xwayland* view){
     struct wm_view_xwayland* parent = NULL;
     
@@ -356,3 +358,7 @@ struct wm_view_vtable wm_view_xwayland_vtable = {
     .is_floating = wm_view_xwayland_is_floating,
     .get_parent = wm_view_xwayland_get_parent
 };
+
+int wm_view_is_xwayland(struct wm_view* view){
+    return view->vtable == &wm_view_xwayland_vtable;
+}

@@ -47,6 +47,7 @@ struct wm_view_xwayland {
 
 void wm_view_xwayland_init(struct wm_view_xwayland* view, struct wm_server* server, struct wlr_xwayland_surface* surface);
 
-struct wm_view_vtable wm_view_xwayland_vtable;
+int wm_view_is_xwayland(struct wm_view* view);
+
 
 #endif

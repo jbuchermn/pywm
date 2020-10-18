@@ -45,6 +45,6 @@ PyObject* _pywm_widget_set_box(PyObject* self, PyObject* args);
 PyObject* _pywm_widget_set_layer(PyObject* self, PyObject* args);
 PyObject* _pywm_widget_set_pixels(PyObject* self, PyObject* args);
 
-PyMethodDef _pywm_widget_methods[];
+extern PyMethodDef _pywm_widget_methods[];
 
 #endif

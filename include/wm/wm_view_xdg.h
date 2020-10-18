@@ -22,6 +22,5 @@ struct wm_view_xdg {
 
 void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct wlr_xdg_surface* surface);
 
-struct wm_view_vtable wm_view_xdg_vtable;
 
 #endif
