@@ -12,6 +12,7 @@
     -> Usable
     -> Weird behaviour when "Save as" dialog is too large, can only clikc "Cancel" not "Save"
     -> Mouse clicks missing in fullscreen YT, seems to be related to scaling
+    -> Opening a second Chrome window does not work 
 
 * IntelliJ (XWayland)
     -> Usable
