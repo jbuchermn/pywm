@@ -63,6 +63,7 @@ void wm_keyboard_init(struct wm_keyboard* keyboard, struct wm_seat* seat, struct
     /* Configuration */
 	struct xkb_rule_names rules = { 0 };
 	rules.layout = "de,de";
+    rules.options = "caps:swapescape";
 	struct xkb_context* context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     assert(context);
 	struct xkb_keymap* keymap = xkb_map_new_from_names(context, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
