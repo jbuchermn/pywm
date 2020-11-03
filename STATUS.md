@@ -19,7 +19,7 @@
 ### IntelliJ (XWayland)
 - Usable
 
-## Matplotlib (XWayland)
+### Matplotlib (XWayland)
 - Basically usable
 - However tooltips appear as extra views, which can possibly break the wm (High frequency animating around), but is extremely annoying anyways
 
