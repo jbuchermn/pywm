@@ -1,8 +1,9 @@
-# Status
+# PyWM - Python-based Wayland window manager
+
+## Status
 
 ### termite, gnome-mpv, gnome-calculator
 - No apparent issues
-
 
 ### GIMP (XWayland)
 - Appears to be usable, however, not checked in detail
@@ -35,3 +36,4 @@
 - Views change their minimal width/height after initial set; this is ignored leading to ugly scaling
 - Cursor not displayed initially (Open termite, fullscreen, open chromium, move cursor.. nothing there)
 - Natural Scrolling
+- Mysterious bugs when ordering widgets in `layout.py` is changed
