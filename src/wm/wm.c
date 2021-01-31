@@ -48,6 +48,7 @@ void* run(){
 	wlr_log(WLR_INFO, "Running compositor on wayland display '%s'", socket);
 	setenv("_WAYLAND_DISPLAY", socket, true);
 
+	wlr_log(WLR_INFO, "Starting backend...");
 	if (!wlr_backend_start(wm.server->wlr_backend)) {
 		wlr_log(WLR_ERROR, "Failed to start backend");
 		wlr_backend_destroy(wm.server->wlr_backend);
@@ -58,6 +59,7 @@ void* run(){
 	setenv("WAYLAND_DISPLAY", socket, true);
 
     /* Main */
+	wlr_log(WLR_INFO, "Main...");
     wl_display_run(wm.server->wl_display);
 
     return NULL;

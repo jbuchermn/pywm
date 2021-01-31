@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <execinfo.h>
 #include <wlr/util/log.h>
 #include "wm/wm.h"
 #include "wm/wm_config.h"
@@ -10,7 +11,7 @@
 #include "py/_pywm_view.h"
 #include "py/_pywm_widget.h"
 
-static void sigsegv_handler(int sig) {
+static void sig_handler(int sig) {
     void *array[10];
     size_t size;
 
@@ -54,10 +55,15 @@ static PyObject* _pywm_terminate(PyObject* self, PyObject* args){
 }
 
 static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
-    /* Dubug: Print stacktrace upon segfault */
-    signal(SIGSEGV, sigsegv_handler);
+    /* Dubug: Print stacktrace upon segfault etc. */
+    signal(SIGSEGV, sig_handler);
+    signal(SIGINT, sig_handler);
+    signal(SIGTERM, sig_handler);
+    signal(SIGHUP, sig_handler);
 
-    int status;
+    fprintf(stderr, "C: Running PyWM...\n");
+
+    int status = 0;
 
     double output_scale = 1.;
     const char* xcursor_theme = NULL;
@@ -90,6 +96,8 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
     Py_BEGIN_ALLOW_THREADS;
     status = wm_run();
     Py_END_ALLOW_THREADS;
+
+    fprintf(stderr, "C: ...finished\n");
 
     return Py_BuildValue("i", status);
 }
@@ -124,7 +132,7 @@ static PyObject* _pywm_register(PyObject* self, PyObject* args){
 
 
 static PyMethodDef _pywm_methods[] = {
-    { "run",                       (PyCFunction)_pywm_run,           METH_VARARGS | METH_KEYWORDS,   "Start the compoitor in this thread" },
+    { "run",                       (PyCFunction)_pywm_run,           METH_VARARGS | METH_KEYWORDS,   "Start the compositor in this thread" },
     { "terminate",                 _pywm_terminate,                  METH_VARARGS,                   "Terminate compositor"  },
     { "register",                  _pywm_register,                   METH_VARARGS,                   "Register callback"  },
     { "update_cursor",             _pywm_update_cursor,              METH_VARARGS,                   "Update cursor position within clients after moving a client"  },

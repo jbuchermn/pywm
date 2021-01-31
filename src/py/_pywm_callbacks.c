@@ -14,7 +14,7 @@ static struct _pywm_callbacks callbacks = { 0 };
  * Helpers
  */
 static bool call_bool(PyObject* callable, PyObject* args){
-    PyObject *_result = PyEval_CallObject(callable, args);
+    PyObject *_result = PyObject_Call(callable, args, NULL);
     Py_XDECREF(args);
 
     int result = false;
@@ -26,7 +26,7 @@ static bool call_bool(PyObject* callable, PyObject* args){
 }
 
 static void call_void(PyObject* callable, PyObject* args){
-    PyObject *_result = PyEval_CallObject(callable, args);
+    PyObject *_result = PyObject_Call(callable, args, NULL);
     Py_XDECREF(args);
 
     if(!_result){
@@ -154,7 +154,8 @@ static void call_view_focused(struct wm_view* view){
 static void call_ready(){
     if(callbacks.ready){
         PyGILState_STATE gil = PyGILState_Ensure();
-        call_void(callbacks.ready, NULL);
+        PyObject* args = Py_BuildValue("()");
+        call_void(callbacks.ready, args);
         PyGILState_Release(gil);
     }
 }

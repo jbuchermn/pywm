@@ -30,6 +30,8 @@
  * Callbacks
  */
 static void handle_new_input(struct wl_listener* listener, void* data){
+    wlr_log(WLR_DEBUG, "Server: New input");
+
     struct wm_server* server = wl_container_of(listener, server, new_input);
     struct wlr_input_device* input_device = data;
 
@@ -37,6 +39,8 @@ static void handle_new_input(struct wl_listener* listener, void* data){
 }
 
 static void handle_new_output(struct wl_listener* listener, void* data){
+    wlr_log(WLR_DEBUG, "Server: New output");
+
     struct wm_server* server = wl_container_of(listener, server, new_output);
     struct wlr_output* output = data;
 
@@ -44,6 +48,8 @@ static void handle_new_output(struct wl_listener* listener, void* data){
 }
 
 static void handle_new_xdg_surface(struct wl_listener* listener, void* data){
+    wlr_log(WLR_DEBUG, "Server: New xdg surface");
+
     struct wm_server* server = wl_container_of(listener, server, new_xdg_surface);
     struct wlr_xdg_surface* surface = data;
 
@@ -59,6 +65,8 @@ static void handle_new_xdg_surface(struct wl_listener* listener, void* data){
 }
 
 static void handle_new_xwayland_surface(struct wl_listener* listener, void* data){
+    wlr_log(WLR_DEBUG, "Server: New xwayland surface");
+    
     struct wm_server* server = wl_container_of(listener, server, new_xwayland_surface);
     struct wlr_xwayland_surface* surface = data;
 
@@ -72,17 +80,19 @@ static void handle_new_server_decoration(struct wl_listener* listener, void* dat
     /* struct wm_server* server = wl_container_of(listener, server, new_xdg_decoration); */
     /* struct wlr_server_decoration* wlr_deco = data; */
 
-    wlr_log(WLR_DEBUG, "New server decoration");
+    wlr_log(WLR_DEBUG, "Server: New server decoration");
 }
 
 static void handle_new_xdg_decoration(struct wl_listener* listener, void* data){
     /* struct wm_server* server = wl_container_of(listener, server, new_xdg_decoration); */
     /* struct wlr_xdg_toplevel_decoration_v1* wlr_deco = data; */
 
-    wlr_log(WLR_DEBUG, "New XDG toplevel decoration");
+    wlr_log(WLR_DEBUG, "Server: New XDG toplevel decoration");
 }
 
 static void handle_ready(struct wl_listener* listener, void* data){
+    wlr_log(WLR_DEBUG, "Server: Ready");
+
     /* Both parameters ignored */
     wm_callback_ready();
 }

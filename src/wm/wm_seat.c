@@ -16,6 +16,7 @@
  * Callbacks
  */
 static void handle_destroy(struct wl_listener* listener, void* data){
+	wlr_log(WLR_DEBUG, "Destroying seat...");
     struct wm_seat* seat = wl_container_of(listener, seat, destroy);
     wm_seat_destroy(seat);
 }
@@ -66,6 +67,7 @@ void wm_seat_add_input_device(struct wm_seat* seat, struct wlr_input_device* inp
         wm_cursor_add_pointer(seat->wm_cursor, pointer);
         break;
     case WLR_INPUT_DEVICE_TOUCH:
+    case WLR_INPUT_DEVICE_SWITCH:
     case WLR_INPUT_DEVICE_TABLET_TOOL:
     case WLR_INPUT_DEVICE_TABLET_PAD:
         wlr_log(WLR_DEBUG, "Unsupported input device");
@@ -80,6 +82,7 @@ void wm_seat_add_input_device(struct wm_seat* seat, struct wlr_input_device* inp
     }
 
     wlr_seat_set_capabilities(seat->wlr_seat, capabilities);
+        wlr_log(WLR_DEBUG, "...done");
 }
 
 static void activate_surface(struct wlr_surface* surface, bool activated){

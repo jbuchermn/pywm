@@ -1,0 +1,5 @@
+numpy
+evdev
+imageio
+pycairo
+psutil

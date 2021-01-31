@@ -17,18 +17,18 @@
  * Callbacks
  */
 static void handle_destroy(struct wl_listener* listener, void* data){
+    wlr_log(WLR_DEBUG, "Output: Destroy");
     struct wm_output* output = wl_container_of(listener, output, destroy);
     wm_output_destroy(output);
 }
 
 static void handle_mode(struct wl_listener* listener, void* data){
+    wlr_log(WLR_DEBUG, "Output: Mode");
     struct wm_output* output = wl_container_of(listener, output, mode);
-    wlr_log(WLR_DEBUG, "Mode event");
 }
 
 static void handle_transform(struct wl_listener* listener, void* data){
     struct wm_output* output = wl_container_of(listener, output, transform);
-    wlr_log(WLR_DEBUG, "Transform event");
 }
 
 static void handle_present(struct wl_listener* listener, void* data){
@@ -98,7 +98,7 @@ static void handle_frame(struct wl_listener* listener, void* data){
     /* Synchronous updates */
     wm_callback_update();
 
-	if(!wlr_output_make_current(output->wlr_output, NULL)) {
+	if(!wlr_output_attach_render(output->wlr_output, NULL)) {
 		return;
 	}
 
@@ -146,21 +146,26 @@ static void handle_frame(struct wl_listener* listener, void* data){
     }
 
 	wlr_renderer_end(wlr_renderer);
-	wlr_output_swap_buffers(output->wlr_output, NULL, NULL);
+	wlr_output_commit(output->wlr_output);
 }
 
 /*
  * Class implementation
  */
 void wm_output_init(struct wm_output* output, struct wm_server* server, struct wm_layout* layout, struct wlr_output* out){
+	wlr_log(WLR_DEBUG, "New output");
     output->wm_server = server;
     output->wm_layout = layout;
     output->wlr_output = out;
 
     /* Set mode */
     if(!wl_list_empty(&output->wlr_output->modes)){
-        struct wlr_output_mode* mode = wl_container_of(output->wlr_output->modes.prev, mode, link);
-        wlr_output_set_mode(output->wlr_output, mode);
+		struct wlr_output_mode *mode = wlr_output_preferred_mode(output->wlr_output);
+		wlr_output_set_mode(output->wlr_output, mode);
+		wlr_output_enable(output->wlr_output, true);
+		if (!wlr_output_commit(output->wlr_output)) {
+			wlr_log(WLR_INFO, "New output: Could not commit");
+		}
     }
 
     wlr_output_set_scale(output->wlr_output, output->wm_server->wm_config->output_scale);

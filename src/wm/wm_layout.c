@@ -11,6 +11,7 @@
  * Callbacks
  */
 static void handle_change(struct wl_listener* listener, void* data){
+    wlr_log(WLR_DEBUG, "Layout: Change");
     struct wm_layout* layout = wl_container_of(listener, layout, change);
 
     wm_callback_layout_change(layout);
