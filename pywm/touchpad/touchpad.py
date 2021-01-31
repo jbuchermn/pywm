@@ -69,6 +69,7 @@ class Touchpad(Thread):
                 self.min_z = info.min
                 self.max_z = info.max
 
+
     def listener(self, l):
         self._listeners += [l]
 
@@ -101,7 +102,7 @@ class Touchpad(Thread):
             [(s.tracking_id,
               (s.x - self.min_x)/(self.max_x - self.min_x),
               (s.y - self.min_y)/(self.max_y - self.min_y),
-              (s.z - self.min_z)/(self.max_z - self.min_z)
+              (s.z - self.min_z)/(self.max_z - self.min_z) if self.min_z is not None else 1.0
               ) for s in self._slots if s.tracking_id >= 0]
         )
 
@@ -150,7 +151,7 @@ class Touchpad(Thread):
         self._running = False
 
 
-def find_touchpad(device_name="SynPS/2"):
+def find_touchpad(device_name="bcm5974"):
     with open('/proc/bus/input/devices', 'r') as data:
         found = False
         for d in data:
