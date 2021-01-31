@@ -79,9 +79,10 @@ class PyWM:
         """
         Without XWayland we should wait a little bit
         """
-        time.sleep(.1)
+        time.sleep(1.)
 
         if self._touchpad_main is not None:
+            print("Python: Starting pytouchpad")
             self._touchpad_main.start()
         self.main()
 
@@ -94,8 +95,10 @@ class PyWM:
         if self._touchpad_captured:
             return True
 
-        delta_x /= self.width
-        delta_y /= self.height
+        if self.width > 0:
+            delta_x /= self.width
+        if self.height > 0:
+            delta_y /= self.height
         return self.on_motion(time_msec, delta_x, delta_y)
 
     @callback
@@ -187,12 +190,18 @@ class PyWM:
     """
 
     def run(self):
+        print("Python: Running PyWM...")
         run(**self.config)
+        print("Python: ...finished")
 
     def terminate(self):
         if self._touchpad_main is not None:
+            print("Python: Terminating pytouchpad...")
             self._touchpad_main.stop()
+            print("Python: ...finished")
+        print("Python: Terminating PyWM...")
         terminate()
+        print("Python: ...finished")
 
     def create_widget(self, widget_class, *args, **kwargs):
         widget = widget_class(self, *args, **kwargs)
