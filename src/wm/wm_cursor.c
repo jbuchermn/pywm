@@ -69,6 +69,12 @@ static void handle_axis(struct wl_listener* listener, void* data){
     wm_seat_dispatch_axis(cursor->wm_seat, event);
 }
 
+static void handle_frame(struct wl_listener* listener, void* data){
+    struct wm_cursor* cursor = wl_container_of(listener, cursor, frame);
+
+    wlr_seat_pointer_notify_frame(cursor->wm_seat->wlr_seat);
+}
+
 /*
  * Class implementation
  */
@@ -98,6 +104,9 @@ void wm_cursor_init(struct wm_cursor* cursor, struct wm_seat* seat, struct wm_la
     cursor->axis.notify = handle_axis;
     wl_signal_add(&cursor->wlr_cursor->events.axis, &cursor->axis);
 
+    cursor->frame.notify = handle_frame;
+    wl_signal_add(&cursor->wlr_cursor->events.frame, &cursor->frame);
+
 }
 
 void wm_cursor_destroy(struct wm_cursor* cursor) {
@@ -105,6 +114,7 @@ void wm_cursor_destroy(struct wm_cursor* cursor) {
     wl_list_remove(&cursor->motion_absolute.link);
     wl_list_remove(&cursor->button.link);
     wl_list_remove(&cursor->axis.link);
+    wl_list_remove(&cursor->frame.link);
 }
 
 void wm_cursor_add_pointer(struct wm_cursor* cursor, struct wm_pointer* pointer){

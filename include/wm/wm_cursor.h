@@ -20,6 +20,7 @@ struct wm_cursor {
     struct wl_listener motion_absolute;
     struct wl_listener button;
     struct wl_listener axis;
+    struct wl_listener frame;
 
     uint32_t msec_delta;
 };
