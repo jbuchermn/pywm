@@ -133,14 +133,15 @@ static void wm_view_xdg_get_size_constraints(struct wm_view* super, int* min_wid
 static void wm_view_xdg_get_size(struct wm_view* super, int* width, int* height){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
 
-    /* Fixed by set_tiled */
-    /* Although during updates not strictly equal? */
-    /* assert(view->wlr_xdg_surface->geometry.width == view->wlr_xdg_surface->surface->current.width); */
-    /* assert(view->wlr_xdg_surface->geometry.height == view->wlr_xdg_surface->surface->current.height); */
 
-
+    /* Again following sway here */
     *width = view->wlr_xdg_surface->geometry.width;
     *height = view->wlr_xdg_surface->geometry.height;
+
+    if(!(*width) || !(*height)){
+        *width = view->wlr_xdg_surface->surface->current.width;
+        *height = view->wlr_xdg_surface->surface->current.height;
+    }
 }
 
 

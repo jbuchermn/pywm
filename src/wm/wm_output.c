@@ -124,6 +124,10 @@ static void handle_frame(struct wl_listener* listener, void* data){
         int width, height;
         wm_view_get_size(view, &width, &height);
 
+        if(width<=0 || height<=0){
+            continue;
+        }
+
         double display_x, display_y, display_width, display_height;
         wm_view_get_box(view, &display_x, &display_y, &display_width, &display_height);
 

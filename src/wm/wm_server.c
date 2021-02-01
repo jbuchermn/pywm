@@ -204,6 +204,8 @@ void wm_server_surface_at(struct wm_server* server, double at_x, double at_y,
         int height;
         wm_view_get_size(view, &width, &height);
 
+        if(width <= 0 || height <=0) continue;
+
         double display_x, display_y, display_width, display_height;
         wm_view_get_box(view, &display_x, &display_y, &display_width, &display_height);
 
