@@ -76,11 +76,6 @@ class PyWM:
         self.modifiers = 0
 
     def _exec_main(self):
-        """
-        Without XWayland we should wait a little bit
-        """
-        time.sleep(1.)
-
         if self._touchpad_main is not None:
             print("Python: Starting pytouchpad")
             self._touchpad_main.start()

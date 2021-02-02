@@ -60,10 +60,11 @@ void wm_keyboard_init(struct wm_keyboard* keyboard, struct wm_seat* seat, struct
     keyboard->wm_seat = seat;
     keyboard->wlr_input_device = input_device;
 
-    /* Configuration */
+    /* TODO: Configuration */
 	struct xkb_rule_names rules = { 0 };
 	rules.layout = "de,de";
-    rules.options = "caps:escape";
+    rules.options = "caps:escape"; /* Caps becomes escape */
+
 	struct xkb_context* context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     assert(context);
 	struct xkb_keymap* keymap = xkb_map_new_from_names(context, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
