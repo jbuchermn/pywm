@@ -8,7 +8,7 @@
 | imv                    |    no     | working         |                none                                           |
 | LibreOffice            |    no     | working         |                none                                           |
 | Alacritty              |    no     | working         | Looks terrible                                                |
-| Chromium               |    no     | working         | "Save as" Dialog doesn't open as a subview / Menus outside view|
+| Chromium               |    no     | working         | Menus outside view                                            |
 | Firefox                |    no     | working         | "Save as" Dialog possibly scaled weirdly                      |
 | Atom                   |    no     | ?               | ?                                                             |
 | VSCodium               |    no     | ?               | ?                                                             |
@@ -27,8 +27,8 @@
 
 # ToDo
 
-- Firefox / LibreOffice bug concerning popups
 - Alacritty looks terrible
+- XWayland HiDPI scaling
 
 - Cursor not displayed initially (Open termite, fullscreen, open chromium, move cursor.. nothing there)
 - Cursor changes
