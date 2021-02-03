@@ -111,8 +111,13 @@ void wm_seat_focus_surface(struct wm_seat* seat, struct wlr_surface* surface){
         return;
     }
 
-    /* Disabled as it breaks XWayland context menus... */
-    /* activate_surface(prev, false); */
+    if(prev && surface){
+        struct wm_view* prev_view = wm_server_view_for_surface(seat->wm_server, prev);
+        struct wm_view* view = wm_server_view_for_surface(seat->wm_server, surface);
+
+        if(prev_view && prev_view == view) return;
+    }
+
     activate_surface(surface, true);
 
     struct wm_view* prev_view = wm_server_view_for_surface(seat->wm_server, prev);

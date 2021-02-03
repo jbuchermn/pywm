@@ -4,12 +4,12 @@
 
 | Application            |  XWayland | Status          | Open issues                                                   |
 |------------------------|-----------|-----------------|---------------------------------------------------------------|
-| Termite                |    no     | working         | none                                                          |
-| imv                    |    no     | working         | none                                                          |
-| LibreOffice            |    no     | working         | Mouse over tooltip (Calc drag-complete) isnt handled properly |
+| Termite                |    no     | working         |                none                                           |
+| imv                    |    no     | working         |                none                                           |
+| LibreOffice            |    no     | working         |                none                                           |
 | Alacritty              |    no     | working         | Looks terrible                                                |
 | Chromium               |    no     | working         | "Save as" Dialog doesn't open as a subview / Menus outside view|
-| Firefox                |    no     | working         | Mouse over menus is not handled / "Save as" Dialog possibly scaled weirdly |
+| Firefox                |    no     | working         | "Save as" Dialog possibly scaled weirdly                      |
 | Atom                   |    no     | ?               | ?                                                             |
 | VSCodium               |    no     | ?               | ?                                                             |
 | Matplotlib             |    no     | ?               | ?                                                             |
@@ -27,11 +27,11 @@
 
 # ToDo
 
-- Cursor not displayed initially (Open termite, fullscreen, open chromium, move cursor.. nothing there)
-- Cursor changes
 - Firefox / LibreOffice bug concerning popups
 - Alacritty looks terrible
-- Python: Improved "find next window" logic on Alt-hjkl
+
+- Cursor not displayed initially (Open termite, fullscreen, open chromium, move cursor.. nothing there)
+- Cursor changes
 - Clipboard
 
 # Backlog
@@ -45,6 +45,7 @@
 - MBP function keys + widgets
 - Lid and hibernate
 - MBP keymap (incl Command+c / Command-v)
+- Close window via shortcut (e.g. Chrome popups)
 
 ### XWayland
 - setenv DISPLAY
@@ -54,3 +55,4 @@
 
 ### Python reference implementation
 - Center windows of 1x2 or 2x1 in regular view and overview
+- Improved "find next window" logic on Alt-hjkl
