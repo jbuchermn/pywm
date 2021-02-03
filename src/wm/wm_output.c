@@ -166,12 +166,14 @@ void wm_output_init(struct wm_output* output, struct wm_server* server, struct w
     if(!wl_list_empty(&output->wlr_output->modes)){
 		struct wlr_output_mode *mode = wlr_output_preferred_mode(output->wlr_output);
 		wlr_output_set_mode(output->wlr_output, mode);
+
 		wlr_output_enable(output->wlr_output, true);
 		if (!wlr_output_commit(output->wlr_output)) {
 			wlr_log(WLR_INFO, "New output: Could not commit");
 		}
     }
 
+    /* Set HiDPI scale */
     wlr_output_set_scale(output->wlr_output, output->wm_server->wm_config->output_scale);
 
     output->destroy.notify = handle_destroy;
