@@ -12,7 +12,7 @@
 | Firefox                |    no     | working         | "Save as" Dialog possibly scaled weirdly                      |
 | Atom                   |    no     | ?               | ?                                                             |
 | VSCodium               |    no     | ?               | ?                                                             |
-| Matplotlib             |    no     | ?               | ?                                                             |
+| Matplotlib (Qt5)       |    no     | working         | Requires DISPLAY=":0" to be set?!                             |
 
 | IntelliJ               |    ?      | ?               | ?                                                             |
 | GIMP                   |    ?      | ?               | ?                                                             |
@@ -43,8 +43,7 @@
 - Random hangs - e.g. playing around with nnn, ordering widgets in `layout.py` is changed
     Possibly:[ERROR] [backend/drm/atomic.c:36] eDP-1: Atomic commit failed (pageflip): Device or resource busy
 - zIndex on views
-- Improve touchpad integration (bouncy scrolling at edges e.g., do not fix gesture to a single finger, which is
-  necessary on Lenovo, not on MBP, ...)
+- Various TODO Comments
 - Function / Media keys + widgets
 - MBP keymap (incl Command+c / Command-v)
 - Server-side decorations / Close window via shortcut (e.g. Chrome popups)
@@ -64,3 +63,4 @@
 - Improve "find next window" logic on Alt-hjkl
 - Titles during "far-away" view
 - Scale windows in on open
+- Swipe Overlay: Bouncy overswipe effect (i.e. not a whole tile)

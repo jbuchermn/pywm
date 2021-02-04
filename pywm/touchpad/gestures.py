@@ -17,9 +17,9 @@ _lp_freq = 100.
 _lp_inertia = 0.8
 
 _validate_thresholds = {
-    'delta_x': .1,
-    'delta_y': .1,
-    'scale': .1
+    'delta_x': .02,
+    'delta_y': .02,
+    'scale': .02
 }
 
 _validate_centers = {
@@ -189,6 +189,7 @@ class TwoFingerSwipePinchGesture(Gesture):
         return "TwoFingerSwipePinch"
 
 
+
 class HigherSwipeGesture(Gesture):
     def __init__(self, parent, update):
         super().__init__(parent)
@@ -196,48 +197,50 @@ class HigherSwipeGesture(Gesture):
         assert(update.n_touches in [3, 4, 5])
 
         self.n_touches = update.n_touches
-        self._delta_x = -update.touches[0][1]
-        self._delta_y = -update.touches[0][2]
-        self._id = update.touches[0][0]
         self._update = update
+        self._begin_t = update.t
+
+        self._dx = 0
+        self._dy = 0
 
     def process(self, update):
         """
         "Upgrade" three- to four-finger gesture and so on
         """
-        # if update.n_touches > self.n_touches:
-        #     return False
+        if update.n_touches > self.n_touches:
+            if update.t - self._begin_t < 0.2:
+                return False
 
+        """
+        Gesture finished?
+        """
         if update.n_touches == 0:
             return False
 
         if len(update.touches) == 0:
             return True
 
-        if self._id not in [d[0] for d in update.touches]:
-            intersect = [d for d in self._update.touches if d[0] in
-                         [d[0] for d in update.touches]]
+        dx = 0
+        dy = 0
+        for i, x, y, z in update.touches:
+            try:
+                idx = [it[0] for it in self._update.touches].index(i)
+                dx += x - [it[1] for it in self._update.touches][idx]
+                dy += y - [it[2] for it in self._update.touches][idx]
+            except Exception:
+                pass
 
-            last_touch = [d for d in self._update.touches
-                          if d[0] == self._id][0]
+        self._dx += dx / self.n_touches
+        self._dy += dy / self.n_touches
 
-            if len(intersect) == 0:
-                touch = update.touches[0]
-                self._id = touch[0]
-                self._delta_x += last_touch[1] - touch[1]
-                self._delta_y += last_touch[2] - touch[2]
-            else:
-                touch = intersect[0]
-
-                self._id = touch[0]
-                self._delta_x -= touch[1] - last_touch[1]
-                self._delta_y -= touch[2] - last_touch[2]
-
-        touch = [d for d in update.touches if d[0] == self._id][0]
+        """
+        Update
+        """
         self.update({
-            'delta_x': touch[1] + self._delta_x,
-            'delta_y': touch[2] + self._delta_y
+            'delta_x': self._dx,
+            'delta_y': self._dy
         })
+
 
         self._update = update
         return True
