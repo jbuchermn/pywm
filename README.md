@@ -42,6 +42,7 @@
 - Clean up threading / asyncio --> possibly related to:
 - Random hangs - e.g. playing around with nnn, ordering widgets in `layout.py` is changed
     Possibly:[ERROR] [backend/drm/atomic.c:36] eDP-1: Atomic commit failed (pageflip): Device or resource busy
+- zIndex on views
 - Improve touchpad integration (bouncy scrolling at edges e.g., do not fix gesture to a single finger, which is
   necessary on Lenovo, not on MBP, ...)
 - Function / Media keys + widgets
@@ -62,3 +63,4 @@
 - Center windows of 1x2 or 2x1 in regular view and overview
 - Improve "find next window" logic on Alt-hjkl
 - Titles during "far-away" view
+- Scale windows in on open
