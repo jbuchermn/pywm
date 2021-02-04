@@ -8,7 +8,7 @@
 | imv                    |    no     | working         |                none                                           |
 | LibreOffice            |    no     | working         | Welcome Window is not display (properly)                      |
 | Alacritty              |    no     | working         | Looks terrible                                                |
-| Chromium               |    no     | working         | Menus outside view                                            |
+| Chromium               |    no     | working         | Menus outside view / weird behaviour entering search term     |
 | Firefox                |    no     | working         | "Save as" Dialog possibly scaled weirdly                      |
 | Atom                   |    no     | ?               | ?                                                             |
 | VSCodium               |    no     | ?               | ?                                                             |
@@ -31,7 +31,6 @@
 - Alacritty does not obtain information about the scale factor --> Blurry
 - Have menus render inside parent boundaries (xdg)
 
-- Cursor not displayed initially
 - Change cursor (in general + e.g. when over a link)
 - Clipboard
 
@@ -40,11 +39,13 @@
 ### General
 
 - Clean up threading / asyncio --> possibly related to:
-- Random hangs - e.g. playing around with nnn, ordering widgets in `layout.py` is changed
+- Random hangs - e.g. playing around with nnn, reordering widgets in `layout.py`, poor wifi / iwd does something
     Possibly:[ERROR] [backend/drm/atomic.c:36] eDP-1: Atomic commit failed (pageflip): Device or resource busy
+
 - zIndex on views
 - Various TODO Comments
 - Function / Media keys + widgets
+- Cursor not displayed initially
 - MBP keymap (incl Command+c / Command-v)
 - Server-side decorations / Close window via shortcut (e.g. Chrome popups)
 - Blurry rendering during animations on rescale
