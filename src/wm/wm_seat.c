@@ -11,6 +11,7 @@
 #include "wm/wm_keyboard.h"
 #include "wm/wm_pointer.h"
 #include "wm/wm_cursor.h"
+#include "wm/wm_config.h"
 
 /*
  * Callbacks
@@ -143,7 +144,9 @@ void wm_seat_dispatch_modifiers(struct wm_seat* seat, struct wlr_input_device* i
     wlr_seat_keyboard_notify_modifiers(seat->wlr_seat, &input_device->keyboard->modifiers);
 }
 
+
 bool wm_seat_dispatch_motion(struct wm_seat* seat, double x, double y, uint32_t time_msec){
+    /* TODO: _handle_focus */
     struct wlr_surface* surface;
     double sx;
     double sy;
@@ -154,14 +157,14 @@ bool wm_seat_dispatch_motion(struct wm_seat* seat, double x, double y, uint32_t 
         return false;
     }
 
-    /* 
-     * TODO! Configurable!
-     * Automatically focus surface on mouse enter 
-     */
-    wm_seat_focus_surface(seat, surface);
+    if(seat->wm_server->wm_config->focus_follows_mouse){
+        /* Automatically focus surface on mouse enter  */
+        wm_seat_focus_surface(seat, surface);
+    }
 
     bool focus_change = (surface != seat->wlr_seat->pointer_state.focused_surface);
     wlr_seat_pointer_notify_enter(seat->wlr_seat, surface, sx, sy);
+
     if(!focus_change){
         wlr_seat_pointer_notify_motion(seat->wlr_seat, time_msec, sx, sy);
     }
@@ -169,10 +172,30 @@ bool wm_seat_dispatch_motion(struct wm_seat* seat, double x, double y, uint32_t 
     return true;
 }
 
+static void _handle_focus(struct wm_seat* seat, double x, double y){
+    struct wlr_surface* surface;
+    double sx;
+    double sy;
+
+    wm_server_surface_at(seat->wm_server, x, y, &surface, &sx, &sy);
+    if(!surface){
+        wlr_seat_pointer_clear_focus(seat->wlr_seat);
+        return;
+    }
+
+    wm_seat_focus_surface(seat, surface);
+}
+
 void wm_seat_dispatch_button(struct wm_seat* seat, struct wlr_event_pointer_button* event){
+    /* Focus clicked surface */
+    _handle_focus(seat, seat->wm_cursor->wlr_cursor->x, seat->wm_cursor->wlr_cursor->y);
+
     wlr_seat_pointer_notify_button(seat->wlr_seat, event->time_msec, event->button, event->state);
 }
 void wm_seat_dispatch_axis(struct wm_seat* seat, struct wlr_event_pointer_axis* event){
+    /* Focus acted on surface */
+    _handle_focus(seat, seat->wm_cursor->wlr_cursor->x, seat->wm_cursor->wlr_cursor->y);
+
     wlr_seat_pointer_notify_axis(seat->wlr_seat,
             event->time_msec, event->orientation, event->delta, event->delta_discrete, event->source);
 }

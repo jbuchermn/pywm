@@ -65,18 +65,18 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
 
     int status = 0;
 
-    double output_scale = 1.;
-    const char* xcursor_theme = NULL;
-    const char* xcursor_name = "left_ptr";
-    int xcursor_size = 24;
+    struct wm_config conf;
+    wm_config_init_default(&conf);
+
     char* kwlist[] = {
         "output_scale",
         "xcursor_theme",
         "xcursor_name",
         "xcursor_size",
+        "focus_follows_mouse",
         NULL
     };
-    if(!PyArg_ParseTupleAndKeywords(args, kwargs, "|dssi", kwlist, &output_scale, &xcursor_theme, &xcursor_name, &xcursor_size)){
+    if(!PyArg_ParseTupleAndKeywords(args, kwargs, "|dssip", kwlist, &conf.output_scale, &conf.xcursor_theme, &conf.xcursor_name, &conf.xcursor_size, &conf.focus_follows_mouse)){
         PyErr_SetString(PyExc_TypeError, "Arguments");
         return NULL;
     }
@@ -85,13 +85,7 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
     get_wm()->callback_update = handle_update;
     _pywm_callbacks_init();
 
-    struct wm_config config = {
-        .output_scale = output_scale,
-        .xcursor_theme = xcursor_theme,
-        .xcursor_name = xcursor_name,
-        .xcursor_size = xcursor_size
-    };
-    wm_init(&config);
+    wm_init(&conf);
 
     Py_BEGIN_ALLOW_THREADS;
     status = wm_run();

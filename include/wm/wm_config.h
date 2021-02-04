@@ -3,9 +3,12 @@
 
 struct wm_config {
     double output_scale;
+
     const char* xcursor_theme;
     const char* xcursor_name;
     int xcursor_size;
+
+    int focus_follows_mouse;
 };
 
 void wm_config_init_default(struct wm_config* config);
