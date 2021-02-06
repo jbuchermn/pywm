@@ -18,10 +18,7 @@ struct wm_widget {
     double display_width;
     double display_height;
 
-    enum {
-        WM_WIDGET_BACK,
-        WM_WIDGET_FRONT
-    } layer;
+    int z_index;
 };
 
 void wm_widget_init(struct wm_widget* widget, struct wm_server* server);

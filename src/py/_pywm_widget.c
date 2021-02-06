@@ -24,21 +24,16 @@ void _pywm_widget_update(struct _pywm_widget* widget){
     Py_XDECREF(args);
     if(res && res != Py_None){
         double x, y, w, h;
-        int l;
+        int z_index;
         if(!PyArg_ParseTuple(res, 
                     "(dddd)i",
                     &x, &y, &w, &h,
-                    &l)){
+                    &z_index)){
             PyErr_SetString(PyExc_TypeError, "Arguments");
             return;
         }
 
-
-        if(l == 0){
-            widget->widget->layer = WM_WIDGET_BACK;
-        }else if(l == 1){
-            widget->widget->layer = WM_WIDGET_FRONT;
-        }
+        widget->widget->z_index = z_index;
 
         if(w >= 0.0 && h >= 0.0)
             wm_widget_set_box(widget->widget, x, y, w, h);

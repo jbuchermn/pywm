@@ -1,6 +1,3 @@
-PYWM_LAYER_BACK = 0
-PYWM_LAYER_FRONT = 1
-
 PYWM_FORMATS = dict()
 
 with open('/usr/include/wayland-server-protocol.h', 'r') as header:
@@ -24,12 +21,12 @@ class PyWMWidget:
         self.wm = wm
 
         self.box = (0, 0, 0, 0)
-        self.layer = PYWM_LAYER_BACK
+        self.z_index = 0
 
         self._pending_pixels = None # (fmt, stride, width, height, data)
 
     def _update(self):
-        return (self.box, self.layer)
+        return (self.box, self.z_index)
 
     def _update_pixels(self):
         if self._pending_pixels is not None:
@@ -43,8 +40,8 @@ class PyWMWidget:
     def set_box(self, x, y, w, h):
         self.box = (x, y, w, h)
 
-    def set_layer(self, layer):
-        self.layer = layer
+    def set_z_index(self, z_index):
+        self.z_index = z_index
 
     def destroy(self):
         self.wm.widget_destroy(self)

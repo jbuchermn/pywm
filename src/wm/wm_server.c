@@ -199,6 +199,7 @@ void wm_server_surface_at(struct wm_server* server, double at_x, double at_y,
     struct wm_view* view;
     wl_list_for_each(view, &server->wm_views, link){
         if(!view->mapped) continue;
+        if(!view->accepts_input) continue;
 
         int width;
         int height;

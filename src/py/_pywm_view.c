@@ -62,11 +62,14 @@ void _pywm_view_update(struct _pywm_view* view){
     if(res && res != Py_None){
         double x, y, w, h;
         int focus_pending, width_pending, height_pending;
+        int accepts_input, z_index;
+        
         if(!PyArg_ParseTuple(res, 
-                    "(dddd)p(ii)",
+                    "(dddd)p(ii)ii",
                     &x, &y, &w, &h,
                     &focus_pending,
-                    &width_pending, &height_pending)){
+                    &width_pending, &height_pending,
+                    &accepts_input, &z_index)){
             PyErr_SetString(PyExc_TypeError, "Arguments");
             return;
         }
@@ -77,6 +80,9 @@ void _pywm_view_update(struct _pywm_view* view){
             wm_view_request_size(view->view, width_pending, height_pending);
         if(focus_pending)
             wm_focus_view(view->view);
+
+        view->view->accepts_input = accepts_input;
+        view->view->z_index = z_index;
 
     }
 

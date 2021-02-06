@@ -13,10 +13,12 @@ class PyWMView:
         self.role = None
         self.is_xwayland = None
         self.size_constraints = (0, 0, 0, 0)
+        self.focused = False
         
         self.box = (0.0, 0.0, 1.0, 1.0)
         self.size = (1, 1)
-        self.focused = False
+        self.z_index = 0
+        self.accepts_input = True
 
         self._focus_pending = False
         self._size_pending = (-1, -1)
@@ -53,7 +55,7 @@ class PyWMView:
         if size_w > 0 and size_h > 0:
             self.size = (size_w, size_h)
 
-        res = (self.box, self._focus_pending, self._size_pending)
+        res = (self.box, self._focus_pending, self._size_pending, self.accepts_input, self.z_index)
         self._focus_pending = False
         self._size_pending = (-1, -1)
         return res
@@ -67,6 +69,12 @@ class PyWMView:
 
     def set_size(self, width, height):
         self._size_pending = (width, height)
+
+    def set_z_index(self, z_index):
+        self.z_index = z_index
+
+    def set_accepts_input(self, accepts_input):
+        self.accepts_input = accepts_input
 
     
     """

@@ -3,7 +3,6 @@ from imageio import imread
 
 from .pywm_widget import (
     PyWMWidget,
-    PYWM_LAYER_BACK,
     PYWM_FORMATS
 )
 
@@ -16,7 +15,7 @@ class PyWMBackgroundWidget(PyWMWidget):
         """
         super().__init__(wm)
 
-        self.set_layer(PYWM_LAYER_BACK)
+        self.set_z_index(-5)
         im = imread(path)
         im_alpha = np.zeros(shape=(im.shape[0], im.shape[1], 4),
                             dtype=np.uint8)

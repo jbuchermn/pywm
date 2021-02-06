@@ -11,8 +11,6 @@ from .pywm_view import PyWMView  # noqa F401
 
 from .pywm_widget import (  # noqa F401
     PyWMWidget,
-    PYWM_LAYER_BACK,
-    PYWM_LAYER_FRONT,
     PYWM_FORMATS
 )
 

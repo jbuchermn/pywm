@@ -22,6 +22,9 @@ struct wm_view {
     double display_y;
     double display_width;
     double display_height;
+
+    bool accepts_input;
+    int z_index;
 };
 
 void wm_view_base_init(struct wm_view* view, struct wm_server* server);

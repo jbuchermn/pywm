@@ -4,7 +4,7 @@
 void wm_widget_init(struct wm_widget* widget, struct wm_server* server){
     widget->wm_server = server;
 
-    widget->layer = WM_WIDGET_BACK;
+    widget->z_index = 0;
     widget->wlr_texture = NULL;
 }
 

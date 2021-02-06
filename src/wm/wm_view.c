@@ -21,6 +21,9 @@ void wm_view_base_init(struct wm_view* view, struct wm_server* server){
     view->display_width = 0.;
     view->display_height = 0.;
 
+    view->accepts_input = true;
+    view->z_index = 0;
+
     wl_list_insert(&view->wm_server->wm_views, &view->link);
 }
 

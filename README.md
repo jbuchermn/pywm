@@ -41,7 +41,6 @@
 - Random hangs - e.g. playing around with nnn, reordering widgets in `layout.py`, poor wifi / iwd does something
     Possibly:[ERROR] [backend/drm/atomic.c:36] eDP-1: Atomic commit failed (pageflip): Device or resource busy
 
-- zIndex on views
 - Various TODO Comments
 - Function / Media keys + widgets
 - Cursor not displayed initially
