@@ -64,7 +64,10 @@ if __name__ == '__main__':
         print("Could not find touchpad")
     else:
         touchpad = Touchpad(event)
-        sanitize = SanitizeBogusIds(touchpad)
-        gestures = Gestures(sanitize)
+        gestures = Gestures(
+            # SanitizeBogusIds(
+                touchpad
+            # )
+        )
         log = GesturesLog(gestures)
         touchpad.run()

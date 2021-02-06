@@ -14,8 +14,11 @@ def create_touchpad(gesture_listener):
     event = find_touchpad()
     if event is not None:
         touchpad = Touchpad(event)
-        sanitize = SanitizeBogusIds(touchpad)
-        gestures = Gestures(sanitize)
+        gestures = Gestures(
+            # SanitizeBogusIds(
+                touchpad
+            # )
+        )
         gestures.listener(gesture_listener)
         return touchpad
     else:
