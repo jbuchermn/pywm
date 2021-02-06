@@ -1,3 +1,4 @@
+from select import select
 import evdev
 import time
 import traceback
@@ -112,37 +113,38 @@ class Touchpad(Thread):
     def run(self):
         try:
             slot = 0
-            for event in self._device.read_loop():
-                if not self._running:
-                    break
+            while self._running:
+                r, w, x = select([self._device], [], [], 0.1)
 
-                if event.type == evdev.ecodes.EV_SYN:
-                    self.synchronize()
+                if r:
+                    for event in self._device.read():
+                        if event.type == evdev.ecodes.EV_SYN:
+                            self.synchronize()
 
-                elif event.type == evdev.ecodes.EV_KEY:
-                    if event.value == 1:
-                        if event.code == evdev.ecodes.BTN_TOOL_FINGER:
-                            self._n_touches = 1
-                        elif event.code == evdev.ecodes.BTN_TOOL_DOUBLETAP:
-                            self._n_touches = 2
-                        elif event.code == evdev.ecodes.BTN_TOOL_TRIPLETAP:
-                            self._n_touches = 3
-                        elif event.code == evdev.ecodes.BTN_TOOL_QUADTAP:
-                            self._n_touches = 4
-                        elif event.code == evdev.ecodes.BTN_TOOL_QUINTTAP:
-                            self._n_touches = 5
+                        elif event.type == evdev.ecodes.EV_KEY:
+                            if event.value == 1:
+                                if event.code == evdev.ecodes.BTN_TOOL_FINGER:
+                                    self._n_touches = 1
+                                elif event.code == evdev.ecodes.BTN_TOOL_DOUBLETAP:
+                                    self._n_touches = 2
+                                elif event.code == evdev.ecodes.BTN_TOOL_TRIPLETAP:
+                                    self._n_touches = 3
+                                elif event.code == evdev.ecodes.BTN_TOOL_QUADTAP:
+                                    self._n_touches = 4
+                                elif event.code == evdev.ecodes.BTN_TOOL_QUINTTAP:
+                                    self._n_touches = 5
 
-                elif event.type == evdev.ecodes.EV_ABS:
-                    if event.code == evdev.ecodes.ABS_MT_SLOT:
-                        slot = event.value
-                    elif event.code == evdev.ecodes.ABS_MT_TRACKING_ID:
-                        self._get_slot(slot).set_tracking_id(event.value)
-                    elif event.code == evdev.ecodes.ABS_MT_POSITION_X:
-                        self._get_slot(slot).x = event.value
-                    elif event.code == evdev.ecodes.ABS_MT_POSITION_Y:
-                        self._get_slot(slot).y = event.value
-                    elif event.code == evdev.ecodes.ABS_MT_PRESSURE:
-                        self._get_slot(slot).z = event.value
+                        elif event.type == evdev.ecodes.EV_ABS:
+                            if event.code == evdev.ecodes.ABS_MT_SLOT:
+                                slot = event.value
+                            elif event.code == evdev.ecodes.ABS_MT_TRACKING_ID:
+                                self._get_slot(slot).set_tracking_id(event.value)
+                            elif event.code == evdev.ecodes.ABS_MT_POSITION_X:
+                                self._get_slot(slot).x = event.value
+                            elif event.code == evdev.ecodes.ABS_MT_POSITION_Y:
+                                self._get_slot(slot).y = event.value
+                            elif event.code == evdev.ecodes.ABS_MT_PRESSURE:
+                                self._get_slot(slot).z = event.value
 
         except Exception:
             traceback.print_exc()
@@ -176,4 +178,5 @@ if __name__ == '__main__':
         print("Could not find touchpad")
     else:
         touchpad = Touchpad(event)
+        touchpad.listener(lambda update: print(update))
         touchpad.run()
