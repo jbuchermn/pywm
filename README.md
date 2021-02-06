@@ -28,24 +28,24 @@
 
 ## ToDo
 
+- Clipboard
+
 - Alacritty does not obtain information about the scale factor --> Blurry
 - Have menus render inside parent boundaries (xdg)
 
+- Cursor not displayed initially
 - Change cursor (in general + e.g. when over a link)
-- Clipboard
 
 ## Backlog
 
 ### General
 
-- Random hangs - e.g. playing around with nnn, reordering widgets in `layout.py`, poor wifi / iwd does something
-    Possibly:[ERROR] [backend/drm/atomic.c:36] eDP-1: Atomic commit failed (pageflip): Device or resource busy
 - Various TODO Comments
-- Cursor not displayed initially
 - MBP keymap (incl Command+c / Command-v)
 - Server-side decorations / Close window via shortcut (e.g. Chrome popups)
 - Blurry rendering during animations on rescale
 - Login mechanism
+- Damaging regions
 
 ### XWayland
 

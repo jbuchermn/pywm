@@ -175,7 +175,10 @@ static void handle_frame(struct wl_listener* listener, void* data){
 
 
 	wlr_renderer_end(wlr_renderer);
-	wlr_output_commit(output->wlr_output);
+	if(!wlr_output_commit(output->wlr_output)){
+        wlr_log(WLR_INFO, "Output commit failed, manually scheduling frame");
+        wlr_output_schedule_frame(output->wlr_output);
+    }
 }
 
 /*
