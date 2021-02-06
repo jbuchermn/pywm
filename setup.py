@@ -18,4 +18,5 @@ setup(name='pywm',
       author='Jonas Bucher',
       author_email='j.bucher.mn@gmail.com',
       package_data={'pywm': ['_pywm.so']},
-      packages=['pywm', 'pywm.touchpad'])
+      packages=['pywm', 'pywm.touchpad'],
+      install_requires=['evdev', 'imageio', 'pycairo'])
