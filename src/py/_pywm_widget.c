@@ -6,16 +6,67 @@
 #include "wm/wm.h"
 #include "wm/wm_widget.h"
 #include "py/_pywm_widget.h"
+#include "py/_pywm_callbacks.h"
+#include "wm/wm_util.h"
 
 static struct _pywm_widgets widgets = { 0 };
+static long next_handle = 1;
 
 void _pywm_widget_init(struct _pywm_widget* _widget, struct wm_widget* widget){
-    static long handle = 0;
-    handle++;
-
-    _widget->handle = handle;
+    _widget->handle = (next_handle++);
     _widget->widget = widget;
     _widget->next_widget = NULL;
+}
+
+void _pywm_widget_update(struct _pywm_widget* widget){
+    PyObject* args = Py_BuildValue("(l)", widget->handle);
+    PyObject* res = PyObject_Call(_pywm_callbacks_get_all()->update_widget, args, NULL);
+    Py_XDECREF(args);
+    if(res && res != Py_None){
+        double x, y, w, h;
+        int l;
+        if(!PyArg_ParseTuple(res, 
+                    "(dddd)i",
+                    &x, &y, &w, &h,
+                    &l)){
+            PyErr_SetString(PyExc_TypeError, "Arguments");
+            return;
+        }
+
+
+        if(l == 0){
+            widget->widget->layer = WM_WIDGET_BACK;
+        }else if(l == 1){
+            widget->widget->layer = WM_WIDGET_FRONT;
+        }
+
+        if(w >= 0.0 && h >= 0.0)
+            wm_widget_set_box(widget->widget, x, y, w, h);
+
+    }
+    Py_XDECREF(res);
+
+    args = Py_BuildValue("(l)", widget->handle);
+    res = PyObject_Call(_pywm_callbacks_get_all()->update_widget_pixels, args, NULL);
+    Py_XDECREF(args);
+    if(res && res != Py_None){
+        /* Handle update_pixels */
+        int format, stride, width, height;
+        PyObject* data;
+        if(!PyArg_ParseTuple(res, "iiiiS", &format, &stride, &width, &height, &data)){
+            PyErr_SetString(PyExc_TypeError, "Arguments");
+            return;
+        }
+
+        wm_widget_set_pixels(widget->widget,
+                format,
+                stride,
+                width,
+                height,
+                PyBytes_AsString(data));
+    }
+
+    Py_XDECREF(res);
 }
 
 long _pywm_widgets_add(struct wm_widget* widget){
@@ -62,12 +113,60 @@ long _pywm_widgets_get_handle(struct wm_widget* widget){
     return 0;
 }
 
+
+void _pywm_widgets_update(){
+    TIMER_START(widgets_update);
+
+    /* Query for a widget to destroy */
+    PyObject* args = Py_BuildValue("()");
+    PyObject* res = PyObject_Call(_pywm_callbacks_get_all()->query_destroy_widget, args, NULL);
+    Py_XDECREF(args);
+    if(res && res != Py_None){
+        long handle;
+        if(!PyArg_ParseTuple(res, "l", &handle)){
+            PyErr_SetString(PyExc_TypeError, "Expected long");
+            goto err;
+        }
+
+        struct wm_widget* widget = _pywm_widgets_from_handle(handle);
+        if(!widget){
+            PyErr_SetString(PyExc_TypeError, "Widget has been destroyed");
+            goto err;
+        }
+        _pywm_widgets_remove(widget);
+        wm_destroy_widget(widget);
+    }
+    Py_XDECREF(res);
+
+    /* Query for a new widget */
+    args = Py_BuildValue("(l)", next_handle);
+    res = PyObject_Call(_pywm_callbacks_get_all()->query_new_widget, args, NULL);
+    Py_XDECREF(args);
+    if(res == Py_True){
+        struct wm_widget* widget = wm_create_widget();
+        _pywm_widgets_add(widget);
+    }
+    Py_XDECREF(res);
+
+    /* Update existing widgets */
+    for(struct _pywm_widget* widget = widgets.first_widget; widget; widget=widget->next_widget){
+        _pywm_widget_update(widget);
+    }
+
+err:
+
+
+    TIMER_STOP(widgets_update);
+    TIMER_PRINT(widgets_update);
+}
+
+
 struct _pywm_widget* _pywm_widgets_container_from_handle(long handle){
 
     for(struct _pywm_widget* widget = widgets.first_widget; widget; widget=widget->next_widget){
         if(widget->handle == handle) return widget;
     }
-
+    
     return NULL;
 }
 
@@ -76,136 +175,7 @@ struct wm_widget* _pywm_widgets_from_handle(long handle){
     if(!widget){
         return NULL;
     }
-
+ 
     return widget->widget;
 }
 
-
-PyObject* _pywm_widget_create(PyObject* self, PyObject* args){
-    struct wm_widget* widget = wm_create_widget();
-    long handle = _pywm_widgets_add(widget);
-
-    return Py_BuildValue("l", handle);
-}
-
-PyObject* _pywm_widget_destroy(PyObject* self, PyObject* args){
-    long handle;
-    if(!PyArg_ParseTuple(args, "l", &handle)){
-        PyErr_SetString(PyExc_TypeError, "Arguments");
-        return NULL;
-    }
-
-    struct wm_widget* widget = _pywm_widgets_from_handle(handle);
-    if(!widget){
-        PyErr_SetString(PyExc_TypeError, "Widget has been destroyed");
-        return NULL;
-    }
-
-    _pywm_widgets_remove(widget);
-    wm_destroy_widget(widget);
-
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-
-PyObject* _pywm_widget_set_box(PyObject* self, PyObject* args){
-    long handle;
-    double x, y, width, height;
-    if(!PyArg_ParseTuple(args, "ldddd", &handle, &x, &y, &width, &height)){
-        PyErr_SetString(PyExc_TypeError, "Arguments");
-        return NULL;
-    }
-
-    struct wm_widget* widget = _pywm_widgets_from_handle(handle);
-    if(!widget){
-        PyErr_SetString(PyExc_TypeError, "Widget has been destroyed");
-        return NULL;
-    }
-
-    wm_widget_set_box(widget, x, y, width, height);
-
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-
-PyObject* _pywm_widget_set_layer(PyObject* self, PyObject* args){
-    long handle;
-    int layer;
-    if(!PyArg_ParseTuple(args, "li", &handle, &layer)){
-        PyErr_SetString(PyExc_TypeError, "Arguments");
-        return NULL;
-    }
-
-    struct wm_widget* widget = _pywm_widgets_from_handle(handle);
-    if(!widget){
-        PyErr_SetString(PyExc_TypeError, "Widget has been destroyed");
-        return NULL;
-    }
-
-    if(layer == 0){
-        widget->layer = WM_WIDGET_BACK;
-    }else if(layer == 1){
-        widget->layer = WM_WIDGET_FRONT;
-    }else{
-        PyErr_SetString(PyExc_TypeError, "Unknown layer");
-        return NULL;
-    }
-
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-
-PyObject* _pywm_widget_set_pixels(PyObject* self, PyObject* args){
-    long handle;
-    int format, stride, width, height;
-    PyObject* data;
-    if(!PyArg_ParseTuple(args, "liiiiS", &handle, &format, &stride, &width, &height, &data)){
-        PyErr_SetString(PyExc_TypeError, "Arguments");
-        return NULL;
-    }
-
-    struct _pywm_widget* widget = _pywm_widgets_container_from_handle(handle);
-    if(!widget){
-        PyErr_SetString(PyExc_TypeError, "Widget has been destroyed");
-        return NULL;
-    }
-
-    widget->pixels_pending = true;
-    widget->pixels.format = format;
-    widget->pixels.stride = stride;
-    widget->pixels.width = width;
-    widget->pixels.height = height;
-    widget->pixels.data = data;
-
-    Py_INCREF(data);
-
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-
-void _pywm_widgets_update(){
-    for(struct _pywm_widget* widget = widgets.first_widget; widget; widget=widget->next_widget){
-        if(widget->pixels_pending){
-            wm_widget_set_pixels(widget->widget,
-                    widget->pixels.format,
-                    widget->pixels.stride,
-                    widget->pixels.width,
-                    widget->pixels.height,
-                    PyBytes_AsString(widget->pixels.data));
-
-            widget->pixels_pending = false;
-            Py_DECREF(widget->pixels.data);
-            widget->pixels.data = NULL;
-        }
-    }
-}
-
-PyMethodDef _pywm_widget_methods[] = {
-    { "widget_create",             _pywm_widget_create,              METH_VARARGS,                   "" },
-    { "widget_destroy",            _pywm_widget_destroy,             METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "widget_set_box",            _pywm_widget_set_box,             METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "widget_set_layer",          _pywm_widget_set_layer,           METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "widget_set_pixels",         _pywm_widget_set_pixels,          METH_VARARGS,                   "" },
-
-    { NULL, NULL, 0, NULL }
-};

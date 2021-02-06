@@ -1,16 +1,3 @@
-from ._pywm import (
-    view_get_box,
-    view_get_size,
-    view_get_info,
-    view_set_box,
-    view_set_size,
-    view_get_size_constraints,
-    view_focus,
-    view_is_floating,
-    view_get_parent
-)
-
-
 class PyWMView:
     def __init__(self, wm, handle):
         self._handle = handle
@@ -19,57 +6,72 @@ class PyWMView:
         Consider these readonly
         """
         self.wm = wm
-        self.box = view_get_box(self._handle)
-        self.focused = False
         self.parent = None
-        self.floating = view_is_floating(self._handle)
+        self.floating = None
+        self.title = None
+        self.app_id = None
+        self.role = None
+        self.is_xwayland = None
+        self.size_constraints = (0, 0, 0, 0)
+        
+        self.box = (0.0, 0.0, 1.0, 1.0)
+        self.size = (1, 1)
+        self.focused = False
 
-        parent_handle = view_get_parent(self._handle)
-        for v in self.wm.views:
-            if v._handle == parent_handle:
-                self.parent = v
+        self._focus_pending = False
+        self._size_pending = (-1, -1)
+
+
+    def _update(self, 
+                parent_handle,
+                floating, title, app_id, role, is_xwayland, 
+                sc_min_w, sc_max_w, sc_min_h, sc_max_h,
+                size_w, size_h):
+        if parent_handle is not None:
+            for v in self.wm.views:
+                if v._handle == parent_handle:
+                    self.parent = v
+
+        if floating is not None:
+            self.floating = floating
+
+        if title is not None:
+            self.title = title
+
+        if app_id is not None:
+            self.app_id = app_id
+
+        if role is not None:
+            self.role = role
+
+        if is_xwayland is not None:
+            self.is_xwayland = is_xwayland
+
+        if sc_min_w <= sc_max_w and sc_min_h <= sc_max_h:
+            self.size_constraints = (sc_min_w, sc_max_w, sc_min_h, sc_max_h)
+
+        if size_w > 0 and size_h > 0:
+            self.size = (size_w, size_h)
+
+        res = (self.box, self._focus_pending, self._size_pending)
+        self._focus_pending = False
+        self._size_pending = (-1, -1)
+        return res
+
 
     def focus(self):
-        try:
-            view_focus(self._handle)
-        except Exception:
-            pass
+        self._focus_pending = True
 
     def set_box(self, x, y, w, h):
-        try:
-            view_set_box(self._handle, x, y, w, h)
-        except Exception:
-            pass
         self.box = (x, y, w, h)
 
-    def get_info(self):
-        try:
-            return view_get_info(self._handle)
-        except Exception:
-            return "Destroyed", "", "", False
-
-    def get_size(self):
-        try:
-            return view_get_size(self._handle)
-        except Exception:
-            return 0, 0
-
-    def get_size_constraints(self):
-        try:
-            return view_get_size_constraints(self._handle)
-        except Exception:
-            return -1, -1, -1, -1
-
     def set_size(self, width, height):
-        try:
-            view_set_size(self._handle, round(width), round(height))
-        except Exception:
-            pass
+        self._size_pending = (width, height)
 
+    
     """
     Virtual methods
     """
-
     def main(self):
         pass
 

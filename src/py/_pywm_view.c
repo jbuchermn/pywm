@@ -5,8 +5,11 @@
 
 #include "wm/wm.h"
 #include "wm/wm_view.h"
-#include "py/_pywm_view.h"
 #include "wm/wm_view_xwayland.h"
+#include "wm/wm_util.h"
+
+#include "py/_pywm_view.h"
+#include "py/_pywm_callbacks.h"
 
 static struct _pywm_views views = { 0 };
 
@@ -17,8 +20,67 @@ void _pywm_view_init(struct _pywm_view* _view, struct wm_view* view){
     _view->handle = handle;
     _view->view = view;
     _view->next_view = NULL;
-    _view->focus_pending = false;
-    _view->size_pending = false;
+}
+
+void _pywm_view_update(struct _pywm_view* view){
+
+    /* General info - TODO Should not be updated this often */
+    long parent_handle = 0;
+    struct wm_view* parent = wm_view_get_parent(view->view);
+    if(parent){
+        parent_handle = _pywm_views_get_handle(parent);
+    }
+    int is_floating = wm_view_is_floating(view->view);
+
+    const char* title;
+    const char* app_id; 
+    const char* role;
+    wm_view_get_info(view->view, &title, &app_id, &role);
+
+    bool xwayland = wm_view_is_xwayland(view->view);
+
+    int min_w, max_w, min_h, max_h;
+    wm_view_get_size_constraints(view->view, &min_w, &max_w, &min_h, &max_h);
+
+
+    int width, height;
+    wm_view_get_size(view->view, &width, &height);
+
+    PyObject* args = Py_BuildValue(
+            "(llOsssOiiiiii)",
+            view->handle,
+            parent_handle,
+            is_floating ? Py_True : Py_False,
+            title, app_id, role, xwayland ? Py_True : Py_False,
+            min_w, max_w, min_h, max_h,
+            width, height);
+
+
+    PyObject* res = PyObject_Call(_pywm_callbacks_get_all()->update_view, args, NULL);
+    Py_XDECREF(args);
+
+    if(res && res != Py_None){
+        double x, y, w, h;
+        int focus_pending, width_pending, height_pending;
+        if(!PyArg_ParseTuple(res, 
+                    "(dddd)p(ii)",
+                    &x, &y, &w, &h,
+                    &focus_pending,
+                    &width_pending, &height_pending)){
+            PyErr_SetString(PyExc_TypeError, "Arguments");
+            return;
+        }
+
+        if(w >= 0.0 && h >= 0.0)
+            wm_view_set_box(view->view, x, y, w, h);
+        if(width_pending > 0 && height_pending > 0)
+            wm_view_request_size(view->view, width_pending, height_pending);
+        if(focus_pending)
+            wm_focus_view(view->view);
+
+    }
+
+    Py_XDECREF(res);
 }
 
 long _pywm_views_add(struct wm_view* view){
@@ -72,232 +134,10 @@ long _pywm_views_get_handle(struct wm_view* view){
 }
 
 void _pywm_views_update(){
+    TIMER_START(views_update);
     for(struct _pywm_view* view=views.first_view; view; view=view->next_view){
-        if(view->focus_pending){
-            wm_focus_view(view->view);
-            view->focus_pending = false;
-        }
-
-        if(view->size_pending){
-            wm_view_request_size(view->view, view->size.width, view->size.height);
-            view->size_pending = false;
-        }
+        _pywm_view_update(view);
     }
+    TIMER_STOP(views_update);
+    TIMER_PRINT(views_update);
 }
-
-/*
- * Python methods
- */
-struct _pywm_view* _pywm_views_container_from_handle(long handle){
-
-    for(struct _pywm_view* view = views.first_view; view; view=view->next_view){
-        if(view->handle == handle) return view;
-    }
-
-    return NULL;
-}
-
-struct wm_view* _pywm_views_from_handle(long handle){
-    struct _pywm_view* view = _pywm_views_container_from_handle(handle);
-    if(!view){
-        return NULL;
-    }
-
-    return view->view;
-}
-
-PyObject* _pywm_view_get_size_constraints(PyObject* self, PyObject* args){
-    long handle;
-    if(!PyArg_ParseTuple(args, "l", &handle)){
-        PyErr_SetString(PyExc_TypeError, "Arguments");
-        return NULL;
-    }
-
-    struct wm_view* view = _pywm_views_from_handle(handle);
-    if(!view){
-        PyErr_SetString(PyExc_TypeError, "View has been destroyed");
-        return NULL;
-    }
-
-    int min_w, max_w, min_h, max_h;
-    wm_view_get_size_constraints(view, &min_w, &max_w, &min_h, &max_h);
-
-    return Py_BuildValue("(iiii)", min_w, max_w, min_h, max_h);
-}
-
-PyObject* _pywm_view_get_box(PyObject* self, PyObject* args){
-    long handle;
-    if(!PyArg_ParseTuple(args, "l", &handle)){
-        PyErr_SetString(PyExc_TypeError, "Arguments");
-        return NULL;
-    }
-
-    struct wm_view* view = _pywm_views_from_handle(handle);
-    if(!view){
-        PyErr_SetString(PyExc_TypeError, "View has been destroyed");
-        return NULL;
-    }
-
-    double x, y, w, h;
-    wm_view_get_box(view, &x, &y, &w, &h);
-
-    return Py_BuildValue("(dddd)", x, y, w, h);
-}
-
-PyObject* _pywm_view_get_size(PyObject* self, PyObject* args){
-    long handle;
-    if(!PyArg_ParseTuple(args, "l", &handle)){
-        PyErr_SetString(PyExc_TypeError, "Arguments");
-        return NULL;
-    }
-
-    struct wm_view* view = _pywm_views_from_handle(handle);
-    if(!view){
-        PyErr_SetString(PyExc_TypeError, "View has been destroyed");
-        return NULL;
-    }
-
-    int width, height;
-    wm_view_get_size(view, &width, &height);
-
-    return Py_BuildValue("(ii)", width, height);
-
-}
-
-PyObject* _pywm_view_get_info(PyObject* self, PyObject* args){
-    long handle;
-    if(!PyArg_ParseTuple(args, "l", &handle)){
-        PyErr_SetString(PyExc_TypeError, "Arguments");
-        return NULL;
-    }
-
-    struct wm_view* view = _pywm_views_from_handle(handle);
-    if(!view){
-        PyErr_SetString(PyExc_TypeError, "View has been destroyed");
-        return NULL;
-    }
-
-    const char* title;
-    const char* app_id; 
-    const char* role;
-    wm_view_get_info(view, &title, &app_id, &role);
-
-    bool xwayland = wm_view_is_xwayland(view);
-
-    return Py_BuildValue("(sssb)", title, app_id, role, xwayland);
-
-}
-
-PyObject* _pywm_view_set_box(PyObject* self, PyObject* args){
-    long handle;
-    double x, y, width, height;
-    if(!PyArg_ParseTuple(args, "ldddd", &handle, &x, &y, &width, &height)){
-        PyErr_SetString(PyExc_TypeError, "Arguments");
-        return NULL;
-    }
-
-    struct wm_view* view = _pywm_views_from_handle(handle);
-    if(!view){
-        PyErr_SetString(PyExc_TypeError, "View has been destroyed");
-        return NULL;
-    }
-
-    wm_view_set_box(view, x, y, width, height);
-
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-
-PyObject* _pywm_view_set_size(PyObject* self, PyObject* args){
-    long handle;
-    int width, height;
-    if(!PyArg_ParseTuple(args, "lii", &handle, &width, &height)){
-        PyErr_SetString(PyExc_TypeError, "Arguments");
-        return NULL;
-    }
-
-    struct _pywm_view* view = _pywm_views_container_from_handle(handle);
-    if(!view){
-        PyErr_SetString(PyExc_TypeError, "View has been destroyed");
-        return NULL;
-    }
-
-    view->size_pending = true;
-    view->size.width = width;
-    view->size.height = height;
-
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-
-PyObject* _pywm_view_focus(PyObject* self, PyObject* args){
-    long handle;
-    if(!PyArg_ParseTuple(args, "l", &handle)){
-        PyErr_SetString(PyExc_TypeError, "Arguments");
-        return NULL;
-    }
-
-    struct _pywm_view* view = _pywm_views_container_from_handle(handle);
-    if(!view){
-        PyErr_SetString(PyExc_TypeError, "View has been destroyed");
-        return NULL;
-    }
-
-    view->focus_pending = true;
-
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-
-PyObject* _pywm_view_is_floating(PyObject* self, PyObject* args){
-    long handle;
-    if(!PyArg_ParseTuple(args, "l", &handle)){
-        PyErr_SetString(PyExc_TypeError, "Arguments");
-        return NULL;
-    }
-
-    struct _pywm_view* view = _pywm_views_container_from_handle(handle);
-    if(!view){
-        PyErr_SetString(PyExc_TypeError, "View has been destroyed");
-        return NULL;
-    }
-
-    bool is_floating = wm_view_is_floating(view->view);
-    return Py_BuildValue("b", is_floating);
-}
-
-PyObject* _pywm_view_get_parent(PyObject* self, PyObject* args){
-    long handle;
-    if(!PyArg_ParseTuple(args, "l", &handle)){
-        PyErr_SetString(PyExc_TypeError, "Arguments");
-        return NULL;
-    }
-
-    struct _pywm_view* view = _pywm_views_container_from_handle(handle);
-    if(!view){
-        PyErr_SetString(PyExc_TypeError, "View has been destroyed");
-        return NULL;
-    }
-
-    struct wm_view* parent = wm_view_get_parent(view->view);
-    if(!parent){
-        return Py_BuildValue("l", 0);
-    }else{
-        long parent_handle = _pywm_views_get_handle(parent);
-        return Py_BuildValue("l", parent_handle);
-    }
-}
-
-PyMethodDef _pywm_view_methods[] = {
-    { "view_get_box",              _pywm_view_get_box,               METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "view_get_size",             _pywm_view_get_size,              METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "view_get_info",             _pywm_view_get_info,              METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "view_set_box",              _pywm_view_set_box,               METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "view_set_size",             _pywm_view_set_size,              METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "view_get_size_constraints", _pywm_view_get_size_constraints,  METH_VARARGS,                   "" },  /* Asynchronous. segfaults? */
-    { "view_focus",                _pywm_view_focus,                 METH_VARARGS,                   "" },
-    { "view_is_floating",          _pywm_view_is_floating,           METH_VARARGS,                   "" },
-    { "view_get_parent",           _pywm_view_get_parent,            METH_VARARGS,                   "" },
-
-    { NULL, NULL, 0, NULL }
-};

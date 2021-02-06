@@ -8,8 +8,7 @@ from .touchpad import create_touchpad, GestureListener
 from ._pywm import (  # noqa E402
     run,
     terminate,
-    register,
-    update_cursor
+    register
 )
 
 
@@ -52,11 +51,22 @@ class PyWM:
         register("axis", self._axis)
         register("key", self._key)
         register("modifiers", self._modifiers)
-        register("init_view", self._init_view)
+
+        register("update_view", self._update_view)
         register("destroy_view", self._destroy_view)
         register("view_focused", self._view_focused)
 
+        register("query_new_widget", self._query_new_widget)
+        register("update_widget", self._update_widget)
+        register("update_widget_pixels", self._update_widget_pixels)
+        register("query_destroy_widget", self._query_destroy_widget)
+
+        register("query_update_cursor", self._query_update_cursor)
+
         self._view_class = view_class
+
+        self._pending_widgets = []
+        self._pending_destroy_widgets = []
 
         self._last_absolute_x = None
         self._last_absolute_y = None
@@ -64,6 +74,8 @@ class PyWM:
         self._touchpad_main = None
         self._touchpad_main = create_touchpad(self._gesture)
         self._touchpad_captured = False
+
+        self._pending_update_cursor = False
 
         """
         Consider these read-only
@@ -145,10 +157,52 @@ class PyWM:
         self.on_layout_change()
 
     @callback
-    def _init_view(self, handle):
-        view = self._view_class(self, handle)
-        self.views += [view]
-        view.main()
+    def _update_view(self, handle, *args):
+        view = None
+        is_new = False
+
+        for v in self.views:
+            if v._handle == handle:
+                view = v
+                break
+        else:
+            view = self._view_class(self, handle)
+            self.views += [view]
+            is_new = True
+
+        res = view._update(*args)
+
+        if is_new:
+            view.main()
+
+        return res
+
+    @callback
+    def _update_widget(self, handle, *args):
+        widget = None
+
+        for v in self.widgets:
+            if v._handle == handle:
+                widget = v
+                break
+        else:
+            return None
+
+        return widget._update(*args)
+
+    @callback
+    def _update_widget_pixels(self, handle, *args):
+        widget = None
+
+        for v in self.widgets:
+            if v._handle == handle:
+                widget = v
+                break
+        else:
+            return None
+
+        return widget._update_pixels(*args)
+
 
     @callback
     def _destroy_view(self, handle):
@@ -170,8 +224,33 @@ class PyWM:
             else:
                 view.focused = focused
 
-    def on_widget_destroy(self, widget):
+    @callback
+    def _query_new_widget(self, new_handle):
+        if len(self._pending_widgets) > 0:
+            widget = self._pending_widgets.pop(0)
+            widget._handle = new_handle
+            self.widgets += [widget]
+            return True
+
+        return False
+    
+    @callback
+    def _query_destroy_widget(self):
+        if len(self._pending_destroy_widgets) > 0:
+            return self._pending_destroy_widgets.pop(0)._handle
+
+        return None
+
+    @callback
+    def _query_update_cursor(self):
+        if self._pending_update_cursor:
+            self._pending_update_cursor = False
+            return True
+        return False
+
+    def widget_destroy(self, widget):
         self.widgets = [v for v in self.widgets if id(v) != id(widget)]
+        self._pending_destroy_widgets = [widget]
 
     def _gesture(self, gesture):
         self._touchpad_captured = self.on_gesture(gesture)
@@ -200,11 +279,11 @@ class PyWM:
 
     def create_widget(self, widget_class, *args, **kwargs):
         widget = widget_class(self, *args, **kwargs)
-        self.widgets += [widget]
+        self._pending_widgets += [widget]
         return widget
 
     def update_cursor(self):
-        update_cursor()
+        self._pending_update_cursor = True
 
     """
     Virtual methods

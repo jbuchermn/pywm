@@ -122,13 +122,7 @@ static bool call_axis(struct wlr_event_pointer_axis* event){
 }
 
 static void call_init_view(struct wm_view* view){
-    if(callbacks.init_view){
-        long handle = _pywm_views_add(view);
-        PyGILState_STATE gil = PyGILState_Ensure();
-        PyObject* args = Py_BuildValue("(l)", handle);
-        call_void(callbacks.init_view, args);
-        PyGILState_Release(gil);
-    }
+    _pywm_views_add(view);
 }
 
 static void call_destroy_view(struct wm_view* view){
@@ -164,6 +158,7 @@ static void call_ready(){
  * Public interface
  */
 void _pywm_callbacks_init(){
+    get_wm()->callback_ready = &call_ready;
     get_wm()->callback_layout_change = &call_layout_change;
     get_wm()->callback_key = &call_key;
     get_wm()->callback_modifiers = &call_modifiers;
@@ -174,7 +169,6 @@ void _pywm_callbacks_init(){
     get_wm()->callback_init_view = &call_init_view;
     get_wm()->callback_destroy_view = &call_destroy_view;
     get_wm()->callback_view_focused = &call_view_focused;
-    get_wm()->callback_ready = &call_ready;
 }
 
 PyObject** _pywm_callbacks_get(const char* name){
@@ -190,17 +184,31 @@ PyObject** _pywm_callbacks_get(const char* name){
         return &callbacks.key;
     }else if(!strcmp(name, "modifiers")){
         return &callbacks.modifiers;
-    }else if(!strcmp(name, "init_view")){
-        return &callbacks.init_view;
-    }else if(!strcmp(name, "destroy_view")){
-        return &callbacks.destroy_view;
-    }else if(!strcmp(name, "view_focused")){
-        return &callbacks.view_focused;
     }else if(!strcmp(name, "layout_change")){
         return &callbacks.layout_change;
     }else if(!strcmp(name, "ready")){
         return &callbacks.ready;
+    }else if(!strcmp(name, "update_view")){
+        return &callbacks.update_view;
+    }else if(!strcmp(name, "destroy_view")){
+        return &callbacks.destroy_view;
+    }else if(!strcmp(name, "view_focused")){
+        return &callbacks.view_focused;
+    }else if(!strcmp(name, "query_new_widget")){
+        return &callbacks.query_new_widget;
+    }else if(!strcmp(name, "update_widget")){
+        return &callbacks.update_widget;
+    }else if(!strcmp(name, "update_widget_pixels")){
+        return &callbacks.update_widget_pixels;
+    }else if(!strcmp(name, "query_destroy_widget")){
+        return &callbacks.query_destroy_widget;
+    }else if(!strcmp(name, "query_update_cursor")){
+        return &callbacks.query_update_cursor;
     }
 
     return NULL;
+}
+
+struct _pywm_callbacks* _pywm_callbacks_get_all(){
+    return &callbacks;
 }
