@@ -10,8 +10,8 @@ from .gestures import (  # noqa F401
 )
 
 
-def create_touchpad(gesture_listener):
-    event = find_touchpad()
+def create_touchpad(device_name, gesture_listener):
+    event = find_touchpad(device_name)
     if event is not None:
         touchpad = Touchpad(event)
         gestures = Gestures(
