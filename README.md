@@ -8,7 +8,7 @@
 | imv                    |    no     | working         |                none                                           |
 | LibreOffice            |    no     | working         | Welcome Window is not display (properly)                      |
 | Alacritty              |    no     | working         | Looks terrible                                                |
-| Chromium               |    no     | working         | Menus outside view / weird behaviour entering search term     |
+| Chromium               |    no     | working         | Menus outside view / weird behaviour entering search term (related to full-screen YT?)     |
 | Firefox                |    no     | working         | "Save as" Dialog possibly scaled weirdly                      |
 | Atom                   |    no     | ?               | ?                                                             |
 | VSCodium               |    no     | ?               | ?                                                             |
