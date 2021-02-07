@@ -2,28 +2,29 @@
 
 ## Status
 
-| Application            |  XWayland | Status          | Open issues                                                   |
-|------------------------|-----------|-----------------|---------------------------------------------------------------|
-| Termite                |    no     | working         |                none                                           |
-| imv                    |    no     | working         |                none                                           |
-| LibreOffice            |    no     | working         | Welcome Window is not display (properly)                      |
-| Alacritty              |    no     | working         | Looks terrible                                                |
-| Chromium               |    no     | working         | Menus outside view / weird behaviour entering search term (related to full-screen YT?)     |
-| Firefox                |    no     | working         | "Save as" Dialog possibly scaled weirdly                      |
-| Atom                   |    no     | ?               | ?                                                             |
-| VSCodium               |    no     | ?               | ?                                                             |
-| Matplotlib (Qt5)       |    no     | working         | Requires DISPLAY=":0" to be set?!                             |
+| Application            |  XWayland | Status              | Open issues                                                   |
+|------------------------|-----------|---------------------|---------------------------------------------------------------|
+| Termite                |    no     | working             |                none                                           |
+| imv                    |    no     | working             |                none                                           |
+| LibreOffice            |    no     | working             | Welcome Window is not display (properly)                      |
+| Alacritty              |    no     | working             | Looks terrible                                                |
+| Chromium               |    no     | working             | Menus outside view / weird behaviour entering search term (related to full-screen YT?)     |
+| Firefox                |    no     | working             | "Save as" Dialog possibly scaled weirdly                      |
+| Atom                   |    no     | ?                   | ?                                                             |
+| VSCodium               |    no     | ?                   | ?                                                             |
+| Matplotlib (Qt5)       |    no     | working             | Requires DISPLAY=":0" to be set?!                             |
 
-| IntelliJ               |    ?      | ?               | ?                                                             |
-| GIMP                   |    ?      | ?               | ?                                                             |
-| OpenSCAD               |    ?      | ?               | ?                                                             |
-| FreeCAD                |    ?      | ?               | ?                                                             |
+| IntelliJ               |    ?      | ?                   | ?                                                             |
+| GIMP                   |    ?      | ?                   | ?                                                             |
+| OpenSCAD               |    ?      | ?                   | ?                                                             |
+| FreeCAD                |    ?      | ?                   | ?                                                             |
 
-| VSCodium               |    yes    | working         | no hidpi scaling                                              |
-| Firefox                |    yes    | working         | "Save as" Dialog possibly scaled weirdly / no hidpi scaling   |
-| Matplotlib             |    yes    | not working     |                                                               |
-| Atom                   |    yes    | ?               | ?                                                             |
-| Chromium               |    yes    | ?               | ?                                                             |
+| VSCodium               |    yes    | working             | no hidpi scaling                                              |
+| Firefox                |    yes    | working             | "Save as" Dialog possibly scaled weirdly / no hidpi scaling   |
+| Matplotlib             |    yes    | not working         |                                                               |
+| Zoom                   |    yes    | working very poorly | ?                                                             |
+| Atom                   |    yes    | ?                   | ?                                                             |
+| Chromium               |    yes    | ?                   | ?                                                             |
 
 
 ## ToDo
