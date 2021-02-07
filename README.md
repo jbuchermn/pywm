@@ -29,6 +29,7 @@
 ## ToDo
 
 - Clipboard
+- Use sorting fpr z-index logic
 
 - Alacritty does not obtain information about the scale factor --> Blurry
 - Have menus render inside parent boundaries (xdg)
@@ -46,6 +47,7 @@
 - Blurry rendering during animations on rescale
 - Login mechanism
 - Damaging regions
+- Screensharing using xdg-desktop-portal-wlr
 
 ### XWayland
 

@@ -65,10 +65,10 @@ class PyWMView:
         self._focus_pending = True
 
     def set_box(self, x, y, w, h):
-        self.box = (x, y, w, h)
+        self.box = (float(x), float(y), float(w), float(h))
 
     def set_size(self, width, height):
-        self._size_pending = (width, height)
+        self._size_pending = (int(width), int(height))
 
     def set_z_index(self, z_index):
         self.z_index = z_index

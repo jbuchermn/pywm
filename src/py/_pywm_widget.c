@@ -29,7 +29,7 @@ void _pywm_widget_update(struct _pywm_widget* widget){
                     "(dddd)i",
                     &x, &y, &w, &h,
                     &z_index)){
-            PyErr_SetString(PyExc_TypeError, "Arguments");
+            PyErr_SetString(PyExc_TypeError, "Cannot parse update_widget return");
             return;
         }
 
@@ -49,7 +49,7 @@ void _pywm_widget_update(struct _pywm_widget* widget){
         int format, stride, width, height;
         PyObject* data;
         if(!PyArg_ParseTuple(res, "iiiiS", &format, &stride, &width, &height, &data)){
-            PyErr_SetString(PyExc_TypeError, "Arguments");
+            PyErr_SetString(PyExc_TypeError, "Cannot parse update_widget_pixels return");
             return;
         }
 

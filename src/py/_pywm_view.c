@@ -70,7 +70,7 @@ void _pywm_view_update(struct _pywm_view* view){
                     &focus_pending,
                     &width_pending, &height_pending,
                     &accepts_input, &z_index)){
-            PyErr_SetString(PyExc_TypeError, "Arguments");
+            PyErr_SetString(PyExc_TypeError, "Cannot parse update_view return");
             return;
         }
 

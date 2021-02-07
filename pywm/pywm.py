@@ -29,9 +29,14 @@ PYWM_PRESSED = 1
 
 def callback(func):
     def wrapped_func(*args, **kwargs):
+        res = None
         try:
-            return func(*args, **kwargs)
-        except Exception:
+            res = func(*args, **kwargs)
+            return res
+        except Exception as e:
+            print("---- Error in callback %s" % repr(func))
+            print(e)
+            print("Function returned", res)
             traceback.print_exc()
     return wrapped_func
 

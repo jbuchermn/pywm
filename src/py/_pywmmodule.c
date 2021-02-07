@@ -82,7 +82,7 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
     char* ignore;
 
     if(!PyArg_ParseTupleAndKeywords(args, kwargs, "|dssips", kwlist, &conf.output_scale, &conf.xcursor_theme, &conf.xcursor_name, &conf.xcursor_size, &conf.focus_follows_mouse, &ignore)){
-        PyErr_SetString(PyExc_TypeError, "Arguments");
+        PyErr_SetString(PyExc_TypeError, "Cannot parse run arguments");
         return NULL;
     }
 
