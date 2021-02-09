@@ -55,6 +55,8 @@ class PyWMView:
         if size_w > 0 and size_h > 0:
             self.size = (size_w, size_h)
 
+        self.on_update()
+
         res = (self.box, self._focus_pending, self._size_pending, self.accepts_input, self.z_index)
         self._focus_pending = False
         self._size_pending = (-1, -1)
@@ -81,6 +83,9 @@ class PyWMView:
     Virtual methods
     """
     def main(self):
+        pass
+
+    def on_update(self):
         pass
 
     def destroy(self):

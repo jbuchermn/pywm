@@ -14,10 +14,10 @@
 | Atom                   |    no     | ?                   | ?                                                        |
 | VSCodium               |    no     | ?                   | ?                                                        |
 | Matplotlib (Qt5)       |    no     | working             | Requires DISPLAY=":0" to be set?!                        |
+| GIMP-2.99              |    no     | working poorly      | Some windows / popups do not open at all                 |
+| OpenSCAD               |    no     | not working         | Save as / New File Dialogs do not work                   |
 
 | IntelliJ               |    ?      | ?                   | ?                                                        |
-| GIMP                   |    ?      | ?                   | ?                                                        |
-| OpenSCAD               |    ?      | ?                   | ?                                                        |
 | FreeCAD                |    ?      | ?                   | ?                                                        |
 
 | VSCodium               |    yes    | working             | No hidpi scaling                                         |
@@ -32,8 +32,11 @@
 
 ## ToDo
 
-- Use sorting for z-index logic
 - Alacritty does not obtain information about the scale factor --> Blurry
+- OpenSCAD dialogs
+- GIMP-2.99 dialogs
+
+- Use sorting for z-index logic
 - Cursor not displayed initially
 
 - Clipboard
