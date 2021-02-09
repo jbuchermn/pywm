@@ -6,12 +6,16 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 #include <wlr/xwayland.h>
+#include <wlr/types/wlr_output_layout.h>
+
+#include "wm/wm_view_xdg.h"
 
 #include "wm/wm_util.h"
-#include "wm/wm_view_xdg.h"
+#include "wm/wm_config.h"
 #include "wm/wm_view.h"
 #include "wm/wm_seat.h"
 #include "wm/wm_server.h"
+#include "wm/wm_layout.h"
 #include "wm/wm.h"
 
 struct wm_view_vtable wm_view_xdg_vtable;
@@ -19,6 +23,34 @@ struct wm_view_vtable wm_view_xdg_vtable;
 /*
  * Callbacks
  */
+static void popup_handle_map(struct wl_listener* listener, void* data){
+    struct wm_popup_xdg* popup = wl_container_of(listener, popup, map);
+
+    /* Noop */
+}
+
+static void popup_handle_unmap(struct wl_listener* listener, void* data){
+    struct wm_popup_xdg* popup = wl_container_of(listener, popup, unmap);
+
+    /* Noop */
+}
+
+static void popup_handle_destroy(struct wl_listener* listener, void* data){
+    struct wm_popup_xdg* popup = wl_container_of(listener, popup, destroy);
+    wm_popup_xdg_destroy(popup);
+    free(popup);
+}
+
+static void popup_handle_new_popup(struct wl_listener* listener, void* data){
+    struct wm_popup_xdg* popup = wl_container_of(listener, popup, new_popup);
+    struct wlr_xdg_popup* wlr_xdg_popup = data;
+
+    struct wm_popup_xdg* new_popup = calloc(1, sizeof(struct wm_popup_xdg));
+    wm_popup_xdg_init(new_popup, popup->toplevel, wlr_xdg_popup);
+}
+
+
+
 static void handle_map(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, map);
 
@@ -56,9 +88,73 @@ static void handle_destroy(struct wl_listener* listener, void* data){
     free(view);
 }
 
+static void handle_new_popup(struct wl_listener* listener, void* data){
+    struct wm_view_xdg* view = wl_container_of(listener, view, new_popup);
+    struct wlr_xdg_popup* wlr_xdg_popup = data;
+
+    struct wm_popup_xdg* popup = calloc(1, sizeof(struct wm_popup_xdg));
+    wm_popup_xdg_init(popup, view, wlr_xdg_popup);
+}
 
 /*
- * Class implementation
+ * Class implementation wm_popup_xdg
+ */
+void wm_popup_xdg_init(struct wm_popup_xdg* popup, struct wm_view_xdg* toplevel, struct wlr_xdg_popup* wlr_xdg_popup){
+
+    popup->wlr_xdg_popup = wlr_xdg_popup;
+    popup->toplevel = toplevel;
+
+    popup->map.notify = &popup_handle_map;
+    wl_signal_add(&wlr_xdg_popup->base->events.map, &popup->map);
+
+    popup->unmap.notify = &popup_handle_unmap;
+    wl_signal_add(&wlr_xdg_popup->base->events.unmap, &popup->unmap);
+
+    popup->destroy.notify = &popup_handle_destroy;
+    wl_signal_add(&wlr_xdg_popup->base->events.destroy, &popup->destroy);
+
+    popup->new_popup.notify = &popup_handle_new_popup;
+    wl_signal_add(&wlr_xdg_popup->base->events.new_popup, &popup->new_popup);
+
+
+    /* Unconstrain popup */
+    int width, height;
+    wm_view_get_size(&popup->toplevel->super, &width, &height);
+
+    if(popup->toplevel->constrain_popups_to_toplevel){
+        struct wlr_box box = {
+            .x = 0,
+            .y = 0,
+            .width = width,
+            .height = height
+        };
+        wlr_xdg_popup_unconstrain_from_box(popup->wlr_xdg_popup, &box);
+    }else{
+        struct wlr_box* output_box = wlr_output_layout_get_box(
+                popup->toplevel->super.wm_server->wm_layout->wlr_output_layout, NULL);
+
+        double x_scale = width / popup->toplevel->super.display_width;
+        double y_scale = height / popup->toplevel->super.display_height;
+        struct wlr_box box = {
+            .x = -popup->toplevel->super.display_x * x_scale,
+            .y = -popup->toplevel->super.display_y * y_scale,
+            .width = output_box->width * x_scale,
+            .height = output_box->height * y_scale
+        };
+        wlr_xdg_popup_unconstrain_from_box(popup->wlr_xdg_popup, &box);
+    }
+}
+
+void wm_popup_xdg_destroy(struct wm_popup_xdg* popup){
+    wl_list_remove(&popup->map.link);
+    wl_list_remove(&popup->unmap.link);
+    wl_list_remove(&popup->destroy.link);
+    wl_list_remove(&popup->new_popup.link);
+}
+
+
+/*
+ * Class implementation wm_view_xdg
  */
 void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct wlr_xdg_surface* surface){
     wm_view_base_init(&view->super, server);
@@ -75,9 +171,14 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
     view->destroy.notify = &handle_destroy;
     wl_signal_add(&surface->events.destroy, &view->destroy);
 
+    view->new_popup.notify = &handle_new_popup;
+    wl_signal_add(&surface->events.new_popup, &view->new_popup);
+
     /* Get rid of white spaces around; therefore geometry.width/height should always equal current.width/height */
     view->floating = false;
     wlr_xdg_toplevel_set_tiled(surface, 15);
+
+    view->constrain_popups_to_toplevel = server->wm_config->constrain_popups_to_toplevel;
 }
 
 static void wm_view_xdg_destroy(struct wm_view* super){
@@ -86,6 +187,7 @@ static void wm_view_xdg_destroy(struct wm_view* super){
     wl_list_remove(&view->map.link);
     wl_list_remove(&view->unmap.link);
     wl_list_remove(&view->destroy.link);
+    wl_list_remove(&view->new_popup.link);
 
     wm_view_base_destroy(&view->super);
 }

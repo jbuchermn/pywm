@@ -8,4 +8,5 @@ void wm_config_init_default(struct wm_config* config){
     config->xcursor_size = 12;
 
     config->focus_follows_mouse = 1;
+    config->constrain_popups_to_toplevel = 0;
 }
