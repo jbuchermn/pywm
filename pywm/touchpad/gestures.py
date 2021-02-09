@@ -19,12 +19,14 @@ _lp_inertia = 0.8
 _validate_thresholds = {
     'delta_x': .02,
     'delta_y': .02,
+    'delta2_s': .0005,
     'scale': .02
 }
 
 _validate_centers = {
     'delta_x': 0.,
     'delta_y': 0.,
+    'delta2_s': 0.,
     'scale': 1.
 }
 
@@ -200,6 +202,7 @@ class HigherSwipeGesture(Gesture):
         self._update = update
         self._begin_t = update.t
 
+        self._d2s = 0
         self._dx = 0
         self._dy = 0
 
@@ -222,23 +225,30 @@ class HigherSwipeGesture(Gesture):
 
         dx = 0
         dy = 0
+        d2s = 0
         for i, x, y, z in update.touches:
             try:
                 idx = [it[0] for it in self._update.touches].index(i)
+
                 dx += x - [it[1] for it in self._update.touches][idx]
+                d2s += (x - [it[1] for it in self._update.touches][idx])**2
+
                 dy += y - [it[2] for it in self._update.touches][idx]
+                d2s += (y - [it[2] for it in self._update.touches][idx])**2
             except Exception:
                 pass
 
         self._dx += dx / self.n_touches
         self._dy += dy / self.n_touches
+        self._d2s += d2s / self.n_touches
 
         """
         Update
         """
         self.update({
             'delta_x': self._dx,
-            'delta_y': self._dy
+            'delta_y': self._dy,
+            'delta2_s': self._d2s,
         })
 
 
