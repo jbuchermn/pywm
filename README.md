@@ -6,25 +6,28 @@
 |------------------------|-----------|---------------------|----------------------------------------------------------|
 | Termite                |    no     | working             |                none                                      |
 | imv                    |    no     | working             |                none                                      |
-| LibreOffice            |    no     | working             | Welcome Window is not display (properly)                 |
+| LibreOffice            |    no     | working             |                none                                      |
 | Alacritty              |    no     | working             | Looks terrible                                           |
 | Chromium               |    no     | working             | Weird behaviour entering search (related to full-screen YT?) |
 | -                      |    -      | -                   | Too large popups are placed wrong (this is an issue with sway as well) |
-| Firefox                |    no     | working             | "Save as" Dialog possibly scaled weirdly                 |
-| Matplotlib (Qt5)       |    no     | working             | Requires DISPLAY=":0" to be set?!                        |
-| GIMP-2.99              |    no     | working             |                 none                                     |
-| OpenSCAD               |    no     | working             |                 none                                     |
+| Firefox                |    no     | working             | "Save as" Dialog opens in background                     |
+| Matplotlib (Qt5)       |    no     | working             |                none                                      |
+| GIMP-2.99              |    no     | working             | Popups cannot be moved / resized                         |
+| OpenSCAD               |    no     | working             |                none                                      |
+
+
+| VSCodium               |    yes    | working             | No hidpi scaling                                         |
+| Firefox                |    yes    | working             | "Save as" Dialog possibly scaled weirdly and unclickable |
+| -                      |    -      | -                   | No hidpi scaling                                         |
+| Matplotlib             |    yes    | not working         |                                                          |
+| Zoom                   |    yes    | working very poorly | ?                                                        |
+
+
 | Atom                   |    no     | ?                   | ?                                                        |
 | VSCodium               |    no     | ?                   | ?                                                        |
 
 | IntelliJ               |    ?      | ?                   | ?                                                        |
 | FreeCAD                |    ?      | ?                   | ?                                                        |
-
-| VSCodium               |    yes    | working             | No hidpi scaling                                         |
-| Firefox                |    yes    | working             | "Save as" Dialog possibly scaled weirdly and unclickable |
-| -                      |           |                     | No hidpi scaling                                         |
-| Matplotlib             |    yes    | not working         |                                                          |
-| Zoom                   |    yes    | working very poorly | ?                                                        |
 | Atom                   |    yes    | ?                   | ?                                                        |
 | Chromium               |    yes    | ?                   | ?                                                        |
 
@@ -32,28 +35,33 @@
 
 ## ToDo
 
-- Alacritty does not obtain information about the scale factor --> Blurry
-
+- Firefox background popups
+- Moveable and resizable popups
+- Send wlr_surface_send_enter at proper place --> Fixes alacrittys unawareness of dpi
 - Use sorting for z-index logic
 - Cursor not displayed initially
 
 - Clipboard
 - Change cursor (in general + e.g. when over a link)
 
+- Fullscreen mode on views (xdg-shell configure?) -> i.e. Chrome without client-side-decorations (wlr_xdg_toplevel_set_fullscreen)
+- Close window functionality from Python (e.g. via Shortcut, for Chrome popups)
+
 ## Backlog
 
 ### General
 
 - Various TODO Comments
+- Move popups
 - Popup constraints on scaling
 - MBP keymap (incl Command+c / Command-v)
-- Server-side decorations / Close window via shortcut (e.g. Chrome popups)
-- Fullscreen mode on views (xdg-shell configure?) -> i.e. Chrome without client-side-decorations
-  (wlr_xdg_toplevel_set_fullscreen)
 - Blurry rendering during animations on rescale
-- Login mechanism
 - Damaging regions
 - Screensharing using xdg-desktop-portal-wlr / Screenshots / -records
+- Blur the background via OpenGL shaders?
+
+- Multiple outputs
+- Login mechanism
 
 ### XWayland
 
@@ -61,3 +69,8 @@
 - HiDPI scaling
 - Certain welcome windows (OpenSCAD, FreeCAD) are not displayed at all. In case of OpenSCAD, a wlr_surface is registered, but no view ever reaches the python side
 
+## Notes
+
+- Firefox: MOZ_ENABLE_WAYLAND=1
+- Chromium: --enable-features=UseOzonePlatform --ozone-platform=wayland
+- Matplotlib / Qt5 on Wayland requires DISPLAY=":0" to be set?!
