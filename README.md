@@ -9,7 +9,7 @@
 | LibreOffice            |    no     | working             |                none                                      |
 | Alacritty              |    no     | working             |                none                                      |
 | Chromium               |    no     | working             | Too large popups are placed wrong (this is an issue with sway as well) |
-| Firefox                |    no     | working             | "Save as" Dialog opens in background                     |
+| Firefox                |    no     | working             |                none                                      |
 | Matplotlib (Qt5)       |    no     | working             |                none                                      |
 | GIMP-2.99              |    no     | working             | Popups cannot be moved / resized                         |
 | OpenSCAD               |    no     | working             |                none                                      |
@@ -34,7 +34,6 @@
 
 ## ToDo
 
-- Firefox background popups
 - Moveable and resizable popups
 
 - Cursor not displayed initially
