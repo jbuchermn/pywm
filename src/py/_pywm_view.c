@@ -75,14 +75,14 @@ void _pywm_view_update(struct _pywm_view* view){
         }
 
         if(w >= 0.0 && h >= 0.0)
-            wm_view_set_box(view->view, x, y, w, h);
+            wm_content_set_box(&view->view->super, x, y, w, h);
         if(width_pending > 0 && height_pending > 0)
             wm_view_request_size(view->view, width_pending, height_pending);
         if(focus_pending)
             wm_focus_view(view->view);
 
         view->view->accepts_input = accepts_input;
-        view->view->z_index = z_index;
+        view->view->super.z_index = z_index;
 
     }
 

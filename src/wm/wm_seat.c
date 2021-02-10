@@ -121,6 +121,7 @@ void wm_seat_focus_surface(struct wm_seat* seat, struct wlr_surface* surface){
         return;
     }
 
+    activate_surface(prev, false);
     activate_surface(surface, true);
 
     struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat->wlr_seat);

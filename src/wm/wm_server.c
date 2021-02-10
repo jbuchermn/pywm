@@ -17,6 +17,7 @@
 #include <wlr/xwayland.h>
 
 #include "wm/wm_server.h"
+#include "wm/wm_util.h"
 #include "wm/wm.h"
 #include "wm/wm_seat.h"
 #include "wm/wm_view_xdg.h"
@@ -24,6 +25,7 @@
 #include "wm/wm_layout.h"
 #include "wm/wm_widget.h"
 #include "wm/wm_config.h"
+#include "wm/wm_output.h"
 
 
 /*
@@ -52,6 +54,12 @@ static void handle_new_xdg_surface(struct wl_listener* listener, void* data){
 
     struct wm_server* server = wl_container_of(listener, server, new_xdg_surface);
     struct wlr_xdg_surface* surface = data;
+
+    /* Let clients know which (only one is supported) output they're on */
+    if(server->wm_layout->default_output) {
+        wlr_surface_send_enter(surface->surface,
+                server->wm_layout->default_output->wlr_output);
+    }
 
     if(surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL){
         /* Popups should be handled by the parent */
@@ -101,8 +109,7 @@ static void handle_ready(struct wl_listener* listener, void* data){
  * Class implementation
  */
 void wm_server_init(struct wm_server* server, struct wm_config* config){
-    wl_list_init(&server->wm_views);
-    wl_list_init(&server->wm_widgets);
+    wl_list_init(&server->wm_contents);
     server->wm_config = config;
 
     /* Wayland and wlroots resources */
@@ -196,8 +203,11 @@ void wm_server_destroy(struct wm_server* server){
 
 void wm_server_surface_at(struct wm_server* server, double at_x, double at_y, 
         struct wlr_surface** result, double* result_sx, double* result_sy){
-    struct wm_view* view;
-    wl_list_for_each(view, &server->wm_views, link){
+    struct wm_content* content;
+    wl_list_for_each(content, &server->wm_contents, link){
+        if(!wm_content_is_view(content)) continue;
+        struct wm_view* view = wm_cast(wm_view, content);
+
         if(!view->mapped) continue;
         if(!view->accepts_input) continue;
 
@@ -208,7 +218,7 @@ void wm_server_surface_at(struct wm_server* server, double at_x, double at_y,
         if(width <= 0 || height <=0) continue;
 
         double display_x, display_y, display_width, display_height;
-        wm_view_get_box(view, &display_x, &display_y, &display_width, &display_height);
+        wm_content_get_box(content, &display_x, &display_y, &display_width, &display_height);
 
         double scale_x = display_width/width;
         double scale_y = display_height/height;
@@ -245,8 +255,11 @@ static void _view_for_surface(struct wlr_surface* surface, int sx, int sy, void*
 }
 
 struct wm_view* wm_server_view_for_surface(struct wm_server* server, struct wlr_surface* surface){
-    struct wm_view* view;
-    wl_list_for_each(view, &server->wm_views, link){
+    struct wm_content* content;
+    wl_list_for_each(content, &server->wm_contents, link){
+        if(!wm_content_is_view(content)) continue;
+        struct wm_view* view = wm_cast(wm_view, content);
+
         struct _view_for_surface_data data = { 0 };
         data.surface = surface;
         wm_view_for_each_surface(view, _view_for_surface, &data);
@@ -261,7 +274,41 @@ struct wm_view* wm_server_view_for_surface(struct wm_server* server, struct wlr_
 struct wm_widget* wm_server_create_widget(struct wm_server* server){
     struct wm_widget* widget = calloc(1, sizeof(struct wm_widget));
     wm_widget_init(widget, server);
-    wl_list_insert(&server->wm_widgets, &widget->link);
-
     return widget;
+}
+
+
+void wm_server_update_contents(struct wm_server* server){
+    /* Empty or only one element */
+    if(server->wm_contents.next == server->wm_contents.prev) return;
+
+    int swapped = 1;
+    do {
+        swapped = 0;
+
+        struct wl_list* cur1 = server->wm_contents.next;
+        struct wl_list* cur2 = cur1->next;
+        for(;cur1 != server->wm_contents.prev; 
+                cur1 = cur1->next, cur2 = cur2->next){
+
+            struct wm_content* content1 = wl_container_of(cur1, content1, link);
+            struct wm_content* content2 = wl_container_of(cur2, content2, link);
+
+            if(content1->z_index<content2->z_index){
+                cur1->prev->next = cur2;
+                cur2->next->prev = cur1;
+
+                cur1->next = cur2->next;
+                cur2->prev = cur1->prev;
+
+                cur2->next = cur1;
+                cur1->prev = cur2;
+
+                cur1 = cur1->prev;
+                cur2 = cur1;
+                swapped = 1;
+            }
+        }
+
+    } while(swapped);
 }

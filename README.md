@@ -7,9 +7,8 @@
 | Termite                |    no     | working             |                none                                      |
 | imv                    |    no     | working             |                none                                      |
 | LibreOffice            |    no     | working             |                none                                      |
-| Alacritty              |    no     | working             | Looks terrible                                           |
-| Chromium               |    no     | working             | Weird behaviour entering search (related to full-screen YT?) |
-| -                      |    -      | -                   | Too large popups are placed wrong (this is an issue with sway as well) |
+| Alacritty              |    no     | working             |                none                                      |
+| Chromium               |    no     | working             | Too large popups are placed wrong (this is an issue with sway as well) |
 | Firefox                |    no     | working             | "Save as" Dialog opens in background                     |
 | Matplotlib (Qt5)       |    no     | working             |                none                                      |
 | GIMP-2.99              |    no     | working             | Popups cannot be moved / resized                         |
@@ -37,10 +36,8 @@
 
 - Firefox background popups
 - Moveable and resizable popups
-- Send wlr_surface_send_enter at proper place --> Fixes alacrittys unawareness of dpi
-- Use sorting for z-index logic
-- Cursor not displayed initially
 
+- Cursor not displayed initially
 - Clipboard
 - Change cursor (in general + e.g. when over a link)
 

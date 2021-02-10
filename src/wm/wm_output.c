@@ -12,6 +12,7 @@
 #include "wm/wm_widget.h"
 #include "wm/wm_config.h"
 #include "wm/wm.h"
+#include "wm/wm_util.h"
 
 /*
  * Callbacks
@@ -160,10 +161,10 @@ static void render_widget(struct wm_output* output, struct wm_widget* widget){
     if(!widget->wlr_texture) return;
 
     struct wlr_box box = {
-        .x = round(widget->display_x * output->wlr_output->scale),
-        .y = round(widget->display_y * output->wlr_output->scale),
-        .width = round(widget->display_width * output->wlr_output->scale),
-        .height = round(widget->display_height * output->wlr_output->scale)
+        .x = round(widget->super.display_x * output->wlr_output->scale),
+        .y = round(widget->super.display_y * output->wlr_output->scale),
+        .width = round(widget->super.display_width * output->wlr_output->scale),
+        .height = round(widget->super.display_height * output->wlr_output->scale)
     };
 
     float matrix[9];
@@ -186,7 +187,7 @@ static void render_view(struct wm_output* output, struct wm_view* view, struct t
     }
 
     double display_x, display_y, display_width, display_height;
-    wm_view_get_box(view, &display_x, &display_y, &display_width, &display_height);
+    wm_content_get_box(&view->super, &display_x, &display_y, &display_width, &display_height);
 
     struct render_data rdata = {
         .output = output,
@@ -210,6 +211,8 @@ static void handle_frame(struct wl_listener* listener, void* data){
 
     /* Synchronous updates */
     wm_callback_update();
+    wm_server_update_contents(output->wm_server);
+    /* ------------------- */
 
 	if(!wlr_output_attach_render(output->wlr_output, NULL)) {
 		return;
@@ -220,42 +223,15 @@ static void handle_frame(struct wl_listener* listener, void* data){
 	float color[4] = { 0.3, 0.3, 0.3, 1.0 };
 	wlr_renderer_clear(wlr_renderer, color);
 
-    /* Find relevant z_indices */
-    int z_index_min = 0;
-    int z_index_max = 0;
-
-    struct wm_widget* widget;
-    wl_list_for_each_reverse(widget, &output->wm_server->wm_widgets, link){
-        if(widget->z_index<z_index_min) z_index_min = widget->z_index;
-        if(widget->z_index>z_index_max) z_index_max = widget->z_index;
-    }
-
-    struct wm_view* view;
-    wl_list_for_each_reverse(view, &output->wm_server->wm_views, link){
-        if(view->z_index<z_index_min) z_index_min = view->z_index;
-        if(view->z_index>z_index_max) z_index_max = view->z_index;
-    }
-
-    /* Limit to -100 - 100 due to inefficient implementation */
-    if(z_index_min < -100) z_index_min = -100;
-    if(z_index_max > 100) z_index_max = 100;
-
-    /* Render z_indices */
-    for(int z_index = z_index_min; z_index<=z_index_max; z_index++){
-        /* Render views */
-        struct wm_view *view;
-        wl_list_for_each_reverse(view, &output->wm_server->wm_views, link) {
-            if(view->z_index != z_index) continue;
-            render_view(output, view, now);
-
+    /* Render views and widgets */
+    struct wm_content *r;
+    wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
+        if(wm_content_is_view(r)){
+            render_view(output, wm_cast(wm_view, r), now);
+        }else{
+            render_widget(output, wm_cast(wm_widget, r));
         }
 
-        /* Render widgets */
-        struct wm_widget* widget;
-        wl_list_for_each_reverse(widget, &output->wm_server->wm_widgets, link){
-            if(widget->z_index != z_index) continue;
-            render_widget(output, widget);
-        }
     }
 
 

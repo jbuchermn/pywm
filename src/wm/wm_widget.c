@@ -1,28 +1,29 @@
 #include "wm/wm_widget.h"
 #include "wm/wm_server.h"
 
-void wm_widget_init(struct wm_widget* widget, struct wm_server* server){
-    widget->wm_server = server;
+#include "wm/wm_util.h"
 
-    widget->z_index = 0;
+void wm_widget_init(struct wm_widget* widget, struct wm_server* server){
+    wm_content_init(&widget->super, server);
+
     widget->wlr_texture = NULL;
 }
 
-void wm_widget_destroy(struct wm_widget* widget){
-    wl_list_remove(&widget->link);
+static void wm_widget_destroy(struct wm_content* super){
+    struct wm_widget* widget = wm_cast(wm_widget, super);
     wlr_texture_destroy(widget->wlr_texture);
+
+    wm_content_destroy(super);
 }
 
 void wm_widget_set_pixels(struct wm_widget* widget, enum wl_shm_format format, uint32_t stride, uint32_t width, uint32_t height, const void* data){
     if(widget->wlr_texture){
         wlr_texture_write_pixels(widget->wlr_texture, stride, width, height, 0, 0, 0, 0, data);
     }else{
-        widget->wlr_texture = wlr_texture_from_pixels(widget->wm_server->wlr_renderer, format, stride, width, height, data);
+        widget->wlr_texture = wlr_texture_from_pixels(widget->super.wm_server->wlr_renderer, format, stride, width, height, data);
     }
 }
-void wm_widget_set_box(struct wm_widget* widget, double x, double y, double width, double height){
-    widget->display_x = x;
-    widget->display_y = y;
-    widget->display_width = width;
-    widget->display_height = height;
-}
+
+struct wm_content_vtable wm_widget_vtable = {
+    .destroy = &wm_widget_destroy,
+};

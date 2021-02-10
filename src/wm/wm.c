@@ -98,7 +98,7 @@ struct wm_widget* wm_create_widget(){
 }
 
 void wm_destroy_widget(struct wm_widget* widget){
-    wm_widget_destroy(widget);
+    wm_content_destroy(&widget->super);
     free(widget);
 }
 

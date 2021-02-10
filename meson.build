@@ -59,6 +59,7 @@ sources = [
     'src/wm/wm_cursor.c',
     'src/wm/wm_layout.c',
     'src/wm/wm_output.c',
+    'src/wm/wm_content.c',
     'src/wm/wm_view.c',
     'src/wm/wm_view_xdg.c',
     'src/wm/wm_view_xwayland.c',

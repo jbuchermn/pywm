@@ -167,6 +167,7 @@ class PyWM:
         view = None
         is_new = False
 
+        # TODO: Inefficient
         for v in self.views:
             if v._handle == handle:
                 view = v

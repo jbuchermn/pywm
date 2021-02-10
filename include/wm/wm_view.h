@@ -7,36 +7,30 @@
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_box.h>
 
+#include "wm_content.h"
+
 struct wm_seat;
 struct wm_view_vtable;
 
 struct wm_view {
-    struct wl_list link;  // wm_server::wm_views
-    struct wm_server* wm_server;
+    struct wm_content super;
 
     struct wm_view_vtable* vtable;
-
     bool mapped;
 
-    double display_x;
-    double display_y;
-    double display_width;
-    double display_height;
-
     bool accepts_input;
-    int z_index;
 };
 
 void wm_view_base_init(struct wm_view* view, struct wm_server* server);
-void wm_view_base_destroy(struct wm_view* view);
+
 void wm_view_base_get_box(struct wm_view* view, double* x, double* y, double* width, double* height);
 void wm_view_base_set_box(struct wm_view* view, double x, double y, double width, double height);
+
+int wm_content_is_view(struct wm_content* content);
 
 struct wm_view_vtable {
     void (*destroy)(struct wm_view* view);
     void (*get_info)(struct wm_view* view, const char** title, const char** app_id, const char** role);
-    void (*set_box)(struct wm_view* view, double x, double y, double width, double height);
-    void (*get_box)(struct wm_view* view, double* x, double* y, double* width, double* height);
     void (*request_size)(struct wm_view* view, int width, int height);
     void (*get_size)(struct wm_view* view, int* width, int* height);
     void (*get_size_constraints)(struct wm_view* view, int* min_width, int* max_width, int* min_height, int* max_height);
@@ -47,20 +41,9 @@ struct wm_view_vtable {
     struct wm_view* (*get_parent)(struct wm_view* view);
 };
 
-static inline void wm_view_destroy(struct wm_view* view){
-    (*view->vtable->destroy)(view);
-}
 
 static inline void wm_view_get_info(struct wm_view* view, const char** title, const char** app_id, const char** role){
     (*view->vtable->get_info)(view, title, app_id, role);
-}
-
-static inline void wm_view_set_box(struct wm_view* view, double x, double y, double width, double height){
-    (*view->vtable->set_box)(view, x, y, width, height);
-}
-
-static inline void wm_view_get_box(struct wm_view* view, double* x, double* y, double* width, double* height){
-    (*view->vtable->get_box)(view, x, y, width, height);
 }
 
 static inline void wm_view_request_size(struct wm_view* view, int width, int height){

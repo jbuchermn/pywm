@@ -29,6 +29,8 @@ void wm_layout_init(struct wm_layout* layout, struct wm_server* server){
 
     layout->change.notify = &handle_change;
     wl_signal_add(&layout->wlr_output_layout->events.change, &layout->change);
+
+    layout->default_output = NULL;
 }
 
 void wm_layout_destroy(struct wm_layout* layout) {
@@ -43,4 +45,6 @@ void wm_layout_add_output(struct wm_layout* layout, struct wlr_output* out){
     wl_list_insert(&layout->wm_outputs, &output->link);
 
     wlr_output_layout_add_auto(layout->wlr_output_layout, out);
+
+    if(!layout->default_output) layout->default_output = output;
 }

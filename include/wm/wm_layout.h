@@ -13,6 +13,11 @@ struct wm_layout {
     struct wlr_output_layout* wlr_output_layout;
     struct wl_list wm_outputs; // wm_output::link
 
+    /* First registered output for now - multiple screens are not
+     * properly supported anyway - used to notify clients about 
+     * the output they are on */
+    struct wm_output* default_output;
+
     struct wl_listener change;
 };
 

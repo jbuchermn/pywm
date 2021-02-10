@@ -84,7 +84,7 @@ static void handle_unmap(struct wl_listener* listener, void* data){
 
 static void handle_destroy(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, destroy);
-    wm_view_destroy(&view->super);
+    wm_content_destroy(&view->super.super);
     free(view);
 }
 
@@ -131,13 +131,13 @@ void wm_popup_xdg_init(struct wm_popup_xdg* popup, struct wm_view_xdg* toplevel,
         wlr_xdg_popup_unconstrain_from_box(popup->wlr_xdg_popup, &box);
     }else{
         struct wlr_box* output_box = wlr_output_layout_get_box(
-                popup->toplevel->super.wm_server->wm_layout->wlr_output_layout, NULL);
+                popup->toplevel->super.super.wm_server->wm_layout->wlr_output_layout, NULL);
 
-        double x_scale = width / popup->toplevel->super.display_width;
-        double y_scale = height / popup->toplevel->super.display_height;
+        double x_scale = width / popup->toplevel->super.super.display_width;
+        double y_scale = height / popup->toplevel->super.super.display_height;
         struct wlr_box box = {
-            .x = -popup->toplevel->super.display_x * x_scale,
-            .y = -popup->toplevel->super.display_y * y_scale,
+            .x = -popup->toplevel->super.super.display_x * x_scale,
+            .y = -popup->toplevel->super.super.display_y * y_scale,
             .width = output_box->width * x_scale,
             .height = output_box->height * y_scale
         };
@@ -188,8 +188,6 @@ static void wm_view_xdg_destroy(struct wm_view* super){
     wl_list_remove(&view->unmap.link);
     wl_list_remove(&view->destroy.link);
     wl_list_remove(&view->new_popup.link);
-
-    wm_view_base_destroy(&view->super);
 }
 
 static void wm_view_xdg_get_info(struct wm_view* super, const char** title, const char** app_id, const char** role){
@@ -244,6 +242,7 @@ static void wm_view_xdg_get_size(struct wm_view* super, int* width, int* height)
         *width = view->wlr_xdg_surface->surface->current.width;
         *height = view->wlr_xdg_surface->surface->current.height;
     }
+
 }
 
 
@@ -274,13 +273,15 @@ static struct wm_view* wm_view_xdg_get_parent(struct wm_view* super){
         return NULL;
     }
 
-    struct wm_view* parent;
-    wl_list_for_each(parent, &view->super.wm_server->wm_views, link){
-        /* Only works for one-level inheritance! */
-        if(parent->vtable == view->super.vtable){
-            struct wm_view_xdg* parent_xdg = wm_cast(wm_view_xdg, parent);
-            if(parent_xdg->wlr_xdg_surface == parent_surface){
-                return parent;
+    struct wm_content* parent;
+    wl_list_for_each(parent, &view->super.super.wm_server->wm_contents, link){
+        if(parent->vtable == view->super.super.vtable){
+            struct wm_view* parent_view = wm_cast(wm_view, parent);
+            if(parent_view->vtable == view->super.vtable){
+                struct wm_view_xdg* parent_xdg = wm_cast(wm_view_xdg, parent_view);
+                if(parent_xdg->wlr_xdg_surface == parent_surface){
+                    return parent_view;
+                }
             }
         }
     }
@@ -292,8 +293,6 @@ static struct wm_view* wm_view_xdg_get_parent(struct wm_view* super){
 struct wm_view_vtable wm_view_xdg_vtable = {
     .destroy = wm_view_xdg_destroy,
     .get_info = wm_view_xdg_get_info,
-    .set_box = wm_view_base_set_box,
-    .get_box = wm_view_base_get_box,
     .request_size = wm_view_xdg_request_size,
     .get_size_constraints = wm_view_xdg_get_size_constraints,
     .get_size = wm_view_xdg_get_size,
