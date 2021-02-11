@@ -11,8 +11,10 @@
 | Chromium               |    no     | working             | Too large popups are placed wrong (this is an issue with sway as well) |
 | Firefox                |    no     | working             |                none                                      |
 | Matplotlib (Qt5)       |    no     | working             |                none                                      |
-| GIMP-2.99              |    no     | working             | Popups cannot be moved / resized                         |
+| GIMP-2.99              |    no     | working             | Popups (actually floating toplevels) cannot be moved     |
 | OpenSCAD               |    no     | working             |                none                                      |
+| Zoom                   |    no     | working             | Popup-toplevels are not recognized as floating           |
+| nemo                   |    no     | working             | Missing decorations on popups are not nice               |
 
 
 | VSCodium               |    yes    | working             | No hidpi scaling                                         |
@@ -34,28 +36,32 @@
 
 ## ToDo
 
-- Moveable and resizable popups
+- Handle shadow-related CSD-offsets at GIMP
+- OpenGL shaders
+    - ShapeCorners for KDE?
+    - Blurry background?
+    - Blurry rendering on demand? (make animations look nicer)
 
-- Cursor not displayed initially
-- Clipboard
-- Change cursor (in general + e.g. when over a link)
-
+- Possibly use toplevel->parent to find floating ones?
+- XDG: Moveable and (possibly) resizable floating toplevels
 - Fullscreen mode on views (xdg-shell configure?) -> i.e. Chrome without client-side-decorations (wlr_xdg_toplevel_set_fullscreen)
 - Close window functionality from Python (e.g. via Shortcut, for Chrome popups)
+
+- Clipboard
+- Cursor not displayed initially
+- Change cursor (in general + e.g. when over a link)
+
+
 
 ## Backlog
 
 ### General
 
 - Various TODO Comments
-- Move popups
 - Popup constraints on scaling
 - MBP keymap (incl Command+c / Command-v)
-- Blurry rendering during animations on rescale
-- Damaging regions
 - Screensharing using xdg-desktop-portal-wlr / Screenshots / -records
-- Blur the background via OpenGL shaders?
-
+- Damaging regions
 - Multiple outputs
 - Login mechanism
 
@@ -63,7 +69,6 @@
 
 - setenv DISPLAY
 - HiDPI scaling
-- Certain welcome windows (OpenSCAD, FreeCAD) are not displayed at all. In case of OpenSCAD, a wlr_surface is registered, but no view ever reaches the python side
 
 ## Notes
 

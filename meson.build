@@ -53,6 +53,7 @@ deps = [
 sources = [
     'src/wm/wm.c',
     'src/wm/wm_server.c',
+    'src/wm/wm_renderer.c',
     'src/wm/wm_seat.c',
     'src/wm/wm_keyboard.c',
     'src/wm/wm_pointer.c',

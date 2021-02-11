@@ -11,6 +11,7 @@
 struct wm_config;
 struct wm_seat;
 struct wm_layout;
+struct wm_renderer;
 
 struct wm_server{
     struct wm_config* wm_config;
@@ -20,7 +21,6 @@ struct wm_server{
 
     struct wlr_backend* wlr_backend;
     struct wlr_compositor* wlr_compositor;
-    struct wlr_renderer* wlr_renderer;
     struct wlr_data_device_manager* wlr_data_device_manager;
     struct wlr_xdg_shell* wlr_xdg_shell;
     struct wlr_server_decoration_manager* wlr_server_decoration_manager;
@@ -28,6 +28,7 @@ struct wm_server{
     struct wlr_xwayland* wlr_xwayland;
     struct wlr_xcursor_manager* wlr_xcursor_manager;
 
+    struct wm_renderer* wm_renderer;
     struct wm_seat* wm_seat;
     struct wm_layout* wm_layout;
 

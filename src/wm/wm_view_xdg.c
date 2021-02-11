@@ -96,6 +96,42 @@ static void handle_new_popup(struct wl_listener* listener, void* data){
     wm_popup_xdg_init(popup, view, wlr_xdg_popup);
 }
 
+static void handle_fullscreen(struct wl_listener* listener, void* data){
+    struct wm_view_xdg* view = wl_container_of(listener, view, request_fullscreen);
+
+    wlr_log(WLR_INFO, "Fullscreen requested");
+}
+
+static void handle_move(struct wl_listener* listener, void* data){
+    struct wm_view_xdg* view = wl_container_of(listener, view, request_move);
+
+    wlr_log(WLR_INFO, "Move requested");
+}
+
+static void handle_resize(struct wl_listener* listener, void* data){
+    struct wm_view_xdg* view = wl_container_of(listener, view, request_resize);
+
+    wlr_log(WLR_INFO, "Resize requested");
+}
+
+static void handle_minimize(struct wl_listener* listener, void* data){
+    struct wm_view_xdg* view = wl_container_of(listener, view, request_minimize);
+
+    wlr_log(WLR_INFO, "Minimize requested");
+}
+
+static void handle_maximize(struct wl_listener* listener, void* data){
+    struct wm_view_xdg* view = wl_container_of(listener, view, request_maximize);
+
+    wlr_log(WLR_INFO, "Maximize requested");
+}
+
+static void handle_show_window_menu(struct wl_listener* listener, void* data){
+    struct wm_view_xdg* view = wl_container_of(listener, view, request_show_window_menu);
+
+    wlr_log(WLR_INFO, "Show window requested");
+}
+
 /*
  * Class implementation wm_popup_xdg
  */
@@ -173,6 +209,25 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
 
     view->new_popup.notify = &handle_new_popup;
     wl_signal_add(&surface->events.new_popup, &view->new_popup);
+
+    view->request_fullscreen.notify = &handle_fullscreen;
+    wl_signal_add(&surface->toplevel->events.request_fullscreen, &view->request_fullscreen);
+
+    view->request_move.notify = &handle_move;
+    wl_signal_add(&surface->toplevel->events.request_move, &view->request_move);
+
+    view->request_resize.notify = &handle_resize;
+    wl_signal_add(&surface->toplevel->events.request_resize, &view->request_resize);
+
+    view->request_maximize.notify = &handle_maximize;
+    wl_signal_add(&surface->toplevel->events.request_maximize, &view->request_maximize);
+
+    view->request_minimize.notify = &handle_minimize;
+    wl_signal_add(&surface->toplevel->events.request_minimize, &view->request_minimize);
+
+    view->request_show_window_menu.notify = &handle_show_window_menu;
+    wl_signal_add(&surface->toplevel->events.request_show_window_menu, &view->request_show_window_menu);
+
 
     /* Get rid of white spaces around; therefore geometry.width/height should always equal current.width/height */
     view->floating = false;

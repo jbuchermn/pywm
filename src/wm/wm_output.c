@@ -4,13 +4,13 @@
 #include <time.h>
 #include <wlr/util/log.h>
 #include <wlr/render/wlr_renderer.h>
-#include <wlr/types/wlr_matrix.h>
 #include "wm/wm_server.h"
 #include "wm/wm_output.h"
 #include "wm/wm_view.h"
 #include "wm/wm_layout.h"
 #include "wm/wm_widget.h"
 #include "wm/wm_config.h"
+#include "wm/wm_renderer.h"
 #include "wm/wm.h"
 #include "wm/wm_util.h"
 
@@ -146,12 +146,7 @@ static void render_surface(struct wlr_surface *surface, int sx, int sy, void *da
 		.height = round(surface->current.height * rdata->y_scale * output->wlr_output->scale)
 	};
 
-	float matrix[9];
-	enum wl_output_transform transform = wlr_output_transform_invert(surface->current.transform);
-	wlr_matrix_project_box(matrix, &box, transform, 0, output->wlr_output->transform_matrix);
-
-    /* Actual rendering */
-	wlr_render_texture_with_matrix(output->wm_server->wlr_renderer, texture, matrix, 1);
+    wm_renderer_render_texture_at(output->wm_server->wm_renderer, texture, &box);
 
     /* Notify client */
 	wlr_surface_send_frame_done(surface, &rdata->when);
@@ -167,9 +162,7 @@ static void render_widget(struct wm_output* output, struct wm_widget* widget){
         .height = round(widget->super.display_height * output->wlr_output->scale)
     };
 
-    float matrix[9];
-    wlr_matrix_project_box(matrix, &box, WL_OUTPUT_TRANSFORM_NORMAL, 0, output->wlr_output->transform_matrix);
-    wlr_render_texture_with_matrix(output->wm_server->wlr_renderer, widget->wlr_texture, matrix, 1.);
+    wm_renderer_render_texture_at(output->wm_server->wm_renderer, widget->wlr_texture, &box);
 
 }
 
@@ -204,7 +197,7 @@ static void render_view(struct wm_output* output, struct wm_view* view, struct t
 
 static void handle_frame(struct wl_listener* listener, void* data){
     struct wm_output* output = wl_container_of(listener, output, frame);
-    struct wlr_renderer* wlr_renderer = output->wm_server->wlr_renderer;
+    struct wm_renderer* renderer = output->wm_server->wm_renderer;
 
 	struct timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
@@ -218,10 +211,7 @@ static void handle_frame(struct wl_listener* listener, void* data){
 		return;
 	}
 
-	wlr_renderer_begin(wlr_renderer, output->wlr_output->width, output->wlr_output->height);
-
-	float color[4] = { 0.3, 0.3, 0.3, 1.0 };
-	wlr_renderer_clear(wlr_renderer, color);
+    wm_renderer_begin(renderer, output);
 
     /* Render views and widgets */
     struct wm_content *r;
@@ -235,7 +225,7 @@ static void handle_frame(struct wl_listener* listener, void* data){
     }
 
 
-	wlr_renderer_end(wlr_renderer);
+    wm_renderer_end(renderer, output);
 	if(!wlr_output_commit(output->wlr_output)){
         wlr_log(WLR_INFO, "Output commit failed, manually scheduling frame");
         wlr_output_schedule_frame(output->wlr_output);

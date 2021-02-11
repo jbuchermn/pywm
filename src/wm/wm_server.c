@@ -10,7 +10,6 @@
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/config.h>
-#include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_linux_dmabuf_v1.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/util/log.h>
@@ -26,6 +25,7 @@
 #include "wm/wm_widget.h"
 #include "wm/wm_config.h"
 #include "wm/wm_output.h"
+#include "wm/wm_renderer.h"
 
 
 /*
@@ -122,12 +122,11 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wlr_backend = wlr_backend_autocreate(server->wl_display, NULL);
     assert(server->wlr_backend);
 
-    server->wlr_renderer = wlr_backend_get_renderer(server->wlr_backend);
-    assert(server->wlr_renderer);
+    server->wm_renderer = calloc(1, sizeof(struct wm_renderer));
+    wm_renderer_init(server->wm_renderer, server);
 
-    wlr_renderer_init_wl_display(server->wlr_renderer, server->wl_display);
 
-    server->wlr_compositor = wlr_compositor_create(server->wl_display, server->wlr_renderer);
+    server->wlr_compositor = wlr_compositor_create(server->wl_display, server->wm_renderer->wlr_renderer);
     assert(server->wlr_compositor);
 
     server->wlr_data_device_manager = wlr_data_device_manager_create(server->wl_display);
@@ -137,6 +136,7 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     assert(server->wlr_xdg_shell);
 
     server->wlr_server_decoration_manager = wlr_server_decoration_manager_create(server->wl_display);
+	/* wlr_server_decoration_manager_set_default_mode(server->wlr_server_decoration_manager, WLR_SERVER_DECORATION_MANAGER_MODE_CLIENT); */
 	wlr_server_decoration_manager_set_default_mode(server->wlr_server_decoration_manager, WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
 
     server->wlr_xdg_decoration_manager = wlr_xdg_decoration_manager_v1_create(server->wl_display);
@@ -196,6 +196,8 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
 }
 
 void wm_server_destroy(struct wm_server* server){
+    wm_renderer_destroy(server->wm_renderer);
+
     wlr_xwayland_destroy(server->wlr_xwayland);
     wl_display_destroy_clients(server->wl_display);
     wl_display_destroy(server->wl_display);

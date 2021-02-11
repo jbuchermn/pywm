@@ -34,6 +34,13 @@ struct wm_view_xdg {
     struct wl_listener unmap;
     struct wl_listener destroy;
     struct wl_listener new_popup;
+
+    struct wl_listener request_fullscreen;
+    struct wl_listener request_move;
+    struct wl_listener request_resize;
+    struct wl_listener request_maximize;
+    struct wl_listener request_minimize;
+    struct wl_listener request_show_window_menu;
 };
 
 void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct wlr_xdg_surface* surface);

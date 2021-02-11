@@ -1,5 +1,6 @@
 #include "wm/wm_widget.h"
 #include "wm/wm_server.h"
+#include "wm/wm_renderer.h"
 
 #include "wm/wm_util.h"
 
@@ -20,7 +21,7 @@ void wm_widget_set_pixels(struct wm_widget* widget, enum wl_shm_format format, u
     if(widget->wlr_texture){
         wlr_texture_write_pixels(widget->wlr_texture, stride, width, height, 0, 0, 0, 0, data);
     }else{
-        widget->wlr_texture = wlr_texture_from_pixels(widget->super.wm_server->wlr_renderer, format, stride, width, height, data);
+        widget->wlr_texture = wlr_texture_from_pixels(widget->super.wm_server->wm_renderer->wlr_renderer, format, stride, width, height, data);
     }
 }
 
