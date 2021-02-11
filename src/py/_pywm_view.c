@@ -42,17 +42,20 @@ void _pywm_view_update(struct _pywm_view* view){
     int min_w, max_w, min_h, max_h;
     wm_view_get_size_constraints(view->view, &min_w, &max_w, &min_h, &max_h);
 
+    int offset_x, offset_y;
+    wm_view_get_offset(view->view, &offset_x, &offset_y);
 
     int width, height;
     wm_view_get_size(view->view, &width, &height);
 
     PyObject* args = Py_BuildValue(
-            "(llOsssOiiiiii)",
+            "(llOsssOiiiiiiii)",
             view->handle,
             parent_handle,
             is_floating ? Py_True : Py_False,
             title, app_id, role, xwayland ? Py_True : Py_False,
             min_w, max_w, min_h, max_h,
+            offset_x, offset_y,
             width, height);
 
 

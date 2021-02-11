@@ -16,6 +16,7 @@ class PyWMView:
         self.focused = False
         
         self.box = (0.0, 0.0, 1.0, 1.0)
+        self.offset = (0, 0)
         self.size = (1, 1)
         self.z_index = 0
         self.accepts_input = True
@@ -28,6 +29,7 @@ class PyWMView:
                 parent_handle,
                 floating, title, app_id, role, is_xwayland, 
                 sc_min_w, sc_max_w, sc_min_h, sc_max_h,
+                offset_x, offset_y,
                 size_w, size_h):
         if parent_handle is not None:
             for v in self.wm.views:
@@ -54,6 +56,8 @@ class PyWMView:
 
         if size_w > 0 and size_h > 0:
             self.size = (size_w, size_h)
+
+        self.offset = (offset_x, offset_y)
 
         self.on_update()
 

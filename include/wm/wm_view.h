@@ -33,6 +33,7 @@ struct wm_view_vtable {
     void (*get_info)(struct wm_view* view, const char** title, const char** app_id, const char** role);
     void (*request_size)(struct wm_view* view, int width, int height);
     void (*get_size)(struct wm_view* view, int* width, int* height);
+    void (*get_offset)(struct wm_view* view, int* offset_x, int* offset_y);
     void (*get_size_constraints)(struct wm_view* view, int* min_width, int* max_width, int* min_height, int* max_height);
     void (*focus)(struct wm_view* view, struct wm_seat* seat);
     struct wlr_surface* (*surface_at)(struct wm_view* view, double at_x, double at_y, double* sx, double* sy);
@@ -56,6 +57,10 @@ static inline void wm_view_get_size_constraints(struct wm_view* view, int* min_w
 
 static inline void wm_view_get_size(struct wm_view* view, int* width, int* height){
     (*view->vtable->get_size)(view, width, height);
+}
+
+static inline void wm_view_get_offset(struct wm_view* view, int* offset_x, int* offset_y){
+    (*view->vtable->get_offset)(view, offset_x, offset_y);
 }
 
 static inline void wm_view_focus(struct wm_view* view, struct wm_seat* seat){

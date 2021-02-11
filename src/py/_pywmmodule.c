@@ -77,18 +77,20 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
         "xcursor_size",
         "focus_follows_mouse",
         "constrain_popups_to_toplevel",
+        "encourage_csd",
         "touchpad_device_name",
         NULL
     };
     char* ignore;
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwargs, "|dssipps", kwlist,
+    if(!PyArg_ParseTupleAndKeywords(args, kwargs, "|dssippps", kwlist,
                 &conf.output_scale,
                 &conf.xcursor_theme,
                 &conf.xcursor_name,
                 &conf.xcursor_size,
                 &conf.focus_follows_mouse,
                 &conf.constrain_popups_to_toplevel,
+                &conf.encourage_csd,
                 &ignore)){
         PyErr_SetString(PyExc_TypeError, "Cannot parse run arguments");
         return NULL;

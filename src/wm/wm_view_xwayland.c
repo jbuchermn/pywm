@@ -264,6 +264,11 @@ static void wm_view_xwayland_get_size(struct wm_view* super, int* width, int* he
     *height = view->wlr_xwayland_surface->surface->current.height;
 }
 
+static void wm_view_xwayland_get_offset(struct wm_view* super, int* offset_x, int* offset_y){
+    *offset_x = 0;
+    *offset_y = 0;
+}
+
 
 static void wm_view_xwayland_focus(struct wm_view* super, struct wm_seat* seat){
     struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
@@ -351,6 +356,7 @@ struct wm_view_vtable wm_view_xwayland_vtable = {
     .get_info = wm_view_xwayland_get_info,
     .request_size = wm_view_xwayland_request_size,
     .get_size = wm_view_xwayland_get_size,
+    .get_offset = wm_view_xwayland_get_offset,
     .get_size_constraints = wm_view_xwayland_get_size_constraints,
     .focus = wm_view_xwayland_focus,
     .surface_at = wm_view_xwayland_surface_at,

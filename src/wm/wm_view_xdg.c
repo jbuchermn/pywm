@@ -300,6 +300,13 @@ static void wm_view_xdg_get_size(struct wm_view* super, int* width, int* height)
 
 }
 
+static void wm_view_xdg_get_offset(struct wm_view* super, int* offset_x, int* offset_y){
+    struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
+
+    *offset_x = view->wlr_xdg_surface->geometry.x;
+    *offset_y = view->wlr_xdg_surface->geometry.y;
+}
+
 
 static void wm_view_xdg_focus(struct wm_view* super, struct wm_seat* seat){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
@@ -351,6 +358,7 @@ struct wm_view_vtable wm_view_xdg_vtable = {
     .request_size = wm_view_xdg_request_size,
     .get_size_constraints = wm_view_xdg_get_size_constraints,
     .get_size = wm_view_xdg_get_size,
+    .get_offset = wm_view_xdg_get_offset,
     .focus = wm_view_xdg_focus,
     .surface_at = wm_view_xdg_surface_at,
     .for_each_surface = wm_view_xdg_for_each_surface,
