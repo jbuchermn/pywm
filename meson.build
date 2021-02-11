@@ -22,7 +22,9 @@ add_project_arguments(
 
 
 # Dependencies
-wlroots        = dependency('wlroots')
+
+wlroots        = subproject('wlroots').get_variable('wlroots')
+# wlroots        = dependency('wlroots')
 wayland_server = dependency('wayland-server')
 wayland_client = dependency('wayland-client')
 wayland_cursor = dependency('wayland-cursor')

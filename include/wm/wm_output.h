@@ -15,7 +15,6 @@ struct wm_output {
 
     struct wl_listener destroy;
     struct wl_listener mode;
-    struct wl_listener transform;
     struct wl_listener present;
     struct wl_listener frame;
 };

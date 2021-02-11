@@ -119,7 +119,7 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wl_event_loop = wl_display_get_event_loop(server->wl_display);
     assert(server->wl_event_loop);
 
-    server->wlr_backend = wlr_backend_autocreate(server->wl_display, NULL);
+    server->wlr_backend = wlr_backend_autocreate(server->wl_display);
     assert(server->wlr_backend);
 
     server->wm_renderer = calloc(1, sizeof(struct wm_renderer));
