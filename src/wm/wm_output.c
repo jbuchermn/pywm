@@ -3,7 +3,6 @@
 #include <assert.h>
 #include <time.h>
 #include <wlr/util/log.h>
-#include <wlr/render/wlr_renderer.h>
 #include "wm/wm_server.h"
 #include "wm/wm_output.h"
 #include "wm/wm_view.h"
@@ -45,89 +44,6 @@ struct render_data {
     double y_scale;
 };
 
-/* static void render_decoration(struct wm_view* view, struct render_data* rdata){ */
-/*     int _width, _height; */
-/*     wm_view_get_size(view, &_width, &_height); */
-/*     double width = _width * rdata->x_scale; */
-/*     double height = _height * rdata->y_scale; */
-/*  */
-/*     { */
-/*         double x = rdata->x - 2; */
-/*         double y = rdata->y - 8; */
-/*         double w = width + 4; */
-/*         double h = 8; */
-/*         float color[] = {0.0, 0.0, 0.0, 0.4}; */
-/*  */
-/*         struct wlr_box box = { */
-/*             .x = round(x * rdata->output->wlr_output->scale), */
-/*             .y = round(y * rdata->output->wlr_output->scale), */
-/*             .width = round(w * rdata->output->wlr_output->scale), */
-/*             .height = round(h * rdata->output->wlr_output->scale) */
-/*         }; */
-/*         wlr_render_rect( */
-/*                 rdata->output->wm_server->wlr_renderer, */
-/*                 &box, */
-/*                 color, */
-/*                 rdata->output->wlr_output->transform_matrix); */
-/*     } */
-/*     { */
-/*         double x = rdata->x - 2; */
-/*         double y = rdata->y; */
-/*         double w = 2; */
-/*         double h = height; */
-/*         float color[] = {0.0, 0.0, 0.0, 0.4}; */
-/*  */
-/*         struct wlr_box box = { */
-/*             .x = round(x * rdata->output->wlr_output->scale), */
-/*             .y = round(y * rdata->output->wlr_output->scale), */
-/*             .width = round(w * rdata->output->wlr_output->scale), */
-/*             .height = round(h * rdata->output->wlr_output->scale) */
-/*         }; */
-/*         wlr_render_rect( */
-/*                 rdata->output->wm_server->wlr_renderer, */
-/*                 &box, */
-/*                 color, */
-/*                 rdata->output->wlr_output->transform_matrix); */
-/*     } */
-/*     { */
-/*         double x = rdata->x + width; */
-/*         double y = rdata->y; */
-/*         double w = 2; */
-/*         double h = height; */
-/*         float color[] = {0.0, 0.0, 0.0, 0.4}; */
-/*  */
-/*         struct wlr_box box = { */
-/*             .x = round(x * rdata->output->wlr_output->scale), */
-/*             .y = round(y * rdata->output->wlr_output->scale), */
-/*             .width = round(w * rdata->output->wlr_output->scale), */
-/*             .height = round(h * rdata->output->wlr_output->scale) */
-/*         }; */
-/*         wlr_render_rect( */
-/*                 rdata->output->wm_server->wlr_renderer, */
-/*                 &box, */
-/*                 color, */
-/*                 rdata->output->wlr_output->transform_matrix); */
-/*     } */
-/*     { */
-/*         double x = rdata->x - 2; */
-/*         double y = rdata->y + height; */
-/*         double w = width + 4; */
-/*         double h = 2; */
-/*         float color[] = {0.0, 0.0, 0.0, 0.4}; */
-/*  */
-/*         struct wlr_box box = { */
-/*             .x = round(x * rdata->output->wlr_output->scale), */
-/*             .y = round(y * rdata->output->wlr_output->scale), */
-/*             .width = round(w * rdata->output->wlr_output->scale), */
-/*             .height = round(h * rdata->output->wlr_output->scale) */
-/*         }; */
-/*         wlr_render_rect( */
-/*                 rdata->output->wm_server->wlr_renderer, */
-/*                 &box, */
-/*                 color, */
-/*                 rdata->output->wlr_output->transform_matrix); */
-/*     } */
-/* } */
 
 static void render_surface(struct wlr_surface *surface, int sx, int sy, void *data) {
 	struct render_data *rdata = data;
@@ -191,7 +107,6 @@ static void render_view(struct wm_output* output, struct wm_view* view, struct t
         .y_scale = display_height / height
     };
 
-    /* render_decoration(view, &rdata); */
     wm_view_for_each_surface(view, render_surface, &rdata);
 }
 

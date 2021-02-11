@@ -3,7 +3,6 @@
 
 #include <wayland-server.h>
 #include <wlr/backend.h>
-#include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_server_decoration.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>

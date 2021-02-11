@@ -40,9 +40,22 @@ void wm_renderer_end(struct wm_renderer* renderer, struct wm_output* output){
     renderer->current = NULL;
 }
 
+
+
 void wm_renderer_render_texture_at(struct wm_renderer* renderer, struct wlr_texture* texture, struct wlr_box* box){
 
     float matrix[9];
     wlr_matrix_project_box(matrix, box, WL_OUTPUT_TRANSFORM_NORMAL, 0, renderer->current->wlr_output->transform_matrix);
-    wlr_render_texture_with_matrix(renderer->wlr_renderer, texture, matrix, 1.);
+
+	struct wlr_fbox fbox = {
+		.x = 0,
+		.y = 0,
+		.width = texture->width,
+		.height = texture->height,
+	};
+
+    wlr_render_subtexture_with_matrix(
+            renderer->wlr_renderer,
+            texture,
+            &fbox, matrix, 1.);
 }
