@@ -64,13 +64,14 @@ void _pywm_view_update(struct _pywm_view* view){
 
     if(res && res != Py_None){
         double x, y, w, h;
-        int focus_pending, width_pending, height_pending;
+        int focus_pending, width_pending, height_pending, resizing_pending, fullscreen_pending, maximized_pending;
         int accepts_input, z_index;
         
         if(!PyArg_ParseTuple(res, 
-                    "(dddd)p(ii)ii",
+                    "(dddd)piii(ii)ii",
                     &x, &y, &w, &h,
                     &focus_pending,
+                    &resizing_pending, &fullscreen_pending, &maximized_pending,
                     &width_pending, &height_pending,
                     &accepts_input, &z_index)){
             PyErr_SetString(PyExc_TypeError, "Cannot parse update_view return");
@@ -83,6 +84,12 @@ void _pywm_view_update(struct _pywm_view* view){
             wm_view_request_size(view->view, width_pending, height_pending);
         if(focus_pending)
             wm_focus_view(view->view);
+        if(resizing_pending != -1)
+            wm_view_set_resizing(view->view, resizing_pending);
+        if(fullscreen_pending != -1)
+            wm_view_set_fullscreen(view->view, fullscreen_pending);
+        if(maximized_pending != -1)
+            wm_view_set_maximized(view->view, maximized_pending);
 
         view->view->accepts_input = accepts_input;
         view->view->super.z_index = z_index;

@@ -22,6 +22,9 @@ class PyWMView:
         self.accepts_input = True
 
         self._focus_pending = False
+        self._resizing_pending = None
+        self._fullscreen_pending = None
+        self._maximized_pending = None
         self._size_pending = (-1, -1)
 
 
@@ -61,8 +64,18 @@ class PyWMView:
 
         self.on_update()
 
-        res = (self.box, self._focus_pending, self._size_pending, self.accepts_input, self.z_index)
+        res = (
+            self.box,
+            self._focus_pending,
+            -1 if self._resizing_pending is None else self._resizing_pending,
+            -1 if self._fullscreen_pending is None else self._fullscreen_pending,
+            -1 if self._maximized_pending is None else self._maximized_pending,
+            self._size_pending,
+            self.accepts_input, self.z_index)
         self._focus_pending = False
+        self._resizing_pending = None
+        self._fullscreen_pending = None
+        self._maximized_pending = None
         self._size_pending = (-1, -1)
         return res
 
@@ -70,11 +83,21 @@ class PyWMView:
     def focus(self):
         self._focus_pending = True
 
+    def set_resizing(self, val):
+        self._resizing_pending = val
+
+    def set_fullscreen(self, val):
+        self._fullscreen_pending = val
+
+    def set_maximized(self, val):
+        self._maximized_pending = val
+
     def set_box(self, x, y, w, h):
         self.box = (float(x), float(y), float(w), float(h))
 
     def set_size(self, width, height):
-        self._size_pending = (int(width), int(height))
+        self.size = (int(width), int(height))
+        self._size_pending = self.size
 
     def set_z_index(self, z_index):
         self.z_index = z_index

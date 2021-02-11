@@ -36,6 +36,10 @@ struct wm_view_vtable {
     void (*get_offset)(struct wm_view* view, int* offset_x, int* offset_y);
     void (*get_size_constraints)(struct wm_view* view, int* min_width, int* max_width, int* min_height, int* max_height);
     void (*focus)(struct wm_view* view, struct wm_seat* seat);
+    void (*set_resizing)(struct wm_view* view, bool resizing);
+    void (*set_fullscreen)(struct wm_view* view, bool fullscreen);
+    void (*set_maximized)(struct wm_view* view, bool maximized);
+    void (*set_activated)(struct wm_view* view, bool activated);
     struct wlr_surface* (*surface_at)(struct wm_view* view, double at_x, double at_y, double* sx, double* sy);
     void (*for_each_surface)(struct wm_view* view, wlr_surface_iterator_func_t iterator, void* user_data);
     bool (*is_floating)(struct wm_view* view);
@@ -65,6 +69,22 @@ static inline void wm_view_get_offset(struct wm_view* view, int* offset_x, int* 
 
 static inline void wm_view_focus(struct wm_view* view, struct wm_seat* seat){
     (*view->vtable->focus)(view, seat);
+}
+
+static inline void wm_view_set_resizing(struct wm_view* view, bool resizing){
+    (*view->vtable->set_resizing)(view, resizing);
+}
+
+static inline void wm_view_set_fullscreen(struct wm_view* view, bool fullscreen){
+    (*view->vtable->set_fullscreen)(view, fullscreen);
+}
+
+static inline void wm_view_set_maximized(struct wm_view* view, bool maximized){
+    (*view->vtable->set_maximized)(view, maximized);
+}
+
+static inline void wm_view_set_activated(struct wm_view* view, bool activated){
+    (*view->vtable->set_activated)(view, activated);
 }
 
 static inline struct wlr_surface* wm_view_surface_at(struct wm_view* view, double at_x, double at_y, double* sx, double* sy){
