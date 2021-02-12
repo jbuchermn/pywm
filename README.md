@@ -36,16 +36,17 @@
 
 ## ToDo
 
-- XDG: Moveable and (possibly) resizable floating toplevels
-- Close window functionality from Python (e.g. via Shortcut, for Chrome popups)
+- Better state / event handling Python <-> C 
+    - XDG: Moveable and (possibly) resizable floating toplevels
+    - Close window functionality from Python (e.g. via Shortcut, for Chrome popups)
+    - Handle GIMP sized too small issue
 
 - OpenGL shaders
     - ShapeCorners for KDE?
     - Blurry background?
     - Blurry rendering on demand? (make animations look nicer)
 
-
-- Possibly use toplevel->parent to find floating ones?
+- Possibly use toplevel -> parent to find floating ones?
 
 - Clipboard
 - Cursor not displayed initially
