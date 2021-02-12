@@ -11,22 +11,35 @@ with open('/usr/include/wayland-server-protocol.h', 'r') as header:
             PYWM_FORMATS[name] = code
 
 
+class PyWMWidgetDownstreamState:
+    def __init__(self, z_index, box):
+        self.z_index = int(z_index)
+        self.box = (float(box[0]), float(box[1]), float(box[2]), float(box[3]))
+
+    def copy(self):
+        return PyWMWidgetDownstreamState(self.z_index, self.box)
+
+    def get(self):
+        return (
+            self.box,
+            self.z_index
+        )
+
 class PyWMWidget:
     def __init__(self, wm):
         self._handle = None
 
-        """
-        Consider these readonly
-        """
         self.wm = wm
 
-        self.box = (0, 0, 0, 0)
-        self.z_index = 0
+        self.down_state = PyWMWidgetDownstreamState(0, (0, 0, 0, 0))
 
-        self._pending_pixels = None # (fmt, stride, width, height, data)
+        """
+        (fmt, stride, width, height, data)
+        """
+        self._pending_pixels = None
 
     def _update(self):
-        return (self.box, self.z_index)
+        return self.down_state.get()
 
     def _update_pixels(self):
         if self._pending_pixels is not None:
@@ -38,10 +51,10 @@ class PyWMWidget:
 
 
     def set_box(self, x, y, w, h):
-        self.box = (x, y, w, h)
+        self.down_state.box = (float(x), float(y), float(w), float(h))
 
     def set_z_index(self, z_index):
-        self.z_index = z_index
+        self.down_state.z_index = int(z_index)
 
     def destroy(self):
         self.wm.widget_destroy(self)

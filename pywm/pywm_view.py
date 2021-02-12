@@ -1,122 +1,240 @@
+from abc import abstractmethod
+
+class PyWMViewUpstreamState:
+    def __init__(self, *args):
+        if len(args) != 14:
+            raise Exception("Unexpected number of args")
+        self.is_floating = bool(args[0])
+        self.title = str(args[1])
+
+        """
+        min_w, max_w, min_h, max_h
+        """
+        self.size_constraints = (int(args[2]), int(args[3]), int(args[4]), int(args[5]))        
+        """
+        describe the offset of actual content within the view
+        (in case of CSD)
+
+        offset_x, offset_y
+        """
+        self.offset = (int(args[6]), int(args[7]))
+
+        """
+        width, height
+        """
+        self.size = (int(args[8]), int(args[9]))
+
+        self.is_focused = bool(args[10])
+        self.is_fullscreen = bool(args[11])
+        self.is_maximized = bool(args[12])
+        self.is_resizing = bool(args[13])
+
+    def is_update(self, other):
+        if self.is_floating != other.is_floating:
+            return True
+        if self.title != other.title:
+            return True
+        if self.size_constraints != other.size_constraints:
+            return True
+        if self.offset != other.offset:
+            return True
+        if self.size != other.size:
+            return True
+        if self.is_focused != other.is_focused:
+            return True
+        if self.is_fullscreen != other.is_fullscreen:
+            return True
+        if self.is_maximized != other.is_maximized:
+            return True
+        if self.is_resizing != other.is_resizing:
+            return True
+        return False
+
+
+class PyWMViewDownstreamState:
+    def __init__(self, z_index, box, accepts_input, up_state=None):
+        self.z_index = int(z_index)
+        self.box = (float(box[0]), float(box[1]), float(box[2]), float(box[3]))
+        self.accepts_input = accepts_input
+
+        """
+        Request size
+        """
+        self.size = (-1, -1)
+
+        """
+        Request one of these actions
+        """
+        self.focus = False
+        self.fullscreen = False
+        self.maximized = False
+        self.resizing = False
+
+        self.close = False
+
+        if up_state is not None:
+            self.size = up_state.size
+
+            self.focus = up_state.is_focused
+            self.fullscreen = up_state.is_fullscreen
+            self.maximized = up_state.is_maximized
+            self.resizing = up_state.is_resizing
+
+    def copy(self):
+        res = PyWMViewDownstreamState(self.z_index, self.box, self.accepts_input)
+
+        res.size = self.size
+
+        res.focus = self.focus
+        res.fullscreen = self.fullscreen
+        res.maximized = self.maximized
+        res.resizing = self.resizing
+
+        res.close = self.close
+
+        return res
+
+    def get(self, last_state, up_state):
+        return (
+            self.box,
+            self.z_index,
+            self.accepts_input,
+
+            self.size if self.size != last_state.size else (-1, -1),
+            self.focus if self.focus != last_state.focus and self.focus != up_state.is_focused else -1,
+            self.fullscreen if self.fullscreen != last_state.fullscreen and self.fullscreen != up_state.is_fullscreen else -1,
+            self.maximized if self.maximized != last_state.maximized and self.maximized != up_state.is_maximized else -1,
+            self.resizing if self.resizing != last_state.resizing and self.resizing != up_state.is_resizing else -1,
+            self.close if self.close != last_state.close else -1
+        )
+
+    def __str__(self):
+        return str(self.__dict__)
+
+
+
 class PyWMView:
     def __init__(self, wm, handle):
         self._handle = handle
 
-        """
-        Consider these readonly
-        """
         self.wm = wm
         self.parent = None
-        self.floating = None
-        self.title = None
         self.app_id = None
         self.role = None
         self.is_xwayland = None
-        self.size_constraints = (0, 0, 0, 0)
-        self.focused = False
-        
-        self.box = (0.0, 0.0, 1.0, 1.0)
-        self.offset = (0, 0)
-        self.size = (1, 1)
-        self.z_index = 0
-        self.accepts_input = True
 
-        self._focus_pending = False
-        self._resizing_pending = None
-        self._fullscreen_pending = None
-        self._maximized_pending = None
-        self._size_pending = (-1, -1)
+        self.up_state = None
+        self.last_up_state = None
+
+        self.down_state = None
+        self.last_down_state = None
 
 
-    def _update(self, 
-                parent_handle,
-                floating, title, app_id, role, is_xwayland, 
-                sc_min_w, sc_max_w, sc_min_h, sc_max_h,
-                offset_x, offset_y,
-                size_w, size_h):
-        if parent_handle is not None:
-            for v in self.wm.views:
-                if v._handle == parent_handle:
-                    self.parent = v
+    def _update(self, parent_handle, is_xwayland, app_id, role, *args):
+        if self.parent is None and parent_handle is not None:
+            try:
+                self._parent = self.wm._views[parent_handle]
+            except Exception:
+                pass
 
-        if floating is not None:
-            self.floating = floating
+        self.is_xwayland = is_xwayland
+        self.app_id = app_id
+        self.role = role
 
-        if title is not None:
-            self.title = title
+        self.last_up_state = self.up_state
+        self.up_state = PyWMViewUpstreamState(*args)
 
-        if app_id is not None:
-            self.app_id = app_id
+        if self.down_state is None:
+            """
+            Initial
+            """
+            self.last_down_state = PyWMViewDownstreamState(
+                0, (0,0,0,0), False, up_state=self.up_state)
+            self.down_state = self.last_down_state.copy()
 
-        if role is not None:
-            self.role = role
+        elif self.up_state.is_update(self.last_up_state):
+            """
+            Update
+            """
+            if self.up_state.is_focused != self.last_up_state.is_focused:
+                # Accept the state change
+                self.down_state.focus = self.up_state.is_focused
+                self.on_focus_change()
 
-        if is_xwayland is not None:
-            self.is_xwayland = is_xwayland
+            if self.up_state.size != self.last_up_state.size or \
+                    self.up_state.size_constraints != self.last_up_state.size_constraints:
+                self.on_size_or_constraints_change()
 
-        if sc_min_w <= sc_max_w and sc_min_h <= sc_max_h:
-            self.size_constraints = (sc_min_w, sc_max_w, sc_min_h, sc_max_h)
+            self.process(
+                self.last_down_state, self.up_state)
 
-        if size_w > 0 and size_h > 0:
-            self.size = (size_w, size_h)
 
-        self.offset = (offset_x, offset_y)
-
-        self.on_update()
-
-        res = (
-            self.box,
-            self._focus_pending,
-            -1 if self._resizing_pending is None else self._resizing_pending,
-            -1 if self._fullscreen_pending is None else self._fullscreen_pending,
-            -1 if self._maximized_pending is None else self._maximized_pending,
-            self._size_pending,
-            self.accepts_input, self.z_index)
-        self._focus_pending = False
-        self._resizing_pending = None
-        self._fullscreen_pending = None
-        self._maximized_pending = None
-        self._size_pending = (-1, -1)
+        res = self.down_state.get(self.last_down_state, self.up_state)
+        self.down_state, self.last_down_state = self.down_state.copy(), self.down_state
         return res
 
 
     def focus(self):
-        self._focus_pending = True
+        self.down_state.focus = True
 
     def set_resizing(self, val):
-        self._resizing_pending = val
+        self.down_state.resizing = bool(val)
 
     def set_fullscreen(self, val):
-        self._fullscreen_pending = val
+        self.down_state.fullscreen = bool(val)
 
     def set_maximized(self, val):
-        self._maximized_pending = val
+        self.down_state.maximized = bool(val)
+
+    def close(self):
+        self.down_state.close = True
 
     def set_box(self, x, y, w, h):
-        self.box = (float(x), float(y), float(w), float(h))
+        self.down_state.box = (float(x), float(y), float(w), float(h))
 
     def set_size(self, width, height):
-        self.size = (int(width), int(height))
-        self._size_pending = self.size
+        self.down_state.size = (int(width), int(height))
 
     def set_z_index(self, z_index):
-        self.z_index = z_index
+        self.down_state.z_index = int(z_index)
 
     def set_accepts_input(self, accepts_input):
-        self.accepts_input = accepts_input
+        self.down_state.accepts_input = bool(accepts_input)
 
     
     """
     Virtual methods
     """
     def main(self):
+        """
+        Called after view is initialized, before first process
+        """
         pass
 
-    def on_update(self):
+    def on_event(self, event):
         pass
+
+    @abstractmethod
+    def process(self, last_down_state, up_state):
+        """
+        Use setters to update down state based on last down_state and up_state
+        Is called initially, or after up_state changes
+        """
+        pass
+
 
     def destroy(self):
+        """
+        Called after the view is destroyed on c-side
+        """
         pass
 
+    """
+    Callbacks on various specific updates
+    Notice, that these will always be called together with (before) process
+    """
     def on_focus_change(self):
+        pass
+
+    def on_size_or_constraints_change(self):
         pass

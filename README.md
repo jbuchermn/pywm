@@ -36,11 +36,6 @@
 
 ## ToDo
 
-- Better state / event handling Python <-> C 
-    - XDG: Moveable and (possibly) resizable floating toplevels
-    - Close window functionality from Python (e.g. via Shortcut, for Chrome popups)
-    - Handle GIMP sized too small issue
-
 - OpenGL shaders
     - ShapeCorners for KDE?
     - Blurry background?
@@ -65,6 +60,7 @@
 - Damaging regions
 - Multiple outputs
 - Login mechanism
+- Resizable toplevels
 
 ### XWayland
 

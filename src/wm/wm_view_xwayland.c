@@ -236,6 +236,12 @@ static void wm_view_xwayland_request_size(struct wm_view* super, int width, int 
     wlr_xwayland_surface_configure(view->wlr_xwayland_surface, 0, 0, width, height);
 }
 
+static void wm_view_xwayland_request_close(struct wm_view* super){
+    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
+
+    wlr_xwayland_surface_close(view->wlr_xwayland_surface);
+}
+
 static void wm_view_xwayland_get_size_constraints(struct wm_view* super, int* min_width, int* max_width, int* min_height, int* max_height){
     struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
     if(view->wlr_xwayland_surface->size_hints){
@@ -373,6 +379,7 @@ struct wm_view_vtable wm_view_xwayland_vtable = {
     .destroy = wm_view_xwayland_destroy,
     .get_info = wm_view_xwayland_get_info,
     .request_size = wm_view_xwayland_request_size,
+    .request_close = wm_view_xwayland_request_close,
     .get_size = wm_view_xwayland_get_size,
     .get_offset = wm_view_xwayland_get_offset,
     .get_size_constraints = wm_view_xwayland_get_size_constraints,

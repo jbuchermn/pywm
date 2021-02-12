@@ -108,9 +108,6 @@ void wm_seat_focus_surface(struct wm_seat* seat, struct wlr_surface* surface){
     wlr_seat_keyboard_notify_enter(seat->wlr_seat, surface,
             keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
 
-    if(view && view != prev_view){
-        wm_callback_view_focused(view);
-    }
 }
 
 void wm_seat_dispatch_key(struct wm_seat* seat, struct wlr_input_device* input_device, struct wlr_event_keyboard_key* event){
