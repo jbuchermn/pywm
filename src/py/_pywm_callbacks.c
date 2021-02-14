@@ -135,15 +135,16 @@ static void call_destroy_view(struct wm_view* view){
     }
 }
 
-static void call_view_focused(struct wm_view* view){
-    if(callbacks.view_focused){
+static void call_view_event(struct wm_view* view, const char* event){
+    if(callbacks.view_event){
         long handle = _pywm_views_get_handle(view);
         PyGILState_STATE gil = PyGILState_Ensure();
-        PyObject* args = Py_BuildValue("(l)", handle);
-        call_void(callbacks.view_focused, args);
+        PyObject* args = Py_BuildValue("(ls)", handle, event);
+        call_void(callbacks.view_event, args);
         PyGILState_Release(gil);
     }
 }
+
 
 static void call_ready(){
     if(callbacks.ready){
@@ -168,7 +169,7 @@ void _pywm_callbacks_init(){
     get_wm()->callback_axis = &call_axis;
     get_wm()->callback_init_view = &call_init_view;
     get_wm()->callback_destroy_view = &call_destroy_view;
-    get_wm()->callback_view_focused = &call_view_focused;
+    get_wm()->callback_view_event = &call_view_event;
 }
 
 PyObject** _pywm_callbacks_get(const char* name){
@@ -192,8 +193,6 @@ PyObject** _pywm_callbacks_get(const char* name){
         return &callbacks.update_view;
     }else if(!strcmp(name, "destroy_view")){
         return &callbacks.destroy_view;
-    }else if(!strcmp(name, "view_focused")){
-        return &callbacks.view_focused;
     }else if(!strcmp(name, "query_new_widget")){
         return &callbacks.query_new_widget;
     }else if(!strcmp(name, "update_widget")){
@@ -202,8 +201,10 @@ PyObject** _pywm_callbacks_get(const char* name){
         return &callbacks.update_widget_pixels;
     }else if(!strcmp(name, "query_destroy_widget")){
         return &callbacks.query_destroy_widget;
-    }else if(!strcmp(name, "query_update_cursor")){
-        return &callbacks.query_update_cursor;
+    }else if(!strcmp(name, "query")){
+        return &callbacks.query;
+    }else if(!strcmp(name, "view_event")){
+        return &callbacks.view_event;
     }
 
     return NULL;

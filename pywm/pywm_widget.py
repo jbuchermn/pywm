@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 PYWM_FORMATS = dict()
 
 with open('/usr/include/wayland-server-protocol.h', 'r') as header:
@@ -11,22 +13,39 @@ with open('/usr/include/wayland-server-protocol.h', 'r') as header:
             PYWM_FORMATS[name] = code
 
 
+class PyWMWidgetDownstreamState:
+    def __init__(self, z_index=0, box=(0, 0, 0, 0)):
+        self.z_index = int(z_index)
+        self.box = (float(box[0]), float(box[1]), float(box[2]), float(box[3]))
+
+    def copy(self):
+        return PyWMWidgetDownstreamState(self.z_index, self.box)
+
+    def get(self):
+        return (
+            self.box,
+            self.z_index
+        )
+
 class PyWMWidget:
     def __init__(self, wm):
         self._handle = None
 
-        """
-        Consider these readonly
-        """
         self.wm = wm
 
-        self.box = (0, 0, 0, 0)
-        self.z_index = 0
+        self._down_state = PyWMWidgetDownstreamState(0, (0, 0, 0, 0))
+        self._damaged = True
 
-        self._pending_pixels = None # (fmt, stride, width, height, data)
+        """
+        (fmt, stride, width, height, data)
+        """
+        self._pending_pixels = None
 
     def _update(self):
-        return (self.box, self.z_index)
+        if self._damaged:
+            self._damaged = False
+            self._down_state = self.process()
+        return self._down_state.get()
 
     def _update_pixels(self):
         if self._pending_pixels is not None:
@@ -36,12 +55,8 @@ class PyWMWidget:
 
         return None
 
-
-    def set_box(self, x, y, w, h):
-        self.box = (x, y, w, h)
-
-    def set_z_index(self, z_index):
-        self.z_index = z_index
+    def damage(self):
+        self._damaged = True
 
     def destroy(self):
         self.wm.widget_destroy(self)
@@ -49,3 +64,9 @@ class PyWMWidget:
     def set_pixels(self, fmt, stride, width, height, data):
         self._pending_pixels = (fmt, stride, width, height, data)
 
+    @abstractmethod
+    def process(self):
+        """
+        return next down_state based on whatever state the implementation uses
+        """
+        pass

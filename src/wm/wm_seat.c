@@ -3,7 +3,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <wlr/util/log.h>
-#include <wlr/xwayland.h>
 #include "wm/wm.h"
 #include "wm/wm_seat.h"
 #include "wm/wm_view.h"
@@ -86,25 +85,6 @@ void wm_seat_add_input_device(struct wm_seat* seat, struct wlr_input_device* inp
         wlr_log(WLR_DEBUG, "...done");
 }
 
-static void activate_surface(struct wlr_surface* surface, bool activated){
-    if(!surface) return;
-
-    if(wlr_surface_is_xdg_surface(surface)){
-        struct wlr_xdg_surface* xdg_surface = wlr_xdg_surface_from_wlr_surface(surface);
-        if(xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL){
-            wlr_xdg_toplevel_set_activated(xdg_surface, activated);
-        }
-        return;
-    }
-
-    if(wlr_surface_is_xwayland_surface(surface)){
-        wlr_xwayland_surface_activate(wlr_xwayland_surface_from_wlr_surface(surface), activated);
-        return;
-    }
-
-    wlr_log(WLR_ERROR, "Unknown surface implementation");
-}
-
 
 void wm_seat_focus_surface(struct wm_seat* seat, struct wlr_surface* surface){
     struct wlr_surface* prev = seat->wlr_seat->keyboard_state.focused_surface;
@@ -121,16 +101,13 @@ void wm_seat_focus_surface(struct wm_seat* seat, struct wlr_surface* surface){
         return;
     }
 
-    activate_surface(prev, false);
-    activate_surface(surface, true);
+    if(prev_view) wm_view_set_activated(prev_view, false);
+    if(view) wm_view_set_activated(view, true);
 
     struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat->wlr_seat);
     wlr_seat_keyboard_notify_enter(seat->wlr_seat, surface,
             keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
 
-    if(view && view != prev_view){
-        wm_callback_view_focused(view);
-    }
 }
 
 void wm_seat_dispatch_key(struct wm_seat* seat, struct wlr_input_device* input_device, struct wlr_event_keyboard_key* event){

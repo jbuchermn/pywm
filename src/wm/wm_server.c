@@ -136,8 +136,9 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     assert(server->wlr_xdg_shell);
 
     server->wlr_server_decoration_manager = wlr_server_decoration_manager_create(server->wl_display);
-	/* wlr_server_decoration_manager_set_default_mode(server->wlr_server_decoration_manager, WLR_SERVER_DECORATION_MANAGER_MODE_CLIENT); */
-	wlr_server_decoration_manager_set_default_mode(server->wlr_server_decoration_manager, WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
+	wlr_server_decoration_manager_set_default_mode(
+            server->wlr_server_decoration_manager,
+            config->encourage_csd ? WLR_SERVER_DECORATION_MANAGER_MODE_CLIENT : WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
 
     server->wlr_xdg_decoration_manager = wlr_xdg_decoration_manager_v1_create(server->wl_display);
     assert(server->wlr_xdg_decoration_manager);

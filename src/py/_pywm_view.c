@@ -39,21 +39,47 @@ void _pywm_view_update(struct _pywm_view* view){
 
     bool xwayland = wm_view_is_xwayland(view->view);
 
+    /* Current info */
     int min_w, max_w, min_h, max_h;
     wm_view_get_size_constraints(view->view, &min_w, &max_w, &min_h, &max_h);
 
+    int offset_x, offset_y;
+    wm_view_get_offset(view->view, &offset_x, &offset_y);
 
     int width, height;
     wm_view_get_size(view->view, &width, &height);
 
+    int is_focused = wm_view_is_focused(view->view);
+    int is_fullscreen = wm_view_is_fullscreen(view->view);
+    int is_maximized = wm_view_is_maximized(view->view);
+    int is_resizing = wm_view_is_resizing(view->view);
+
     PyObject* args = Py_BuildValue(
-            "(llOsssOiiiiii)",
+            "(llOssOsiiiiiiiiOOOO)",
+
             view->handle,
             parent_handle,
+            xwayland ? Py_True : Py_False,
+            app_id,
+            role,
+
             is_floating ? Py_True : Py_False,
-            title, app_id, role, xwayland ? Py_True : Py_False,
-            min_w, max_w, min_h, max_h,
-            width, height);
+            title,
+
+            min_w,
+            max_w,
+            min_h,
+            max_h,
+
+            offset_x,
+            offset_y,
+            width,
+            height,
+
+            is_focused ? Py_True : Py_False,
+            is_fullscreen ? Py_True : Py_False,
+            is_maximized ? Py_True : Py_False,
+            is_resizing ? Py_True : Py_False);
 
 
     PyObject* res = PyObject_Call(_pywm_callbacks_get_all()->update_view, args, NULL);
@@ -61,28 +87,46 @@ void _pywm_view_update(struct _pywm_view* view){
 
     if(res && res != Py_None){
         double x, y, w, h;
-        int focus_pending, width_pending, height_pending;
+        int focus_pending, resizing_pending, fullscreen_pending, maximized_pending, close_pending;
+        int width_pending, height_pending;
         int accepts_input, z_index;
         
         if(!PyArg_ParseTuple(res, 
-                    "(dddd)p(ii)ii",
+                    "(dddd)ip(ii)iiiii",
                     &x, &y, &w, &h,
-                    &focus_pending,
+
+                    &z_index,
+                    &accepts_input,
+
                     &width_pending, &height_pending,
-                    &accepts_input, &z_index)){
+                    &focus_pending,
+                    &fullscreen_pending,
+                    &maximized_pending,
+                    &resizing_pending,
+                    &close_pending
+        )){
+            fprintf(stderr, "Error parsing update view return...\n");
             PyErr_SetString(PyExc_TypeError, "Cannot parse update_view return");
-            return;
+        }else{
+
+            if(w >= 0.0 && h >= 0.0)
+                wm_content_set_box(&view->view->super, x, y, w, h);
+            if(width_pending > 0 && height_pending > 0)
+                wm_view_request_size(view->view, width_pending, height_pending);
+            if(focus_pending != -1 && focus_pending)
+                wm_focus_view(view->view);
+            if(resizing_pending != -1)
+                wm_view_set_resizing(view->view, resizing_pending);
+            if(fullscreen_pending != -1)
+                wm_view_set_fullscreen(view->view, fullscreen_pending);
+            if(maximized_pending != -1)
+                wm_view_set_maximized(view->view, maximized_pending);
+            if(close_pending != -1 && close_pending)
+                wm_view_request_close(view->view);
+
+            view->view->accepts_input = accepts_input;
+            view->view->super.z_index = z_index;
         }
-
-        if(w >= 0.0 && h >= 0.0)
-            wm_content_set_box(&view->view->super, x, y, w, h);
-        if(width_pending > 0 && height_pending > 0)
-            wm_view_request_size(view->view, width_pending, height_pending);
-        if(focus_pending)
-            wm_focus_view(view->view);
-
-        view->view->accepts_input = accepts_input;
-        view->view->super.z_index = z_index;
 
     }
 

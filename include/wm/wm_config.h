@@ -11,6 +11,7 @@ struct wm_config {
     int focus_follows_mouse;
     int constrain_popups_to_toplevel;
 
+    int encourage_csd;
 };
 
 void wm_config_init_default(struct wm_config* config);

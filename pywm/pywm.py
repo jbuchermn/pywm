@@ -7,7 +7,6 @@ from .touchpad import create_touchpad, GestureListener
 
 from ._pywm import (  # noqa E402
     run,
-    terminate,
     register
 )
 
@@ -59,16 +58,19 @@ class PyWM:
 
         register("update_view", self._update_view)
         register("destroy_view", self._destroy_view)
-        register("view_focused", self._view_focused)
+        register("view_event", self._view_event)
 
         register("query_new_widget", self._query_new_widget)
         register("update_widget", self._update_widget)
         register("update_widget_pixels", self._update_widget_pixels)
         register("query_destroy_widget", self._query_destroy_widget)
 
-        register("query_update_cursor", self._query_update_cursor)
+        register("query", self._query)
 
         self._view_class = view_class
+
+        self._views = {}
+        self._widgets = {}
 
         self._pending_widgets = []
         self._pending_destroy_widgets = []
@@ -82,13 +84,12 @@ class PyWM:
         self._touchpad_captured = False
 
         self._pending_update_cursor = False
+        self._pending_terminate = False
 
         """
         Consider these read-only
         """
         self.config = kwargs
-        self.views = []
-        self.widgets = []
         self.width = 0
         self.height = 0
         self.modifiers = 0
@@ -164,79 +165,66 @@ class PyWM:
 
     @callback
     def _update_view(self, handle, *args):
-        view = None
-        is_new = False
-
-        # TODO: Inefficient
-        for v in self.views:
-            if v._handle == handle:
-                view = v
-                break
-        else:
+        try:
+            v = self._views[handle]
+            try:
+                res = v._update(*args)
+                return res
+            except Exception as e:
+                print(e)
+        except Exception:
             view = self._view_class(self, handle)
-            self.views += [view]
-            is_new = True
+            self._views[handle] = view
 
-        res = view._update(*args)
-
-        if is_new:
+            view._update(*args)
             view.main()
 
-        return res
+            res = view._update(*args)
+            return res
 
     @callback
     def _update_widget(self, handle, *args):
-        widget = None
-
-        for v in self.widgets:
-            if v._handle == handle:
-                widget = v
-                break
-        else:
+        try:
+            res = self._widgets[handle]._update(*args)
+            return res
+        except Exception as e:
             return None
 
-        return widget._update(*args)
 
     @callback
     def _update_widget_pixels(self, handle, *args):
-        widget = None
-
-        for v in self.widgets:
-            if v._handle == handle:
-                widget = v
-                break
-        else:
+        try:
+            return self._widgets[handle]._update_pixels(*args)
+        except Exception:
             return None
-
-        return widget._update_pixels(*args)
 
 
     @callback
     def _destroy_view(self, handle):
-        for view in self.views:
-            if view._handle == handle:
-                view.destroy()
+        try:
+            self._views[handle].destroy()
+            self._views.pop(handle, None)
+        except Exception:
+            pass
 
-            if view.parent is not None and view.parent._handle == handle:
-                view.parent = None
-        self.views = [v for v in self.views if v._handle != handle]
+        for h in self._views:
+            if self._views[h].parent is not None and self._views[h].parent._handle == handle:
+                self._views[h].parent = None
 
     @callback
-    def _view_focused(self, handle):
-        for view in self.views:
-            focused = view._handle == handle
-            if focused != view.focused:
-                view.focused = focused
-                view.on_focus_change()
-            else:
-                view.focused = focused
+    def _view_event(self, handle, event):
+        try:
+            self._views[handle].on_event(event)
+        except Exception:
+            pass
+
 
     @callback
     def _query_new_widget(self, new_handle):
         if len(self._pending_widgets) > 0:
             widget = self._pending_widgets.pop(0)
             widget._handle = new_handle
-            self.widgets += [widget]
+            self._widgets[new_handle] = widget
             return True
 
         return False
@@ -249,15 +237,15 @@ class PyWM:
         return None
 
     @callback
-    def _query_update_cursor(self):
-        if self._pending_update_cursor:
-            self._pending_update_cursor = False
-            return True
-        return False
+    def _query(self):
+        res = (self._pending_update_cursor, self._pending_terminate)
+        self._pending_update_cursor = False
+
+        return res
 
     def widget_destroy(self, widget):
-        self.widgets = [v for v in self.widgets if id(v) != id(widget)]
-        self._pending_destroy_widgets = [widget]
+        self._widgets.pop(widget._handle, None)
+        self._pending_destroy_widgets += [widget]
 
     def _gesture(self, gesture):
         self._touchpad_captured = self.on_gesture(gesture)
@@ -277,12 +265,8 @@ class PyWM:
 
     def terminate(self):
         if self._touchpad_main is not None:
-            print("Python: Terminating pytouchpad...")
             self._touchpad_main.stop()
-            print("Python: ...finished")
-        print("Python: Terminating PyWM...")
-        terminate()
-        print("Python: ...finished")
+        self._pending_terminate = True
 
     def create_widget(self, widget_class, *args, **kwargs):
         widget = widget_class(self, *args, **kwargs)

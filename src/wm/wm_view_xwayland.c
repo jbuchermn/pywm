@@ -236,6 +236,12 @@ static void wm_view_xwayland_request_size(struct wm_view* super, int width, int 
     wlr_xwayland_surface_configure(view->wlr_xwayland_surface, 0, 0, width, height);
 }
 
+static void wm_view_xwayland_request_close(struct wm_view* super){
+    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
+
+    wlr_xwayland_surface_close(view->wlr_xwayland_surface);
+}
+
 static void wm_view_xwayland_get_size_constraints(struct wm_view* super, int* min_width, int* max_width, int* min_height, int* max_height){
     struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
     if(view->wlr_xwayland_surface->size_hints){
@@ -264,6 +270,11 @@ static void wm_view_xwayland_get_size(struct wm_view* super, int* width, int* he
     *height = view->wlr_xwayland_surface->surface->current.height;
 }
 
+static void wm_view_xwayland_get_offset(struct wm_view* super, int* offset_x, int* offset_y){
+    *offset_x = 0;
+    *offset_y = 0;
+}
+
 
 static void wm_view_xwayland_focus(struct wm_view* super, struct wm_seat* seat){
     struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
@@ -272,6 +283,24 @@ static void wm_view_xwayland_focus(struct wm_view* super, struct wm_seat* seat){
         return;
     }
     wm_seat_focus_surface(seat, view->wlr_xwayland_surface->surface);
+}
+
+static void wm_view_xwayland_set_resizing(struct wm_view* super, bool resizing){
+    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
+
+    /* No op */
+}
+static void wm_view_xwayland_set_fullscreen(struct wm_view* super, bool fullscreen){
+    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
+    wlr_xwayland_surface_set_fullscreen(view->wlr_xwayland_surface, fullscreen);
+}
+static void wm_view_xwayland_set_maximized(struct wm_view* super, bool maximized){
+    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
+    wlr_xwayland_surface_set_maximized(view->wlr_xwayland_surface, maximized);
+}
+static void wm_view_xwayland_set_activated(struct wm_view* super, bool activated){
+    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
+    wlr_xwayland_surface_activate(view->wlr_xwayland_surface, activated);
 }
 
 static struct wlr_surface* wm_view_xwayland_surface_at(struct wm_view* super, double at_x, double at_y, double* sx, double* sy){
@@ -350,9 +379,15 @@ struct wm_view_vtable wm_view_xwayland_vtable = {
     .destroy = wm_view_xwayland_destroy,
     .get_info = wm_view_xwayland_get_info,
     .request_size = wm_view_xwayland_request_size,
+    .request_close = wm_view_xwayland_request_close,
     .get_size = wm_view_xwayland_get_size,
+    .get_offset = wm_view_xwayland_get_offset,
     .get_size_constraints = wm_view_xwayland_get_size_constraints,
     .focus = wm_view_xwayland_focus,
+    .set_resizing = wm_view_xwayland_set_resizing,
+    .set_fullscreen = wm_view_xwayland_set_fullscreen,
+    .set_maximized = wm_view_xwayland_set_maximized,
+    .set_activated = wm_view_xwayland_set_activated,
     .surface_at = wm_view_xwayland_surface_at,
     .for_each_surface = wm_view_xwayland_for_each_surface,
     .is_floating = wm_view_xwayland_is_floating,

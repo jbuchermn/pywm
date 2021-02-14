@@ -15,14 +15,14 @@ struct _pywm_callbacks {
 
     PyObject* update_view;
     PyObject* destroy_view;
-    PyObject* view_focused;
+    PyObject* view_event;
 
     PyObject* query_new_widget;
     PyObject* update_widget;
     PyObject* update_widget_pixels;
     PyObject* query_destroy_widget;
 
-    PyObject* query_update_cursor;
+    PyObject* query;
 };
 
 void _pywm_callbacks_init();

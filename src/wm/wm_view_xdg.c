@@ -99,37 +99,37 @@ static void handle_new_popup(struct wl_listener* listener, void* data){
 static void handle_fullscreen(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, request_fullscreen);
 
-    wlr_log(WLR_INFO, "Fullscreen requested");
+    wm_callback_view_event(&view->super, "request_fullscreen");
 }
 
 static void handle_move(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, request_move);
 
-    wlr_log(WLR_INFO, "Move requested");
+    wm_callback_view_event(&view->super, "request_move");
 }
 
 static void handle_resize(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, request_resize);
 
-    wlr_log(WLR_INFO, "Resize requested");
+    wm_callback_view_event(&view->super, "request_resize");
 }
 
 static void handle_minimize(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, request_minimize);
 
-    wlr_log(WLR_INFO, "Minimize requested");
+    wm_callback_view_event(&view->super, "request_minimize");
 }
 
 static void handle_maximize(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, request_maximize);
 
-    wlr_log(WLR_INFO, "Maximize requested");
+    wm_callback_view_event(&view->super, "request_maximize");
 }
 
 static void handle_show_window_menu(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, request_show_window_menu);
 
-    wlr_log(WLR_INFO, "Show window requested");
+    wm_callback_view_event(&view->super, "request_show_window_menu");
 }
 
 /*
@@ -300,6 +300,43 @@ static void wm_view_xdg_get_size(struct wm_view* super, int* width, int* height)
 
 }
 
+static void wm_view_xdg_get_offset(struct wm_view* super, int* offset_x, int* offset_y){
+    struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
+
+    *offset_x = view->wlr_xdg_surface->geometry.x;
+    *offset_y = view->wlr_xdg_surface->geometry.y;
+}
+
+static void wm_view_xdg_set_resizing(struct wm_view* super, bool resizing){
+    struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
+    wlr_xdg_toplevel_set_resizing(view->wlr_xdg_surface, resizing);
+}
+static void wm_view_xdg_set_fullscreen(struct wm_view* super, bool fullscreen){
+    struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
+    wlr_xdg_toplevel_set_fullscreen(view->wlr_xdg_surface, fullscreen);
+}
+static void wm_view_xdg_set_maximized(struct wm_view* super, bool maximized){
+    struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
+    wlr_xdg_toplevel_set_maximized(view->wlr_xdg_surface, maximized);
+}
+static void wm_view_xdg_set_activated(struct wm_view* super, bool activated){
+    struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
+
+    /* Close popups on deactivate */
+    if(!activated){
+        struct wlr_xdg_popup* popup, *tmp;
+        wl_list_for_each_safe(popup, tmp, &view->wlr_xdg_surface->popups, link){
+            wlr_xdg_popup_destroy(popup->base);
+        }
+    }
+
+    wlr_xdg_toplevel_set_activated(view->wlr_xdg_surface, activated);
+}
+
+static void wm_view_xdg_request_close(struct wm_view* super){
+    struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
+    wlr_xdg_toplevel_send_close(view->wlr_xdg_surface);
+}
 
 static void wm_view_xdg_focus(struct wm_view* super, struct wm_seat* seat){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
@@ -349,9 +386,15 @@ struct wm_view_vtable wm_view_xdg_vtable = {
     .destroy = wm_view_xdg_destroy,
     .get_info = wm_view_xdg_get_info,
     .request_size = wm_view_xdg_request_size,
+    .request_close = wm_view_xdg_request_close,
     .get_size_constraints = wm_view_xdg_get_size_constraints,
     .get_size = wm_view_xdg_get_size,
+    .get_offset = wm_view_xdg_get_offset,
     .focus = wm_view_xdg_focus,
+    .set_resizing = wm_view_xdg_set_resizing,
+    .set_fullscreen = wm_view_xdg_set_fullscreen,
+    .set_maximized = wm_view_xdg_set_maximized,
+    .set_activated = wm_view_xdg_set_activated,
     .surface_at = wm_view_xdg_surface_at,
     .for_each_surface = wm_view_xdg_for_each_surface,
     .is_floating = wm_view_xdg_is_floating,

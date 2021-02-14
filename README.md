@@ -36,16 +36,12 @@
 
 ## ToDo
 
-- Handle shadow-related CSD-offsets at GIMP
 - OpenGL shaders
     - ShapeCorners for KDE?
     - Blurry background?
     - Blurry rendering on demand? (make animations look nicer)
 
-- Possibly use toplevel->parent to find floating ones?
-- XDG: Moveable and (possibly) resizable floating toplevels
-- Fullscreen mode on views (xdg-shell configure?) -> i.e. Chrome without client-side-decorations (wlr_xdg_toplevel_set_fullscreen)
-- Close window functionality from Python (e.g. via Shortcut, for Chrome popups)
+- Possibly use toplevel -> parent to find floating ones?
 
 - Clipboard
 - Cursor not displayed initially
@@ -64,6 +60,7 @@
 - Damaging regions
 - Multiple outputs
 - Login mechanism
+- Resizable toplevels
 
 ### XWayland
 
