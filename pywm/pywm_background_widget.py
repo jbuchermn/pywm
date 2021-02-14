@@ -15,7 +15,6 @@ class PyWMBackgroundWidget(PyWMWidget):
         """
         super().__init__(wm)
 
-        self.set_z_index(-5)
         im = imread(path)
         im_alpha = np.zeros(shape=(im.shape[0], im.shape[1], 4),
                             dtype=np.uint8)
@@ -32,5 +31,3 @@ class PyWMBackgroundWidget(PyWMWidget):
                         0,
                         self.width, self.height,
                         im_alpha.tobytes())
-
-        self.set_box(0, 0, self.wm.width, self.wm.height)

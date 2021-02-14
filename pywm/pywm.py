@@ -168,7 +168,8 @@ class PyWM:
         try:
             v = self._views[handle]
             try:
-                return v._update(*args)
+                res = v._update(*args)
+                return res
             except Exception as e:
                 print(e)
         except Exception:
@@ -178,13 +179,15 @@ class PyWM:
             view._update(*args)
             view.main()
 
-            return view._update(*args)
+            res = view._update(*args)
+            return res
 
     @callback
     def _update_widget(self, handle, *args):
         try:
-            return self._widgets[handle]._update(*args)
-        except Exception:
+            res = self._widgets[handle]._update(*args)
+            return res
+        except Exception as e:
             return None
 
 
@@ -242,7 +245,7 @@ class PyWM:
 
     def widget_destroy(self, widget):
         self._widgets.pop(widget._handle, None)
-        self._pending_destroy_widgets = [widget]
+        self._pending_destroy_widgets += [widget]
 
     def _gesture(self, gesture):
         self._touchpad_captured = self.on_gesture(gesture)

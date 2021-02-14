@@ -7,10 +7,15 @@ from .pywm import (  # noqa F401
     PYWM_RELEASED,
     PYWM_PRESSED
 )
-from .pywm_view import PyWMView  # noqa F401
+from .pywm_view import (  # noqa F401
+    PyWMView,
+    PyWMViewDownstreamState,
+    PyWMViewUpstreamState
+)
 
 from .pywm_widget import (  # noqa F401
     PyWMWidget,
+    PyWMWidgetDownstreamState,
     PYWM_FORMATS
 )
 
