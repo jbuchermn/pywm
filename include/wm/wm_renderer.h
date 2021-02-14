@@ -3,13 +3,39 @@
 
 #include <wlr/render/wlr_renderer.h>
 
+#define WM_CUSTOM_RENDERER
+
 struct wm_output;
+
+#ifdef WM_CUSTOM_RENDERER
+
+#include <GLES2/gl2.h>
+struct wm_renderer_shader {
+    GLuint shader;
+    GLint proj;
+    GLint invert_y;
+    GLint tex;
+    GLint alpha;
+    GLint pos_attrib;
+    GLint tex_attrib;
+    GLint width;
+    GLint height;
+    GLint cornerradius;
+};
+
+#endif
 
 struct wm_renderer {
     struct wm_server* wm_server;
     struct wlr_renderer* wlr_renderer;
 
     struct wm_output* current;
+
+#ifdef WM_CUSTOM_RENDERER
+    /* Custom shaders */
+    struct wm_renderer_shader shader_rgba;
+    struct wm_renderer_shader shader_rgbx;
+#endif
 };
 
 void wm_renderer_init(struct wm_renderer* renderer, struct wm_server* server);

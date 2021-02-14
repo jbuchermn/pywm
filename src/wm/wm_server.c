@@ -112,21 +112,28 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     wl_list_init(&server->wm_contents);
     server->wm_config = config;
 
-    /* Wayland and wlroots resources */
+    /* Display */
     server->wl_display = wl_display_create();
     assert(server->wl_display);
 
-    server->wl_event_loop = wl_display_get_event_loop(server->wl_display);
-    assert(server->wl_event_loop);
-
+    /* Backend */
     server->wlr_backend = wlr_backend_autocreate(server->wl_display);
     assert(server->wlr_backend);
 
+
+    /* Renderer */
     server->wm_renderer = calloc(1, sizeof(struct wm_renderer));
     wm_renderer_init(server->wm_renderer, server);
 
+    /* Renderer */
+    server->wl_event_loop = 
+        wl_display_get_event_loop(server->wl_display);
+    assert(server->wl_event_loop);
 
-    server->wlr_compositor = wlr_compositor_create(server->wl_display, server->wm_renderer->wlr_renderer);
+
+    /* Compositor and protocols */
+    server->wlr_compositor = 
+        wlr_compositor_create(server->wl_display, server->wm_renderer->wlr_renderer);
     assert(server->wlr_compositor);
 
     server->wlr_data_device_manager = wlr_data_device_manager_create(server->wl_display);

@@ -37,9 +37,10 @@
 ## ToDo
 
 - OpenGL shaders
-    - ShapeCorners for KDE?
-    - Blurry background?
+    - ShapeCorners for KDE? Yes
+    - Blurry background? Probably not
     - Blurry rendering on demand? (make animations look nicer)
+- Clean up binding to wlroots
 
 - Possibly use toplevel -> parent to find floating ones?
 
