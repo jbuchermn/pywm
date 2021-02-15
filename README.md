@@ -11,7 +11,7 @@
 | Chromium               |    no     | working             | Too large popups are placed wrong (this is an issue with sway as well) |
 | Firefox                |    no     | working             |                none                                      |
 | Matplotlib (Qt5)       |    no     | working             |                none                                      |
-| GIMP-2.99              |    no     | working             | Popups (actually floating toplevels) cannot be moved     |
+| GIMP-2.99              |    no     | working             |                none                                      |
 | OpenSCAD               |    no     | working             |                none                                      |
 | Zoom                   |    no     | working             | Popup-toplevels are not recognized as floating           |
 | nemo                   |    no     | working             | Missing decorations on popups are not nice               |
@@ -36,27 +36,21 @@
 
 ## ToDo
 
-- OpenGL shaders
-    - ShapeCorners for KDE? Yes
-    - Blurry background? Probably not
-    - Blurry rendering on demand? (make animations look nicer)
-- Clean up binding to wlroots
-
-- Possibly use toplevel -> parent to find floating ones?
-
+- Opacity of views
+- MBP keymap
 - Clipboard
 - Cursor not displayed initially
 - Change cursor (in general + e.g. when over a link)
-
 
 
 ## Backlog
 
 ### General
 
+- Possibly use toplevel -> parent to find floating windows?
+- Clean up binding to wlroots
 - Various TODO Comments
 - Popup constraints on scaling
-- MBP keymap (incl Command+c / Command-v)
 - Screensharing using xdg-desktop-portal-wlr / Screenshots / -records
 - Damaging regions
 - Multiple outputs

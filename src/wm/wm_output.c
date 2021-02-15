@@ -59,7 +59,12 @@ static void render_surface(struct wlr_surface *surface, int sx, int sy, void *da
 		.height = round(surface->current.height * rdata->y_scale * output->wlr_output->scale)
 	};
 
-    wm_renderer_render_texture_at(output->wm_server->wm_renderer, texture, &box, rdata->corner_radius * output->wlr_output->scale);
+    double corner_radius = rdata->corner_radius * output->wlr_output->scale;
+    if(sx || sy){
+        /* Only for surfaces which extend fully */
+        corner_radius = 0;
+    }
+    wm_renderer_render_texture_at(output->wm_server->wm_renderer, texture, &box, corner_radius);
 
     /* Notify client */
 	wlr_surface_send_frame_done(surface, &rdata->when);
