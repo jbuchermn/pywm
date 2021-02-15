@@ -82,7 +82,9 @@ error:
 static bool render_subtexture_with_matrix(
 		struct wm_renderer *renderer, struct wlr_texture *wlr_texture,
 		const struct wlr_fbox *box, const float matrix[static 9],
-		float alpha) {
+		float alpha,
+        const struct wlr_box *display_box, float corner_radius
+        ) {
 	struct wlr_gles2_renderer *gles2_renderer =
 		gles2_get_renderer(renderer->wlr_renderer);
 	struct wlr_gles2_texture *texture =
@@ -129,9 +131,9 @@ static bool render_subtexture_with_matrix(
 	glUniform1i(shader->invert_y, texture->inverted_y);
 	glUniform1i(shader->tex, 0);
 	glUniform1f(shader->alpha, alpha);
-	glUniform1f(shader->width, box->width);
-	glUniform1f(shader->height, box->height);
-	glUniform1f(shader->cornerradius, 25);
+	glUniform1f(shader->width, display_box->width);
+	glUniform1f(shader->height, display_box->height);
+	glUniform1f(shader->cornerradius, corner_radius);
 
 	const GLfloat x1 = box->x / wlr_texture->width;
 	const GLfloat y1 = box->y / wlr_texture->height;
@@ -300,7 +302,7 @@ void wm_renderer_end(struct wm_renderer* renderer, struct wm_output* output){
 }
 
 
-void wm_renderer_render_texture_at(struct wm_renderer* renderer, struct wlr_texture* texture, struct wlr_box* box){
+void wm_renderer_render_texture_at(struct wm_renderer* renderer, struct wlr_texture* texture, struct wlr_box* box, double corner_radius){
 
     float matrix[9];
     wlr_matrix_project_box(matrix, box, WL_OUTPUT_TRANSFORM_NORMAL, 0, renderer->current->wlr_output->transform_matrix);
@@ -316,7 +318,10 @@ void wm_renderer_render_texture_at(struct wm_renderer* renderer, struct wlr_text
     render_subtexture_with_matrix(
             renderer,
             texture,
-            &fbox, matrix, 1.);
+            &fbox, matrix, 1.,
+
+            box, corner_radius
+            );
 #else
     wlr_render_subtexture_with_matrix(
             renderer->wlr_renderer,

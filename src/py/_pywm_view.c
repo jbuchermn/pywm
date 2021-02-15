@@ -87,13 +87,15 @@ void _pywm_view_update(struct _pywm_view* view){
 
     if(res && res != Py_None){
         double x, y, w, h;
+        double corner_radius;
         int focus_pending, resizing_pending, fullscreen_pending, maximized_pending, close_pending;
         int width_pending, height_pending;
         int accepts_input, z_index;
         
         if(!PyArg_ParseTuple(res, 
-                    "(dddd)ip(ii)iiiii",
+                    "(dddd)dip(ii)iiiii",
                     &x, &y, &w, &h,
+                    &corner_radius,
 
                     &z_index,
                     &accepts_input,
@@ -109,6 +111,7 @@ void _pywm_view_update(struct _pywm_view* view){
             PyErr_SetString(PyExc_TypeError, "Cannot parse update_view return");
         }else{
 
+            wm_content_set_corner_radius(&view->view->super, corner_radius);
             if(w >= 0.0 && h >= 0.0)
                 wm_content_set_box(&view->view->super, x, y, w, h);
             if(width_pending > 0 && height_pending > 0)

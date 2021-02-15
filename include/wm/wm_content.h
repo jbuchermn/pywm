@@ -15,6 +15,8 @@ struct wm_content {
     double display_y;
     double display_width;
     double display_height;
+    double corner_radius;
+
     int z_index;
 };
 
@@ -23,6 +25,9 @@ void wm_content_base_destroy(struct wm_content* content);
 
 void wm_content_set_box(struct wm_content* content, double x, double y, double width, double height);
 void wm_content_get_box(struct wm_content* content, double* display_x, double* display_y, double* display_width, double* display_height);
+
+void wm_content_set_corner_radius(struct wm_content* content, double corner_radius);
+double wm_content_get_corner_radius(struct wm_content* content);
 
 struct wm_content_vtable {
     void (*destroy)(struct wm_content* view);

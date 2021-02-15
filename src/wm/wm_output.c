@@ -38,6 +38,7 @@ struct render_data {
     double y;
     double x_scale;
     double y_scale;
+    double corner_radius;
 };
 
 
@@ -58,7 +59,7 @@ static void render_surface(struct wlr_surface *surface, int sx, int sy, void *da
 		.height = round(surface->current.height * rdata->y_scale * output->wlr_output->scale)
 	};
 
-    wm_renderer_render_texture_at(output->wm_server->wm_renderer, texture, &box);
+    wm_renderer_render_texture_at(output->wm_server->wm_renderer, texture, &box, rdata->corner_radius * output->wlr_output->scale);
 
     /* Notify client */
 	wlr_surface_send_frame_done(surface, &rdata->when);
@@ -73,8 +74,9 @@ static void render_widget(struct wm_output* output, struct wm_widget* widget){
         .width = round(widget->super.display_width * output->wlr_output->scale),
         .height = round(widget->super.display_height * output->wlr_output->scale)
     };
+    double corner_radius = wm_content_get_corner_radius(&widget->super) * output->wlr_output->scale;
 
-    wm_renderer_render_texture_at(output->wm_server->wm_renderer, widget->wlr_texture, &box);
+    wm_renderer_render_texture_at(output->wm_server->wm_renderer, widget->wlr_texture, &box, corner_radius);
 
 }
 
@@ -93,6 +95,7 @@ static void render_view(struct wm_output* output, struct wm_view* view, struct t
 
     double display_x, display_y, display_width, display_height;
     wm_content_get_box(&view->super, &display_x, &display_y, &display_width, &display_height);
+    double corner_radius = wm_content_get_corner_radius(&view->super);
 
     struct render_data rdata = {
         .output = output,
@@ -100,7 +103,8 @@ static void render_view(struct wm_output* output, struct wm_view* view, struct t
         .x = display_x,
         .y = display_y,
         .x_scale = display_width / width,
-        .y_scale = display_height / height
+        .y_scale = display_height / height,
+        .corner_radius = corner_radius
     };
 
     wm_view_for_each_surface(view, render_surface, &rdata);

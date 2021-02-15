@@ -18,6 +18,8 @@ void wm_content_init(struct wm_content* content, struct wm_server* server) {
     content->display_y = 0.;
     content->display_width = 0.;
     content->display_height = 0.;
+    content->corner_radius = 0.;
+
     content->z_index = 0;
     wl_list_insert(&content->wm_server->wm_contents, &content->link);
 }
@@ -39,6 +41,14 @@ void wm_content_get_box(struct wm_content* content, double* display_x, double* d
     *display_y = content->display_y;
     *display_width = content->display_width;
     *display_height = content->display_height;
+}
+
+void wm_content_set_corner_radius(struct wm_content* content, double corner_radius){
+    content->corner_radius = corner_radius;
+}
+
+double wm_content_get_corner_radius(struct wm_content* content){
+    return content->corner_radius;
 }
 
 struct wm_content_vtable wm_content_base_vtable = {

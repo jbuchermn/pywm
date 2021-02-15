@@ -43,6 +43,6 @@ void wm_renderer_destroy(struct wm_renderer* renderer);
 
 void wm_renderer_begin(struct wm_renderer* renderer, struct wm_output* output);
 void wm_renderer_end(struct wm_renderer* renderer, struct wm_output* output);
-void wm_renderer_render_texture_at(struct wm_renderer* renderer, struct wlr_texture* texture, struct wlr_box* box);
+void wm_renderer_render_texture_at(struct wm_renderer* renderer, struct wlr_texture* texture, struct wlr_box* box, double corner_radius);
 
 #endif
