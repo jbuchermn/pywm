@@ -1,3 +1,5 @@
+import traceback
+
 from abc import abstractmethod
 
 class PyWMViewUpstreamState:
@@ -154,7 +156,9 @@ class PyWMView:
             try:
                 self._down_state = self.process(self.up_state)
             except Exception as e:
-                print("Exception during process: %s", e)
+                print("Exception during process: %s" % e)
+                traceback.print_exc()
+
                 self._down_state = self._last_down_state
 
         res = self._down_state.get(
@@ -195,7 +199,8 @@ class PyWMView:
     """
     Virtual methods
     """
-    def main(self):
+    def main(self, *args):
+
         """
         Called after view is initialized, before first process
         """

@@ -177,7 +177,7 @@ class PyWM:
             self._views[handle] = view
 
             view._update(*args)
-            view.main()
+            self._execute_view_main(view)
 
             res = view._update(*args)
             return res
@@ -282,6 +282,9 @@ class PyWM:
 
     def main(self):
         pass
+
+    def _execute_view_main(self, view):
+        view.main()
 
     def on_layout_change(self):
         pass
