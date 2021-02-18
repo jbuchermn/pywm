@@ -36,11 +36,14 @@
 
 ## ToDo
 
-- Opacity of views
-- MBP keymap
-- Clipboard
+- Hide cursor on demand
 - Cursor not displayed initially
 - Change cursor (in general + e.g. when over a link)
+
+- Clipboard
+
+- Opacity of views
+- MBP keymap
 
 
 ## Backlog

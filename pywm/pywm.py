@@ -201,8 +201,10 @@ class PyWM:
 
     @callback
     def _destroy_view(self, handle):
+        view = None
+
         try:
-            self._views[handle].destroy()
+            view = self._views[handle]
             self._views.pop(handle, None)
         except Exception:
             pass
@@ -210,6 +212,9 @@ class PyWM:
         for h in self._views:
             if self._views[h].parent is not None and self._views[h].parent._handle == handle:
                 self._views[h].parent = None
+
+        if view is not None:
+            view.destroy()
 
     @callback
     def _view_event(self, handle, event):

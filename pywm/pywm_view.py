@@ -115,7 +115,7 @@ class PyWMView:
         self._down_action_fullscreen = None
         self._down_action_maximized = None
         self._down_action_resizing = None
-        self._down_action_closed = None
+        self._down_action_close = None
 
 
     def _update(self, parent_handle, is_xwayland, app_id, role, *args):
@@ -167,13 +167,13 @@ class PyWMView:
             self._down_action_fullscreen,
             self._down_action_maximized,
             self._down_action_resizing,
-            self._down_action_closed
+            self._down_action_close
         )
         self._down_action_focus = None
         self._down_action_fullscreen = None
         self._down_action_maximized = None
         self._down_action_resizing = None
-        self._down_action_closed = None
+        self._down_action_close = None
         return res
 
 
