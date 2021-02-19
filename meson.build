@@ -23,7 +23,7 @@ add_project_arguments(
 
 # Dependencies
 
-wlroots        = subproject('wlroots').get_variable('wlroots')
+wlroots        = subproject('wlroots').get_variable('wlroots_static')
 # wlroots        = dependency('wlroots')
 wayland_server = dependency('wayland-server')
 wayland_client = dependency('wayland-client')
@@ -79,11 +79,12 @@ py_sources = [
 
 incs = include_directories('include')
 
+
 executable(
 	'pywm',
 	sources + ['src/main.c'],
     include_directories: incs,
-	dependencies: deps,
+	dependencies: deps
 )
 
 python = import('python').find_installation('python3')
