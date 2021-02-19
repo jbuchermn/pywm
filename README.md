@@ -8,13 +8,14 @@
 | imv                    |    no     | working             |                none                                      |
 | LibreOffice            |    no     | working             |                none                                      |
 | Alacritty              |    no     | working             |                none                                      |
-| Chromium               |    no     | working             | Too large popups are placed wrong (this is an issue with sway as well) |
 | Firefox                |    no     | working             |                none                                      |
 | Matplotlib (Qt5)       |    no     | working             |                none                                      |
 | GIMP-2.99              |    no     | working             |                none                                      |
-| OpenSCAD               |    no     | working             |                none                                      |
+| nemo                   |    no     | working             |                none                                      |
+| Nautilus               |    no     | working             |                none                                      |
+| Chromium               |    no     | working             | Too large popups are placed wrong (this is an issue with sway as well) |
+| OpenSCAD               |    no     | working             | Open Dialog is display very small                        |
 | Zoom                   |    no     | working             | Popup-toplevels are not recognized as floating           |
-| nemo                   |    no     | working             | Missing decorations on popups are not nice               |
 
 
 | VSCodium               |    yes    | working             | No hidpi scaling                                         |
@@ -22,7 +23,6 @@
 | -                      |    -      | -                   | No hidpi scaling                                         |
 | Matplotlib             |    yes    | not working         |                                                          |
 | Zoom                   |    yes    | working very poorly | ?                                                        |
-
 
 | Atom                   |    no     | ?                   | ?                                                        |
 | VSCodium               |    no     | ?                   | ?                                                        |
@@ -36,14 +36,14 @@
 
 ## ToDo
 
-- Hide cursor on demand
+- Clipboard
+- Clean up binding to wlroots
 - Cursor not displayed initially
+
+- Hide cursor on demand
 - Change cursor (in general + e.g. when over a link)
 
-- Clipboard
-
 - Opacity of views
-- MBP keymap
 
 
 ## Backlog
@@ -51,7 +51,6 @@
 ### General
 
 - Possibly use toplevel -> parent to find floating windows?
-- Clean up binding to wlroots
 - Various TODO Comments
 - Popup constraints on scaling
 - Screensharing using xdg-desktop-portal-wlr / Screenshots / -records

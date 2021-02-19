@@ -62,6 +62,7 @@ void wm_keyboard_init(struct wm_keyboard* keyboard, struct wm_seat* seat, struct
 
     /* TODO: Configuration */
 	struct xkb_rule_names rules = { 0 };
+    rules.model = "macintosh";
 	rules.layout = "de,de";
     rules.options = "caps:escape"; /* Caps becomes escape */
 
