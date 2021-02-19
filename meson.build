@@ -23,7 +23,7 @@ add_project_arguments(
 
 # Dependencies
 
-wlroots        = subproject('wlroots').get_variable('wlroots_static')
+wlroots        = subproject('wlroots', default_options: ['default_library=static']).get_variable('wlroots')
 # wlroots        = dependency('wlroots')
 wayland_server = dependency('wayland-server')
 wayland_client = dependency('wayland-client')
