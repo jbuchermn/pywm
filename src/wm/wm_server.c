@@ -164,7 +164,7 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
         wlr_log(WLR_ERROR, "Cannot load XCursor");
     }
 
-    struct wlr_xcursor* xcursor = wlr_xcursor_manager_get_xcursor(server->wlr_xcursor_manager, server->wm_config->xcursor_name, 1);
+    struct wlr_xcursor* xcursor = wlr_xcursor_manager_get_xcursor(server->wlr_xcursor_manager, "left_ptr", 1);
     if(xcursor){
         struct wlr_xcursor_image* image = xcursor->images[0];
         wlr_xwayland_set_cursor(server->wlr_xwayland,

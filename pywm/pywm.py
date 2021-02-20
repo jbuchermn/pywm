@@ -83,7 +83,12 @@ class PyWM:
             if "touchpad_device_name" in kwargs else None
         self._touchpad_captured = False
 
-        self._pending_update_cursor = False
+        """
+        -1: Do nothing
+        0: Disable cursor
+        1: Enable cursor
+        """
+        self._pending_update_cursor = -1
         self._pending_terminate = False
 
         """
@@ -244,7 +249,7 @@ class PyWM:
     @callback
     def _query(self):
         res = (self._pending_update_cursor, self._pending_terminate)
-        self._pending_update_cursor = False
+        self._pending_update_cursor = -1
 
         return res
 
@@ -278,8 +283,8 @@ class PyWM:
         self._pending_widgets += [widget]
         return widget
 
-    def update_cursor(self):
-        self._pending_update_cursor = True
+    def update_cursor(self, enabled=True):
+        self._pending_update_cursor = 0 if not enabled else 1
 
     """
     Virtual methods

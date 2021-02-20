@@ -107,6 +107,7 @@ void wm_cursor_init(struct wm_cursor* cursor, struct wm_seat* seat, struct wm_la
     cursor->frame.notify = handle_frame;
     wl_signal_add(&cursor->wlr_cursor->events.frame, &cursor->frame);
 
+    cursor->cursor_visible = 0;
 }
 
 void wm_cursor_destroy(struct wm_cursor* cursor) {
@@ -123,9 +124,49 @@ void wm_cursor_add_pointer(struct wm_cursor* cursor, struct wm_pointer* pointer)
 
 void wm_cursor_update(struct wm_cursor* cursor){
     clock_t t_msec = clock() * 1000 / CLOCKS_PER_SEC;
-    if(!wm_seat_dispatch_motion(cursor->wm_seat, cursor->wlr_cursor->x, cursor->wlr_cursor->y,
-                t_msec + cursor->msec_delta)){
-        wlr_xcursor_manager_set_cursor_image(cursor->wlr_xcursor_manager,
-                cursor->wm_seat->wm_server->wm_config->xcursor_name, cursor->wlr_cursor);
+    if(!wm_seat_dispatch_motion(cursor->wm_seat, cursor->wlr_cursor->x, cursor->wlr_cursor->y, t_msec + cursor->msec_delta)){
+        wm_cursor_set_image(cursor, "left_ptr");
+    }else{
+        /* We are over a surface */
+    }
+}
+
+void wm_cursor_set_visible(struct wm_cursor* cursor, int visible){
+    cursor->cursor_visible = visible;
+
+    if(cursor->client_image.surface){
+        wm_cursor_set_image_surface(cursor,
+                cursor->client_image.surface,
+                cursor->client_image.hotspot_x,
+                cursor->client_image.hotspot_y);
+    }else{
+        wm_cursor_set_image(cursor, "left_ptr");
+    }
+}
+
+void wm_cursor_set_image(struct wm_cursor* cursor, const char* image){
+    cursor->client_image.surface = NULL;
+
+    if(!cursor->cursor_visible){
+        wlr_cursor_set_image(cursor->wlr_cursor, NULL, 0, 0, 0, 0, 0, 0);
+    }else{
+        wlr_xcursor_manager_set_cursor_image(
+                cursor->wlr_xcursor_manager,
+                image,
+                cursor->wlr_cursor
+        );
+    }
+}
+
+void wm_cursor_set_image_surface(struct wm_cursor* cursor, struct wlr_surface* surface, int32_t hotspot_x, int32_t hotspot_y){
+    /* TODO Listen for surface destroy */
+    cursor->client_image.surface = surface;
+    cursor->client_image.hotspot_x = hotspot_x;
+    cursor->client_image.hotspot_y = hotspot_y;
+
+    if(!cursor->cursor_visible){
+        wlr_cursor_set_image(cursor->wlr_cursor, NULL, 0, 0, 0, 0, 0, 0);
+    }else{
+        wlr_cursor_set_surface(cursor->wlr_cursor, surface, hotspot_x, hotspot_y);
     }
 }

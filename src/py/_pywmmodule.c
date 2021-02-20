@@ -33,13 +33,13 @@ static void handle_update(){
     int terminate;
 
     if(!PyArg_ParseTuple(res, 
-                "pp",
+                "ip",
                 &update_cursor,
                 &terminate)){
         PyErr_SetString(PyExc_TypeError, "Cannot parse query return");
     }else{
-        if(update_cursor){
-            wm_update_cursor();
+        if(update_cursor >= 0){
+            wm_update_cursor(update_cursor);
         }
         if(terminate){
             wm_terminate();
@@ -80,12 +80,7 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
         o = PyDict_GetItemString(kwargs, "xkb_layout"); if(o){ conf.xkb_layout = PyBytes_AsString(o); }
         o = PyDict_GetItemString(kwargs, "xkb_options"); if(o){ conf.xkb_options = PyBytes_AsString(o); }
 
-        fprintf(stderr, "%s\n", conf.xkb_model);
-        fprintf(stderr, "%s\n", conf.xkb_layout);
-        fprintf(stderr, "%s\n", conf.xkb_options);
-
         o = PyDict_GetItemString(kwargs, "xcursor_theme"); if(o){ conf.xcursor_theme = PyBytes_AsString(o); }
-        o = PyDict_GetItemString(kwargs, "xcursor_name"); if(o){ conf.xcursor_name = PyBytes_AsString(o); }
         o = PyDict_GetItemString(kwargs, "xcursor_size"); if(o){ conf.xcursor_size = PyLong_AsLong(o); }
 
         o = PyDict_GetItemString(kwargs, "focus_follows_mouse"); if(o){ conf.focus_follows_mouse = o == Py_True; }

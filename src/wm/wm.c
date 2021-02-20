@@ -85,9 +85,10 @@ void wm_focus_view(struct wm_view* view){
     wm_view_focus(view, wm.server->wm_seat);
 }
 
-void wm_update_cursor(){
+void wm_update_cursor(int cursor_visible){
     if(!wm.server) return;
 
+    wm_cursor_set_visible(wm.server->wm_seat->wm_cursor, cursor_visible);
     wm_cursor_update(wm.server->wm_seat->wm_cursor);
 }
 

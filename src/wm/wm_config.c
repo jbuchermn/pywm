@@ -9,8 +9,7 @@ void wm_config_init_default(struct wm_config* config){
     config->xkb_options = "";
 
     config->xcursor_theme = NULL;
-    config->xcursor_name = "left_ptr";
-    config->xcursor_size = 12;
+    config->xcursor_size = 24;
 
     config->focus_follows_mouse = 1;
     config->constrain_popups_to_toplevel = 0;

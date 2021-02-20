@@ -23,6 +23,7 @@ struct wm_seat{
     struct wl_listener start_drag;
     struct wl_listener request_set_selection;
     struct wl_listener request_set_primary_selection;
+    struct wl_listener request_set_cursor;
     struct wl_listener destroy;
 };
 

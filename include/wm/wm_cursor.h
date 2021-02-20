@@ -23,9 +23,23 @@ struct wm_cursor {
     struct wl_listener frame;
 
     uint32_t msec_delta;
+
+    /* Set from python - final say about whether a cursor is displayed */
+    int cursor_visible;
+
+    struct {
+        struct wlr_surface* surface;
+        int32_t hotspot_x;
+        int32_t hotspot_y;
+    } client_image;
 };
 
 void wm_cursor_init(struct wm_cursor* cursor, struct wm_seat* seat, struct wm_layout* layout);
+
+void wm_cursor_set_visible(struct wm_cursor* cursor, int visible);
+void wm_cursor_set_image(struct wm_cursor* cursor, const char* image);
+void wm_cursor_set_image_surface(struct wm_cursor* cursor, struct wlr_surface* surface, int32_t hotspot_x, int32_t hotspot_y);
+
 void wm_cursor_destroy(struct wm_cursor* cursor);
 void wm_cursor_add_pointer(struct wm_cursor* cursor, struct wm_pointer* pointer);
 void wm_cursor_update(struct wm_cursor* cursor);

@@ -21,21 +21,45 @@ static void handle_request_start_drag(struct wl_listener* listener, void* data){
     wlr_log(WLR_DEBUG, "TODO: Request start drag");
     struct wm_seat* seat = wl_container_of(listener, seat, request_start_drag);
 }
+
 static void handle_start_drag(struct wl_listener* listener, void* data){
     wlr_log(WLR_DEBUG, "TODO: Start drag");
     struct wm_seat* seat = wl_container_of(listener, seat, start_drag);
 }
+
 static void handle_request_set_selection(struct wl_listener* listener, void* data){
     struct wm_seat* seat = wl_container_of(listener, seat, request_set_selection);
     struct wlr_seat_request_set_selection_event* event = data;
 
     wlr_seat_set_selection(seat->wlr_seat, event->source, event->serial);
 }
+
 static void handle_request_set_primary_selection(struct wl_listener* listener, void* data){
     struct wm_seat* seat = wl_container_of(listener, seat, request_set_primary_selection);
     struct wlr_seat_request_set_primary_selection_event* event = data;
 
     wlr_seat_set_primary_selection(seat->wlr_seat, event->source, event->serial);
+}
+
+static void handle_request_set_cursor(struct wl_listener* listener, void* data){
+    struct wm_seat* seat = wl_container_of(listener, seat, request_set_cursor);
+    struct wlr_seat_pointer_request_set_cursor_event* event = data;
+
+    /* Following sway */
+	struct wl_client *focused_client = NULL;
+	struct wlr_surface *focused_surface = seat->wlr_seat->pointer_state.focused_surface;
+	if (focused_surface != NULL) {
+		focused_client = wl_resource_get_client(focused_surface->resource);
+	}
+
+	if (focused_client == NULL ||
+			event->seat_client->client != focused_client) {
+		wlr_log(WLR_DEBUG, "Denying request to set cursor from unfocused client");
+		return;
+	}
+
+    wm_cursor_set_image_surface(seat->wm_cursor, event->surface, event->hotspot_x, event->hotspot_y);
+
 }
 
 static void handle_destroy(struct wl_listener* listener, void* data){
@@ -69,6 +93,9 @@ void wm_seat_init(struct wm_seat* seat, struct wm_server* server, struct wm_layo
 
     seat->request_set_primary_selection.notify = handle_request_set_primary_selection;
     wl_signal_add(&seat->wlr_seat->events.request_set_primary_selection, &seat->request_set_primary_selection);
+
+    seat->request_set_cursor.notify = handle_request_set_cursor;
+    wl_signal_add(&seat->wlr_seat->events.request_set_cursor, &seat->request_set_cursor);
 
     seat->destroy.notify = handle_destroy;
     wl_signal_add(&seat->wlr_seat->events.destroy, &seat->destroy);
@@ -121,7 +148,6 @@ void wm_seat_add_input_device(struct wm_seat* seat, struct wlr_input_device* inp
     }
 
     wlr_seat_set_capabilities(seat->wlr_seat, capabilities);
-        wlr_log(WLR_DEBUG, "...done");
 }
 
 

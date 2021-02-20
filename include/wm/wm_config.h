@@ -9,7 +9,6 @@ struct wm_config {
     const char *xkb_options;
 
     const char* xcursor_theme;
-    const char* xcursor_name;
     int xcursor_size;
 
     int focus_follows_mouse;
