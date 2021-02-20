@@ -2,6 +2,8 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <wlr/types/wlr_data_device.h>
+#include <wlr/types/wlr_primary_selection.h>
 #include <wlr/util/log.h>
 #include "wm/wm.h"
 #include "wm/wm_seat.h"
@@ -15,6 +17,27 @@
 /*
  * Callbacks
  */
+static void handle_request_start_drag(struct wl_listener* listener, void* data){
+    wlr_log(WLR_DEBUG, "TODO: Request start drag");
+    struct wm_seat* seat = wl_container_of(listener, seat, request_start_drag);
+}
+static void handle_start_drag(struct wl_listener* listener, void* data){
+    wlr_log(WLR_DEBUG, "TODO: Start drag");
+    struct wm_seat* seat = wl_container_of(listener, seat, start_drag);
+}
+static void handle_request_set_selection(struct wl_listener* listener, void* data){
+    struct wm_seat* seat = wl_container_of(listener, seat, request_set_selection);
+    struct wlr_seat_request_set_selection_event* event = data;
+
+    wlr_seat_set_selection(seat->wlr_seat, event->source, event->serial);
+}
+static void handle_request_set_primary_selection(struct wl_listener* listener, void* data){
+    struct wm_seat* seat = wl_container_of(listener, seat, request_set_primary_selection);
+    struct wlr_seat_request_set_primary_selection_event* event = data;
+
+    wlr_seat_set_primary_selection(seat->wlr_seat, event->source, event->serial);
+}
+
 static void handle_destroy(struct wl_listener* listener, void* data){
 	wlr_log(WLR_DEBUG, "Destroying seat...");
     struct wm_seat* seat = wl_container_of(listener, seat, destroy);
@@ -35,11 +58,27 @@ void wm_seat_init(struct wm_seat* seat, struct wm_server* server, struct wm_layo
     seat->wm_cursor = calloc(1, sizeof(struct wm_cursor));
     wm_cursor_init(seat->wm_cursor, seat, layout);
 
+    seat->request_start_drag.notify = handle_request_start_drag;
+    wl_signal_add(&seat->wlr_seat->events.request_start_drag, &seat->request_start_drag);
+
+    seat->start_drag.notify = handle_start_drag;
+    wl_signal_add(&seat->wlr_seat->events.start_drag, &seat->start_drag);
+
+    seat->request_set_selection.notify = handle_request_set_selection;
+    wl_signal_add(&seat->wlr_seat->events.request_set_selection, &seat->request_set_selection);
+
+    seat->request_set_primary_selection.notify = handle_request_set_primary_selection;
+    wl_signal_add(&seat->wlr_seat->events.request_set_primary_selection, &seat->request_set_primary_selection);
+
     seat->destroy.notify = handle_destroy;
     wl_signal_add(&seat->wlr_seat->events.destroy, &seat->destroy);
 }
 
 void wm_seat_destroy(struct wm_seat* seat) {
+    wl_list_remove(&seat->request_start_drag.link);
+    wl_list_remove(&seat->start_drag.link);
+    wl_list_remove(&seat->request_set_selection.link);
+    wl_list_remove(&seat->request_set_primary_selection.link);
     wl_list_remove(&seat->destroy.link);
 
     /* TODO */

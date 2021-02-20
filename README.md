@@ -36,13 +36,12 @@
 
 ## ToDo
 
-- Clipboard
+- Drag-n-drop
 - Cursor not displayed initially
-
-- XWayland dialogs
 - Hide cursor on demand
 - Change cursor (in general + e.g. when over a link)
 
+- XWayland dialogs
 - Opacity of views
 
 
@@ -50,7 +49,6 @@
 
 ### General
 
-- Drag-n-drop
 - Possibly use toplevel -> parent to find floating windows?
 - Various TODO Comments
 - Popup constraints on scaling
