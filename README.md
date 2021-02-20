@@ -50,6 +50,7 @@
 
 ### General
 
+- Drag-n-drop
 - Possibly use toplevel -> parent to find floating windows?
 - Various TODO Comments
 - Popup constraints on scaling

@@ -187,7 +187,7 @@ class PyWM:
         try:
             res = self._widgets[handle]._update(*args)
             return res
-        except Exception as e:
+        except Exception:
             return None
 
 
@@ -265,7 +265,7 @@ class PyWM:
 
     def run(self):
         print("Python: Running PyWM...")
-        run(**self.config)
+        run(**{k:v if not isinstance(v, str) else v.encode("ascii") for k, v in self.config.items()})
         print("Python: ...finished")
 
     def terminate(self):

@@ -4,6 +4,10 @@
 struct wm_config {
     double output_scale;
 
+    const char *xkb_model;
+    const char *xkb_layout;
+    const char *xkb_options;
+
     const char* xcursor_theme;
     const char* xcursor_name;
     int xcursor_size;

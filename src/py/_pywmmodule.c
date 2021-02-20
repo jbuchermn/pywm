@@ -72,30 +72,26 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
     struct wm_config conf;
     wm_config_init_default(&conf);
 
-    char* kwlist[] = {
-        "output_scale",
-        "xcursor_theme",
-        "xcursor_name",
-        "xcursor_size",
-        "focus_follows_mouse",
-        "constrain_popups_to_toplevel",
-        "encourage_csd",
-        "touchpad_device_name",
-        NULL
-    };
-    char* ignore;
+    if(kwargs){
+        PyObject* o;
+        o = PyDict_GetItemString(kwargs, "output_scale"); if(o){ conf.output_scale = PyFloat_AsDouble(o); }
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwargs, "|dssippps", kwlist,
-                &conf.output_scale,
-                &conf.xcursor_theme,
-                &conf.xcursor_name,
-                &conf.xcursor_size,
-                &conf.focus_follows_mouse,
-                &conf.constrain_popups_to_toplevel,
-                &conf.encourage_csd,
-                &ignore)){
-        PyErr_SetString(PyExc_TypeError, "Cannot parse run arguments");
-        return NULL;
+        o = PyDict_GetItemString(kwargs, "xkb_model"); if(o){ conf.xkb_model = PyBytes_AsString(o); }
+        o = PyDict_GetItemString(kwargs, "xkb_layout"); if(o){ conf.xkb_layout = PyBytes_AsString(o); }
+        o = PyDict_GetItemString(kwargs, "xkb_options"); if(o){ conf.xkb_options = PyBytes_AsString(o); }
+
+        fprintf(stderr, "%s\n", conf.xkb_model);
+        fprintf(stderr, "%s\n", conf.xkb_layout);
+        fprintf(stderr, "%s\n", conf.xkb_options);
+
+        o = PyDict_GetItemString(kwargs, "xcursor_theme"); if(o){ conf.xcursor_theme = PyBytes_AsString(o); }
+        o = PyDict_GetItemString(kwargs, "xcursor_name"); if(o){ conf.xcursor_name = PyBytes_AsString(o); }
+        o = PyDict_GetItemString(kwargs, "xcursor_size"); if(o){ conf.xcursor_size = PyLong_AsLong(o); }
+
+        o = PyDict_GetItemString(kwargs, "focus_follows_mouse"); if(o){ conf.focus_follows_mouse = o == Py_True; }
+        o = PyDict_GetItemString(kwargs, "constrain_popups_to_toplevel"); if(o){ conf.constrain_popups_to_toplevel = o == Py_True; }
+
+        o = PyDict_GetItemString(kwargs, "encourage_csd"); if(o){ conf.encourage_csd = o == Py_True; }
     }
 
     /* Register callbacks immediately, might be called during init */

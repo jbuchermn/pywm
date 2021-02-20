@@ -4,8 +4,11 @@
 #include <wayland-server.h>
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon.h>
+
 #include "wm/wm_keyboard.h"
 #include "wm/wm_seat.h"
+#include "wm/wm_server.h"
+#include "wm/wm_config.h"
 #include "wm/wm.h"
 
 
@@ -60,11 +63,10 @@ void wm_keyboard_init(struct wm_keyboard* keyboard, struct wm_seat* seat, struct
     keyboard->wm_seat = seat;
     keyboard->wlr_input_device = input_device;
 
-    /* TODO: Configuration */
 	struct xkb_rule_names rules = { 0 };
-    rules.model = "macintosh";
-	rules.layout = "de,de";
-    rules.options = "caps:escape"; /* Caps becomes escape */
+    rules.model = seat->wm_server->wm_config->xkb_model;
+	rules.layout = seat->wm_server->wm_config->xkb_layout;
+    rules.options = seat->wm_server->wm_config->xkb_options;
 
 	struct xkb_context* context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     assert(context);
