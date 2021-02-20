@@ -12,6 +12,8 @@
 #include <wlr/config.h>
 #include <wlr/types/wlr_linux_dmabuf_v1.h>
 #include <wlr/types/wlr_xcursor_manager.h>
+#include <wlr/types/wlr_screencopy_v1.h>
+#include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/util/log.h>
 #include <wlr/xwayland.h>
 
@@ -150,6 +152,8 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wlr_xdg_decoration_manager = wlr_xdg_decoration_manager_v1_create(server->wl_display);
     assert(server->wlr_xdg_decoration_manager);
 
+    wlr_screencopy_manager_v1_create(server->wl_display);
+
     server->wlr_xwayland = wlr_xwayland_create(server->wl_display, server->wlr_compositor, false);
     assert(server->wlr_xwayland);
 
@@ -170,6 +174,8 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     /* Children */
     server->wm_layout = calloc(1, sizeof(struct wm_layout));
     wm_layout_init(server->wm_layout, server);
+
+    wlr_xdg_output_manager_v1_create(server->wl_display, server->wm_layout->wlr_output_layout);
 
     server->wm_seat = calloc(1, sizeof(struct wm_seat));
     wm_seat_init(server->wm_seat, server, server->wm_layout);

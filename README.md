@@ -17,6 +17,7 @@
 | Chromium               |    no     | working             | Too large popups are placed wrong (this is an issue with sway as well) |
 | OpenSCAD               |    no     | working             | Open Dialog is display very small                        |
 | Zoom                   |    no     | working             | Popup-toplevels are not recognized as floating           |
+| VLC                    |    no     | ?                   |                                                          |
 | Spotify                |    yes    | working             |                none                                      |
 | VSCodium               |    yes    | working             | Dialogs not really working                               |
 | Atom                   |    yes    | working             | Dialogs not really working                               |
@@ -31,6 +32,7 @@
 | FreeCAD                |    ?      | ?                   | ?                                                        |
 | Atom                   |    yes    | ?                   | ?                                                        |
 | Chromium               |    yes    | ?                   | ?                                                        |
+| VLC                    |    yes    | ?                   |                                                          |
 
 
 
