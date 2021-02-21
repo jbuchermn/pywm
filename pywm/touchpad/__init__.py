@@ -20,6 +20,6 @@ def create_touchpad(device_name, gesture_listener):
             # )
         )
         gestures.listener(gesture_listener)
-        return touchpad
+        return touchpad, gestures
     else:
         return None

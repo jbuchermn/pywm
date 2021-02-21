@@ -79,7 +79,7 @@ class PyWM:
         self._last_absolute_y = None
 
         self._touchpad_main = None
-        self._touchpad_main = create_touchpad(kwargs["touchpad_device_name"], self._gesture) \
+        self._touchpad_main, self._touchpad_gestures = create_touchpad(kwargs["touchpad_device_name"], self._gesture) \
             if "touchpad_device_name" in kwargs else None
         self._touchpad_captured = False
 
@@ -263,6 +263,12 @@ class PyWM:
 
     def _gesture_finished(self):
         self._touchpad_captured = False
+
+    def reallow_gesture(self):
+        if self._touchpad_captured:
+            return
+
+        self._touchpad_gestures.reset()
 
     """
     Public API

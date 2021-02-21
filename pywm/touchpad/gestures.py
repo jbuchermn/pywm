@@ -269,6 +269,9 @@ class Gestures:
     def listener(self, l):
         self._listeners += [l]
 
+    def reset(self):
+        self._active_gesture = None
+
     def on_update(self, update):
         was_pending = True
         if self._active_gesture is not None:
