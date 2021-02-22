@@ -1,4 +1,4 @@
-import traceback
+import logging
 
 from abc import abstractmethod
 
@@ -156,9 +156,7 @@ class PyWMView:
             try:
                 self._down_state = self.process(self.up_state)
             except Exception as e:
-                print("Exception during process: %s" % e)
-                traceback.print_exc()
-
+                logging.exception("Exception during view.process")
                 self._down_state = self._last_down_state
 
         res = self._down_state.get(

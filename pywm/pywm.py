@@ -1,5 +1,4 @@
-import traceback
-import time
+import logging
 from threading import Thread
 
 from .pywm_view import PyWMView
@@ -33,10 +32,7 @@ def callback(func):
             res = func(*args, **kwargs)
             return res
         except Exception as e:
-            print("---- Error in callback %s" % repr(func))
-            print(e)
-            print("Function returned", res)
-            traceback.print_exc()
+            logging.exception("---- Error in callback %s (RET %s)", repr(func), res)
     return wrapped_func
 
 
@@ -46,6 +42,8 @@ class PyWM:
         if _instance is not None:
             raise Exception("Can only have one instance!")
         _instance = self
+
+        logging.debug("PyWM init")
 
         register("ready", self._ready)
         register("layout_change", self._layout_change)
@@ -82,6 +80,9 @@ class PyWM:
             if "touchpad_device_name" in kwargs else (None, None)
         self._touchpad_captured = False
 
+        logging.info("Tochpad '%s' %sfound", kwargs["touchpad_device_name"] if "touchpad_device_name" in kwargs else "",
+                     "not " if self._touchpad_main is None else "")
+
         """
         -1: Do nothing
         0: Disable cursor
@@ -100,12 +101,14 @@ class PyWM:
 
     def _exec_main(self):
         if self._touchpad_main is not None:
-            print("Python: Starting pytouchpad")
+            logging.debug("Starting pytouchpad")
             self._touchpad_main.start()
+        logging.debug("Executing main")
         self.main()
 
     @callback
     def _ready(self):
+        logging.debug("PyWM ready")
         Thread(target=self._exec_main).start()
 
     @callback
@@ -174,8 +177,9 @@ class PyWM:
             try:
                 res = v._update(*args)
                 return res
-            except Exception as e:
-                print(e)
+            except Exception:
+                logging.exception("view._update failed")
+                return None
         except Exception:
             view = self._view_class(self, handle)
             self._views[handle] = view
@@ -275,11 +279,12 @@ class PyWM:
     """
 
     def run(self):
-        print("Python: Running PyWM...")
+        logging.debug("PyWM run")
         run(**{k:v if not isinstance(v, str) else v.encode("ascii") for k, v in self.config.items()})
-        print("Python: ...finished")
+        logging.debug("PyWM finished")
 
     def terminate(self):
+        logging.debug("PyWM terminating")
         if self._touchpad_main is not None:
             self._touchpad_main.stop()
         self._pending_terminate = True

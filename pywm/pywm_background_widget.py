@@ -1,4 +1,5 @@
 import numpy as np
+import logging
 from imageio import imread
 
 from .pywm_widget import (
@@ -37,4 +38,4 @@ class PyWMBackgroundWidget(PyWMWidget):
                             self.width, self.height,
                             im_alpha.tobytes())
         except Exception as e:
-            print("Unable to load background: %s" % e)
+            logging.warn("Unable to load background: %s", str(e))

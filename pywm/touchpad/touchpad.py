@@ -1,7 +1,7 @@
 from select import select
 import evdev
 import time
-import traceback
+import logging
 from threading import Thread
 
 
@@ -147,7 +147,7 @@ class Touchpad(Thread):
                                 self._get_slot(slot).z = event.value
 
         except Exception:
-            traceback.print_exc()
+            logging.exception("Touchpad run")
 
     def stop(self):
         self._running = False

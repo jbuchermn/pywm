@@ -38,6 +38,7 @@
 ## Current
 
 - wf-recorder cursor
+- Cursor surface destroy listener (segfaults)
 
 - XWayland dialogs
 - XWayland setenv display
