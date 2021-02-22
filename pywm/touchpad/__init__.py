@@ -11,8 +11,8 @@ from .gestures import (  # noqa F401
 
 
 def create_touchpad(device_name, gesture_listener):
-    event = find_touchpad(device_name)
-    if event is not None:
+    try:
+        event = find_touchpad(device_name)
         touchpad = Touchpad(event)
         gestures = Gestures(
             # SanitizeBogusIds(
@@ -21,5 +21,6 @@ def create_touchpad(device_name, gesture_listener):
         )
         gestures.listener(gesture_listener)
         return touchpad, gestures
-    else:
-        return None
+    except Exception as e:
+        print("Could not open touchpad: %s" % e)
+        return None, None

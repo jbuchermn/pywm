@@ -35,16 +35,19 @@
 | Chromium               |    yes    | ?                   | ?                                                        |
 
 
-## ToDo
+## Current
+
+- wf-recorder cursor
+
+- XWayland dialogs
+- XWayland setenv display
 
 
 ## Backlog
 
-### General
-
 - Drag-n-drop
 - Opacity of views
-- Screensharing using xdg-desktop-portal-wlr / Screenshots / -records
+- Screensharing using xdg-desktop-portal-wlr
 
 - Possibly use toplevel -> parent to find floating windows?
 - Popup constraints on scaling
@@ -54,10 +57,6 @@
 - Resizable toplevels
 - Various TODO Comments
 
-### XWayland
-
-- Dialogs not working
-- setenv DISPLAY
 
 ## Notes
 
@@ -65,3 +64,5 @@
 - Chromium: --enable-features=UseOzonePlatform --ozone-platform=wayland
 - Matplotlib / Qt5 on Wayland requires DISPLAY=":0" to be set?!
 - Electron apps: --force-device-scale-factor=2
+- Screen record: wf-recorder
+- Screen shot: grim
