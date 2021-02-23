@@ -1,0 +1,26 @@
+#+TITLE: PyWM agenda
+
+* Current
+** Cursor
+- [ ] Cursor during wf-recorder
+- [ ] Cursor surface destroy listener (segfaults)
+** XWayland
+- [ ] Dialogs unresponsive / wrong placed
+- [ ] setenv display
+** README.md improvements
+** Various TODO Comments inline
+
+* Backlog
+
+- [ ] Drag-n-drop
+- [ ] Opacity of views
+- [ ] Screensharing using xdg-desktop-portal-wlr
+- [ ] Popup constraints on scaling
+
+* Ideas
+
+** Possibly use toplevel -> parent to find floating windows?
+** Damaging regions -> Performace
+** Multiple outputs
+** Login mechanism
+** Resizable toplevels

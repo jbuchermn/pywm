@@ -1,5 +1,7 @@
 # PyWM - Python-based Wayland window manager
 
+Documentation to come
+
 ## Status
 
 | Application            |  XWayland | Status              | Open issues                                              |
@@ -35,31 +37,7 @@
 | Chromium               |    yes    | ?                   | ?                                                        |
 
 
-## Current
-
-- wf-recorder cursor
-- Cursor surface destroy listener (segfaults)
-
-- XWayland dialogs
-- XWayland setenv display
-
-
-## Backlog
-
-- Drag-n-drop
-- Opacity of views
-- Screensharing using xdg-desktop-portal-wlr
-
-- Possibly use toplevel -> parent to find floating windows?
-- Popup constraints on scaling
-- Damaging regions
-- Multiple outputs
-- Login mechanism
-- Resizable toplevels
-- Various TODO Comments
-
-
-## Notes
+# Notes
 
 - Firefox: MOZ_ENABLE_WAYLAND=1
 - Chromium: --enable-features=UseOzonePlatform --ozone-platform=wayland
