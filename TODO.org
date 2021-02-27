@@ -2,16 +2,20 @@
 
 * Current
 ** Cursor
-- [ ] Cursor during wf-recorder
 - [ ] Cursor surface destroy listener (segfaults)
+- [ ] Cursor during wf-recorder
+
 ** XWayland
-- [ ] Dialogs unresponsive / wrong placed
+- [X] Dialogs (Atom / VLC / ...) do not accept input
+- [ ] No input is accpeted beyond half screen-size
 - [ ] setenv display
-** README.md improvements
-** Various TODO Comments inline
 
 * Backlog
 
+** Various TODO Comments inline
+** README.md improvements
+
+** General
 - [ ] Drag-n-drop
 - [ ] Opacity of views
 - [ ] Screensharing using xdg-desktop-portal-wlr

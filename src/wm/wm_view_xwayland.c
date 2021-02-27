@@ -62,11 +62,13 @@ static void try_to_find_parent(struct wm_view_xwayland* view){
 Found:
 
     if(parent){
-        if(view->wlr_xwayland_surface->modal){
+        if(!view->wlr_xwayland_surface->override_redirect){
             /* Child view */
             view->floating = true;
             view->parent = parent;
         }else{
+            wlr_log(WLR_DEBUG, "XWayland: Detected popup disguised as new view... allocating xwayland_child");
+
             /* Tooltip, context-menu, more of a subsurface than a sub-view */
             struct wm_view_xwayland_child* child = calloc(1, sizeof(struct wm_view_xwayland_child));
 

@@ -21,14 +21,13 @@ Documentation to come
 | VLC                    |    no     | working             | Popup-toplevels are not recognized as floating           |
 | Zoom                   |    no     | working             | Popup-toplevels are not recognized as floating           |
 | Spotify                |    yes    | working             |                none                                      |
-| VSCodium               |    yes    | working             | Dialogs not really working                               |
-| Atom                   |    yes    | working             | Dialogs not really working                               |
-| Emacs                  |    yes    | working             | Dialogs not really working                               |
-| VLC                    |    yes    | working             | Dialogs not really working                               |
-| Firefox                |    yes    | working             | "Save as" Dialog possibly scaled weirdly and unclickable |
-| -                      |    -      | -                   | No hidpi scaling                                         |
+| VSCodium               |    yes    | working             |                none                                      |
+| Atom                   |    yes    | working             |                none                                      |
+| VLC                    |    yes    | working             |                none                                      |
+| Firefox                |    yes    | working             |                none                                      |
 | Zoom                   |    yes    | working very poorly | ?                                                        |
 | Matplotlib             |    yes    | not working         |                                                          |
+| Emacs                  |    yes    | working             | ?                                                        |
 | Atom                   |    no     | ?                   | ?                                                        |
 | VSCodium               |    no     | ?                   | ?                                                        |
 | IntelliJ               |    ?      | ?                   | ?                                                        |
@@ -39,9 +38,11 @@ Documentation to come
 
 # Notes
 
-- Firefox: MOZ_ENABLE_WAYLAND=1
-- Chromium: --enable-features=UseOzonePlatform --ozone-platform=wayland
-- Matplotlib / Qt5 on Wayland requires DISPLAY=":0" to be set?!
-- Electron apps: --force-device-scale-factor=2
+- XWayland apps are responsible for handling HiDPI themselves (per default they will appear very small)
 - Screen record: wf-recorder
 - Screen shot: grim
+
+- Firefox: MOZ_ENABLE_WAYLAND=1
+- Chromium: --enable-features=UseOzonePlatform --ozone-platform=wayland
+- Matplotlib / Qt5 on Wayland requires DISPLAY=":0" to be set
+- Electron apps: --force-device-scale-factor=2
