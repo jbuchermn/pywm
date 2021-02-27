@@ -7,8 +7,8 @@
 
 ** XWayland
 - [X] Dialogs (Atom / VLC / ...) do not accept input
+- [X] setenv display
 - [ ] No input is accpeted beyond half screen-size
-- [ ] setenv display
 
 * Backlog
 

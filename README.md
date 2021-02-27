@@ -42,6 +42,7 @@ Documentation to come
 - Screen record: wf-recorder
 - Screen shot: grim
 
+- GDK on XWayland: GDK_DPI_SCALE=2
 - Firefox: MOZ_ENABLE_WAYLAND=1
 - Chromium: --enable-features=UseOzonePlatform --ozone-platform=wayland
 - Matplotlib / Qt5 on Wayland requires DISPLAY=":0" to be set

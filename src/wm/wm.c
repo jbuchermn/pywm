@@ -8,6 +8,7 @@
 #include <wayland-server.h>
 #include <wlr/backend.h>
 #include <wlr/util/log.h>
+#include <wlr/xwayland.h>
 
 #include "wm/wm_seat.h"
 #include "wm/wm_cursor.h"
@@ -57,10 +58,15 @@ void* run(){
 	}
 
 	setenv("WAYLAND_DISPLAY", socket, true);
+	setenv("DISPLAY", wm.server->wlr_xwayland->display_name, true);
 
     /* Main */
 	wlr_log(WLR_INFO, "Main...");
     wl_display_run(wm.server->wl_display);
+
+	unsetenv("_WAYLAND_DISPLAY");
+	unsetenv("WAYLAND_DISPLAY");
+	unsetenv("DISPLAY");
 
     return NULL;
 }
