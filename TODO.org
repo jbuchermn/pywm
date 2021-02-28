@@ -27,4 +27,3 @@
 ** Damaging regions -> Performace
 ** Multiple outputs
 ** Login mechanism
-** Resizable toplevels

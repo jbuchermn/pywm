@@ -17,7 +17,7 @@ Documentation to come
 | Nautilus               |    no     | working             |                none                                      |
 | masm11/Emacs           |    no     | working             |                none                                      |
 | Chromium               |    no     | working             | Too large popups are placed wrong (this is an issue with sway as well) |
-| OpenSCAD               |    no     | working             | Open Dialog is display very small                        |
+| OpenSCAD               |    no     | working             |                none                                      |
 | VLC                    |    no     | working             | Popup-toplevels are not recognized as floating           |
 | Zoom                   |    no     | working             | Popup-toplevels are not recognized as floating           |
 | Spotify                |    yes    | working             |                none                                      |
