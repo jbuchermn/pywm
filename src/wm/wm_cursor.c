@@ -22,7 +22,6 @@ static void handle_motion(struct wl_listener* listener, void* data){
     cursor->msec_delta = event->time_msec - t_msec;
 
     if(wm_callback_motion(event->delta_x, event->delta_y, event->time_msec)){
-        /* TODO: Do not show cursor */
         return;
     }
 
@@ -39,7 +38,6 @@ static void handle_motion_absolute(struct wl_listener* listener, void* data){
     cursor->msec_delta = event->time_msec - t_msec;
 
     if(wm_callback_motion_absolute(event->x, event->y, event->time_msec)){
-        /* TODO: Do not show cursor */
         return;
     }
 
@@ -75,6 +73,11 @@ static void handle_frame(struct wl_listener* listener, void* data){
     wlr_seat_pointer_notify_frame(cursor->wm_seat->wlr_seat);
 }
 
+static void handle_surface_destroy(struct wl_listener* listener, void* data){
+    struct wm_cursor* cursor = wl_container_of(listener, cursor, surface_destroy);
+    wm_cursor_set_image_surface(cursor, NULL, 0, 0);
+}
+
 /*
  * Class implementation
  */
@@ -107,6 +110,9 @@ void wm_cursor_init(struct wm_cursor* cursor, struct wm_seat* seat, struct wm_la
     cursor->frame.notify = handle_frame;
     wl_signal_add(&cursor->wlr_cursor->events.frame, &cursor->frame);
 
+    wl_list_init(&cursor->surface_destroy.link);
+    cursor->surface_destroy.notify = handle_surface_destroy;
+
     cursor->cursor_visible = 0;
 }
 
@@ -116,6 +122,7 @@ void wm_cursor_destroy(struct wm_cursor* cursor) {
     wl_list_remove(&cursor->button.link);
     wl_list_remove(&cursor->axis.link);
     wl_list_remove(&cursor->frame.link);
+    wl_list_remove(&cursor->surface_destroy.link);
 }
 
 void wm_cursor_add_pointer(struct wm_cursor* cursor, struct wm_pointer* pointer){
@@ -145,6 +152,8 @@ void wm_cursor_set_visible(struct wm_cursor* cursor, int visible){
 }
 
 void wm_cursor_set_image(struct wm_cursor* cursor, const char* image){
+    wl_list_remove(&cursor->surface_destroy.link);
+    wl_list_init(&cursor->surface_destroy.link);
     cursor->client_image.surface = NULL;
 
     if(!cursor->cursor_visible){
@@ -159,7 +168,14 @@ void wm_cursor_set_image(struct wm_cursor* cursor, const char* image){
 }
 
 void wm_cursor_set_image_surface(struct wm_cursor* cursor, struct wlr_surface* surface, int32_t hotspot_x, int32_t hotspot_y){
-    /* TODO Listen for surface destroy */
+    if(!surface){
+        wm_cursor_set_image(cursor, "left_ptr");
+        return;
+    }
+
+    wl_list_remove(&cursor->surface_destroy.link);
+    wl_signal_add(&surface->events.destroy, &cursor->surface_destroy);
+
     cursor->client_image.surface = surface;
     cursor->client_image.hotspot_x = hotspot_x;
     cursor->client_image.hotspot_y = hotspot_y;

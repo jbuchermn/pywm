@@ -21,6 +21,8 @@ struct wm_cursor {
     struct wl_listener button;
     struct wl_listener axis;
     struct wl_listener frame;
+    struct wl_listener surface_destroy;
+
 
     uint32_t msec_delta;
 

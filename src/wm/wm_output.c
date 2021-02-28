@@ -144,6 +144,7 @@ static void handle_frame(struct wl_listener* listener, void* data){
 
     }
 
+    wlr_output_render_software_cursors(output->wlr_output, NULL);
 
     wm_renderer_end(renderer, output);
 	if(!wlr_output_commit(output->wlr_output)){

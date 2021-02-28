@@ -2,13 +2,15 @@
 
 * Current
 ** Cursor
-- [ ] Cursor surface destroy listener (segfaults)
-- [ ] Cursor during wf-recorder
+- [X] Cursor surface destroy listener (segfaults)
+- [X] Cursor during wf-recorder
 
 ** XWayland
-- [X] Dialogs (Atom / VLC / ...) do not accept input
-- [X] setenv display
 - [ ] No input is accpeted beyond half screen-size
+
+** Render
+- [ ] Compare CPU usage / Battery consumption of various tasks with sway
+- [ ] Possibly implement damage handling based on that
 
 * Backlog
 
@@ -24,6 +26,5 @@
 * Ideas
 
 ** Possibly use toplevel -> parent to find floating windows?
-** Damaging regions -> Performace
 ** Multiple outputs
 ** Login mechanism
