@@ -175,7 +175,9 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wm_layout = calloc(1, sizeof(struct wm_layout));
     wm_layout_init(server->wm_layout, server);
 
-    wlr_xdg_output_manager_v1_create(server->wl_display, server->wm_layout->wlr_output_layout);
+    if(config->enable_output_manager){
+        wlr_xdg_output_manager_v1_create(server->wl_display, server->wm_layout->wlr_output_layout);
+    }
 
     server->wm_seat = calloc(1, sizeof(struct wm_seat));
     wm_seat_init(server->wm_seat, server, server->wm_layout);

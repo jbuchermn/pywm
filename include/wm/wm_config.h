@@ -3,6 +3,7 @@
 
 struct wm_config {
     double output_scale;
+    int enable_output_manager;
 
     const char *xkb_model;
     const char *xkb_layout;
