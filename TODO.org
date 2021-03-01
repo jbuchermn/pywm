@@ -21,24 +21,6 @@
 - [ ] Implement incl. pyi for _pywm
 - [ ] Fix setup.py incl. requirements.txt
 
-** XWayland
-- [ ] No input is accpeted beyond half screen-size
-  - This is introduced by using the wayland output_manager
-  - It appears, Xwayland (as a wayland client= takes the information of output_manager literally, i.e. as actual, not logical, pixels
-  - This can be verified thorugh xrandr
-
-    - with output manager
-        Screen 0: minimum 16 x 16, current 1280 x 800, maximum 32767 x 32767
-        XWAYLAND0 connected 1280x800+0+0 (normal left inverted right x axis y axis) 290mm x 180mm
-        1280x800      59.81*+
-
-    - without output manager
-        Screen 0: minimum 16 x 16, current 2560 x 1600, maximum 32767 x 32767
-        XWAYLAND0 connected 2560x1600+0+0 (normal left inverted right x axis y axis) 290mm x 180mm
-        2560x1600     59.94*+
-
-  - There is no implication on display quality - just mouse movements beyound logical pixel size are not propagated through Xwayland
-
 ** Render
 - [ ] Implement damage handling based (see emersion blog post)
 
