@@ -35,6 +35,8 @@ struct wm_view_xdg {
     struct wl_listener destroy;
     struct wl_listener new_popup;
 
+    struct wl_listener surface_commit;
+
     struct wl_listener request_fullscreen;
     struct wl_listener request_move;
     struct wl_listener request_resize;

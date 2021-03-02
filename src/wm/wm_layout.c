@@ -6,6 +6,7 @@
 #include "wm/wm_layout.h"
 #include "wm/wm_output.h"
 #include "wm/wm.h"
+#include "wm/wm_view.h"
 
 /*
  * Callbacks
@@ -47,4 +48,43 @@ void wm_layout_add_output(struct wm_layout* layout, struct wlr_output* out){
     wlr_output_layout_add_auto(layout->wlr_output_layout, out);
 
     if(!layout->default_output) layout->default_output = output;
+}
+
+struct damage_data {
+    struct wm_output* output;
+    double x;
+    double y;
+};
+
+static void damage_surface(struct wlr_surface *surface, int sx, int sy, void *data) {
+    struct damage_data* ddata = data;
+
+    if(pixman_region32_not_empty(&surface->buffer_damage)){
+        pixman_region32_t region;
+        pixman_region32_init(&region);
+
+        pixman_region32_union_rect(&region, &region, 0, 0, 2560, 1600);
+
+        wlr_output_damage_add(
+                ddata->output->wlr_output_damage,
+                &region);
+        pixman_region32_fini(&region);
+    }
+}
+
+void wm_layout_damage_from(struct wm_layout* layout, struct wm_view* view){
+    if(!layout->default_output) return;
+
+    struct damage_data ddata = {
+        .output = layout->default_output,
+        .x = view->super.display_x,
+        .y = view->super.display_y
+    };
+    wm_view_for_each_surface(view, damage_surface, &ddata);
+}
+
+void wm_layout_damage_whole(struct wm_layout* layout){
+    if(!layout->default_output) return;
+
+    wlr_output_damage_add_whole(layout->default_output->wlr_output_damage);
 }

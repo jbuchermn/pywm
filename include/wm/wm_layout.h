@@ -6,6 +6,7 @@
 #include <wlr/types/wlr_output_layout.h>
 
 struct wm_server;
+struct wm_view;
 
 struct wm_layout {
     struct wm_server* wm_server;
@@ -25,5 +26,8 @@ void wm_layout_init(struct wm_layout* layout, struct wm_server* server);
 void wm_layout_destroy(struct wm_layout* layout);
 
 void wm_layout_add_output(struct wm_layout* layout, struct wlr_output* output);
+
+void wm_layout_damage_from(struct wm_layout* layout, struct wm_view* content);
+void wm_layout_damage_whole(struct wm_layout* layout);
 
 #endif

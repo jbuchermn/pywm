@@ -16,13 +16,16 @@
 | (Alacritty +) Maximized Chromium YT 1440p60 | 24.8 W                 | 27.8 W                 | 3.0 W     |       12% |
 
 * Current
+** Render
+- [ ] Remove python-callbacks from render
+- [ ] Event handling present / render / send-frame-done / damage (with every damage = full-screen damage)
+- [ ] Damage tracking
+- [ ] Further optimizations concerning invisible windows?
+
 ** Type-checking
 - [ ] Try Monkeytype
 - [ ] Implement incl. pyi for _pywm
 - [ ] Fix setup.py incl. requirements.txt
-
-** Render
-- [ ] Implement damage handling based (see emersion blog post)
 
 * Backlog
 
