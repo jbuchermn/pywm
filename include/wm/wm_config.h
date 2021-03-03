@@ -5,6 +5,8 @@ struct wm_config {
     double output_scale;
     int enable_output_manager;
 
+    int callback_frequency;
+
     const char *xkb_model;
     const char *xkb_layout;
     const char *xkb_options;

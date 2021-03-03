@@ -126,9 +126,9 @@ void _pywm_view_update(struct _pywm_view* view){
                 wm_view_set_maximized(view->view, maximized_pending);
             if(close_pending != -1 && close_pending)
                 wm_view_request_close(view->view);
+            wm_content_set_z_index(&view->view->super, z_index);
 
             view->view->accepts_input = accepts_input;
-            view->view->super.z_index = z_index;
         }
 
     }

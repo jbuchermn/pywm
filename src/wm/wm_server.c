@@ -49,6 +49,14 @@ static void handle_new_output(struct wl_listener* listener, void* data){
     struct wlr_output* output = data;
 
     wm_layout_add_output(server->wm_layout, output);
+
+    /* Start the timer loop once an output is there */
+    if(!server->callback_timer_started){
+        server->callback_timer_started = true;
+        wl_event_source_timer_update(
+                server->callback_timer,
+                1000 / server->wm_config->callback_frequency);
+    }
 }
 
 static void handle_new_xdg_surface(struct wl_listener* listener, void* data){
@@ -103,8 +111,27 @@ static void handle_new_xdg_decoration(struct wl_listener* listener, void* data){
 static void handle_ready(struct wl_listener* listener, void* data){
     wlr_log(WLR_DEBUG, "Server: Ready");
 
-    /* Both parameters ignored */
     wm_callback_ready();
+}
+
+static int callback_timer_handler(void* data){
+    struct wm_server* server = data;
+
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+
+    long long msec_diff = now.tv_nsec / 1000000 - server->last_callback_externally_sourced.tv_nsec / 1000000;
+    msec_diff += (now.tv_sec - server->last_callback_externally_sourced.tv_sec)*1000;
+    if(msec_diff > 1000 / server->wm_config->callback_frequency){
+        wlr_log(WLR_DEBUG, "Manually scheduled update...");
+        wm_callback_update();
+    }
+
+    /* Reschedule */
+    wl_event_source_timer_update(
+            server->callback_timer,
+            1000 / server->wm_config->callback_frequency);
+    return 0;
 }
 
 /*
@@ -209,6 +236,13 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
      */
     server->xwayland_ready.notify = handle_ready;
     wl_signal_add(&server->wlr_xwayland->events.ready, &server->xwayland_ready);
+
+
+	server->callback_timer = wl_event_loop_add_timer(server->wl_event_loop,
+		callback_timer_handler, server);
+    server->callback_timer_started = false;
+
+    clock_gettime(CLOCK_MONOTONIC, &server->last_callback_externally_sourced);
 }
 
 void wm_server_destroy(struct wm_server* server){
@@ -312,7 +346,7 @@ void wm_server_update_contents(struct wm_server* server){
             struct wm_content* content1 = wl_container_of(cur1, content1, link);
             struct wm_content* content2 = wl_container_of(cur2, content2, link);
 
-            if(content1->z_index<content2->z_index){
+            if(wm_content_get_z_index(content1)<wm_content_get_z_index(content2)){
                 cur1->prev->next = cur2;
                 cur2->next->prev = cur1;
 
@@ -329,4 +363,10 @@ void wm_server_update_contents(struct wm_server* server){
         }
 
     } while(swapped);
+}
+
+
+void wm_server_callback_update(struct wm_server* server){
+    clock_gettime(CLOCK_MONOTONIC, &server->last_callback_externally_sourced);
+    wm_callback_update();
 }

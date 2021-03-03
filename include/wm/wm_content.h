@@ -2,6 +2,11 @@
 #define WM_CONTENT_H
 
 #include <wayland-server.h>
+#include <pixman.h>
+#include <wlr/types/wlr_surface.h>
+#include <wlr/util/log.h>
+
+struct wm_output;
 
 struct wm_content_vtable;
 
@@ -29,12 +34,26 @@ void wm_content_get_box(struct wm_content* content, double* display_x, double* d
 void wm_content_set_corner_radius(struct wm_content* content, double corner_radius);
 double wm_content_get_corner_radius(struct wm_content* content);
 
+void wm_content_set_z_index(struct wm_content* content, int z_index);
+int wm_content_get_z_index(struct wm_content* content);
+
+
 struct wm_content_vtable {
-    void (*destroy)(struct wm_content* view);
+    void (*destroy)(struct wm_content* content);
+    void (*render)(struct wm_content* content, struct wm_output* output, pixman_region32_t* output_damage, struct timespec now);
+
+    /* origin == NULL means damage whole */
+    void (*damage_output)(struct wm_content* content, struct wm_output* output, struct wlr_surface* origin);
 };
 
 static inline void wm_content_destroy(struct wm_content* content){
     (*content->vtable->destroy)(content);
+}
+static inline void wm_content_render(struct wm_content* content, struct wm_output* output, pixman_region32_t* output_damage, struct timespec now){
+    (*content->vtable->render)(content, output, output_damage, now);
+}
+static inline void wm_content_damage_output(struct wm_content* content, struct wm_output* output, struct wlr_surface* origin){
+    (*content->vtable->damage_output)(content, output, origin);
 }
 
 #endif

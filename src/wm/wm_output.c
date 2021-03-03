@@ -1,7 +1,6 @@
 #define _POSIX_C_SOURCE 200112L
 
 #include "wm/wm_output.h"
-#include "wm/wm.h"
 #include "wm/wm_config.h"
 #include "wm/wm_layout.h"
 #include "wm/wm_renderer.h"
@@ -13,6 +12,8 @@
 #include <time.h>
 #include <wlr/util/log.h>
 #include <wlr/util/region.h>
+
+/* #define DEBUG_DAMAGE */
 
 /*
  * Callbacks
@@ -34,138 +35,50 @@ static void handle_mode(struct wl_listener *listener, void *data) {
 
 static void handle_present(struct wl_listener *listener, void *data) {
     struct wm_output *output = wl_container_of(listener, output, present);
-    struct wlr_output_event_present* event = data;
 
-    /* TODO: Find better place */
-    /* Synchronous updates */
-    wm_callback_update();
-    wm_server_update_contents(output->wm_server);
-    /* ------------------- */
-
-}
-
-struct render_data {
-    struct wm_output *output;
-    struct timespec when;
-    double x;
-    double y;
-    double x_scale;
-    double y_scale;
-    double corner_radius;
-};
-
-static void render_surface(struct wlr_surface *surface, int sx, int sy,
-        void *data) {
-    struct render_data *rdata = data;
-    struct wm_output *output = rdata->output;
-
-    struct wlr_texture *texture = wlr_surface_get_texture(surface);
-    if (!texture) {
-        return;
-    }
-
-    struct wlr_box box = {
-        .x = round((rdata->x + sx * rdata->x_scale) * output->wlr_output->scale),
-        .y = round((rdata->y + sy * rdata->y_scale) * output->wlr_output->scale),
-        .width = round(surface->current.width * rdata->x_scale *
-                output->wlr_output->scale),
-        .height = round(surface->current.height * rdata->y_scale *
-                output->wlr_output->scale)};
-
-    double corner_radius = rdata->corner_radius * output->wlr_output->scale;
-    if (sx || sy) {
-        /* Only for surfaces which extend fully */
-        corner_radius = 0;
-    }
-    wm_renderer_render_texture_at(output->wm_server->wm_renderer, texture, &box,
-            corner_radius);
-
-    /* Notify client */
-    wlr_surface_send_frame_done(surface, &rdata->when);
-}
-
-static void render_widget(struct wm_output *output, struct wm_widget *widget) {
-    if (!widget->wlr_texture)
-        return;
-
-    struct wlr_box box = {
-        .x = round(widget->super.display_x * output->wlr_output->scale),
-        .y = round(widget->super.display_y * output->wlr_output->scale),
-        .width = round(widget->super.display_width * output->wlr_output->scale),
-        .height =
-            round(widget->super.display_height * output->wlr_output->scale)};
-    double corner_radius =
-        wm_content_get_corner_radius(&widget->super) * output->wlr_output->scale;
-
-    wm_renderer_render_texture_at(output->wm_server->wm_renderer,
-            widget->wlr_texture, &box, corner_radius);
-}
-
-static void render_view(struct wm_output *output, struct wm_view *view,
-        struct timespec now) {
-
-    if (!view->mapped) {
-        return;
-    }
-
-    int width, height;
-    wm_view_get_size(view, &width, &height);
-
-    if (width <= 0 || height <= 0) {
-        return;
-    }
-
-    double display_x, display_y, display_width, display_height;
-    wm_content_get_box(&view->super, &display_x, &display_y, &display_width,
-            &display_height);
-    double corner_radius = wm_content_get_corner_radius(&view->super);
-
-    struct render_data rdata = {.output = output,
-        .when = now,
-        .x = display_x,
-        .y = display_y,
-        .x_scale = display_width / width,
-        .y_scale = display_height / height,
-        .corner_radius = corner_radius};
-
-    wm_view_for_each_surface(view, render_surface, &rdata);
+    /* 
+     * Synchronous update is best scheduled immediately after
+     * frame present
+     */
+    wm_server_callback_update(output->wm_server);
 }
 
 static void render(struct wm_output *output, struct timespec now, pixman_region32_t *damage) {
     struct wm_renderer *renderer = output->wm_server->wm_renderer;
 
+    /* Ensure z-index */
+    wm_server_update_contents(output->wm_server);
+
     /* Begin render */
     wm_renderer_begin(renderer, output);
+
+#ifdef DEBUG_DAMAGE
+    wlr_renderer_clear(renderer->wlr_renderer, (float[]){1, 1, 0, 1});
+#endif
 
     /* Do render */
     struct wm_content *r;
     wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
-        if (wm_content_is_view(r)) {
-            render_view(output, wm_cast(wm_view, r), now);
-        } else {
-            render_widget(output, wm_cast(wm_widget, r));
-        }
+        wm_content_render(r, output, damage, now);
     }
 
-    wlr_output_render_software_cursors(output->wlr_output, damage);
-
     /* End render */
-    wm_renderer_end(renderer, output);
+    wm_renderer_end(renderer, damage, output);
 
     /* Commit */
-    int width, height;
-    wlr_output_transformed_resolution(output->wlr_output, &width, &height);
-
+#ifdef DEBUG_DAMAGE
     pixman_region32_t frame_damage;
     pixman_region32_init(&frame_damage);
-
-    enum wl_output_transform transform =
-        wlr_output_transform_invert(output->wlr_output->transform);
-    wlr_region_transform(&frame_damage, &output->wlr_output_damage->current,
-            transform, width, height);
-
-    wlr_output_set_damage(output->wlr_output, &frame_damage);
+    pixman_region32_union_rect(&frame_damage, &frame_damage,
+        0, 0, output->wlr_output->width, output->wlr_output->height);
+    wlr_output_set_damage(
+            output->wlr_output, &output->wlr_output_damage->current);
     pixman_region32_fini(&frame_damage);
+#else
+    wlr_output_set_damage(
+            output->wlr_output, &output->wlr_output_damage->current);
+#endif
+
 
     if (!wlr_output_commit(output->wlr_output)) {
         wlr_log(WLR_DEBUG, "Commit frame failed");

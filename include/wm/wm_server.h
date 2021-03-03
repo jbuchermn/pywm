@@ -1,6 +1,7 @@
 #ifndef WM_SERVER_H
 #define WM_SERVER_H
 
+#include <time.h>
 #include <wayland-server.h>
 #include <wlr/backend.h>
 #include <wlr/types/wlr_xdg_shell.h>
@@ -41,6 +42,11 @@ struct wm_server{
     struct wl_listener new_xdg_decoration;
     struct wl_listener xwayland_ready;
     struct wl_listener new_xwayland_surface;
+
+    struct timespec last_callback_externally_sourced;
+
+    bool callback_timer_started;
+    struct wl_event_source* callback_timer;
 };
 
 void wm_server_init(struct wm_server* server, struct wm_config* config);
@@ -54,5 +60,12 @@ void wm_server_update_contents(struct wm_server* server);
 
 /* passes ownership to caller, no need to unregister, simply destroy */
 struct wm_widget* wm_server_create_widget(struct wm_server* server);
+
+/*
+ * Execute wm_callback_update() supressing callback_timer
+ *
+ * Calling the update this way is preferred over callback_timer
+ */
+void wm_server_callback_update(struct wm_server* server);
 
 #endif
