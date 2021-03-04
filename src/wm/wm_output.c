@@ -57,9 +57,13 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
 #endif
 
     /* Do render */
-    struct wm_content *r;
-    wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
-        wm_content_render(r, output, damage, now);
+    if(output == output->wm_server->wm_layout->default_output){
+        struct wm_content *r;
+        wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
+            wm_content_render(r, output, damage, now);
+        }
+    }else{
+        wlr_renderer_clear(renderer->wlr_renderer, (float[]){.3, .3, .3, 1});
     }
 
     /* End render */

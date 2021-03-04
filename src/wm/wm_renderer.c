@@ -323,7 +323,11 @@ void wm_renderer_render_texture_at(struct wm_renderer* renderer, pixman_region32
             .width = rects[i].x2 - rects[i].x1,
             .height = rects[i].y2 - rects[i].y1
         };
-        wlr_renderer_scissor(renderer->wlr_renderer, &damage_box);
+		struct wlr_box inters;
+		wlr_box_intersection(&inters, box, &damage_box);
+		if(wlr_box_empty(&inters)) continue;
+
+        wlr_renderer_scissor(renderer->wlr_renderer, &inters);
 
 #ifdef WM_CUSTOM_RENDERER
 		render_subtexture_with_matrix(
@@ -331,8 +335,7 @@ void wm_renderer_render_texture_at(struct wm_renderer* renderer, pixman_region32
 				texture,
 				&fbox, matrix, 1.,
 
-				box, corner_radius
-				);
+				box, corner_radius);
 #else
 		wlr_render_subtexture_with_matrix(
 				renderer->wlr_renderer,
