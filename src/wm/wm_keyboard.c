@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <wayland-server.h>
 #include <wlr/util/log.h>
+#include <wlr/backend.h>
+#include <wlr/backend/multi.h>
 #include <xkbcommon/xkbcommon.h>
 
 #include "wm/wm_keyboard.h"
@@ -38,6 +40,24 @@ static void handle_key(struct wl_listener* listener, void* data){
         at += xkb_keysym_get_name(keysyms[i], keys + at, KEYS_STRING_LENGTH - at);
     }
     assert(at < KEYS_STRING_LENGTH - 1);
+
+    /* Copied from sway - switch VT on CTRL-ALT-Fx */
+	for (size_t i = 0; i < keysyms_len; ++i) {
+		xkb_keysym_t keysym = keysyms[i];
+		if (keysym >= XKB_KEY_XF86Switch_VT_1 &&
+				keysym <= XKB_KEY_XF86Switch_VT_12) {
+			if (wlr_backend_is_multi(keyboard->wm_seat->wm_server->wlr_backend)) {
+				struct wlr_session *session =
+					wlr_backend_get_session(keyboard->wm_seat->wm_server->wlr_backend);
+				if (session) {
+					unsigned vt = keysym - XKB_KEY_XF86Switch_VT_1 + 1;
+					wlr_session_change_vt(session, vt);
+				}
+			}
+			return;
+		}
+	}
+
 
     if(wm_callback_key(event, keys)){
         return;
