@@ -17,10 +17,11 @@
 
 * Current
 ** Render
-- [ ] Remove python-callbacks from render
-- [ ] Event handling present / render / send-frame-done / damage (with every damage = full-screen damage)
-- [ ] Damage tracking
-- [ ] Further optimizations concerning invisible windows?
+- [X] Remove python-callbacks from render
+- [X] Event handling present / render / send-frame-done / damage (with every damage = full-screen damage)
+- [X] Damage tracking
+- [ ] Necessary / helpful to check in wm_renderer, if box intersects damage at all?
+- [X] XWayland surface_commits
 
 ** Type-checking
 - [ ] Try Monkeytype

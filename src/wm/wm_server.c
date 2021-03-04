@@ -123,7 +123,6 @@ static int callback_timer_handler(void* data){
     long long msec_diff = now.tv_nsec / 1000000 - server->last_callback_externally_sourced.tv_nsec / 1000000;
     msec_diff += (now.tv_sec - server->last_callback_externally_sourced.tv_sec)*1000;
     if(msec_diff > 1000 / server->wm_config->callback_frequency){
-        wlr_log(WLR_DEBUG, "Manually scheduled update...");
         wm_callback_update();
     }
 
