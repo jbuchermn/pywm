@@ -1,27 +1,14 @@
 #+TITLE: PyWM agenda
 
-* Power stats
-** MBP 2015
-** Power command: powerstat -d 20
-** Display brightness: 30%
-** No sound
-
-| Use Case                                    | Power consumption sway | Power consumption newm  | Power consumption damage_tracking |
-|---------------------------------------------+------------------------+-------------------------+-----------------------------------|
-| One alacritty window for power measurement  | 8.8 W                  | 13.7 W (+55%)           | 9.1 W (+3%)                       |
-| Alacritty + Chromium Google idle            | 8.9 W                  | 13.9 W (+56%)           | 9.1 W (+2%)                       |
-| Alacritty + Chromium YT 720p not maximized  | 11.6 W                 | 16.6 W (+43%)           | 12.0 W (+3%)                      |
-| (Alacritty +) Maximized Chromium YT 720p    | 12.8 W                 | 17.1 W (+34%)           | 13.7 W (+7%)                      |
-| (Alacritty +) Maximized Chromium YT 720p60  | 21.9 W                 | 20.6 W ( -6%)           | 21.2 W (-3%)                      |
-| (Alacritty +) Maximized Chromium YT 1440p60 | 24.8 W                 | 27.8 W (+12%)           | 26.6 W (+7%)                      |
-
 * Current
-** Render
-- [X] Remove python-callbacks from render
-- [X] Event handling present / render / send-frame-done / damage (with every damage = full-screen damage)
-- [X] Damage tracking
-- [X] Necessary / helpful to check in wm_renderer, if box intersects damage at all?
-- [X] XWayland surface_commits
+** Fully-fledged compositor
+- [ ] Access touchpad through libseat or systemd-logind instead of directly (via adding the user to group input)
+- [ ] Session management / basis for pywm-controlled login / lock
+- [ ] idle and idle_inhibit_manager
+- [ ] Drag-n-drop
+
+** General
+- [ ] Opacity of views
 
 ** Type-checking
 - [ ] Try Monkeytype
@@ -29,18 +16,14 @@
 - [ ] Fix setup.py incl. requirements.txt
 
 * Backlog
-
-** Various TODO Comments inline
 ** README.md improvements
 
 ** General
-- [ ] Drag-n-drop
-- [ ] Opacity of views
 - [ ] Screensharing using xdg-desktop-portal-wlr
 - [ ] Popup constraints on scaling
 
 * Ideas
 
+** Various TODO Comments inline
 ** Possibly use toplevel -> parent to find floating windows?
 ** Multiple outputs
-** Login mechanism
