@@ -5,6 +5,8 @@ void wm_config_init_default(struct wm_config* config){
     config->output_scale = 1.;
     config->enable_output_manager = 1;
 
+    config->callback_frequency = 30;
+
     config->xkb_model = "";
     config->xkb_layout = "us";
     config->xkb_options = "";

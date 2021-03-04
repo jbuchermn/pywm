@@ -33,10 +33,10 @@ void _pywm_widget_update(struct _pywm_widget* widget){
             return;
         }
 
-        widget->widget->super.z_index = z_index;
 
         if(w >= 0.0 && h >= 0.0)
             wm_content_set_box(&widget->widget->super, x, y, w, h);
+        wm_content_set_z_index(&widget->widget->super, z_index);
 
     }
     Py_XDECREF(res);

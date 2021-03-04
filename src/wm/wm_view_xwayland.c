@@ -11,6 +11,7 @@
 #include "wm/wm_view.h"
 #include "wm/wm_seat.h"
 #include "wm/wm_server.h"
+#include "wm/wm_layout.h"
 #include "wm/wm.h"
 
 struct wm_view_vtable wm_view_xwayland_vtable;
@@ -85,6 +86,13 @@ Found:
 static void child_handle_map(struct wl_listener* listener, void* data){
     struct wm_view_xwayland_child* child = wl_container_of(listener, child, map);
     child->mapped = true;
+
+    wm_layout_damage_from(
+        child->parent->super.super.wm_server->wm_layout,
+        &child->parent->super.super, child->wlr_xwayland_surface->surface);
+
+    assert(child->wlr_xwayland_surface->surface);
+    wl_signal_add(&child->wlr_xwayland_surface->surface->events.commit, &child->surface_commit);
 }
 
 static void child_handle_request_configure(struct wl_listener* listener, void* data){
@@ -97,11 +105,22 @@ static void child_handle_request_configure(struct wl_listener* listener, void* d
 static void child_handle_unmap(struct wl_listener* listener, void* data){
     struct wm_view_xwayland_child* child = wl_container_of(listener, child, unmap);
     child->mapped = false;
+
+    wm_layout_damage_whole(
+        child->parent->super.super.wm_server->wm_layout);
 }
 
 static void child_handle_destroy(struct wl_listener* listener, void* data){
     struct wm_view_xwayland_child* child = wl_container_of(listener, child, destroy);
     wm_view_xwayland_child_destroy(child);
+}
+
+static void child_handle_surface_commit(struct wl_listener* listener, void* data){
+    struct wm_view_xwayland_child* child = wl_container_of(listener, child, surface_commit);
+
+    wm_layout_damage_from(
+        child->parent->super.super.wm_server->wm_layout,
+        &child->parent->super.super, child->wlr_xwayland_surface->surface);
 }
 
 static void handle_request_configure(struct wl_listener* listener, void* data){
@@ -134,19 +153,37 @@ static void handle_map(struct wl_listener* listener, void* data){
 
     wm_callback_init_view(&view->super);
     view->super.mapped = true;
+
+    wm_layout_damage_from(
+        view->super.super.wm_server->wm_layout,
+        &view->super.super, NULL);
+
+    assert(view->wlr_xwayland_surface->surface);
+    wl_signal_add(&view->wlr_xwayland_surface->surface->events.commit, &view->surface_commit);
 }
 
 static void handle_unmap(struct wl_listener* listener, void* data){
     struct wm_view_xwayland* view = wl_container_of(listener, view, unmap);
     view->super.mapped = false;
     wm_callback_destroy_view(&view->super);
+
+    wm_layout_damage_whole(view->super.super.wm_server->wm_layout);
 }
+
 
 static void handle_destroy(struct wl_listener* listener, void* data){
     struct wm_view_xwayland* view = wl_container_of(listener, view, destroy);
     wm_content_destroy(&view->super.super);
 
     free(view);
+}
+
+static void handle_surface_commit(struct wl_listener* listener, void* data){
+    struct wm_view_xwayland* view = wl_container_of(listener, view, surface_commit);
+
+    wm_layout_damage_from(
+            view->super.super.wm_server->wm_layout,
+            &view->super.super, view->wlr_xwayland_surface->surface);
 }
 
 
@@ -169,6 +206,9 @@ void wm_view_xwayland_child_init(struct wm_view_xwayland_child* child, struct wm
     child->destroy.notify = &child_handle_destroy;
     wl_signal_add(&surface->events.destroy, &child->destroy);
 
+    child->surface_commit.notify = &child_handle_surface_commit;
+    /* Signal is added on map */
+
     wl_list_insert(&parent->children, &child->link);
 }
 
@@ -177,6 +217,7 @@ void wm_view_xwayland_child_destroy(struct wm_view_xwayland_child* child){
     wl_list_remove(&child->map.link);
     wl_list_remove(&child->unmap.link);
     wl_list_remove(&child->destroy.link);
+    if(child->mapped) wl_list_remove(&child->surface_commit.link);
 
     wl_list_remove(&child->link);
 }
@@ -210,6 +251,9 @@ void wm_view_xwayland_init(struct wm_view_xwayland* view, struct wm_server* serv
     view->destroy.notify = &handle_destroy;
     wl_signal_add(&surface->events.destroy, &view->destroy);
 
+    view->surface_commit.notify = &handle_surface_commit;
+    /* signal is added on map */
+
 }
 
 static void wm_view_xwayland_destroy(struct wm_view* super){
@@ -221,6 +265,7 @@ static void wm_view_xwayland_destroy(struct wm_view* super){
     wl_list_remove(&view->map.link);
     wl_list_remove(&view->unmap.link);
     wl_list_remove(&view->destroy.link);
+    if(view->super.mapped) wl_list_remove(&view->surface_commit.link);
 }
 
 static void wm_view_xwayland_get_info(struct wm_view* super, const char** title, const char** app_id, const char** role){

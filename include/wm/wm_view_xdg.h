@@ -17,6 +17,7 @@ struct wm_popup_xdg {
     struct wl_listener unmap;
     struct wl_listener destroy;
     struct wl_listener new_popup;
+    struct wl_listener surface_commit;
 };
 
 void wm_popup_xdg_init(struct wm_popup_xdg* popup, struct wm_view_xdg* toplevel, struct wlr_xdg_popup* wlr_xdg_popup);
@@ -34,6 +35,8 @@ struct wm_view_xdg {
     struct wl_listener unmap;
     struct wl_listener destroy;
     struct wl_listener new_popup;
+
+    struct wl_listener surface_commit;
 
     struct wl_listener request_fullscreen;
     struct wl_listener request_move;

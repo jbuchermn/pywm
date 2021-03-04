@@ -6,6 +6,7 @@
 #include "wm/wm_layout.h"
 #include "wm/wm_output.h"
 #include "wm/wm.h"
+#include "wm/wm_view.h"
 
 /*
  * Callbacks
@@ -47,4 +48,17 @@ void wm_layout_add_output(struct wm_layout* layout, struct wlr_output* out){
     wlr_output_layout_add_auto(layout->wlr_output_layout, out);
 
     if(!layout->default_output) layout->default_output = output;
+}
+
+
+void wm_layout_damage_whole(struct wm_layout* layout){
+    if(!layout->default_output) return;
+
+    wlr_output_damage_add_whole(layout->default_output->wlr_output_damage);
+}
+
+void wm_layout_damage_from(struct wm_layout* layout, struct wm_content* content, struct wlr_surface* origin){
+    if(!layout->default_output) return;
+
+    wm_content_damage_output(content, layout->default_output, origin);
 }

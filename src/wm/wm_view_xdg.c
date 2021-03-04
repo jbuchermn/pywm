@@ -26,13 +26,16 @@ struct wm_view_vtable wm_view_xdg_vtable;
 static void popup_handle_map(struct wl_listener* listener, void* data){
     struct wm_popup_xdg* popup = wl_container_of(listener, popup, map);
 
-    /* Noop */
+    wm_layout_damage_from(
+        popup->toplevel->super.super.wm_server->wm_layout,
+        &popup->toplevel->super.super,
+        popup->wlr_xdg_popup->base->surface);
 }
 
 static void popup_handle_unmap(struct wl_listener* listener, void* data){
     struct wm_popup_xdg* popup = wl_container_of(listener, popup, unmap);
 
-    /* Noop */
+    wm_layout_damage_whole(popup->toplevel->super.super.wm_server->wm_layout);
 }
 
 static void popup_handle_destroy(struct wl_listener* listener, void* data){
@@ -47,6 +50,16 @@ static void popup_handle_new_popup(struct wl_listener* listener, void* data){
 
     struct wm_popup_xdg* new_popup = calloc(1, sizeof(struct wm_popup_xdg));
     wm_popup_xdg_init(new_popup, popup->toplevel, wlr_xdg_popup);
+}
+
+static void popup_handle_surface_commit(struct wl_listener* listener, void* data){
+    struct wm_popup_xdg* popup = wl_container_of(listener, popup, surface_commit);
+
+    wm_layout_damage_from(
+            popup->toplevel->super.super.wm_server->wm_layout,
+            &popup->toplevel->super.super,
+            popup->wlr_xdg_popup->base->surface
+    );
 }
 
 
@@ -74,12 +87,19 @@ static void handle_map(struct wl_listener* listener, void* data){
     wm_callback_init_view(&view->super);
 
     view->super.mapped = true;
+
+    wm_layout_damage_from(
+        view->super.super.wm_server->wm_layout,
+        &view->super.super, NULL);
 }
+
 
 static void handle_unmap(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, unmap);
     view->super.mapped = false;
     wm_callback_destroy_view(&view->super);
+
+    wm_layout_damage_whole(view->super.super.wm_server->wm_layout);
 }
 
 static void handle_destroy(struct wl_listener* listener, void* data){
@@ -88,12 +108,21 @@ static void handle_destroy(struct wl_listener* listener, void* data){
     free(view);
 }
 
+
 static void handle_new_popup(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, new_popup);
     struct wlr_xdg_popup* wlr_xdg_popup = data;
 
     struct wm_popup_xdg* popup = calloc(1, sizeof(struct wm_popup_xdg));
     wm_popup_xdg_init(popup, view, wlr_xdg_popup);
+}
+
+static void handle_surface_commit(struct wl_listener* listener, void* data){
+    struct wm_view_xdg* view = wl_container_of(listener, view, surface_commit);
+
+    wm_layout_damage_from(
+            view->super.super.wm_server->wm_layout,
+            &view->super.super, view->wlr_xdg_surface->surface);
 }
 
 static void handle_fullscreen(struct wl_listener* listener, void* data){
@@ -152,6 +181,8 @@ void wm_popup_xdg_init(struct wm_popup_xdg* popup, struct wm_view_xdg* toplevel,
     popup->new_popup.notify = &popup_handle_new_popup;
     wl_signal_add(&wlr_xdg_popup->base->events.new_popup, &popup->new_popup);
 
+    popup->surface_commit.notify = &popup_handle_surface_commit;
+    wl_signal_add(&wlr_xdg_popup->base->surface->events.commit, &popup->surface_commit);
 
     /* Unconstrain popup */
     int width, height;
@@ -186,6 +217,7 @@ void wm_popup_xdg_destroy(struct wm_popup_xdg* popup){
     wl_list_remove(&popup->unmap.link);
     wl_list_remove(&popup->destroy.link);
     wl_list_remove(&popup->new_popup.link);
+    wl_list_remove(&popup->surface_commit.link);
 }
 
 
@@ -209,6 +241,9 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
 
     view->new_popup.notify = &handle_new_popup;
     wl_signal_add(&surface->events.new_popup, &view->new_popup);
+
+    view->surface_commit.notify = &handle_surface_commit;
+    wl_signal_add(&surface->surface->events.commit, &view->surface_commit);
 
     view->request_fullscreen.notify = &handle_fullscreen;
     wl_signal_add(&surface->toplevel->events.request_fullscreen, &view->request_fullscreen);
@@ -243,6 +278,15 @@ static void wm_view_xdg_destroy(struct wm_view* super){
     wl_list_remove(&view->unmap.link);
     wl_list_remove(&view->destroy.link);
     wl_list_remove(&view->new_popup.link);
+
+    wl_list_remove(&view->surface_commit.link);
+
+    wl_list_remove(&view->request_fullscreen.link);
+    wl_list_remove(&view->request_move.link);
+    wl_list_remove(&view->request_resize.link);
+    wl_list_remove(&view->request_maximize.link);
+    wl_list_remove(&view->request_minimize.link);
+    wl_list_remove(&view->request_show_window_menu.link);
 }
 
 static void wm_view_xdg_get_info(struct wm_view* super, const char** title, const char** app_id, const char** role){

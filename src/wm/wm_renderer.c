@@ -288,24 +288,24 @@ void wm_renderer_destroy(struct wm_renderer* renderer){
 
 void wm_renderer_begin(struct wm_renderer* renderer, struct wm_output* output){
 	wlr_renderer_begin(renderer->wlr_renderer, output->wlr_output->width, output->wlr_output->height);
-
-	float color[4] = { 0.3, 0.3, 0.3, 1.0 };
-	wlr_renderer_clear(renderer->wlr_renderer, color);
-
     renderer->current = output;
 }
 
-void wm_renderer_end(struct wm_renderer* renderer, struct wm_output* output){
+void wm_renderer_end(struct wm_renderer* renderer, pixman_region32_t* damage, struct wm_output* output){
+    wlr_renderer_scissor(renderer->wlr_renderer, NULL);
+    wlr_output_render_software_cursors(output->wlr_output, damage);
 	wlr_renderer_end(renderer->wlr_renderer);
 
     renderer->current = NULL;
 }
 
 
-void wm_renderer_render_texture_at(struct wm_renderer* renderer, struct wlr_texture* texture, struct wlr_box* box, double corner_radius){
+void wm_renderer_render_texture_at(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_texture* texture, struct wlr_box* box, double corner_radius){
 
     float matrix[9];
-    wlr_matrix_project_box(matrix, box, WL_OUTPUT_TRANSFORM_NORMAL, 0, renderer->current->wlr_output->transform_matrix);
+    wlr_matrix_project_box(matrix, box,
+            WL_OUTPUT_TRANSFORM_NORMAL, 0,
+            renderer->current->wlr_output->transform_matrix);
 
 	struct wlr_fbox fbox = {
 		.x = 0,
@@ -314,18 +314,33 @@ void wm_renderer_render_texture_at(struct wm_renderer* renderer, struct wlr_text
 		.height = texture->height,
 	};
 
-#ifdef WM_CUSTOM_RENDERER
-    render_subtexture_with_matrix(
-            renderer,
-            texture,
-            &fbox, matrix, 1.,
+	int nrects;
+	pixman_box32_t* rects = pixman_region32_rectangles(damage, &nrects);
+	for(int i=0; i<nrects; i++){
+        struct wlr_box damage_box = {
+            .x = rects[i].x1,
+            .y = rects[i].y1,
+            .width = rects[i].x2 - rects[i].x1,
+            .height = rects[i].y2 - rects[i].y1
+        };
+		struct wlr_box inters;
+		wlr_box_intersection(&inters, box, &damage_box);
+		if(wlr_box_empty(&inters)) continue;
 
-            box, corner_radius
-            );
+        wlr_renderer_scissor(renderer->wlr_renderer, &inters);
+
+#ifdef WM_CUSTOM_RENDERER
+		render_subtexture_with_matrix(
+				renderer,
+				texture,
+				&fbox, matrix, 1.,
+
+				box, corner_radius);
 #else
-    wlr_render_subtexture_with_matrix(
-            renderer->wlr_renderer,
-            texture,
-            &fbox, matrix, 1.);
+		wlr_render_subtexture_with_matrix(
+				renderer->wlr_renderer,
+				texture,
+				&fbox, matrix, 1.);
 #endif
+	}
 }

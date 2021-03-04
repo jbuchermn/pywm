@@ -21,6 +21,7 @@ struct wm_view_xwayland_child {
     struct wl_listener map;
     struct wl_listener unmap;
     struct wl_listener destroy;
+    struct wl_listener surface_commit;
 };
 
 void wm_view_xwayland_child_init(struct wm_view_xwayland_child* child, struct wm_view_xwayland* parent, struct wlr_xwayland_surface* surface);
@@ -43,6 +44,7 @@ struct wm_view_xwayland {
     struct wl_listener map;
     struct wl_listener unmap;
     struct wl_listener destroy;
+    struct wl_listener surface_commit;
 };
 
 void wm_view_xwayland_init(struct wm_view_xwayland* view, struct wm_server* server, struct wlr_xwayland_surface* surface);

@@ -7,6 +7,7 @@
 
 #include "wm/wm_content.h"
 #include "wm/wm_server.h"
+#include "wm/wm_layout.h"
 
 struct wm_content_vtable wm_content_base_vtable;
 
@@ -29,11 +30,18 @@ void wm_content_base_destroy(struct wm_content* content) {
 }
 
 void wm_content_set_box(struct wm_content* content, double x, double y, double width, double height) {
+    if(fabs(content->display_x - x) +
+            fabs(content->display_y - y) + 
+            fabs(content->display_width - width) +
+            fabs(content->display_height - height) < 0.01) return;
 
+
+    wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
     content->display_x = x;
     content->display_y = y;
     content->display_width = width;
     content->display_height = height;
+    wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
 }
 
 void wm_content_get_box(struct wm_content* content, double* display_x, double* display_y, double* display_width, double* display_height){
@@ -43,8 +51,21 @@ void wm_content_get_box(struct wm_content* content, double* display_x, double* d
     *display_height = content->display_height;
 }
 
+void wm_content_set_z_index(struct wm_content* content, int z_index){
+    if(z_index == content->z_index) return;
+
+    content->z_index = z_index;
+    wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
+}
+int wm_content_get_z_index(struct wm_content* content){
+    return content->z_index;
+}
+
 void wm_content_set_corner_radius(struct wm_content* content, double corner_radius){
+    if(fabs(content->corner_radius - corner_radius) < 0.01) return;
+
     content->corner_radius = corner_radius;
+    wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
 }
 
 double wm_content_get_corner_radius(struct wm_content* content){

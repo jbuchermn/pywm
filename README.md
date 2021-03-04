@@ -6,44 +6,44 @@ Documentation to come
 
 | Application            |  XWayland | Status              | Open issues                                              |
 |------------------------|-----------|---------------------|----------------------------------------------------------|
-| Termite                |    no     | working             |                none                                      |
-| imv                    |    no     | working             |                none                                      |
-| LibreOffice            |    no     | working             |                none                                      |
-| Alacritty              |    no     | working             |                none                                      |
-| Firefox                |    no     | working             |                none                                      |
-| Matplotlib (Qt5)       |    no     | working             |                none                                      |
-| GIMP-2.99              |    no     | working             |                none                                      |
-| nemo                   |    no     | working             |                none                                      |
-| Nautilus               |    no     | working             |                none                                      |
-| masm11/Emacs           |    no     | working             |                none                                      |
-| Chromium               |    no     | working             | Too large popups are placed wrong (this is an issue with sway as well) |
-| OpenSCAD               |    no     | working             |                none                                      |
-| VLC                    |    no     | working             | Popup-toplevels are not recognized as floating           |
-| Zoom                   |    no     | working             | Popup-toplevels are not recognized as floating           |
+| Termite                |           | working             |                none                                      |
+| imv                    |           | working             |                none                                      |
+| LibreOffice            |           | working             |                none                                      |
+| Alacritty              |           | working             |                none                                      |
+| Firefox                |           | working             |                none                                      |
+| Matplotlib (Qt5)       |           | working             |                none                                      |
+| GIMP-2.99              |           | working             |                none                                      |
+| nemo                   |           | working             |                none                                      |
+| Nautilus               |           | working             |                none                                      |
+| masm11/Emacs           |           | working             |                none                                      |
+| Chromium               |           | working             | Too large popups are placed wrong (this is an issue with sway as well) |
+| OpenSCAD               |           | working             |                none                                      |
+| VLC                    |           | working             | Popup-toplevels are not recognized as floating           |
+| Zoom                   |           | working             | Popup-toplevels are not recognized as floating           |
+| Atom                   |           | ?                   | ?                                                        |
+| VSCodium               |           | ?                   | ?                                                        |
+| IntelliJ               |    ?      | ?                   | ?                                                        |
+| FreeCAD                |    ?      | ?                   | ?                                                        |
 | Spotify                |    yes    | working             |                none                                      |
 | VSCodium               |    yes    | working             |                none                                      |
 | Atom                   |    yes    | working             |                none                                      |
 | VLC                    |    yes    | working             |                none                                      |
 | Firefox                |    yes    | working             |                none                                      |
-| Zoom                   |    yes    | working very poorly | ?                                                        |
+| Zoom                   |    yes    | working             | Does not look very nice                                  |
 | Matplotlib             |    yes    | not working         |                                                          |
 | Emacs                  |    yes    | working             | ?                                                        |
-| Atom                   |    no     | ?                   | ?                                                        |
-| VSCodium               |    no     | ?                   | ?                                                        |
-| IntelliJ               |    ?      | ?                   | ?                                                        |
-| FreeCAD                |    ?      | ?                   | ?                                                        |
 | Atom                   |    yes    | ?                   | ?                                                        |
 | Chromium               |    yes    | ?                   | ?                                                        |
 
 
 # Notes
 
-- XWayland apps are responsible for handling HiDPI themselves (per default they will appear very small)
+- Depending on the settings (see main.py) XWayland apps are responsible for handling HiDPI themselves and will per default appear very small
+    - GDK on XWayland: GDK_DPI_SCALE=2
+    - Electron apps: --force-device-scale-factor=2
+
 - Screen record: wf-recorder
 - Screen shot: grim
-
-- GDK on XWayland: GDK_DPI_SCALE=2
 - Firefox: MOZ_ENABLE_WAYLAND=1
 - Chromium: --enable-features=UseOzonePlatform --ozone-platform=wayland
 - Matplotlib / Qt5 on Wayland requires DISPLAY=":0" to be set
-- Electron apps: --force-device-scale-factor=2
