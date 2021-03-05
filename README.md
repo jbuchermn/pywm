@@ -36,7 +36,13 @@ Documentation to come
 | Chromium               |    yes    | ?                   | ?                                                        |
 
 
-# Notes
+## Installing
+
+```
+sudo pip3 install -v git+https://github.com/jbuchermn/pywm
+```
+
+## Notes
 
 - Depending on the settings (see main.py) XWayland apps are responsible for handling HiDPI themselves and will per default appear very small
     - GDK on XWayland: GDK_DPI_SCALE=2
