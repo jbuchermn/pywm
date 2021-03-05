@@ -14,15 +14,17 @@ with open('/usr/include/wayland-server-protocol.h', 'r') as header:
 
 
 class PyWMWidgetDownstreamState:
-    def __init__(self, z_index=0, box=(0, 0, 0, 0)):
+    def __init__(self, z_index=0, box=(0, 0, 0, 0), lock_enabled=True):
         self.z_index = int(z_index)
         self.box = (float(box[0]), float(box[1]), float(box[2]), float(box[3]))
+        self.lock_enabled=lock_enabled
 
     def copy(self):
         return PyWMWidgetDownstreamState(self.z_index, self.box)
 
     def get(self):
         return (
+            self.lock_enabled,
             self.box,
             self.z_index
         )
