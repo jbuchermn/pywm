@@ -1,6 +1,9 @@
+import os
 import glob
 import shutil
-from distutils.core import setup
+from setuptools import setup
+
+os.system("meson build && ninja -C build")
 
 so = None
 for f in glob.glob('build/_pywm.*.so'):
@@ -14,7 +17,8 @@ shutil.copy(so, 'pywm/_pywm.so')
 
 setup(name='pywm',
       version='0.0.1',
-      description='wlroots compositor with Python frontend',
+      description='wlroots-based Wayland compositor with Python frontend',
+      url="https://github.com/jbuchermn/pywm",
       author='Jonas Bucher',
       author_email='j.bucher.mn@gmail.com',
       package_data={'pywm': ['_pywm.so']},
