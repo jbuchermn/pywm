@@ -16,7 +16,7 @@ if so is None:
 shutil.copy(so, 'pywm/_pywm.so')
 
 setup(name='pywm',
-      version='0.0.1',
+      version='0.0.9',
       description='wlroots-based Wayland compositor with Python frontend',
       url="https://github.com/jbuchermn/pywm",
       author='Jonas Bucher',
