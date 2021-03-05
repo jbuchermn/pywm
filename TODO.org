@@ -1,9 +1,11 @@
 #+TITLE: PyWM agenda
 
-* Current
+* Current (aiming for v0.1.0)
+
+** Session management / Lock screen
+- [ ] Access touchpad through libseat or systemd-logind instead of directly (i.e. remove necessity of adding the user to group input)
+
 ** Fully-fledged compositor
-- [ ] Access touchpad through libseat or systemd-logind instead of directly (via adding the user to group input)
-- [ ] Session management / basis for pywm-controlled login / lock
 - [ ] idle and idle_inhibit_manager
 - [ ] Drag-n-drop
 
@@ -15,10 +17,10 @@
 - [ ] Implement incl. pyi for _pywm
 - [ ] Fix setup.py incl. requirements.txt
 
-* Backlog
 ** README.md improvements
 
-** General
+* Backlog
+
 - [ ] Screensharing using xdg-desktop-portal-wlr
 - [ ] Popup constraints on scaling
 
