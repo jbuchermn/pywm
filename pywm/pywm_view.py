@@ -54,9 +54,10 @@ class PyWMViewUpstreamState:
 
 
 class PyWMViewDownstreamState:
-    def __init__(self, z_index=0, box=(0, 0, 0, 0), corner_radius=0, accepts_input=False, lock_enabled=False, up_state=None):
+    def __init__(self, z_index=0, box=(0, 0, 0, 0), opacity=1., corner_radius=0, accepts_input=False, lock_enabled=False, up_state=None):
         self.z_index = int(z_index)
         self.box = (float(box[0]), float(box[1]), float(box[2]), float(box[3]))
+        self.opacity = opacity
         self.corner_radius = corner_radius
         self.accepts_input = accepts_input
         self.lock_enabled = lock_enabled
@@ -77,6 +78,7 @@ class PyWMViewDownstreamState:
     def get(self, last_state, focus, fullscreen, maximized, resizing, close):
         return (
             self.box,
+            self.opacity,
             self.corner_radius,
             int(self.z_index),
             bool(self.accepts_input),

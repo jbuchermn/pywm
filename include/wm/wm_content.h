@@ -23,6 +23,7 @@ struct wm_content {
     double corner_radius;
 
     int z_index;
+    double opacity;
 
     /* Accepts input and is displayed clearly during lock - careful */
     bool lock_enabled;
@@ -39,6 +40,9 @@ double wm_content_get_corner_radius(struct wm_content* content);
 
 void wm_content_set_z_index(struct wm_content* content, int z_index);
 int wm_content_get_z_index(struct wm_content* content);
+
+void wm_content_set_opacity(struct wm_content* content, double opacity);
+double wm_content_get_opacity(struct wm_content* content);
 
 void wm_content_set_lock_enabled(struct wm_content* content, bool lock_enabled);
 

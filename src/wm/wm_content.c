@@ -63,6 +63,17 @@ int wm_content_get_z_index(struct wm_content* content){
     return content->z_index;
 }
 
+void wm_content_set_opacity(struct wm_content* content, double opacity){
+    if(fabs(content->opacity - opacity) < 0.01) return;
+
+    content->opacity = opacity;
+    wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
+}
+
+double wm_content_get_opacity(struct wm_content* content){
+   return content->opacity;
+}
+
 void wm_content_set_corner_radius(struct wm_content* content, double corner_radius){
     if(fabs(content->corner_radius - corner_radius) < 0.01) return;
 

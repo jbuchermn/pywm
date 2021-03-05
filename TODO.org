@@ -9,9 +9,6 @@
 - [ ] idle and idle_inhibit_manager
 - [ ] Drag-n-drop
 
-** General
-- [ ] Opacity of views
-
 ** Type-checking
 - [ ] Try Monkeytype
 - [ ] Implement incl. pyi for _pywm

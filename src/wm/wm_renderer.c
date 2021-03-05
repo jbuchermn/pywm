@@ -169,7 +169,7 @@ static bool render_subtexture_with_matrix(
                 5. / 85.,
                 4. / 85.,
                 3. / 85.,
-                4. / 85., 
+                4. / 85.,
                 5. / 85.,
                 4. / 85.,
                 3. / 85.,
@@ -405,7 +405,7 @@ void wm_renderer_init(struct wm_renderer* renderer, struct wm_server* server){
 	renderer->shader_rgbx.pos_attrib = glGetAttribLocation(renderer->shader_blurred_rgbx.shader, "pos");
 	renderer->shader_rgbx.tex_attrib = glGetAttribLocation(renderer->shader_blurred_rgbx.shader, "texcoord");
 
-	renderer->shader_blurred_rgba.shader = 
+	renderer->shader_blurred_rgba.shader =
 		link_program(r, custom_tex_vertex_src, custom_tex_fragment_blurred_src_rgba);
 	assert(renderer->shader_blurred_rgba.shader);
 
@@ -423,7 +423,7 @@ void wm_renderer_init(struct wm_renderer* renderer, struct wm_server* server){
 	renderer->shader_blurred_rgba.pos_attrib = glGetAttribLocation(renderer->shader_blurred_rgba.shader, "pos");
 	renderer->shader_blurred_rgba.tex_attrib = glGetAttribLocation(renderer->shader_blurred_rgba.shader, "texcoord");
 
-	renderer->shader_blurred_rgbx.shader = 
+	renderer->shader_blurred_rgbx.shader =
 		link_program(r, custom_tex_vertex_src, custom_tex_fragment_blurred_src_rgbx);
 	assert(renderer->shader_blurred_rgbx.shader);
 
@@ -462,8 +462,11 @@ void wm_renderer_end(struct wm_renderer* renderer, pixman_region32_t* damage, st
     renderer->current = NULL;
 }
 
-
-void wm_renderer_render_texture_at(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_texture* texture, struct wlr_box* box, double corner_radius, bool blurred){
+void wm_renderer_render_texture_at(struct wm_renderer *renderer,
+                                   pixman_region32_t *damage,
+                                   struct wlr_texture *texture,
+                                   struct wlr_box *box, double opacity,
+                                   double corner_radius, bool blurred) {
 
     float matrix[9];
     wlr_matrix_project_box(matrix, box,
@@ -496,7 +499,7 @@ void wm_renderer_render_texture_at(struct wm_renderer* renderer, pixman_region32
 		render_subtexture_with_matrix(
 				renderer,
 				texture,
-				&fbox, matrix, 1.,
+				&fbox, matrix, opacity,
 
 				box, corner_radius, blurred);
 #else

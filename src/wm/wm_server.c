@@ -379,5 +379,7 @@ void wm_server_set_locked(struct wm_server* server, bool is_locked){
 
     if(is_locked){
         wm_seat_clear_focus(server->wm_seat);
+    }else{
+        wm_update_cursor(1);
     }
 }
