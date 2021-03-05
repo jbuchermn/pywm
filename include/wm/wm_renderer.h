@@ -58,4 +58,5 @@ void wm_renderer_render_texture_at(struct wm_renderer *renderer,
                                    struct wlr_box *box, double opacity,
                                    double corner_radius, bool blurred);
 
+
 #endif

@@ -12,6 +12,7 @@
 #include <time.h>
 #include <wlr/util/log.h>
 #include <wlr/util/region.h>
+#include <wlr/types/wlr_matrix.h>
 
 /* #define DEBUG_DAMAGE */
 
@@ -56,10 +57,41 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     wlr_renderer_clear(renderer->wlr_renderer, (float[]){1, 1, 0, 1});
 #endif
 
+    bool needs_clear = false;
+    struct wm_content *r;
+    wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
+        if(wm_content_get_opacity(r) < 1. - 0.0001){
+            needs_clear=true;
+            break;
+        }
+    }
+
+    if(needs_clear){
+        int nrects;
+        pixman_box32_t* rects = pixman_region32_rectangles(damage, &nrects);
+        for(int i=0; i<nrects; i++){
+            struct wlr_box damage_box = {
+                .x = rects[i].x1,
+                .y = rects[i].y1,
+                .width = rects[i].x2 - rects[i].x1,
+                .height = rects[i].y2 - rects[i].y1
+            };
+
+            float matrix[9];
+            wlr_matrix_project_box(matrix, &damage_box,
+                    WL_OUTPUT_TRANSFORM_NORMAL, 0,
+                    renderer->current->wlr_output->transform_matrix);
+            wlr_render_rect(
+                    renderer->wlr_renderer,
+                    &damage_box, (float[]){0., 0., 0., 1.}, matrix);
+        }
+    }
+
     /* Do render */
     if(output == output->wm_server->wm_layout->default_output){
         struct wm_content *r;
         wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
+            if(wm_content_get_opacity(r) < 0.0001) continue;
             wm_content_render(r, output, damage, now);
         }
     }else{
