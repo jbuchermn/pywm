@@ -30,17 +30,20 @@ static void handle_update(){
     Py_XDECREF(args);
 
     int update_cursor;
+    int locked;
     int terminate;
 
     if(!PyArg_ParseTuple(res, 
-                "ip",
+                "ipp",
                 &update_cursor,
+                &locked,
                 &terminate)){
         PyErr_SetString(PyExc_TypeError, "Cannot parse query return");
     }else{
         if(update_cursor >= 0){
             wm_update_cursor(update_cursor);
         }
+        wm_set_locked(locked);
         if(terminate){
             wm_terminate();
         }

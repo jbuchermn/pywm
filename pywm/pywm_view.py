@@ -54,11 +54,12 @@ class PyWMViewUpstreamState:
 
 
 class PyWMViewDownstreamState:
-    def __init__(self, z_index=0, box=(0, 0, 0, 0), corner_radius=0, accepts_input=False, up_state=None):
+    def __init__(self, z_index=0, box=(0, 0, 0, 0), corner_radius=0, accepts_input=False, lock_enabled=False, up_state=None):
         self.z_index = int(z_index)
         self.box = (float(box[0]), float(box[1]), float(box[2]), float(box[3]))
         self.corner_radius = corner_radius
         self.accepts_input = accepts_input
+        self.lock_enabled = lock_enabled
 
         """
         Request size
@@ -79,6 +80,7 @@ class PyWMViewDownstreamState:
             self.corner_radius,
             int(self.z_index),
             bool(self.accepts_input),
+            bool(self.lock_enabled),
 
             self.size if self.size != last_state.size else (-1, -1),
 

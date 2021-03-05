@@ -32,6 +32,7 @@ void wm_seat_destroy(struct wm_seat* seat);
 
 void wm_seat_add_input_device(struct wm_seat* seat, struct wlr_input_device* input_device);
 
+void wm_seat_clear_focus(struct wm_seat* seat);
 void wm_seat_focus_surface(struct wm_seat* seat, struct wlr_surface* surface);
 
 /* Pass input on to client */

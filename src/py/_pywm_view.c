@@ -91,14 +91,16 @@ void _pywm_view_update(struct _pywm_view* view){
         int focus_pending, resizing_pending, fullscreen_pending, maximized_pending, close_pending;
         int width_pending, height_pending;
         int accepts_input, z_index;
+        int lock_enabled;
         
         if(!PyArg_ParseTuple(res, 
-                    "(dddd)dip(ii)iiiii",
+                    "(dddd)dipp(ii)iiiii",
                     &x, &y, &w, &h,
                     &corner_radius,
 
                     &z_index,
                     &accepts_input,
+                    &lock_enabled,
 
                     &width_pending, &height_pending,
                     &focus_pending,
@@ -127,6 +129,7 @@ void _pywm_view_update(struct _pywm_view* view){
             if(close_pending != -1 && close_pending)
                 wm_view_request_close(view->view);
             wm_content_set_z_index(&view->view->super, z_index);
+            wm_content_set_lock_enabled(&view->view->super, lock_enabled);
 
             view->view->accepts_input = accepts_input;
         }

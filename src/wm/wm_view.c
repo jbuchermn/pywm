@@ -51,6 +51,7 @@ struct render_data {
     double x_scale;
     double y_scale;
     double corner_radius;
+    bool blurred;
 };
 
 
@@ -78,7 +79,7 @@ static void render_surface(struct wlr_surface *surface, int sx, int sy,
         corner_radius = 0;
     }
     wm_renderer_render_texture_at(output->wm_server->wm_renderer, rdata->damage, texture, &box,
-            corner_radius);
+            corner_radius, rdata->blurred);
 
     /* Notify client */
     wlr_surface_send_frame_done(surface, &rdata->when);
@@ -112,7 +113,9 @@ static void wm_view_render(struct wm_content* super, struct wm_output* output, p
         .y = display_y,
         .x_scale = display_width / width,
         .y_scale = display_height / height,
-        .corner_radius = corner_radius};
+        .corner_radius = corner_radius,
+        .blurred = view->super.wm_server->is_locked && !view->super.lock_enabled
+    };
 
     wm_view_for_each_surface(view, render_surface, &rdata);
 }

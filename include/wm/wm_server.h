@@ -47,6 +47,8 @@ struct wm_server{
 
     bool callback_timer_started;
     struct wl_event_source* callback_timer;
+
+    bool is_locked;
 };
 
 void wm_server_init(struct wm_server* server, struct wm_config* config);
@@ -67,5 +69,7 @@ struct wm_widget* wm_server_create_widget(struct wm_server* server);
  * Calling the update this way is preferred over callback_timer
  */
 void wm_server_callback_update(struct wm_server* server);
+
+void wm_server_set_locked(struct wm_server* server, bool is_locked);
 
 #endif

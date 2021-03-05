@@ -1,6 +1,7 @@
 #ifndef WM_RENDERER_H
 #define WM_RENDERER_H
 
+#include <stdbool.h>
 #include <wlr/render/wlr_renderer.h>
 
 #define WM_CUSTOM_RENDERER
@@ -20,7 +21,11 @@ struct wm_renderer_shader {
     GLint tex_attrib;
     GLint width;
     GLint height;
+
     GLint cornerradius;
+
+    GLint blur_offset;
+    GLint blur_weight;
 };
 
 #endif
@@ -35,6 +40,9 @@ struct wm_renderer {
     /* Custom shaders */
     struct wm_renderer_shader shader_rgba;
     struct wm_renderer_shader shader_rgbx;
+
+    struct wm_renderer_shader shader_blurred_rgba;
+    struct wm_renderer_shader shader_blurred_rgbx;
 #endif
 };
 
@@ -43,6 +51,6 @@ void wm_renderer_destroy(struct wm_renderer* renderer);
 
 void wm_renderer_begin(struct wm_renderer* renderer, struct wm_output* output);
 void wm_renderer_end(struct wm_renderer* renderer, pixman_region32_t* damage, struct wm_output* output);
-void wm_renderer_render_texture_at(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_texture* texture, struct wlr_box* box, double corner_radius);
+void wm_renderer_render_texture_at(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_texture* texture, struct wlr_box* box, double corner_radius, bool blurred);
 
 #endif

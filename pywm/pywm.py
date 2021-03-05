@@ -83,6 +83,8 @@ class PyWM:
         logging.info("Tochpad '%s' %sfound", kwargs["touchpad_device_name"] if "touchpad_device_name" in kwargs else "",
                      "not " if self._touchpad_main is None else "")
 
+        self._locked = False
+
         """
         -1: Do nothing
         0: Disable cursor
@@ -251,7 +253,7 @@ class PyWM:
 
     @callback
     def _query(self):
-        res = (self._pending_update_cursor, self._pending_terminate)
+        res = (self._pending_update_cursor, self._locked, self._pending_terminate)
         self._pending_update_cursor = -1
 
         return res

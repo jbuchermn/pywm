@@ -83,7 +83,7 @@ static bool render_subtexture_with_matrix(
 		struct wm_renderer *renderer, struct wlr_texture *wlr_texture,
 		const struct wlr_fbox *box, const float matrix[static 9],
 		float alpha,
-        const struct wlr_box *display_box, float corner_radius
+        const struct wlr_box *display_box, float corner_radius, bool blurred
         ) {
 	struct wlr_gles2_renderer *gles2_renderer =
 		gles2_get_renderer(renderer->wlr_renderer);
@@ -96,9 +96,9 @@ static bool render_subtexture_with_matrix(
 	switch (texture->target) {
 	case GL_TEXTURE_2D:
 		if (texture->has_alpha) {
-			shader = &renderer->shader_rgba;
+			shader = blurred ? &renderer->shader_blurred_rgba : &renderer->shader_rgba;
 		} else {
-			shader = &renderer->shader_rgbx;
+			shader = blurred ? &renderer->shader_blurred_rgbx : &renderer->shader_rgbx;
 		}
 		break;
 	case GL_TEXTURE_EXTERNAL_OES:
@@ -134,6 +134,65 @@ static bool render_subtexture_with_matrix(
 	glUniform1f(shader->width, display_box->width);
 	glUniform1f(shader->height, display_box->height);
 	glUniform1f(shader->cornerradius, corner_radius);
+
+    if(blurred){
+        float x = 2. / display_box->width;
+        float y = 2. / display_box->height;
+        glUniform2fv(shader->blur_offset, 25, (GLfloat[]){
+                -2*x, -2*y, // 5
+                -2*x, -1*y, // 4
+                -2*x,  0*y, // 3
+                -2*x,  1*y, // 4 
+                -2*x,  2*y, // 5
+                -1*x, -2*y, // 4
+                -1*x, -1*y, // 3
+                -1*x,  0*y, // 2
+                -1*x,  1*y, // 3
+                -1*x,  2*y, // 4
+                 0*x, -2*y, // 3
+                 0*x, -1*y, // 2
+                 0*x,  0*y, // 1
+                 0*x,  1*y, // 2
+                 0*x,  2*y, // 3
+                 1*x, -2*y, // 4
+                 1*x, -1*y, // 3
+                 1*x,  0*y, // 2
+                 1*x,  1*y, // 3
+                 1*x,  2*y, // 4
+                 2*x, -2*y, // 5
+                 2*x, -1*y, // 4
+                 2*x,  0*y, // 3
+                 2*x,  1*y, // 4
+                 2*x,  2*y, // 5
+                });
+        glUniform1fv(shader->blur_weight, 25, (GLfloat[]){
+                5. / 85.,
+                4. / 85.,
+                3. / 85.,
+                4. / 85., 
+                5. / 85.,
+                4. / 85.,
+                3. / 85.,
+                2. / 85.,
+                3. / 85.,
+                4. / 85.,
+                3. / 85.,
+                2. / 85.,
+                1. / 85.,
+                2. / 85.,
+                3. / 85.,
+                4. / 85.,
+                3. / 85.,
+                2. / 85.,
+                3. / 85.,
+                4. / 85.,
+                5. / 85.,
+                4. / 85.,
+                3. / 85.,
+                4. / 85.,
+                5. / 85.
+                });
+    }
 
 	const GLfloat x1 = box->x / wlr_texture->width;
 	const GLfloat y1 = box->y / wlr_texture->height;
@@ -232,6 +291,72 @@ const GLchar custom_tex_fragment_src_rgbx[] =
 "   }\n"
 "	gl_FragColor = vec4(texture2D(tex, v_texcoord).rgb, 1.0) * alpha;\n"
 "}\n";
+
+const GLchar custom_tex_fragment_blurred_src_rgba[] =
+"precision mediump float;\n"
+"varying vec2 v_texcoord;\n"
+"uniform sampler2D tex;\n"
+"uniform float alpha;\n"
+"\n"
+"uniform float width;\n"
+"uniform float height;\n"
+"\n"
+"uniform vec2 blur_offset[25];\n"
+"uniform float blur_weight[25];\n"
+"uniform float cornerradius;\n"
+"\n"
+"void main() {\n"
+"   if(v_texcoord.x*width < cornerradius && v_texcoord.y*height < cornerradius){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius, cornerradius)) > cornerradius) discard;\n"
+"   }\n"
+"   if(v_texcoord.x*width > width - cornerradius && v_texcoord.y*height < cornerradius){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius, cornerradius)) > cornerradius) discard;\n"
+"   }\n"
+"   if(v_texcoord.x*width < cornerradius && v_texcoord.y*height > height - cornerradius){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius, height - cornerradius)) > cornerradius) discard;\n"
+"   }\n"
+"   if(v_texcoord.x*width > width - cornerradius && v_texcoord.y*height > height - cornerradius){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius, height - cornerradius)) > cornerradius) discard;\n"
+"   }\n"
+"   gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);\n"
+"   for(int i=0; i<25; i++)\n"
+"       gl_FragColor += texture2D(tex, v_texcoord + blur_offset[i]) * blur_weight[i] * alpha;\n"
+"}\n";
+
+
+
+const GLchar custom_tex_fragment_blurred_src_rgbx[] =
+"precision mediump float;\n"
+"varying vec2 v_texcoord;\n"
+"uniform sampler2D tex;\n"
+"uniform float alpha;\n"
+"\n"
+"uniform float width;\n"
+"uniform float height;\n"
+"\n"
+"uniform vec2 blur_offset[25];\n"
+"uniform float blur_weight[25];\n"
+"uniform float cornerradius;\n"
+"\n"
+"void main() {\n"
+"   if(v_texcoord.x*width < cornerradius && v_texcoord.y*height < cornerradius){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius, cornerradius)) > cornerradius) discard;\n"
+"   }\n"
+"   if(v_texcoord.x*width > width - cornerradius && v_texcoord.y*height < cornerradius){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius, cornerradius)) > cornerradius) discard;\n"
+"   }\n"
+"   if(v_texcoord.x*width < cornerradius && v_texcoord.y*height > height - cornerradius){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius, height - cornerradius)) > cornerradius) discard;\n"
+"   }\n"
+"   if(v_texcoord.x*width > width - cornerradius && v_texcoord.y*height > height - cornerradius){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius, height - cornerradius)) > cornerradius) discard;\n"
+"   }\n"
+"   gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);\n"
+"   for(int i=0; i<25; i++)\n"
+"       gl_FragColor += vec4(texture2D(tex, v_texcoord + blur_offset[i]).rgb, 1.0) * blur_weight[i] * alpha;\n"
+"}\n";
+
+
 #endif
 
 void wm_renderer_init(struct wm_renderer* renderer, struct wm_server* server){
@@ -261,6 +386,7 @@ void wm_renderer_init(struct wm_renderer* renderer, struct wm_server* server){
 	renderer->shader_rgba.width = glGetUniformLocation(renderer->shader_rgba.shader, "width");
 	renderer->shader_rgba.height = glGetUniformLocation(renderer->shader_rgba.shader, "height");
 	renderer->shader_rgba.cornerradius = glGetUniformLocation(renderer->shader_rgba.shader, "cornerradius");
+
 	renderer->shader_rgba.pos_attrib = glGetAttribLocation(renderer->shader_rgba.shader, "pos");
 	renderer->shader_rgba.tex_attrib = glGetAttribLocation(renderer->shader_rgba.shader, "texcoord");
 
@@ -268,15 +394,52 @@ void wm_renderer_init(struct wm_renderer* renderer, struct wm_server* server){
 		link_program(r, custom_tex_vertex_src, custom_tex_fragment_src_rgbx);
 	assert(renderer->shader_rgbx.shader);
 
-	renderer->shader_rgbx.proj = glGetUniformLocation(renderer->shader_rgbx.shader, "proj");
-	renderer->shader_rgbx.invert_y = glGetUniformLocation(renderer->shader_rgbx.shader, "invert_y");
-	renderer->shader_rgbx.tex = glGetUniformLocation(renderer->shader_rgbx.shader, "tex");
-	renderer->shader_rgbx.alpha = glGetUniformLocation(renderer->shader_rgbx.shader, "alpha");
-	renderer->shader_rgbx.width = glGetUniformLocation(renderer->shader_rgbx.shader, "width");
-	renderer->shader_rgbx.height = glGetUniformLocation(renderer->shader_rgbx.shader, "height");
-	renderer->shader_rgbx.cornerradius = glGetUniformLocation(renderer->shader_rgbx.shader, "cornerradius");
-	renderer->shader_rgbx.pos_attrib = glGetAttribLocation(renderer->shader_rgbx.shader, "pos");
-	renderer->shader_rgbx.tex_attrib = glGetAttribLocation(renderer->shader_rgbx.shader, "texcoord");
+	renderer->shader_rgbx.proj = glGetUniformLocation(renderer->shader_blurred_rgbx.shader, "proj");
+	renderer->shader_rgbx.invert_y = glGetUniformLocation(renderer->shader_blurred_rgbx.shader, "invert_y");
+	renderer->shader_rgbx.tex = glGetUniformLocation(renderer->shader_blurred_rgbx.shader, "tex");
+	renderer->shader_rgbx.alpha = glGetUniformLocation(renderer->shader_blurred_rgbx.shader, "alpha");
+	renderer->shader_rgbx.width = glGetUniformLocation(renderer->shader_blurred_rgbx.shader, "width");
+	renderer->shader_rgbx.height = glGetUniformLocation(renderer->shader_blurred_rgbx.shader, "height");
+	renderer->shader_rgbx.cornerradius = glGetUniformLocation(renderer->shader_blurred_rgbx.shader, "cornerradius");
+
+	renderer->shader_rgbx.pos_attrib = glGetAttribLocation(renderer->shader_blurred_rgbx.shader, "pos");
+	renderer->shader_rgbx.tex_attrib = glGetAttribLocation(renderer->shader_blurred_rgbx.shader, "texcoord");
+
+	renderer->shader_blurred_rgba.shader = 
+		link_program(r, custom_tex_vertex_src, custom_tex_fragment_blurred_src_rgba);
+	assert(renderer->shader_blurred_rgba.shader);
+
+	renderer->shader_blurred_rgba.proj = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "proj");
+	renderer->shader_blurred_rgba.invert_y = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "invert_y");
+	renderer->shader_blurred_rgba.tex = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "tex");
+	renderer->shader_blurred_rgba.alpha = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "alpha");
+	renderer->shader_blurred_rgba.width = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "width");
+	renderer->shader_blurred_rgba.height = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "height");
+
+	renderer->shader_blurred_rgba.cornerradius = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "cornerradius");
+	renderer->shader_blurred_rgba.blur_offset = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "blur_offset");
+	renderer->shader_blurred_rgba.blur_weight = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "blur_weight");
+
+	renderer->shader_blurred_rgba.pos_attrib = glGetAttribLocation(renderer->shader_blurred_rgba.shader, "pos");
+	renderer->shader_blurred_rgba.tex_attrib = glGetAttribLocation(renderer->shader_blurred_rgba.shader, "texcoord");
+
+	renderer->shader_blurred_rgbx.shader = 
+		link_program(r, custom_tex_vertex_src, custom_tex_fragment_blurred_src_rgbx);
+	assert(renderer->shader_blurred_rgbx.shader);
+
+	renderer->shader_blurred_rgbx.proj = glGetUniformLocation(renderer->shader_rgbx.shader, "proj");
+	renderer->shader_blurred_rgbx.invert_y = glGetUniformLocation(renderer->shader_rgbx.shader, "invert_y");
+	renderer->shader_blurred_rgbx.tex = glGetUniformLocation(renderer->shader_rgbx.shader, "tex");
+	renderer->shader_blurred_rgbx.alpha = glGetUniformLocation(renderer->shader_rgbx.shader, "alpha");
+	renderer->shader_blurred_rgbx.width = glGetUniformLocation(renderer->shader_rgbx.shader, "width");
+	renderer->shader_blurred_rgbx.height = glGetUniformLocation(renderer->shader_rgbx.shader, "height");
+
+	renderer->shader_blurred_rgbx.cornerradius = glGetUniformLocation(renderer->shader_rgbx.shader, "cornerradius");
+	renderer->shader_blurred_rgbx.blur_offset = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "blur_offset");
+	renderer->shader_blurred_rgbx.blur_weight = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "blur_weight");
+
+	renderer->shader_blurred_rgbx.pos_attrib = glGetAttribLocation(renderer->shader_rgbx.shader, "pos");
+	renderer->shader_blurred_rgbx.tex_attrib = glGetAttribLocation(renderer->shader_rgbx.shader, "texcoord");
 
 	wlr_egl_unset_current(r->egl);
 #endif
@@ -300,7 +463,7 @@ void wm_renderer_end(struct wm_renderer* renderer, pixman_region32_t* damage, st
 }
 
 
-void wm_renderer_render_texture_at(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_texture* texture, struct wlr_box* box, double corner_radius){
+void wm_renderer_render_texture_at(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_texture* texture, struct wlr_box* box, double corner_radius, bool blurred){
 
     float matrix[9];
     wlr_matrix_project_box(matrix, box,
@@ -335,7 +498,7 @@ void wm_renderer_render_texture_at(struct wm_renderer* renderer, pixman_region32
 				texture,
 				&fbox, matrix, 1.,
 
-				box, corner_radius);
+				box, corner_radius, blurred);
 #else
 		wlr_render_subtexture_with_matrix(
 				renderer->wlr_renderer,

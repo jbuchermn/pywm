@@ -150,6 +150,10 @@ void wm_seat_add_input_device(struct wm_seat* seat, struct wlr_input_device* inp
     wlr_seat_set_capabilities(seat->wlr_seat, capabilities);
 }
 
+void wm_seat_clear_focus(struct wm_seat* seat){
+    wm_seat_focus_surface(seat, NULL);
+    wlr_seat_keyboard_clear_focus(seat->wlr_seat);
+}
 
 void wm_seat_focus_surface(struct wm_seat* seat, struct wlr_surface* surface){
     struct wlr_surface* prev = seat->wlr_seat->keyboard_state.focused_surface;
@@ -167,8 +171,14 @@ void wm_seat_focus_surface(struct wm_seat* seat, struct wlr_surface* surface){
     }
 
     if(prev_view) wm_view_set_activated(prev_view, false);
-    if(view) wm_view_set_activated(view, true);
 
+    /* Guard keyboard focus */
+    if(seat->wm_server->is_locked){
+        if(!view) return;
+        if(!view->super.lock_enabled) return;
+    }
+
+    if(view) wm_view_set_activated(view, true);
     struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat->wlr_seat);
     wlr_seat_keyboard_notify_enter(seat->wlr_seat, surface,
             keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
@@ -201,10 +211,18 @@ bool wm_seat_dispatch_motion(struct wm_seat* seat, double x, double y, uint32_t 
         /* Automatically focus surface on mouse enter  */
         wm_seat_focus_surface(seat, surface);
     }
-
     bool focus_change = (surface != seat->wlr_seat->pointer_state.focused_surface);
+
+    /* Guard mouse focus */
+    if(seat->wm_server->is_locked){
+        struct wm_view* view = wm_server_view_for_surface(seat->wm_server, surface);
+        if(!view || !view->super.lock_enabled){
+            goto Guard;
+        }
+    }
     wlr_seat_pointer_notify_enter(seat->wlr_seat, surface, sx, sy);
 
+Guard:
     if(!focus_change){
         wlr_seat_pointer_notify_motion(seat->wlr_seat, time_msec, sx, sy);
     }

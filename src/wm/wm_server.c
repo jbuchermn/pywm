@@ -242,6 +242,8 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->callback_timer_started = false;
 
     clock_gettime(CLOCK_MONOTONIC, &server->last_callback_externally_sourced);
+
+    server->is_locked = false;
 }
 
 void wm_server_destroy(struct wm_server* server){
@@ -368,4 +370,14 @@ void wm_server_update_contents(struct wm_server* server){
 void wm_server_callback_update(struct wm_server* server){
     clock_gettime(CLOCK_MONOTONIC, &server->last_callback_externally_sourced);
     wm_callback_update();
+}
+
+void wm_server_set_locked(struct wm_server* server, bool is_locked){
+    if(is_locked == server->is_locked) return;
+    server->is_locked = is_locked;
+    wm_layout_damage_whole(server->wm_layout);
+
+    if(is_locked){
+        wm_seat_clear_focus(server->wm_seat);
+    }
 }

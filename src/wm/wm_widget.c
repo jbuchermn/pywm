@@ -46,8 +46,11 @@ static void wm_widget_render(struct wm_content* super, struct wm_output* output,
     double corner_radius =
         wm_content_get_corner_radius(&widget->super) * output->wlr_output->scale;
 
-    wm_renderer_render_texture_at(output->wm_server->wm_renderer, output_damage,
-            widget->wlr_texture, &box, corner_radius);
+    wm_renderer_render_texture_at(
+            output->wm_server->wm_renderer, output_damage,
+            widget->wlr_texture, &box,
+            corner_radius,
+            super->wm_server->is_locked && !super->lock_enabled);
 
 }
 

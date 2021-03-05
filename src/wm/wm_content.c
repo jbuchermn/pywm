@@ -23,6 +23,8 @@ void wm_content_init(struct wm_content* content, struct wm_server* server) {
 
     content->z_index = 0;
     wl_list_insert(&content->wm_server->wm_contents, &content->link);
+
+    content->lock_enabled = false;
 }
 
 void wm_content_base_destroy(struct wm_content* content) {
@@ -65,6 +67,13 @@ void wm_content_set_corner_radius(struct wm_content* content, double corner_radi
     if(fabs(content->corner_radius - corner_radius) < 0.01) return;
 
     content->corner_radius = corner_radius;
+    wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
+}
+
+void wm_content_set_lock_enabled(struct wm_content* content, bool lock_enabled){
+    if(lock_enabled == content->lock_enabled) return;
+
+    content->lock_enabled = lock_enabled;
     wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
 }
 
