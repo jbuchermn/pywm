@@ -83,7 +83,7 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
                     renderer->current->wlr_output->transform_matrix);
             wlr_render_rect(
                     renderer->wlr_renderer,
-                    &damage_box, (float[]){0., 0., 0., 1.}, matrix);
+                    &damage_box, (float[]){0., 0., 0., 1.}, renderer->current->wlr_output->transform_matrix);
         }
     }
 
