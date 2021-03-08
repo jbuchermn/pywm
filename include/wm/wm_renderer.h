@@ -5,6 +5,8 @@
 #include <wlr/render/wlr_renderer.h>
 
 #define WM_CUSTOM_RENDERER
+#define WM_CUSTOM_RENDERER_BLUR 7
+#define WM_CUSTOM_RENDERER_BLUR_SQ_S "49"
 
 struct wm_output;
 
@@ -43,6 +45,9 @@ struct wm_renderer {
 
     struct wm_renderer_shader shader_blurred_rgba;
     struct wm_renderer_shader shader_blurred_rgbx;
+
+    GLfloat* blur_weights;
+    GLfloat* blur_pos;
 #endif
 };
 

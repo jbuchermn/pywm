@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200112L
 
 #include <assert.h>
+#include <math.h>
 #include <stdlib.h>
 #include <wayland-server.h>
 #include <wlr/render/wlr_renderer.h>
@@ -136,62 +137,17 @@ static bool render_subtexture_with_matrix(
 	glUniform1f(shader->cornerradius, corner_radius);
 
     if(blurred){
-        float x = 2. / display_box->width;
-        float y = 2. / display_box->height;
-        glUniform2fv(shader->blur_offset, 25, (GLfloat[]){
-                -2*x, -2*y, // 5
-                -2*x, -1*y, // 4
-                -2*x,  0*y, // 3
-                -2*x,  1*y, // 4 
-                -2*x,  2*y, // 5
-                -1*x, -2*y, // 4
-                -1*x, -1*y, // 3
-                -1*x,  0*y, // 2
-                -1*x,  1*y, // 3
-                -1*x,  2*y, // 4
-                 0*x, -2*y, // 3
-                 0*x, -1*y, // 2
-                 0*x,  0*y, // 1
-                 0*x,  1*y, // 2
-                 0*x,  2*y, // 3
-                 1*x, -2*y, // 4
-                 1*x, -1*y, // 3
-                 1*x,  0*y, // 2
-                 1*x,  1*y, // 3
-                 1*x,  2*y, // 4
-                 2*x, -2*y, // 5
-                 2*x, -1*y, // 4
-                 2*x,  0*y, // 3
-                 2*x,  1*y, // 4
-                 2*x,  2*y, // 5
-                });
-        glUniform1fv(shader->blur_weight, 25, (GLfloat[]){
-                5. / 85.,
-                4. / 85.,
-                3. / 85.,
-                4. / 85.,
-                5. / 85.,
-                4. / 85.,
-                3. / 85.,
-                2. / 85.,
-                3. / 85.,
-                4. / 85.,
-                3. / 85.,
-                2. / 85.,
-                1. / 85.,
-                2. / 85.,
-                3. / 85.,
-                4. / 85.,
-                3. / 85.,
-                2. / 85.,
-                3. / 85.,
-                4. / 85.,
-                5. / 85.,
-                4. / 85.,
-                3. / 85.,
-                4. / 85.,
-                5. / 85.
-                });
+        float x_factor = 1.5 / display_box->width;
+        float y_factor = 1.5 / display_box->height;
+		GLfloat pos[WM_CUSTOM_RENDERER_BLUR * WM_CUSTOM_RENDERER_BLUR * 2];
+		memcpy(pos, renderer->blur_pos, WM_CUSTOM_RENDERER_BLUR * WM_CUSTOM_RENDERER_BLUR * 2 * sizeof(GLfloat));
+		for(int i=0; i<WM_CUSTOM_RENDERER_BLUR * WM_CUSTOM_RENDERER_BLUR; i++){
+			pos[2*i] *= x_factor;
+			pos[2*i + 1] *= y_factor;
+		}
+        glUniform2fv(shader->blur_offset, WM_CUSTOM_RENDERER_BLUR * WM_CUSTOM_RENDERER_BLUR, pos);
+        glUniform1fv(shader->blur_weight, WM_CUSTOM_RENDERER_BLUR * WM_CUSTOM_RENDERER_BLUR, renderer->blur_weights);
+
     }
 
 	const GLfloat x1 = box->x / wlr_texture->width;
@@ -301,8 +257,8 @@ const GLchar custom_tex_fragment_blurred_src_rgba[] =
 "uniform float width;\n"
 "uniform float height;\n"
 "\n"
-"uniform vec2 blur_offset[25];\n"
-"uniform float blur_weight[25];\n"
+"uniform vec2 blur_offset["WM_CUSTOM_RENDERER_BLUR_SQ_S"];\n"
+"uniform float blur_weight["WM_CUSTOM_RENDERER_BLUR_SQ_S"];\n"
 "uniform float cornerradius;\n"
 "\n"
 "void main() {\n"
@@ -319,7 +275,7 @@ const GLchar custom_tex_fragment_blurred_src_rgba[] =
 "       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius, height - cornerradius)) > cornerradius) discard;\n"
 "   }\n"
 "   gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);\n"
-"   for(int i=0; i<25; i++)\n"
+"   for(int i=0; i<"WM_CUSTOM_RENDERER_BLUR_SQ_S"; i++)\n"
 "       gl_FragColor += texture2D(tex, v_texcoord + blur_offset[i]) * blur_weight[i] * alpha;\n"
 "}\n";
 
@@ -334,8 +290,8 @@ const GLchar custom_tex_fragment_blurred_src_rgbx[] =
 "uniform float width;\n"
 "uniform float height;\n"
 "\n"
-"uniform vec2 blur_offset[25];\n"
-"uniform float blur_weight[25];\n"
+"uniform vec2 blur_offset["WM_CUSTOM_RENDERER_BLUR_SQ_S"];\n"
+"uniform float blur_weight["WM_CUSTOM_RENDERER_BLUR_SQ_S"];\n"
 "uniform float cornerradius;\n"
 "\n"
 "void main() {\n"
@@ -352,7 +308,7 @@ const GLchar custom_tex_fragment_blurred_src_rgbx[] =
 "       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius, height - cornerradius)) > cornerradius) discard;\n"
 "   }\n"
 "   gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);\n"
-"   for(int i=0; i<25; i++)\n"
+"   for(int i=0; i<"WM_CUSTOM_RENDERER_BLUR_SQ_S"; i++)\n"
 "       gl_FragColor += vec4(texture2D(tex, v_texcoord + blur_offset[i]).rgb, 1.0) * blur_weight[i] * alpha;\n"
 "}\n";
 
@@ -442,11 +398,33 @@ void wm_renderer_init(struct wm_renderer* renderer, struct wm_server* server){
 	renderer->shader_blurred_rgbx.tex_attrib = glGetAttribLocation(renderer->shader_rgbx.shader, "texcoord");
 
 	wlr_egl_unset_current(r->egl);
+
+	renderer->blur_weights = calloc(WM_CUSTOM_RENDERER_BLUR * WM_CUSTOM_RENDERER_BLUR, sizeof(GLfloat));
+	renderer->blur_pos = calloc(2 * WM_CUSTOM_RENDERER_BLUR * WM_CUSTOM_RENDERER_BLUR, sizeof(GLfloat));;
+
+	for(int i=-(WM_CUSTOM_RENDERER_BLUR/2), c=0; i<=(WM_CUSTOM_RENDERER_BLUR/2); i++){
+        for(int j=-(WM_CUSTOM_RENDERER_BLUR/2); j<=(WM_CUSTOM_RENDERER_BLUR/2); j++,c++){
+			renderer->blur_weights[c] = exp(-4.0 * (i*i + j*j) / WM_CUSTOM_RENDERER_BLUR / WM_CUSTOM_RENDERER_BLUR);
+			renderer->blur_pos[2*c] = i;
+			renderer->blur_pos[2*c + 1] = j;
+		}
+	}
+
+	GLfloat sum = 0;
+	for(int i=0; i<WM_CUSTOM_RENDERER_BLUR*WM_CUSTOM_RENDERER_BLUR; i++){
+		sum += renderer->blur_weights[i];
+	}
+	for(int i=0; i<WM_CUSTOM_RENDERER_BLUR*WM_CUSTOM_RENDERER_BLUR; i++){
+		renderer->blur_weights[i] /= sum;
+	}
 #endif
 }
 
 void wm_renderer_destroy(struct wm_renderer* renderer){
     wlr_renderer_destroy(renderer->wlr_renderer);
+
+	free(renderer->blur_weights);
+	free(renderer->blur_pos);
 }
 
 void wm_renderer_begin(struct wm_renderer* renderer, struct wm_output* output){

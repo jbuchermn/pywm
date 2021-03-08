@@ -3,11 +3,12 @@
 * Current (aiming for v0.1.0)
 
 ** Session management / Lock screen
+- [X] Improve blur (Gaussian, configurable, do not skip pixels)
 - [ ] Access touchpad through libseat or systemd-logind instead of directly (i.e. remove necessity of adding the user to group input)
 
 ** Fully-fledged compositor
-- [ ] idle and idle_inhibit_manager
 - [ ] Drag-n-drop
+- [ ] (idle and) idle_inhibit_manager
 
 ** Type-checking
 - [ ] Try Monkeytype
@@ -16,13 +17,9 @@
 
 ** README.md improvements
 
-* Backlog
-
-- [ ] Screensharing using xdg-desktop-portal-wlr
-- [ ] Popup constraints on scaling
-
-* Ideas
-
+* Backlog / Ideas
+** Screensharing using xdg-desktop-portal-wlr
+** Proper handling of popup constraints on scaling
 ** Various TODO Comments inline
 ** Possibly use toplevel -> parent to find floating windows?
 ** Multiple outputs
