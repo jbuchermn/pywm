@@ -7,6 +7,7 @@
 #include "wm/wm_output.h"
 #include "wm/wm.h"
 #include "wm/wm_view.h"
+#include "wm/wm_server.h"
 
 /*
  * Callbacks
@@ -60,5 +61,9 @@ void wm_layout_damage_whole(struct wm_layout* layout){
 void wm_layout_damage_from(struct wm_layout* layout, struct wm_content* content, struct wlr_surface* origin){
     if(!layout->default_output) return;
 
-    wm_content_damage_output(content, layout->default_output, origin);
+    if(!content->lock_enabled && layout->wm_server->is_locked){
+        wm_content_damage_output(content, layout->default_output, NULL);
+    }else{
+        wm_content_damage_output(content, layout->default_output, origin);
+    }
 }

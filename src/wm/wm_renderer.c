@@ -136,20 +136,6 @@ static bool render_subtexture_with_matrix(
 	glUniform1f(shader->height, display_box->height);
 	glUniform1f(shader->cornerradius, corner_radius);
 
-    if(blurred){
-        float x_factor = 1.5 / display_box->width;
-        float y_factor = 1.5 / display_box->height;
-		GLfloat pos[WM_CUSTOM_RENDERER_BLUR * WM_CUSTOM_RENDERER_BLUR * 2];
-		memcpy(pos, renderer->blur_pos, WM_CUSTOM_RENDERER_BLUR * WM_CUSTOM_RENDERER_BLUR * 2 * sizeof(GLfloat));
-		for(int i=0; i<WM_CUSTOM_RENDERER_BLUR * WM_CUSTOM_RENDERER_BLUR; i++){
-			pos[2*i] *= x_factor;
-			pos[2*i + 1] *= y_factor;
-		}
-        glUniform2fv(shader->blur_offset, WM_CUSTOM_RENDERER_BLUR * WM_CUSTOM_RENDERER_BLUR, pos);
-        glUniform1fv(shader->blur_weight, WM_CUSTOM_RENDERER_BLUR * WM_CUSTOM_RENDERER_BLUR, renderer->blur_weights);
-
-    }
-
 	const GLfloat x1 = box->x / wlr_texture->width;
 	const GLfloat y1 = box->y / wlr_texture->height;
 	const GLfloat x2 = (box->x + box->width) / wlr_texture->width;
@@ -257,8 +243,6 @@ const GLchar custom_tex_fragment_blurred_src_rgba[] =
 "uniform float width;\n"
 "uniform float height;\n"
 "\n"
-"uniform vec2 blur_offset["WM_CUSTOM_RENDERER_BLUR_SQ_S"];\n"
-"uniform float blur_weight["WM_CUSTOM_RENDERER_BLUR_SQ_S"];\n"
 "uniform float cornerradius;\n"
 "\n"
 "void main() {\n"
@@ -274,9 +258,9 @@ const GLchar custom_tex_fragment_blurred_src_rgba[] =
 "   if(v_texcoord.x*width > width - cornerradius && v_texcoord.y*height > height - cornerradius){\n"
 "       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius, height - cornerradius)) > cornerradius) discard;\n"
 "   }\n"
-"   gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);\n"
-"   for(int i=0; i<"WM_CUSTOM_RENDERER_BLUR_SQ_S"; i++)\n"
-"       gl_FragColor += texture2D(tex, v_texcoord + blur_offset[i]) * blur_weight[i] * alpha;\n"
+"   float r = sqrt((v_texcoord.x - 0.5) * (v_texcoord.x - 0.5) + (v_texcoord.y - 0.5) * (v_texcoord.y - 0.5));\n"
+"   float a = atan(v_texcoord.y - 0.5, v_texcoord.x - 0.5);\n"
+"	gl_FragColor = texture2D(tex, vec2(0.5 + r*cos(a + 10.0 * (0.5 - r)), 0.5 + r*sin(a + 10.0 * (0.5 - r)))) * alpha;\n"
 "}\n";
 
 
@@ -290,8 +274,6 @@ const GLchar custom_tex_fragment_blurred_src_rgbx[] =
 "uniform float width;\n"
 "uniform float height;\n"
 "\n"
-"uniform vec2 blur_offset["WM_CUSTOM_RENDERER_BLUR_SQ_S"];\n"
-"uniform float blur_weight["WM_CUSTOM_RENDERER_BLUR_SQ_S"];\n"
 "uniform float cornerradius;\n"
 "\n"
 "void main() {\n"
@@ -307,9 +289,7 @@ const GLchar custom_tex_fragment_blurred_src_rgbx[] =
 "   if(v_texcoord.x*width > width - cornerradius && v_texcoord.y*height > height - cornerradius){\n"
 "       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius, height - cornerradius)) > cornerradius) discard;\n"
 "   }\n"
-"   gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);\n"
-"   for(int i=0; i<"WM_CUSTOM_RENDERER_BLUR_SQ_S"; i++)\n"
-"       gl_FragColor += vec4(texture2D(tex, v_texcoord + blur_offset[i]).rgb, 1.0) * blur_weight[i] * alpha;\n"
+"	gl_FragColor = vec4(texture2D(tex, vec2(sin(v_texcoord.y * 3.0 + v_texcoord.x * 2.0), sin(v_texcoord.x * 2.0 + v_texcoord.y * 3.0))).rgb, 1.0) * alpha;\n"
 "}\n";
 
 
@@ -373,8 +353,6 @@ void wm_renderer_init(struct wm_renderer* renderer, struct wm_server* server){
 	renderer->shader_blurred_rgba.height = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "height");
 
 	renderer->shader_blurred_rgba.cornerradius = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "cornerradius");
-	renderer->shader_blurred_rgba.blur_offset = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "blur_offset");
-	renderer->shader_blurred_rgba.blur_weight = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "blur_weight");
 
 	renderer->shader_blurred_rgba.pos_attrib = glGetAttribLocation(renderer->shader_blurred_rgba.shader, "pos");
 	renderer->shader_blurred_rgba.tex_attrib = glGetAttribLocation(renderer->shader_blurred_rgba.shader, "texcoord");
@@ -391,40 +369,17 @@ void wm_renderer_init(struct wm_renderer* renderer, struct wm_server* server){
 	renderer->shader_blurred_rgbx.height = glGetUniformLocation(renderer->shader_rgbx.shader, "height");
 
 	renderer->shader_blurred_rgbx.cornerradius = glGetUniformLocation(renderer->shader_rgbx.shader, "cornerradius");
-	renderer->shader_blurred_rgbx.blur_offset = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "blur_offset");
-	renderer->shader_blurred_rgbx.blur_weight = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "blur_weight");
 
 	renderer->shader_blurred_rgbx.pos_attrib = glGetAttribLocation(renderer->shader_rgbx.shader, "pos");
 	renderer->shader_blurred_rgbx.tex_attrib = glGetAttribLocation(renderer->shader_rgbx.shader, "texcoord");
 
 	wlr_egl_unset_current(r->egl);
 
-	renderer->blur_weights = calloc(WM_CUSTOM_RENDERER_BLUR * WM_CUSTOM_RENDERER_BLUR, sizeof(GLfloat));
-	renderer->blur_pos = calloc(2 * WM_CUSTOM_RENDERER_BLUR * WM_CUSTOM_RENDERER_BLUR, sizeof(GLfloat));;
-
-	for(int i=-(WM_CUSTOM_RENDERER_BLUR/2), c=0; i<=(WM_CUSTOM_RENDERER_BLUR/2); i++){
-        for(int j=-(WM_CUSTOM_RENDERER_BLUR/2); j<=(WM_CUSTOM_RENDERER_BLUR/2); j++,c++){
-			renderer->blur_weights[c] = exp(-4.0 * (i*i + j*j) / WM_CUSTOM_RENDERER_BLUR / WM_CUSTOM_RENDERER_BLUR);
-			renderer->blur_pos[2*c] = i;
-			renderer->blur_pos[2*c + 1] = j;
-		}
-	}
-
-	GLfloat sum = 0;
-	for(int i=0; i<WM_CUSTOM_RENDERER_BLUR*WM_CUSTOM_RENDERER_BLUR; i++){
-		sum += renderer->blur_weights[i];
-	}
-	for(int i=0; i<WM_CUSTOM_RENDERER_BLUR*WM_CUSTOM_RENDERER_BLUR; i++){
-		renderer->blur_weights[i] /= sum;
-	}
 #endif
 }
 
 void wm_renderer_destroy(struct wm_renderer* renderer){
     wlr_renderer_destroy(renderer->wlr_renderer);
-
-	free(renderer->blur_weights);
-	free(renderer->blur_pos);
 }
 
 void wm_renderer_begin(struct wm_renderer* renderer, struct wm_output* output){

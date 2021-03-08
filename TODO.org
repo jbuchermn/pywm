@@ -6,7 +6,8 @@
 - [X] Improve blur (Gaussian, configurable, do not skip pixels)
 - [ ] Access touchpad through libseat or systemd-logind instead of directly (i.e. remove necessity of adding the user to group input)
 
-** Fully-fledged compositor
+** Bugs / missing features
+- [X] Speed-up Gaussian blur (49 texture fetches / pixel is ridiculous)
 - [ ] Drag-n-drop
 - [ ] (idle and) idle_inhibit_manager
 
