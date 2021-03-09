@@ -23,6 +23,7 @@ struct wm_renderer_shader {
     GLint height;
 
     GLint cornerradius;
+    GLint lock_perc;
 };
 
 #endif
@@ -53,7 +54,7 @@ void wm_renderer_render_texture_at(struct wm_renderer *renderer,
                                    pixman_region32_t *damage,
                                    struct wlr_texture *texture,
                                    struct wlr_box *box, double opacity,
-                                   double corner_radius, bool blurred);
+                                   double corner_radius, double lock_perc);
 
 
 #endif

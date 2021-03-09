@@ -40,7 +40,7 @@ void wm_terminate();
 void wm_focus_view(struct wm_view* view);
 void wm_update_cursor(int cursor_visible);
 
-void wm_set_locked(bool locked);
+void wm_set_locked(double locked);
 
 struct wm_widget* wm_create_widget();
 void wm_destroy_widget(struct wm_widget* widget);

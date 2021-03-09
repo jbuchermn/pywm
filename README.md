@@ -19,6 +19,7 @@ Documentation to come
 | Chromium               |           | working             | Too large popups are placed wrong (this is an issue with sway as well) |
 | OpenSCAD               |           | working             |                none                                      |
 | VLC                    |           | working             | Popup-toplevels are not recognized as floating           |
+| mpv                    |           | working             |                none                                      |
 | Zoom                   |           | working             | Popup-toplevels are not recognized as floating           |
 | Atom                   |           | ?                   | ?                                                        |
 | VSCodium               |           | ?                   | ?                                                        |

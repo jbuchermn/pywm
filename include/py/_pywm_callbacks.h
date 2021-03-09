@@ -22,7 +22,7 @@ struct _pywm_callbacks {
     PyObject* update_widget_pixels;
     PyObject* query_destroy_widget;
 
-    PyObject* query;
+    PyObject* update;
 };
 
 void _pywm_callbacks_init();

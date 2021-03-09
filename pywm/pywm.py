@@ -1,3 +1,4 @@
+from abc import abstractmethod
 import logging
 from threading import Thread
 
@@ -23,6 +24,21 @@ PYWM_MOD_MOD5 = 128
 
 PYWM_RELEASED = 0
 PYWM_PRESSED = 1
+
+
+class PyWMDownstreamState:
+    def __init__(self, lock_perc=0.0):
+        self.lock_perc = lock_perc
+
+    def copy(self):
+        return PyWMDownstreamState(self.lock_perc)
+
+    def get(self, update_cursor, terminate):
+        return (
+            int(update_cursor),
+            self.lock_perc,
+            int(terminate)
+        )
 
 
 def callback(func):
@@ -63,7 +79,7 @@ class PyWM:
         register("update_widget_pixels", self._update_widget_pixels)
         register("query_destroy_widget", self._query_destroy_widget)
 
-        register("query", self._query)
+        register("update", self._update)
 
         self._view_class = view_class
 
@@ -83,7 +99,8 @@ class PyWM:
         logging.info("Tochpad '%s' %sfound", kwargs["touchpad_device_name"] if "touchpad_device_name" in kwargs else "",
                      "not " if self._touchpad_main is None else "")
 
-        self._locked = False
+        self._down_state = PyWMDownstreamState()
+        self._damaged = False
 
         """
         -1: Do nothing
@@ -252,11 +269,23 @@ class PyWM:
         return None
 
     @callback
-    def _query(self):
-        res = (self._pending_update_cursor, self._locked, self._pending_terminate)
+    def _update(self):
+        if self._damaged:
+            self._damaged = False
+            self._down_state = self.process()
+
+        res = self._down_state.get(
+            self._pending_update_cursor,
+            self._pending_terminate
+        )
+
         self._pending_update_cursor = -1
+        self._pending_terminate = False
 
         return res
+    
+    def damage(self):
+        self._damaged = True
 
     def widget_destroy(self, widget):
         self._widgets.pop(widget._handle, None)
@@ -299,9 +328,19 @@ class PyWM:
     def update_cursor(self, enabled=True):
         self._pending_update_cursor = 0 if not enabled else 1
 
+    def is_locked(self):
+        return self._down_state.lock_perc != 0.0
+
     """
     Virtual methods
     """
+
+    @abstractmethod
+    def process(self):
+        """
+        return next down_state based on whatever state the implementation uses
+        """
+        pass
 
     def main(self):
         pass

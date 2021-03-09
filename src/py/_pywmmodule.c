@@ -26,24 +26,24 @@ static void handle_update(){
     PyGILState_STATE gil = PyGILState_Ensure();
 
     PyObject* args = Py_BuildValue("()");
-    PyObject* res = PyObject_Call(_pywm_callbacks_get_all()->query, args, NULL);
+    PyObject* res = PyObject_Call(_pywm_callbacks_get_all()->update, args, NULL);
     Py_XDECREF(args);
 
     int update_cursor;
-    int locked;
+    double lock_perc;
     int terminate;
 
     if(!PyArg_ParseTuple(res, 
-                "ipp",
+                "idp",
                 &update_cursor,
-                &locked,
+                &lock_perc,
                 &terminate)){
         PyErr_SetString(PyExc_TypeError, "Cannot parse query return");
     }else{
         if(update_cursor >= 0){
             wm_update_cursor(update_cursor);
         }
-        wm_set_locked(locked);
+        wm_set_locked(lock_perc);
         if(terminate){
             wm_terminate();
         }
@@ -89,7 +89,6 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
 
         o = PyDict_GetItemString(kwargs, "focus_follows_mouse"); if(o){ conf.focus_follows_mouse = o == Py_True; }
         o = PyDict_GetItemString(kwargs, "constrain_popups_to_toplevel"); if(o){ conf.constrain_popups_to_toplevel = o == Py_True; }
-
         o = PyDict_GetItemString(kwargs, "encourage_csd"); if(o){ conf.encourage_csd = o == Py_True; }
     }
 

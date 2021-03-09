@@ -173,7 +173,7 @@ void wm_seat_focus_surface(struct wm_seat* seat, struct wlr_surface* surface){
     if(prev_view) wm_view_set_activated(prev_view, false);
 
     /* Guard keyboard focus */
-    if(seat->wm_server->is_locked){
+    if(wm_server_is_locked(seat->wm_server)){
         if(!view) return;
         if(!view->super.lock_enabled) return;
     }
@@ -214,7 +214,7 @@ bool wm_seat_dispatch_motion(struct wm_seat* seat, double x, double y, uint32_t 
     bool focus_change = (surface != seat->wlr_seat->pointer_state.focused_surface);
 
     /* Guard mouse focus */
-    if(seat->wm_server->is_locked){
+    if(wm_server_is_locked(seat->wm_server)){
         struct wm_view* view = wm_server_view_for_surface(seat->wm_server, surface);
         if(!view || !view->super.lock_enabled){
             goto Guard;

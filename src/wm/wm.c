@@ -98,7 +98,7 @@ void wm_update_cursor(int cursor_visible){
     wm_cursor_update(wm.server->wm_seat->wm_cursor);
 }
 
-void wm_set_locked(bool locked){
+void wm_set_locked(double locked){
     if(!wm.server) return;
 
     wm_server_set_locked(wm.server, locked);

@@ -7,6 +7,7 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_server_decoration.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
+#include <wlr/types/wlr_idle_inhibit_v1.h>
 
 struct wm_config;
 struct wm_seat;
@@ -27,6 +28,7 @@ struct wm_server{
     struct wlr_xdg_decoration_manager_v1* wlr_xdg_decoration_manager;
     struct wlr_xwayland* wlr_xwayland;
     struct wlr_xcursor_manager* wlr_xcursor_manager;
+    struct wlr_idle_inhibit_manager_v1* wlr_idle_inhibit_manager;
 
     struct wm_renderer* wm_renderer;
     struct wm_seat* wm_seat;
@@ -42,13 +44,14 @@ struct wm_server{
     struct wl_listener new_xdg_decoration;
     struct wl_listener xwayland_ready;
     struct wl_listener new_xwayland_surface;
+    struct wl_listener new_idle_inhibitor;
 
     struct timespec last_callback_externally_sourced;
 
     bool callback_timer_started;
     struct wl_event_source* callback_timer;
 
-    bool is_locked;
+    double lock_perc;
 };
 
 void wm_server_init(struct wm_server* server, struct wm_config* config);
@@ -70,6 +73,7 @@ struct wm_widget* wm_server_create_widget(struct wm_server* server);
  */
 void wm_server_callback_update(struct wm_server* server);
 
-void wm_server_set_locked(struct wm_server* server, bool is_locked);
+void wm_server_set_locked(struct wm_server* server, double lock_perc);
+bool wm_server_is_locked(struct wm_server* server);
 
 #endif

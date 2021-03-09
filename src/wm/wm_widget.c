@@ -50,7 +50,7 @@ static void wm_widget_render(struct wm_content* super, struct wm_output* output,
             output->wm_server->wm_renderer, output_damage,
             widget->wlr_texture, &box,
             wm_content_get_opacity(super), corner_radius,
-            super->wm_server->is_locked && !super->lock_enabled);
+            super->lock_enabled ? 0.0 : super->wm_server->lock_perc);
 
 }
 

@@ -14,6 +14,7 @@
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
+#include <wlr/types/wlr_idle_inhibit_v1.h>
 #include <wlr/util/log.h>
 #include <wlr/xwayland.h>
 
@@ -92,6 +93,10 @@ static void handle_new_xwayland_surface(struct wl_listener* listener, void* data
 
     struct wm_view_xwayland* view = calloc(1, sizeof(struct wm_view_xwayland));
     wm_view_xwayland_init(view, server, surface);
+}
+
+static void handle_new_idle_inhibitor(struct wl_listener* listener, void* data){
+    wlr_log(WLR_DEBUG, "Server: New idle inhibitor");
 }
 
 static void handle_new_server_decoration(struct wl_listener* listener, void* data){
@@ -197,6 +202,9 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
                 image->buffer, image->width * 4, image->width, image->height, image->hotspot_x, image->hotspot_y);
     }
 
+    server->wlr_idle_inhibit_manager = wlr_idle_inhibit_v1_create(server->wl_display);
+
+
     /* Children */
     server->wm_layout = calloc(1, sizeof(struct wm_layout));
     wm_layout_init(server->wm_layout, server);
@@ -229,6 +237,9 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->new_xwayland_surface.notify = handle_new_xwayland_surface;
     wl_signal_add(&server->wlr_xwayland->events.new_surface, &server->new_xwayland_surface);
 
+    server->new_idle_inhibitor.notify = handle_new_idle_inhibitor;
+    wl_signal_add(&server->wlr_idle_inhibit_manager->events.new_inhibitor, &server->new_idle_inhibitor);
+
     /*
      * Due to the unfortunate handling of XWayland forks via SIGUSR1, we need to be sure not
      * to create any threads before the XWayland server is ready
@@ -243,7 +254,7 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
 
     clock_gettime(CLOCK_MONOTONIC, &server->last_callback_externally_sourced);
 
-    server->is_locked = false;
+    server->lock_perc = 0.0;
 }
 
 void wm_server_destroy(struct wm_server* server){
@@ -372,14 +383,19 @@ void wm_server_callback_update(struct wm_server* server){
     wm_callback_update();
 }
 
-void wm_server_set_locked(struct wm_server* server, bool is_locked){
-    if(is_locked == server->is_locked) return;
-    server->is_locked = is_locked;
+void wm_server_set_locked(struct wm_server* server, double lock_perc){
+    if(fabs(lock_perc - server->lock_perc) < 0.001) return;
+
+    server->lock_perc = lock_perc;
     wm_layout_damage_whole(server->wm_layout);
 
-    if(is_locked){
+    if(wm_server_is_locked(server)){
         wm_seat_clear_focus(server->wm_seat);
     }else{
         wm_update_cursor(1);
     }
+}
+
+bool wm_server_is_locked(struct wm_server* server){
+    return server->lock_perc > 0.001;
 }
