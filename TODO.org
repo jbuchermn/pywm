@@ -3,21 +3,28 @@
 * Current (aiming for v0.1.0)
 
 ** Bugs / missing features
-- [X] Speed-up Gaussian blur (49 texture fetches / pixel is ridiculous)
-- [ ] Drag-n-drop
-- [ ] idle interface python-side
-- [ ] idle_inhibit_manager (see mpv)
+*** DONE Speed-up Gaussian blur (49 texture fetches / pixel is ridiculous)
+*** TODO Drag-n-drop
+*** TODO idle interface python-side
+*** TODO idle_inhibit_manager (see mpv)
+*** TODO Wrong view / floating children handling in vlc / zoom (see ideas below)
 
 ** Type-checking / technical debt
-- [ ] Try Monkeytype
-- [ ] Implement incl. pyi for _pywm
-- [ ] Fix setup.py incl. requirements.txt
+*** DONE Fix setup.py incl. requirements.txt
+*** TODO Type annotations
+- [ ] Monkeytype
+- [ ] For Python files
+- [ ] For C extension (.pyi)
+*** TODO inline TODO-comments
 
 ** Session management / Lock screen
-- [X] Improve blur (Gaussian, configurable, do not skip pixels)
-- [ ] Access touchpad through libseat or systemd-logind instead of directly (i.e. remove necessity of adding the user to group input)
+*** DONE Improve blur (Gaussian, configurable, do not skip pixels)
+*** TODO Clean-up touchpad access (i.e. remove necessity of adding the user to group input)
+Either access touchpad through libseat or systemd-logind instead or (preferred) pass events from libinput to pytouchpad
 
-** README.md improvements
+** Documentation
+*** TODO README improvements
+*** TODO Proper documentation which applications have been tested with which issues
 
 * Backlog / Ideas
 ** Screensharing using xdg-desktop-portal-wlr
