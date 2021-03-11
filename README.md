@@ -39,9 +39,27 @@ Documentation to come
 
 ## Installing
 
+### Install PyWM
+
 ```
 sudo pip3 install -v git+https://github.com/jbuchermn/pywm
 ```
+
+### Getting touchpads up and running
+
+Ensure that your user is in the correct group
+
+```
+ls -al /dev/input/event*
+```
+
+As a sidenote, this is not necessary for a Wayland compositor in general as the devices can be access through `systemd-logind` or `seatd` or similar.
+However the python `evdev` module does not allow instantiation given a file descriptor (only a path which it then opens itself),
+so usage of that module would no longer be possible in this case (plus at first side there is no easy way of getting that file descriptor to the 
+Python side). Also `wlroots` (`libinput` in the backend) does not expose touchpads as what they are (`touch-down`, `touch-up`, `touch-motion` for any
+number of parallel slots), but only as pointers (`motion` / `axis`), so gesture detection around `libinput`-events is not possible as well.
+
+Therefore, we're stuck with the less secure (and a lot easier) way of using the (probably named `input`) group.
 
 ## Notes
 
