@@ -13,6 +13,7 @@ struct wm_config;
 struct wm_seat;
 struct wm_layout;
 struct wm_renderer;
+struct wm_idle_inhibit;
 
 struct wm_server{
     struct wm_config* wm_config;
@@ -28,11 +29,11 @@ struct wm_server{
     struct wlr_xdg_decoration_manager_v1* wlr_xdg_decoration_manager;
     struct wlr_xwayland* wlr_xwayland;
     struct wlr_xcursor_manager* wlr_xcursor_manager;
-    struct wlr_idle_inhibit_manager_v1* wlr_idle_inhibit_manager;
 
     struct wm_renderer* wm_renderer;
     struct wm_seat* wm_seat;
     struct wm_layout* wm_layout;
+    struct wm_idle_inhibit* wm_idle_inhibit;
 
     /* Sorted by z-index (highest first) */
     struct wl_list wm_contents;  // wm_content::link
@@ -44,7 +45,6 @@ struct wm_server{
     struct wl_listener new_xdg_decoration;
     struct wl_listener xwayland_ready;
     struct wl_listener new_xwayland_surface;
-    struct wl_listener new_idle_inhibitor;
 
     struct timespec last_callback_externally_sourced;
 

@@ -68,6 +68,7 @@ sources = [
     'src/wm/wm_view_xwayland.c',
     'src/wm/wm_widget.c',
     'src/wm/wm_config.c',
+    'src/wm/wm_idle_inhibit.c',
 ]
 
 py_sources = [

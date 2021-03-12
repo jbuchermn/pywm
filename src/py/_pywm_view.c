@@ -54,8 +54,10 @@ void _pywm_view_update(struct _pywm_view* view){
     int is_maximized = wm_view_is_maximized(view->view);
     int is_resizing = wm_view_is_resizing(view->view);
 
+    int is_inhibiting_idle = wm_view_is_inhibiting_idle(view->view);
+
     PyObject* args = Py_BuildValue(
-            "(llOssOsiiiiiiiiOOOO)",
+            "(llOssOsiiiiiiiiOOOOO)",
 
             view->handle,
             parent_handle,
@@ -79,7 +81,8 @@ void _pywm_view_update(struct _pywm_view* view){
             is_focused ? Py_True : Py_False,
             is_fullscreen ? Py_True : Py_False,
             is_maximized ? Py_True : Py_False,
-            is_resizing ? Py_True : Py_False);
+            is_resizing ? Py_True : Py_False,
+            is_inhibiting_idle ? Py_True : Py_False);
 
 
     PyObject* res = PyObject_Call(_pywm_callbacks_get_all()->update_view, args, NULL);

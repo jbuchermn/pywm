@@ -17,6 +17,7 @@ struct wm_view {
 
     struct wm_view_vtable* vtable;
     bool mapped;
+    bool inhibiting_idle;
 
     bool accepts_input;
 
@@ -29,10 +30,10 @@ struct wm_view {
 
 void wm_view_base_init(struct wm_view* view, struct wm_server* server);
 
-void wm_view_base_get_box(struct wm_view* view, double* x, double* y, double* width, double* height);
-void wm_view_base_set_box(struct wm_view* view, double x, double y, double width, double height);
+void wm_view_set_inhibiting_idle(struct wm_view* view, bool inhibiting_idle);
+bool wm_view_is_inhibiting_idle(struct wm_view* view);
 
-int wm_content_is_view(struct wm_content* content);
+bool wm_content_is_view(struct wm_content* content);
 
 struct wm_view_vtable {
     void (*destroy)(struct wm_view* view);

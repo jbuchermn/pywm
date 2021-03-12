@@ -28,6 +28,7 @@ void wm_view_base_init(struct wm_view* view, struct wm_server* server){
     view->vtable = NULL;
 
     view->mapped = false;
+    view->inhibiting_idle = false;
     view->accepts_input = true;
 }
 
@@ -38,8 +39,15 @@ static void wm_view_base_destroy(struct wm_content* super){
     wm_content_base_destroy(super);
 }
 
-int wm_content_is_view(struct wm_content* content){
+bool wm_content_is_view(struct wm_content* content){
     return content->vtable == &wm_view_vtable;
+}
+
+void wm_view_set_inhibiting_idle(struct wm_view* view, bool inhibiting_idle){
+    view->inhibiting_idle = inhibiting_idle;
+}
+bool wm_view_is_inhibiting_idle(struct wm_view* view){
+    return view->inhibiting_idle;
 }
 
 struct render_data {

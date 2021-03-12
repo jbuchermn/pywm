@@ -6,7 +6,7 @@
 *** DONE Speed-up Gaussian blur (49 texture fetches / pixel is ridiculous)
 *** TODO Drag-n-drop
 *** TODO idle interface python-side
-*** TODO idle_inhibit_manager (see mpv)
+*** DONE idle_inhibit_manager (see mpv)
 *** TODO Wrong view / floating children handling in vlc / zoom (see ideas below)
 
 ** Type-checking / technical debt

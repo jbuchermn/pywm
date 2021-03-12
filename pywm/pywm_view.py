@@ -4,7 +4,7 @@ from abc import abstractmethod
 
 class PyWMViewUpstreamState:
     def __init__(self, *args):
-        if len(args) != 14:
+        if len(args) != 15:
             raise Exception("Unexpected number of args")
         self.is_floating = bool(args[0])
         self.title = str(args[1])
@@ -30,6 +30,7 @@ class PyWMViewUpstreamState:
         self.is_fullscreen = bool(args[11])
         self.is_maximized = bool(args[12])
         self.is_resizing = bool(args[13])
+        self.is_inhibiting_idle = bool(args[14])
 
     def is_update(self, other):
         if self.is_floating != other.is_floating:
@@ -49,6 +50,8 @@ class PyWMViewUpstreamState:
         if self.is_maximized != other.is_maximized:
             return True
         if self.is_resizing != other.is_resizing:
+            return True
+        if self.is_inhibiting_idle != other.is_inhibiting_idle:
             return True
         return False
 
