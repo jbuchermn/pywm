@@ -1,6 +1,8 @@
 from abc import abstractmethod
 import logging
-from threading import Thread
+import time
+from threading import Thread, Lock
+
 
 from .pywm_view import PyWMView
 from .touchpad import create_touchpad, GestureListener
@@ -118,6 +120,48 @@ class PyWM:
         self.height = 0
         self.modifiers = 0
 
+        self._idle_last_activity = time.time()
+        self._idle_last_update_active = time.time()
+        self._idle_last_update_inactive = time.time()
+
+        self._lock = Lock()
+
+
+    def _update_idle(self, activity=True):
+        # Is called from touchpad thread as well as regular thread
+        if self._lock.acquire(blocking=False):
+            try:
+                def is_inhibited():
+                    inhibited = False
+                    for _, v in self._views.items():
+                        if v.up_state.is_inhibiting_idle:
+                            inhibited = True
+                            break
+                    return inhibited
+
+                if activity:
+                    self._idle_last_activity = time.time()
+
+                    if time.time() - self._idle_last_update_active > 1:
+                        try:
+                            self.on_idle(0.0, is_inhibited())
+                        except Exception:
+                            logging.exception("on_idle active")
+                        self._idle_last_update_active = time.time()
+                else:
+                    inactive_time = time.time() - self._idle_last_activity
+                    if time.time() - self._idle_last_update_inactive > 5 and inactive_time > 5:
+                        try:
+                            self.on_idle(inactive_time, is_inhibited())
+                        except Exception:
+                            logging.exception("on_idle inactive")
+                        self._idle_last_update_inactive = time.time()
+
+            finally:
+                self._lock.release()
+
+
+
     def _exec_main(self):
         if self._touchpad_main is not None:
             logging.debug("Starting pytouchpad")
@@ -132,6 +176,7 @@ class PyWM:
 
     @callback
     def _motion(self, time_msec, delta_x, delta_y):
+        self._update_idle()
         if self._touchpad_captured:
             return True
 
@@ -143,6 +188,7 @@ class PyWM:
 
     @callback
     def _motion_absolute(self, time_msec, x, y):
+        self._update_idle()
         if self._touchpad_captured:
             return True
 
@@ -160,6 +206,7 @@ class PyWM:
 
     @callback
     def _button(self, time_msec, button, state):
+        self._update_idle()
         if self._touchpad_captured:
             return True
 
@@ -167,6 +214,7 @@ class PyWM:
 
     @callback
     def _axis(self, time_msec, source, orientation, delta, delta_discrete):
+        self._update_idle()
         if self._touchpad_captured:
             return True
 
@@ -175,16 +223,19 @@ class PyWM:
 
     @callback
     def _key(self, time_msec, keycode, state, keysyms):
+        self._update_idle()
         result = self.on_key(time_msec, keycode, state, keysyms)
         return result
 
     @callback
     def _modifiers(self, depressed, latched, locked, group):
+        self._update_idle()
         self.modifiers = depressed
         return self.on_modifiers(self.modifiers)
 
     @callback
     def _layout_change(self, width, height):
+        self._update_idle()
         self.width = width
         self.height = height
         self.on_layout_change()
@@ -270,6 +321,7 @@ class PyWM:
 
     @callback
     def _update(self):
+        self._update_idle(False)
         if self._damaged:
             self._damaged = False
             self._down_state = self.process()
@@ -292,6 +344,7 @@ class PyWM:
         self._pending_destroy_widgets += [widget]
 
     def _gesture(self, gesture):
+        self._update_idle()
         self._touchpad_captured = self.on_gesture(gesture)
         gesture.listener(GestureListener(None, self._gesture_finished))
 
@@ -374,3 +427,10 @@ class PyWM:
     def on_modifiers(self, modifiers):
         return False
 
+    def on_idle(self, elapsed, idle_inhibited):
+        """
+        elapsed == 0 means there has been an activity, possibly a wakeup from idle is necessary
+        elapsed > 0 describes the amount of seconds which have passed since the last activity, possibly sleep is necessary
+        idle_inhibited is True if there is at least one view with is_inhibiting_idle==True
+        """
+        pass
