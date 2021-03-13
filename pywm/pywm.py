@@ -1,11 +1,15 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 import logging
 import time
 from threading import Thread, Lock
+from typing import Callable, Tuple, Optional
 
 
+from .pywm_widget import PyWMWidget
 from .pywm_view import PyWMView
-from .touchpad import TouchpadDaemon, GestureListener
+from .touchpad import TouchpadDaemon, GestureListener, Gesture
 
 from ._pywm import (  # noqa E402
     run,
@@ -29,17 +33,17 @@ PYWM_PRESSED = 1
 
 
 class PyWMDownstreamState:
-    def __init__(self, lock_perc=0.0):
+    def __init__(self, lock_perc: float=0.0):
         self.lock_perc = lock_perc
 
-    def copy(self):
+    def copy(self) -> PyWMDownstreamState:
         return PyWMDownstreamState(self.lock_perc)
 
-    def get(self, update_cursor, terminate):
+    def get(self, update_cursor: int, terminate: int) -> Tuple[int, float, bool]:
         return (
             int(update_cursor),
             self.lock_perc,
-            int(terminate)
+            bool(terminate)
         )
 
 
@@ -49,7 +53,7 @@ def callback(func):
         try:
             res = func(*args, **kwargs)
             return res
-        except Exception as e:
+        except Exception:
             logging.exception("---- Error in callback %s (RET %s)", repr(func), res)
     return wrapped_func
 
@@ -123,7 +127,7 @@ class PyWM:
         self._lock = Lock()
 
 
-    def _update_idle(self, activity=True):
+    def _update_idle(self, activity: bool=True) -> None:
         # Is called from touchpad thread as well as regular thread
         if self._lock.acquire(blocking=False):
             try:
@@ -158,7 +162,7 @@ class PyWM:
 
 
 
-    def _exec_main(self):
+    def _exec_main(self) -> None:
         if self._touchpad_daemon is not None:
             logging.debug("Starting Touchpad daemon")
             self._touchpad_daemon.start()
@@ -166,12 +170,12 @@ class PyWM:
         self.main()
 
     @callback
-    def _ready(self):
+    def _ready(self) -> None:
         logging.debug("PyWM ready")
         Thread(target=self._exec_main).start()
 
     @callback
-    def _motion(self, time_msec, delta_x, delta_y):
+    def _motion(self, time_msec: int, delta_x: float, delta_y: float) -> bool:
         self._update_idle()
         if self._touchpad_captured:
             return True
@@ -183,12 +187,12 @@ class PyWM:
         return self.on_motion(time_msec, delta_x, delta_y)
 
     @callback
-    def _motion_absolute(self, time_msec, x, y):
+    def _motion_absolute(self, time_msec: int, x: float, y: float) -> bool:
         self._update_idle()
         if self._touchpad_captured:
             return True
 
-        if self._last_absolute_x is not None:
+        if self._last_absolute_x is not None and self._last_absolute_y is not None:
             x -= self._last_absolute_x
             y -= self._last_absolute_y
             self._last_absolute_x += x
@@ -201,7 +205,7 @@ class PyWM:
         return self.on_motion(time_msec, x, y)
 
     @callback
-    def _button(self, time_msec, button, state):
+    def _button(self, time_msec: int, button: int, state: int) -> bool:
         self._update_idle()
         if self._touchpad_captured:
             return True
@@ -209,7 +213,7 @@ class PyWM:
         return self.on_button(time_msec, button, state)
 
     @callback
-    def _axis(self, time_msec, source, orientation, delta, delta_discrete):
+    def _axis(self, time_msec: int, source: int, orientation: int, delta: float, delta_discrete: int) -> bool:
         self._update_idle()
         if self._touchpad_captured:
             return True
@@ -218,26 +222,27 @@ class PyWM:
                             delta_discrete)
 
     @callback
-    def _key(self, time_msec, keycode, state, keysyms):
+    def _key(self, time_msec: int, keycode: int, state: int, keysyms: str) -> bool:
         self._update_idle()
         result = self.on_key(time_msec, keycode, state, keysyms)
         return result
 
     @callback
-    def _modifiers(self, depressed, latched, locked, group):
+    def _modifiers(self, depressed: int, latched: int, locked: int, group: int) -> bool:
         self._update_idle()
         self.modifiers = depressed
         return self.on_modifiers(self.modifiers)
 
     @callback
-    def _layout_change(self, width, height):
+    def _layout_change(self, width: int, height: int) -> None:
         self._update_idle()
         self.width = width
         self.height = height
         self.on_layout_change()
 
     @callback
-    def _update_view(self, handle, *args):
+    def _update_view(self, handle: int, *args
+                     ) -> Optional[Tuple[Tuple[float, float, float, float], float, float, int, bool, bool, Tuple[int, int], int, int, int, int, int]]:
         try:
             v = self._views[handle]
             try:
@@ -257,7 +262,7 @@ class PyWM:
             return res
 
     @callback
-    def _update_widget(self, handle, *args):
+    def _update_widget(self, handle: int, *args):
         try:
             res = self._widgets[handle]._update(*args)
             return res
@@ -266,15 +271,16 @@ class PyWM:
 
 
     @callback
-    def _update_widget_pixels(self, handle, *args):
-        try:
+    def _update_widget_pixels(self, handle: int, *args):
+
+       try:
             return self._widgets[handle]._update_pixels(*args)
-        except Exception:
+       except Exception:
             return None
 
 
     @callback
-    def _destroy_view(self, handle):
+    def _destroy_view(self, handle: int) -> None:
         view = None
 
         try:
@@ -291,7 +297,7 @@ class PyWM:
             view.destroy()
 
     @callback
-    def _view_event(self, handle, event):
+    def _view_event(self, handle: int, event: str) -> None:
         try:
             self._views[handle].on_event(event)
         except Exception:
@@ -299,7 +305,7 @@ class PyWM:
 
 
     @callback
-    def _query_new_widget(self, new_handle):
+    def _query_new_widget(self, new_handle: int) -> bool:
         if len(self._pending_widgets) > 0:
             widget = self._pending_widgets.pop(0)
             widget._handle = new_handle
@@ -309,14 +315,14 @@ class PyWM:
         return False
     
     @callback
-    def _query_destroy_widget(self):
+    def _query_destroy_widget(self) -> Optional[int]:
         if len(self._pending_destroy_widgets) > 0:
             return self._pending_destroy_widgets.pop(0)._handle
 
         return None
 
     @callback
-    def _update(self):
+    def _update(self) -> Tuple[int, float, bool]:
         self._update_idle(False)
         if self._damaged:
             self._damaged = False
@@ -332,22 +338,22 @@ class PyWM:
 
         return res
     
-    def damage(self):
+    def damage(self) -> None:
         self._damaged = True
 
-    def widget_destroy(self, widget):
+    def widget_destroy(self, widget: PyWMWidget) -> None:
         self._widgets.pop(widget._handle, None)
         self._pending_destroy_widgets += [widget]
 
-    def _gesture(self, gesture):
+    def _gesture(self, gesture: Gesture) -> None:
         self._update_idle()
         self._touchpad_captured = self.on_gesture(gesture)
         gesture.listener(GestureListener(None, self._gesture_finished))
 
-    def _gesture_finished(self):
+    def _gesture_finished(self) -> None:
         self._touchpad_captured = False
 
-    def reallow_gesture(self):
+    def reallow_gesture(self) -> None:
         if self._touchpad_captured:
             return
 
@@ -358,26 +364,26 @@ class PyWM:
     Public API
     """
 
-    def run(self):
+    def run(self) -> None:
         logging.debug("PyWM run")
         run(**{k:v if not isinstance(v, str) else v.encode("ascii", "ignore") for k, v in self.config.items()})
         logging.debug("PyWM finished")
 
-    def terminate(self):
+    def terminate(self) -> None:
         logging.debug("PyWM terminating")
         if self._touchpad_daemon is not None:
             self._touchpad_daemon.stop()
         self._pending_terminate = True
 
-    def create_widget(self, widget_class, *args, **kwargs):
+    def create_widget(self, widget_class: Callable, *args, **kwargs) -> PyWMWidget:
         widget = widget_class(self, *args, **kwargs)
         self._pending_widgets += [widget]
         return widget
 
-    def update_cursor(self, enabled=True):
+    def update_cursor(self, enabled: bool=True) -> None:
         self._pending_update_cursor = 0 if not enabled else 1
 
-    def is_locked(self):
+    def is_locked(self) -> bool:
         return self._down_state.lock_perc != 0.0
 
     """
@@ -385,34 +391,34 @@ class PyWM:
     """
 
     @abstractmethod
-    def process(self):
+    def process(self) -> PyWMDownstreamState:
         """
         return next down_state based on whatever state the implementation uses
         """
         pass
 
-    def main(self):
+    def main(self) -> None:
         pass
 
-    def _execute_view_main(self, view):
+    def _execute_view_main(self, view: PyWMView) -> None:
         view.main()
 
-    def on_layout_change(self):
+    def on_layout_change(self) -> None:
         pass
 
-    def on_motion(self, time_msec, delta_x, delta_y):
+    def on_motion(self, time_msec: int, delta_x: float, delta_y: float) -> bool:
         return False
 
-    def on_button(self, time_msec, button, state):
+    def on_button(self, time_msec: int, button: int, state: int) -> bool:
         return False
 
-    def on_axis(self, time_msec, source, orientation, delta, delta_discrete):
+    def on_axis(self, time_msec: int, source: int, orientation: int, delta: float, delta_discrete: int) -> bool:
         return False
 
-    def on_gesture(self, gesture):
+    def on_gesture(self, gesture: Gesture) -> bool:
         return False
 
-    def on_key(self, time_msec, keycode, state, keysyms):
+    def on_key(self, time_msec: int, keycode: int, state: int, keysyms: str) -> bool:
         """
         keycode: raw xkb keycode, probably useless
         state: PYWM_PRESSED, PYWM_RELEASED
@@ -420,10 +426,10 @@ class PyWM:
         """
         return False
 
-    def on_modifiers(self, modifiers):
+    def on_modifiers(self, modifiers: int) -> bool:
         return False
 
-    def on_idle(self, elapsed, idle_inhibited):
+    def on_idle(self, elapsed: float, idle_inhibited: bool) -> None:
         """
         elapsed == 0 means there has been an activity, possibly a wakeup from idle is necessary
         elapsed > 0 describes the amount of seconds which have passed since the last activity, possibly sleep is necessary

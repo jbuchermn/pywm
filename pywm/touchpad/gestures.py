@@ -296,7 +296,7 @@ class Gestures:
 
 
 if __name__ == '__main__':
-    from touchpad import find_touchpad, Touchpad
+    from touchpad import find_all_touchpads, Touchpad
 
     def callback(gesture):
         print("New Gesture: %s" % gesture)
@@ -305,14 +305,11 @@ if __name__ == '__main__':
             lambda: print("---- Terminated ----")
         ))
 
-    event = find_touchpad()
-    if event is None:
-        print("Could not find touchpad")
-    else:
-        touchpad = Touchpad(event)
-        gestures = Gestures(
-            touchpad
-        )
-        gestures.listener(callback)
-        touchpad.run()
+    event = list(find_all_touchpads())[0][1]
+    touchpad = Touchpad(event)
+    gestures = Gestures(
+        touchpad
+    )
+    gestures.listener(callback)
+    touchpad.run()
 

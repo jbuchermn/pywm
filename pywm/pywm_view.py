@@ -1,38 +1,49 @@
-import logging
+from __future__ import annotations
 
+import logging
+from typing import Optional, Tuple
+
+from . import pywm
 from abc import abstractmethod
 
 class PyWMViewUpstreamState:
-    def __init__(self, *args):
-        if len(args) != 15:
-            raise Exception("Unexpected number of args")
-        self.is_floating = bool(args[0])
-        self.title = str(args[1])
+    def __init__(self,
+                 floating: bool, title: str,
+                 sc_min_w: int, sc_max_w: int, sc_min_h: int, sc_max_h: int,
+                 offset_x: int, offset_y: int,
+                 width: int, height: int,
+                 is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool):
+
+        """
+        Called from C - just to bes ure, wrap every attribute in type constrcutor
+        """
+        self.is_floating = bool(floating)
+        self.title = str(title)
 
         """
         min_w, max_w, min_h, max_h
         """
-        self.size_constraints = (int(args[2]), int(args[3]), int(args[4]), int(args[5]))        
+        self.size_constraints = (int(sc_min_w), int(sc_max_w), int(sc_min_h), int(sc_max_h))        
         """
         describe the offset of actual content within the view
         (in case of CSD)
 
         offset_x, offset_y
         """
-        self.offset = (int(args[6]), int(args[7]))
+        self.offset = (int(offset_x), int(offset_y))
 
         """
         width, height
         """
-        self.size = (int(args[8]), int(args[9]))
+        self.size = (int(width), int(height))
 
-        self.is_focused = bool(args[10])
-        self.is_fullscreen = bool(args[11])
-        self.is_maximized = bool(args[12])
-        self.is_resizing = bool(args[13])
-        self.is_inhibiting_idle = bool(args[14])
+        self.is_focused = bool(is_focused)
+        self.is_fullscreen = bool(is_fullscreen)
+        self.is_maximized = bool(is_maximized)
+        self.is_resizing = bool(is_resizing)
+        self.is_inhibiting_idle = bool(is_inhibiting_idle)
 
-    def is_update(self, other):
+    def is_update(self, other: PyWMViewUpstreamState) -> bool:
         if self.is_floating != other.is_floating:
             return True
         if self.title != other.title:
@@ -57,7 +68,13 @@ class PyWMViewUpstreamState:
 
 
 class PyWMViewDownstreamState:
-    def __init__(self, z_index=0, box=(0, 0, 0, 0), opacity=1., corner_radius=0, accepts_input=False, lock_enabled=False, up_state=None):
+    def __init__(self,
+                 z_index: int=0, box: Tuple[float, float, float, float]=(0, 0, 0, 0),
+                 opacity: float=1., corner_radius: float=0,
+                 accepts_input: bool=False, lock_enabled: bool=False, up_state: Optional[PyWMViewUpstreamState]=None):
+        """
+        Just to be sure - wrap in type constructors
+        """
         self.z_index = int(z_index)
         self.box = (float(box[0]), float(box[1]), float(box[2]), float(box[3]))
         self.opacity = opacity
@@ -73,12 +90,15 @@ class PyWMViewDownstreamState:
         if up_state is not None:
             self.size = up_state.size
 
-    def copy(self):
-        res = PyWMViewDownstreamState(self.z_index, self.box, self.accepts_input)
+    def copy(self) -> PyWMViewDownstreamState:
+        res = PyWMViewDownstreamState(self.z_index, self.box, self.opacity, self.corner_radius, self.accepts_input, self.lock_enabled)
         res.size = self.size
         return res
 
-    def get(self, last_state, focus, fullscreen, maximized, resizing, close):
+    def get(self,
+            last_state: Optional[PyWMViewDownstreamState],
+            focus: Optional[int], fullscreen: Optional[int], maximized: Optional[int], resizing: Optional[int], close: Optional[int]
+            ) -> Tuple[Tuple[float, float, float, float], float, float, int, bool, bool, Tuple[int, int], int, int, int, int, int]:
         return (
             self.box,
             self.opacity,
@@ -87,7 +107,7 @@ class PyWMViewDownstreamState:
             bool(self.accepts_input),
             bool(self.lock_enabled),
 
-            self.size if self.size != last_state.size else (-1, -1),
+            self.size if last_state is None or self.size != last_state.size else (-1, -1),
 
             int(focus) if focus is not None else -1,
             int(fullscreen) if fullscreen is not None else -1,
@@ -96,13 +116,13 @@ class PyWMViewDownstreamState:
             int(close) if close is not None else -1
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.__dict__)
 
 
 
 class PyWMView:
-    def __init__(self, wm, handle):
+    def __init__(self, wm: pywm.PyWM, handle: int): # Python imports are great
         self._handle = handle
 
         self.wm = wm
@@ -124,8 +144,16 @@ class PyWMView:
         self._down_action_resizing = None
         self._down_action_close = None
 
+        self._parent: Optional[PyWMView] = None
 
-    def _update(self, parent_handle, is_xwayland, app_id, role, *args):
+
+    def _update(self, parent_handle: int, is_xwayland: bool, app_id: str, role: str,
+                floating: bool, title: str,
+                sc_min_w: int, sc_max_w: int, sc_min_h: int, sc_max_h: int,
+                offset_x: int, offset_y: int,
+                width: int, height: int,
+                is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool
+                ) -> Tuple[Tuple[float, float, float, float], float, float, int, bool, bool, Tuple[int, int], int, int, int, int, int]:
         if self.parent is None and parent_handle is not None:
             try:
                 self._parent = self.wm._views[parent_handle]
@@ -139,7 +167,12 @@ class PyWMView:
         self.last_up_state = self.up_state
         self._last_down_state = self._down_state
 
-        self.up_state = PyWMViewUpstreamState(*args)
+        self.up_state = PyWMViewUpstreamState(
+                floating, title,
+                sc_min_w, sc_max_w, sc_min_h, sc_max_h,
+                offset_x, offset_y,
+                width, height,
+                is_focused, is_fullscreen, is_maximized, is_resizing, is_inhibiting_idle)
 
         if self._down_state is None:
             """
@@ -148,7 +181,7 @@ class PyWMView:
             self._last_down_state = PyWMViewDownstreamState(up_state=self.up_state)
             self._down_state = self._last_down_state.copy()
 
-        elif self._damaged or self.up_state.is_update(self.last_up_state):
+        elif self._damaged or self.last_up_state is None or self.up_state.is_update(self.last_up_state):
             self._damaged = False
             """
             Update
@@ -162,9 +195,10 @@ class PyWMView:
 
             try:
                 self._down_state = self.process(self.up_state)
-            except Exception as e:
+            except Exception:
                 logging.exception("Exception during view.process")
                 self._down_state = self._last_down_state
+
 
         res = self._down_state.get(
             self._last_down_state, 
@@ -182,47 +216,47 @@ class PyWMView:
         return res
 
 
-    def focus(self):
+    def focus(self) -> None:
         self._down_action_focus = True
 
-    def set_resizing(self, val):
+    def set_resizing(self, val: bool) -> None:
         self._down_action_resizing = bool(val)
 
-    def set_fullscreen(self, val):
+    def set_fullscreen(self, val: bool) -> None:
         self._down_action_fullscreen = bool(val)
 
-    def set_maximized(self, val):
+    def set_maximized(self, val: bool) -> None:
         self._down_action_maximized = bool(val)
 
-    def close(self):
+    def close(self) -> None:
         self._down_action_close = True
 
-    def damage(self):
+    def damage(self) -> None:
         self._damaged = True
 
     
     """
     Virtual methods
     """
-    def main(self, *args):
+    def main(self, *args) -> None:
 
         """
         Called after view is initialized, before first process
         """
         pass
 
-    def on_event(self, event):
+    def on_event(self, event: str) -> None:
         pass
 
     @abstractmethod
-    def process(self, up_state):
+    def process(self, up_state: PyWMViewUpstreamState) -> PyWMViewDownstreamState:
         """
         return next down_state based on up_state (and whatever state the implementation uses)
         """
         pass
 
 
-    def destroy(self):
+    def destroy(self) -> None:
         """
         Called after the view is destroyed on c-side
         """
@@ -232,8 +266,10 @@ class PyWMView:
     Callbacks on various specific updates
     Notice, that these will always be called together with (before) process
     """
-    def on_focus_change(self):
+    def on_focus_change(self) -> None:
         pass
 
-    def on_size_or_constraints_change(self):
+    def on_size_or_constraints_change(self) -> None:
         pass
+
+

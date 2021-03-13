@@ -9,11 +9,11 @@ so = None
 for f in glob.glob('build/_pywm.*.so'):
     so = f
 
-if so is None:
+if so is not None:
+    shutil.copy(so, 'pywm/_pywm.so')
+else:
     print("Could not find shared library")
     exit(1)
-
-shutil.copy(so, 'pywm/_pywm.so')
 
 setup(name='pywm',
       version='0.0.9',
