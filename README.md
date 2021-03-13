@@ -18,7 +18,7 @@ Documentation to come
 | masm11/Emacs           |           | working             |                none                                      |
 | Chromium               |           | working             | Too large popups are placed wrong (this is an issue with sway as well) |
 | OpenSCAD               |           | working             |                none                                      |
-| VLC                    |           | working             | Popup-toplevels are not recognized as floating           |
+| VLC                    |           | working             | Video playback does not work porperly (this is an ussue with sway as  well) |
 | mpv                    |           | working             |                none                                      |
 | Zoom                   |           | working             | Popup-toplevels are not recognized as floating           |
 | Atom                   |           | ?                   | ?                                                        |

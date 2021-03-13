@@ -4,10 +4,11 @@
 
 ** Bugs / missing features
 *** DONE Speed-up Gaussian blur (49 texture fetches / pixel is ridiculous)
-*** TODO Drag-n-drop
+*** STRT Drag-n-drop
 *** DONE idle interface python-side
 *** DONE idle_inhibit_manager (see mpv)
-*** TODO Wrong view / floating children handling in vlc / zoom (see ideas below)
+*** KILL Wrong view / floating children handling in vlc / zoom (see ideas below)
+*** TODO Zoom works really poorly (apparently similar under sway...)
 
 ** Type-checking / technical debt
 *** DONE Fix setup.py incl. requirements.txt
@@ -30,5 +31,4 @@
 ** Screensharing using xdg-desktop-portal-wlr
 ** Proper handling of popup constraints on scaling
 ** Various TODO Comments inline
-** Possibly use toplevel -> parent to find floating windows?
 ** Multiple outputs
