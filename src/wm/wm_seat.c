@@ -13,18 +13,32 @@
 #include "wm/wm_pointer.h"
 #include "wm/wm_cursor.h"
 #include "wm/wm_config.h"
+#include "wm/wm_drag.h"
 
 /*
  * Callbacks
  */
 static void handle_request_start_drag(struct wl_listener* listener, void* data){
-    wlr_log(WLR_DEBUG, "TODO: Request start drag");
+    wlr_log(WLR_DEBUG, "Handling request start drag");
     struct wm_seat* seat = wl_container_of(listener, seat, request_start_drag);
+    struct wlr_seat_request_start_drag_event* event = data;
+
+    if(wlr_seat_validate_pointer_grab_serial(seat->wlr_seat, event->origin, event->serial)){
+        wlr_log(WLR_DEBUG, "Starting pointer grab");
+        wlr_seat_start_pointer_drag(seat->wlr_seat, event->drag, event->serial);
+    }else{
+        wlr_data_source_destroy(event->drag->source);
+    }
 }
 
 static void handle_start_drag(struct wl_listener* listener, void* data){
-    wlr_log(WLR_DEBUG, "TODO: Start drag");
+    wlr_log(WLR_DEBUG, "Starting drag");
     struct wm_seat* seat = wl_container_of(listener, seat, start_drag);
+    struct wlr_drag* wlr_drag = data;
+
+    struct wm_drag* drag = calloc(1, sizeof(struct wm_drag));
+    wm_drag_init(drag, seat, wlr_drag);
+
 }
 
 static void handle_request_set_selection(struct wl_listener* listener, void* data){
@@ -211,7 +225,6 @@ bool wm_seat_dispatch_motion(struct wm_seat* seat, double x, double y, uint32_t 
         /* Automatically focus surface on mouse enter  */
         wm_seat_focus_surface(seat, surface);
     }
-    bool focus_change = (surface != seat->wlr_seat->pointer_state.focused_surface);
 
     /* Guard mouse focus */
     if(wm_server_is_locked(seat->wm_server)){
@@ -223,9 +236,7 @@ bool wm_seat_dispatch_motion(struct wm_seat* seat, double x, double y, uint32_t 
     wlr_seat_pointer_notify_enter(seat->wlr_seat, surface, sx, sy);
 
 Guard:
-    if(!focus_change){
-        wlr_seat_pointer_notify_motion(seat->wlr_seat, time_msec, sx, sy);
-    }
+    wlr_seat_pointer_notify_motion(seat->wlr_seat, time_msec, sx, sy);
 
     return true;
 }
