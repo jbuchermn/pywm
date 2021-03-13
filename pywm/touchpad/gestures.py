@@ -13,7 +13,7 @@ except Exception:
 
 
 _two_finger_min_dist = 0.1
-_lp_freq = 100.
+_lp_freq = 200.
 _lp_inertia = 0.8
 
 _validate_thresholds = {
@@ -297,7 +297,6 @@ class Gestures:
 
 if __name__ == '__main__':
     from touchpad import find_touchpad, Touchpad
-    from sanitize_bogus_ids import SanitizeBogusIds
 
     def callback(gesture):
         print("New Gesture: %s" % gesture)
@@ -312,9 +311,7 @@ if __name__ == '__main__':
     else:
         touchpad = Touchpad(event)
         gestures = Gestures(
-            # SanitizeBogusIds(
-                touchpad
-            # )
+            touchpad
         )
         gestures.listener(callback)
         touchpad.run()

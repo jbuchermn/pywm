@@ -5,7 +5,7 @@ from threading import Thread, Lock
 
 
 from .pywm_view import PyWMView
-from .touchpad import create_touchpad, GestureListener
+from .touchpad import TouchpadDaemon, GestureListener
 
 from ._pywm import (  # noqa E402
     run,
@@ -94,12 +94,8 @@ class PyWM:
         self._last_absolute_x = None
         self._last_absolute_y = None
 
-        self._touchpad_main, self._touchpad_gestures = create_touchpad(kwargs["touchpad_device_name"], self._gesture) \
-            if "touchpad_device_name" in kwargs else (None, None)
+        self._touchpad_daemon = TouchpadDaemon(self._gesture)
         self._touchpad_captured = False
-
-        logging.info("Tochpad '%s' %sfound", kwargs["touchpad_device_name"] if "touchpad_device_name" in kwargs else "",
-                     "not " if self._touchpad_main is None else "")
 
         self._down_state = PyWMDownstreamState()
         self._damaged = False
@@ -163,9 +159,9 @@ class PyWM:
 
 
     def _exec_main(self):
-        if self._touchpad_main is not None:
-            logging.debug("Starting pytouchpad")
-            self._touchpad_main.start()
+        if self._touchpad_daemon is not None:
+            logging.debug("Starting Touchpad daemon")
+            self._touchpad_daemon.start()
         logging.debug("Executing main")
         self.main()
 
@@ -355,8 +351,8 @@ class PyWM:
         if self._touchpad_captured:
             return
 
-        if self._touchpad_gestures is not None:
-            self._touchpad_gestures.reset()
+        if self._touchpad_daemon is not None:
+            self._touchpad_daemon.reset_gestures()
 
     """
     Public API
@@ -364,13 +360,13 @@ class PyWM:
 
     def run(self):
         logging.debug("PyWM run")
-        run(**{k:v if not isinstance(v, str) else v.encode("ascii") for k, v in self.config.items()})
+        run(**{k:v if not isinstance(v, str) else v.encode("ascii", "ignore") for k, v in self.config.items()})
         logging.debug("PyWM finished")
 
     def terminate(self):
         logging.debug("PyWM terminating")
-        if self._touchpad_main is not None:
-            self._touchpad_main.stop()
+        if self._touchpad_daemon is not None:
+            self._touchpad_daemon.stop()
         self._pending_terminate = True
 
     def create_widget(self, widget_class, *args, **kwargs):

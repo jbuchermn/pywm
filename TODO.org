@@ -20,6 +20,7 @@
 ** Session management / Lock screen
 *** DONE Improve blur (Gaussian, configurable, do not skip pixels)
 *** KILL Clean-up touchpad access (i.e. remove necessity of adding the user to group input)
+*** DONE Clean-up touchpad creation / enable hotplugging / get rid of necessity to configure touchpad name
 
 ** Documentation
 *** TODO README improvements

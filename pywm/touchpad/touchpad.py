@@ -38,16 +38,14 @@ class TouchpadUpdate:
 
 
 class Touchpad(Thread):
-    def __init__(self, filename):
+    def __init__(self, path):
         super().__init__()
-        self._device = evdev.InputDevice(filename)
+        self.path = path
+        self._device = evdev.InputDevice(path)
         self._running = True
 
         self._n_touches = 0
 
-        """
-        TODO! Read from capabilities()
-        """
         self._n_slots = 2
         self._slots = []
 
@@ -59,7 +57,7 @@ class Touchpad(Thread):
         self.max_y = None
         self.min_z = None
         self.max_z = None
-        for code, info in self._device.capabilities()[3]:
+        for code, info in self._device.capabilities()[evdev.ecodes.EV_ABS]:
             if code == evdev.ecodes.ABS_MT_POSITION_X:
                 self.min_x = info.min
                 self.max_x = info.max
@@ -69,6 +67,8 @@ class Touchpad(Thread):
             elif code == evdev.ecodes.ABS_MT_PRESSURE:
                 self.min_z = info.min
                 self.max_z = info.max
+            elif code == evdev.ecodes.ABS_MT_SLOT:
+                self._n_slots = info.max - info.min + 1
 
 
     def listener(self, l):
@@ -148,35 +148,40 @@ class Touchpad(Thread):
 
         except Exception:
             logging.exception("Touchpad run")
+        finally:
+            self._device.close()
 
     def stop(self):
         self._running = False
 
 
-def find_touchpad(device_name="bcm5974"):
-    with open('/proc/bus/input/devices', 'r') as data:
-        found = False
-        for d in data:
-            if d.startswith("N: Name="):
-                name = d.split('"')[1]
+def find_all_touchpads():
+    for device in [evdev.InputDevice(d) for d in evdev.list_devices()]:
+        if evdev.ecodes.EV_ABS in device.capabilities():
+            yield (device.name, device.path)
+        device.close()
 
-                if device_name in name:
-                    found = True
-            elif d.startswith("H: Handlers=") and found:
-                handlers = d.split("=")[1].split()
-                for h in handlers:
-                    if h.startswith("event"):
-                        return '/dev/input/' + h
-
-    return None
 
 
 if __name__ == '__main__':
-    event = find_touchpad()
-
-    if event is None:
-        print("Could not find touchpad")
-    else:
-        touchpad = Touchpad(event)
+    import threading
+    for n, p in find_all_touchpads():
+        print("Found %s at %s" % (n, p))
+        touchpad = Touchpad(p)
         touchpad.listener(lambda update: print(update))
-        touchpad.run()
+        for thread in threading.enumerate():
+            print("Pre start:", thread.name)
+        touchpad.start()
+        try:
+            while True:
+                time.sleep(1)
+                print(".")
+        except:
+            print("Stopping...")
+            touchpad.stop()
+            print("Joining...")
+            touchpad.join()
+            print("...done")
+
+    for thread in threading.enumerate():
+        print("Still running:", thread.name)

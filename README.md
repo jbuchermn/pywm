@@ -72,3 +72,6 @@ Therefore, we're stuck with the less secure (and a lot easier) way of using the 
 - Firefox: MOZ_ENABLE_WAYLAND=1
 - Chromium: --enable-features=UseOzonePlatform --ozone-platform=wayland
 - Matplotlib / Qt5 on Wayland requires DISPLAY=":0" to be set
+- Apple Trackpad
+    https://medium.com/macoclock/how-to-pair-apple-magic-keyboard-a1314-on-ubuntu-18-04-and-act-as-numpad-42fe4402454c
+    https://wiki.archlinux.org/index.php/Bluetooth
