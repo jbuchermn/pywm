@@ -4,7 +4,7 @@
 
 ** Bugs / missing features
 *** DONE Speed-up Gaussian blur (49 texture fetches / pixel is ridiculous)
-*** STRT Drag-n-drop
+*** DONE Drag-n-drop
 *** DONE idle interface python-side
 *** DONE idle_inhibit_manager (see mpv)
 *** KILL Wrong view / floating children handling in vlc / zoom (see ideas below)

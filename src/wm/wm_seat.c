@@ -24,9 +24,9 @@ static void handle_request_start_drag(struct wl_listener* listener, void* data){
     struct wlr_seat_request_start_drag_event* event = data;
 
     if(wlr_seat_validate_pointer_grab_serial(seat->wlr_seat, event->origin, event->serial)){
-        wlr_log(WLR_DEBUG, "Starting pointer grab");
         wlr_seat_start_pointer_drag(seat->wlr_seat, event->drag, event->serial);
     }else{
+        wlr_log(WLR_DEBUG, "Failed to validate pointer grab");
         wlr_data_source_destroy(event->drag->source);
     }
 }
