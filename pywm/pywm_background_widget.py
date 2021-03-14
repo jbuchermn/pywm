@@ -7,6 +7,8 @@ from .pywm_widget import (
     PYWM_FORMATS
 )
 
+logger = logging.getLogger(__name__)
+
 
 class PyWMBackgroundWidget(PyWMWidget):
     def __init__(self, wm, path):
@@ -38,4 +40,4 @@ class PyWMBackgroundWidget(PyWMWidget):
                             self.width, self.height,
                             im_alpha.tobytes())
         except Exception as e:
-            logging.warn("Unable to load background: %s", str(e))
+            logger.warn("Unable to load background: %s", str(e))

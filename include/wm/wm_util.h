@@ -1,6 +1,7 @@
 #ifndef WM_UTIL_H
 #define WM_UTIL_H
 
+#include <wlr/util/log.h>
 #include <time.h>
 
 #define wm_offset_of(_struct_, _member_)  (size_t)&(((struct _struct_ *)0)->_member_)
@@ -36,7 +37,7 @@ static inline long msec_diff(struct timespec t1, struct timespec t2){
 #define TIMER_PRINT(TNAME) \
     clock_gettime(CLOCK_REALTIME, &TIMER_ ## TNAME ## _print); \
     if(msec_diff(TIMER_ ## TNAME ## _print, TIMER_ ## TNAME ## _last_print) > 1000. / 0.1){ \
-        fprintf(stderr, "TIMER[%s]: %fms, %5.2fHz\n", #TNAME, \
+        wlr_log(WLR_DEBUG, "TIMER[%s]: %fms, %5.2fHz\n", #TNAME, \
                 (double)TIMER_ ## TNAME ## _nsec_agg / TIMER_ ## TNAME ## _n_agg / 1000000., \
                 (double)TIMER_ ## TNAME ## _n_agg * 0.1); \
         TIMER_ ## TNAME ## _n_agg = 0; \

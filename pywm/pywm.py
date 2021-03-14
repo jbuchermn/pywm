@@ -12,7 +12,6 @@ from ._pywm import (  # noqa E402
     register
 )
 
-
 _instance = None
 
 PYWM_MOD_SHIFT = 1
@@ -26,6 +25,8 @@ PYWM_MOD_MOD5 = 128
 
 PYWM_RELEASED = 0
 PYWM_PRESSED = 1
+
+logger = logging.getLogger(__name__)
 
 
 class PyWMDownstreamState:
@@ -50,7 +51,7 @@ def callback(func):
             res = func(*args, **kwargs)
             return res
         except Exception as e:
-            logging.exception("---- Error in callback %s (RET %s)", repr(func), res)
+            logger.exception("---- Error in callback %s (RET %s)", repr(func), res)
     return wrapped_func
 
 
@@ -61,7 +62,7 @@ class PyWM:
             raise Exception("Can only have one instance!")
         _instance = self
 
-        logging.debug("PyWM init")
+        logger.debug("PyWM init")
 
         register("ready", self._ready)
         register("layout_change", self._layout_change)
@@ -142,7 +143,7 @@ class PyWM:
                         try:
                             self.on_idle(0.0, is_inhibited())
                         except Exception:
-                            logging.exception("on_idle active")
+                            logger.exception("on_idle active")
                         self._idle_last_update_active = time.time()
                 else:
                     inactive_time = time.time() - self._idle_last_activity
@@ -150,7 +151,7 @@ class PyWM:
                         try:
                             self.on_idle(inactive_time, is_inhibited())
                         except Exception:
-                            logging.exception("on_idle inactive")
+                            logger.exception("on_idle inactive")
                         self._idle_last_update_inactive = time.time()
 
             finally:
@@ -160,14 +161,14 @@ class PyWM:
 
     def _exec_main(self):
         if self._touchpad_daemon is not None:
-            logging.debug("Starting Touchpad daemon")
+            logger.debug("Starting Touchpad daemon")
             self._touchpad_daemon.start()
-        logging.debug("Executing main")
+        logger.debug("Executing main")
         self.main()
 
     @callback
     def _ready(self):
-        logging.debug("PyWM ready")
+        logger.debug("PyWM ready")
         Thread(target=self._exec_main).start()
 
     @callback
@@ -244,7 +245,7 @@ class PyWM:
                 res = v._update(*args)
                 return res
             except Exception:
-                logging.exception("view._update failed")
+                logger.exception("view._update failed")
                 return None
         except Exception:
             view = self._view_class(self, handle)
@@ -359,12 +360,12 @@ class PyWM:
     """
 
     def run(self):
-        logging.debug("PyWM run")
+        logger.debug("PyWM run")
         run(**{k:v if not isinstance(v, str) else v.encode("ascii", "ignore") for k, v in self.config.items()})
-        logging.debug("PyWM finished")
+        logger.debug("PyWM finished")
 
     def terminate(self):
-        logging.debug("PyWM terminating")
+        logger.debug("PyWM terminating")
         if self._touchpad_daemon is not None:
             self._touchpad_daemon.stop()
         self._pending_terminate = True

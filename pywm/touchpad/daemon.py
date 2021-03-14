@@ -5,6 +5,8 @@ import threading
 from .touchpad import find_all_touchpads, Touchpad
 from .gestures import Gestures
 
+logger = logging.getLogger(__name__)
+
 class TouchpadDaemon(threading.Thread):
     def __init__(self, gesture_listener):
         super().__init__()
@@ -22,13 +24,13 @@ class TouchpadDaemon(threading.Thread):
             (touchpad, gestures)
         ]
         touchpad.start()
-        logging.info("Started touchpad at %s", self._touchpads[-1][0].path)
+        logger.info("Started touchpad at %s", self._touchpads[-1][0].path)
 
     def _stop_pad(self, idx):
         self._touchpads[idx][0].stop()
-        logging.info("Stopping touchpad at %s...", self._touchpads[idx][0].path)
+        logger.info("Stopping touchpad at %s...", self._touchpads[idx][0].path)
         self._touchpads[idx][0].join()
-        logging.info("...stopped")
+        logger.info("...stopped")
         del self._touchpads[idx]
 
     def update(self):
@@ -38,12 +40,12 @@ class TouchpadDaemon(threading.Thread):
                 i = [t.path for t, g in self._touchpads].index(path)
                 validated[i] = True
             except ValueError:
-                logging.info("Found new touchpad: %s at %s", name, path)
+                logger.info("Found new touchpad: %s at %s", name, path)
                 self._start_pad(name, path)
 
         for i, v in reversed(list(enumerate(validated))):
             if not v:
-                logging.info("Touchpad at %s disappeared", self._touchpads[i][0].path)
+                logger.info("Touchpad at %s disappeared", self._touchpads[i][0].path)
                 self._stop_pad(i)
 
     def stop(self):

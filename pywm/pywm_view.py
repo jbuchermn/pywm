@@ -2,6 +2,8 @@ import logging
 
 from abc import abstractmethod
 
+logger = logging.getLogger(__name__)
+
 class PyWMViewUpstreamState:
     def __init__(self, *args):
         if len(args) != 15:
@@ -163,7 +165,7 @@ class PyWMView:
             try:
                 self._down_state = self.process(self.up_state)
             except Exception as e:
-                logging.exception("Exception during view.process")
+                logger.exception("Exception during view.process")
                 self._down_state = self._last_down_state
 
         res = self._down_state.get(
