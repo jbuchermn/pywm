@@ -55,6 +55,29 @@ def callback(func):
     return wrapped_func
 
 
+class PyWMIdleThread(Thread):
+    def __init__(self, wm):
+        super().__init__()
+        self.wm = wm
+
+        self._running = True
+        self.start()
+
+    def run(self):
+        while self._running:
+            t = time.time()
+            time.sleep(.5)
+            t = time.time() - t
+
+            # Detect if we wake up from suspend
+            if t > 1.:
+                self.wm._update_idle()
+            else:
+                self.wm._update_idle(False)
+
+    def stop(self):
+        self._running = False
+
 class PyWM:
     def __init__(self, view_class=PyWMView, **kwargs):
         global _instance
@@ -117,6 +140,7 @@ class PyWM:
         self.height = 0
         self.modifiers = 0
 
+        self._idle_thread = None
         self._idle_last_activity = time.time()
         self._idle_last_update_active = time.time()
         self._idle_last_update_inactive = time.time()
@@ -163,6 +187,9 @@ class PyWM:
         if self._touchpad_daemon is not None:
             logger.debug("Starting Touchpad daemon")
             self._touchpad_daemon.start()
+
+        logger.debug("Starting idle thread")
+        self._idle_thread = PyWMIdleThread(self)
         logger.debug("Executing main")
         self.main()
 
@@ -318,7 +345,6 @@ class PyWM:
 
     @callback
     def _update(self):
-        self._update_idle(False)
         if self._damaged:
             self._damaged = False
             self._down_state = self.process()
@@ -368,6 +394,8 @@ class PyWM:
         logger.debug("PyWM terminating")
         if self._touchpad_daemon is not None:
             self._touchpad_daemon.stop()
+        if self._idle_thread is not None:
+            self._idle_thread.stop()
         self._pending_terminate = True
 
     def create_widget(self, widget_class, *args, **kwargs):
