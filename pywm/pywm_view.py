@@ -168,6 +168,14 @@ class PyWMView:
                 logger.exception("Exception during view.process")
                 self._down_state = self._last_down_state
 
+            # BEGIN DEBUG
+            try:
+                if self._down_state.size != self.up_state.size:
+                    logger.debug("Size (%d %s) %s -> %s", self._handle, self.app_id, self.up_state.size, self._down_state.size)
+            except:
+                pass
+            # END DEBUG
+
         res = self._down_state.get(
             self._last_down_state, 
             self._down_action_focus,
