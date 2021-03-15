@@ -113,11 +113,9 @@ static bool render_subtexture_with_matrix(
 	}
 
 	float gl_matrix[9];
-	if (gles2_renderer->current_buffer != NULL) {
-		wlr_matrix_multiply(gl_matrix, flip_180, matrix);
-	} else {
-		memcpy(gl_matrix, matrix, sizeof(gl_matrix));
-	}
+    wlr_matrix_multiply(gl_matrix, gles2_renderer->projection, matrix);
+    wlr_matrix_multiply(gl_matrix, flip_180, gl_matrix);
+
 	// OpenGL ES 2 requires the glUniformMatrix3fv transpose parameter to be set
 	// to GL_FALSE
 	wlr_matrix_transpose(gl_matrix, gl_matrix);
