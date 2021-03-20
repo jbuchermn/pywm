@@ -21,7 +21,7 @@ static void wm_widget_destroy(struct wm_content* super){
     struct wm_widget* widget = wm_cast(wm_widget, super);
     wlr_texture_destroy(widget->wlr_texture);
 
-    wm_content_destroy(super);
+    wm_content_base_destroy(super);
 }
 
 void wm_widget_set_pixels(struct wm_widget* widget, enum wl_shm_format format, uint32_t stride, uint32_t width, uint32_t height, const void* data){

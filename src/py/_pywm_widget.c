@@ -123,8 +123,8 @@ void _pywm_widgets_update(){
     PyObject* res = PyObject_Call(_pywm_callbacks_get_all()->query_destroy_widget, args, NULL);
     Py_XDECREF(args);
     if(res && res != Py_None){
-        long handle;
-        if(!PyArg_ParseTuple(res, "l", &handle)){
+        long handle = PyLong_AsLong(res);
+        if(handle < 0){
             PyErr_SetString(PyExc_TypeError, "Expected long");
             goto err;
         }

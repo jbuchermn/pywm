@@ -8,7 +8,8 @@
 *** DONE idle interface python-side
 *** DONE idle_inhibit_manager (see mpv)
 *** KILL Wrong view / floating children handling in vlc / zoom (see ideas below)
-*** TODO Zoom works really poorly (apparently similar under sway...)
+*** KILL Zoom works really poorly (apparently similar under sway...)
+*** TODO Occasional rounding errors in damaging
 
 ** Type-checking / technical debt
 *** DONE Fix setup.py incl. requirements.txt

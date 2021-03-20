@@ -20,7 +20,7 @@ Documentation to come
 | OpenSCAD               |           | working             |                none                                      |
 | VLC                    |           | working             | Video playback does not work porperly (this is an ussue with sway as  well) |
 | mpv                    |           | working             |                none                                      |
-| Zoom                   |           | working             | Popup-toplevels are not recognized as floating           |
+| Zoom                   |           | working             | Popup-toplevels are not recognized as floating (this is an issue with sway as well) / scaling does not work properly           |
 | Atom                   |           | ?                   | ?                                                        |
 | VSCodium               |           | ?                   | ?                                                        |
 | IntelliJ               |    ?      | ?                   | ?                                                        |
