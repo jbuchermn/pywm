@@ -18,9 +18,9 @@ Documentation to come
 | masm11/Emacs           |           | working             |                none                                      |
 | Chromium               |           | working             | Too large popups are placed wrong (this is an issue with sway as well) |
 | OpenSCAD               |           | working             |                none                                      |
-| VLC                    |           | working             | Popup-toplevels are not recognized as floating           |
+| VLC                    |           | working             | Video playback does not work porperly (this is an ussue with sway as  well) |
 | mpv                    |           | working             |                none                                      |
-| Zoom                   |           | working             | Popup-toplevels are not recognized as floating           |
+| Zoom                   |           | working             | Popup-toplevels are not recognized as floating (this is an issue with sway as well) / scaling does not work properly           |
 | Atom                   |           | ?                   | ?                                                        |
 | VSCodium               |           | ?                   | ?                                                        |
 | IntelliJ               |    ?      | ?                   | ?                                                        |
@@ -53,7 +53,7 @@ Ensure that your user is in the correct group
 ls -al /dev/input/event*
 ```
 
-As a sidenote, this is not necessary for a Wayland compositor in general as the devices can be access through `systemd-logind` or `seatd` or similar.
+As a sidenote, this is not necessary for a Wayland compositor in general as the devices can be accessed through `systemd-logind` or `seatd` or similar.
 However the python `evdev` module does not allow instantiation given a file descriptor (only a path which it then opens itself),
 so usage of that module would no longer be possible in this case (plus at first side there is no easy way of getting that file descriptor to the 
 Python side). Also `wlroots` (`libinput` in the backend) does not expose touchpads as what they are (`touch-down`, `touch-up`, `touch-motion` for any

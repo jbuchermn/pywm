@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200112L
 
 #include <time.h>
+#include <wayland-server.h>
 #include <assert.h>
 #include <wlr/util/log.h>
 #include "wm/wm_cursor.h"
@@ -9,7 +10,10 @@
 #include "wm/wm_pointer.h"
 #include "wm/wm_config.h"
 #include "wm/wm_server.h"
+#include "wm/wm_content.h"
+#include "wm/wm_drag.h"
 #include "wm/wm.h"
+#include "wm/wm_util.h"
 
 /*
  * Callbacks
@@ -130,6 +134,14 @@ void wm_cursor_add_pointer(struct wm_cursor* cursor, struct wm_pointer* pointer)
 }
 
 void wm_cursor_update(struct wm_cursor* cursor){
+    struct wm_content* r;
+    wl_list_for_each(r, &cursor->wm_seat->wm_server->wm_contents, link) {
+        if(wm_content_is_drag(r)){
+            struct wm_drag* drag = wm_cast(wm_drag, r);
+            wm_drag_update_position(drag);
+        }
+    }
+
     clock_t t_msec = clock() * 1000 / CLOCKS_PER_SEC;
     if(!wm_seat_dispatch_motion(cursor->wm_seat, cursor->wlr_cursor->x, cursor->wlr_cursor->y, t_msec + cursor->msec_delta)){
         wm_cursor_set_image(cursor, "left_ptr");

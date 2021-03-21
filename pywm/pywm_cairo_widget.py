@@ -22,7 +22,7 @@ class PyWMCairoWidget(PyWMWidget):
                           buffer=buf)
         data = data.reshape((self.width * self.height * 4), order='C')
         self.set_pixels(PYWM_FORMATS['ARGB8888'],
-                        0,
+                        4*self.width,
                         self.width, self.height, data.tobytes())
 
     @abstractmethod

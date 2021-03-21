@@ -69,6 +69,7 @@ sources = [
     'src/wm/wm_widget.c',
     'src/wm/wm_config.c',
     'src/wm/wm_idle_inhibit.c',
+    'src/wm/wm_drag.c',
 ]
 
 py_sources = [

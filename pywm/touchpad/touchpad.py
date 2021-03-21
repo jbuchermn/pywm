@@ -4,6 +4,8 @@ import time
 import logging
 from threading import Thread
 
+logger = logging.getLogger(__name__)
+
 
 class Slot:
     def __init__(self, parent, n):
@@ -147,7 +149,7 @@ class Touchpad(Thread):
                                 self._get_slot(slot).z = event.value
 
         except Exception:
-            logging.exception("Touchpad run")
+            logger.exception("Touchpad run")
         finally:
             self._device.close()
 
