@@ -1,9 +1,8 @@
 import matplotlib.pyplot as plt
 import time
 
-from touchpad import find_touchpad, Touchpad
-from gestures import Gestures, GestureListener, LowpassGesture
-from sanitize_bogus_ids import SanitizeBogusIds
+from .touch import find_all_touchpads, Touchpad
+from .gestures import Gestures, GestureListener, LowpassGesture
 
 
 class GesturesLog:
@@ -56,18 +55,3 @@ class GesturesLog:
             self.on_gesture_lp_update,
             self.on_gesture_terminate))
 
-
-if __name__ == '__main__':
-
-    event = find_touchpad()
-    if event is None:
-        print("Could not find touchpad")
-    else:
-        touchpad = Touchpad(event)
-        gestures = Gestures(
-            # SanitizeBogusIds(
-                touchpad
-            # )
-        )
-        log = GesturesLog(gestures)
-        touchpad.run()

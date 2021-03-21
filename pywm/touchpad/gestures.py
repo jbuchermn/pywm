@@ -3,13 +3,7 @@ from threading import Thread
 import math
 import time
 
-"""
-Python is great
-"""
-try:
-    from .lowpass import Lowpass
-except Exception:
-    from lowpass import Lowpass
+from .lowpass import Lowpass
 
 
 _two_finger_min_dist = 0.1

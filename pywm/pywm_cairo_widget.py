@@ -3,16 +3,17 @@ import numpy as np
 from abc import abstractmethod
 
 from .pywm_widget import PyWMWidget, PYWM_FORMATS
+from . import pywm
 
 
 class PyWMCairoWidget(PyWMWidget):
-    def __init__(self, wm, width, height):
+    def __init__(self, wm: pywm.PyWM[pywm.ViewT], width: int, height: int) -> None:
         super().__init__(wm)
 
         self.width = width
         self.height = height
 
-    def render(self):
+    def render(self) -> None:
         surface = cairo.ImageSurface(cairo.FORMAT_ARGB32,
                                      self.width, self.height)
         self._render(surface)
@@ -26,5 +27,5 @@ class PyWMCairoWidget(PyWMWidget):
                         self.width, self.height, data.tobytes())
 
     @abstractmethod
-    def _render(self, surface):
+    def _render(self, surface: cairo.ImageSurface) -> None:
         pass

@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
-from touchpad import find_touchpad, Touchpad
-from sanitize_bogus_ids import SanitizeBogusIds
+from .touch import find_all_touchpads, Touchpad
 
 
 class TouchpadLog:
@@ -60,17 +59,3 @@ class TouchpadLog:
                 self.ys[i] += [(update.t, y)]
                 self.zs[i] += [(update.t, z)]
 
-
-if __name__ == '__main__':
-
-    event = find_touchpad()
-    if event is None:
-        print("Could not find touchpad")
-    else:
-        touchpad = Touchpad(event)
-        log = TouchpadLog(
-            # SanitizeBogusIds(
-                touchpad
-            # )
-        )
-        touchpad.run()

@@ -4,19 +4,17 @@ from abc import abstractmethod
 import logging
 import time
 from threading import Thread, Lock
-from typing import Callable, Tuple, Optional
+from typing import Callable, Optional, Any, Type, TypeVar, Generic
 
 
 from .pywm_widget import PyWMWidget
 from .pywm_view import PyWMView
 from .touchpad import TouchpadDaemon, GestureListener, Gesture
 
-from ._pywm import (  # noqa E402
+from ._pywm import (
     run,
     register
 )
-
-_instance = None
 
 PYWM_MOD_SHIFT = 1
 PYWM_MOD_CAPS = 2
@@ -30,17 +28,17 @@ PYWM_MOD_MOD5 = 128
 PYWM_RELEASED = 0
 PYWM_PRESSED = 1
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class PyWMDownstreamState:
-    def __init__(self, lock_perc: float=0.0):
+    def __init__(self, lock_perc: float=0.0) -> None:
         self.lock_perc = lock_perc
 
     def copy(self) -> PyWMDownstreamState:
         return PyWMDownstreamState(self.lock_perc)
 
-    def get(self, update_cursor: int, terminate: int) -> Tuple[int, float, bool]:
+    def get(self, update_cursor: int, terminate: int) -> tuple[int, float, bool]:
         return (
             int(update_cursor),
             self.lock_perc,
@@ -48,26 +46,29 @@ class PyWMDownstreamState:
         )
 
 
-def callback(func):
-    def wrapped_func(*args, **kwargs):
+T = TypeVar('T')
+def callback(func: Callable[..., Optional[T]]) -> Callable[..., Optional[T]]:
+    def wrapped_func(*args: list[Any], **kwargs: dict[Any, Any]) -> Optional[T]:
         res = None
         try:
             res = func(*args, **kwargs)
             return res
         except Exception as e:
             logger.exception("---- Error in callback %s (RET %s)", repr(func), res)
+            return None
     return wrapped_func
 
+ViewT = TypeVar('ViewT', bound=PyWMView)
+WidgetT = TypeVar('WidgetT', bound=PyWMWidget)
 
-class PyWMIdleThread(Thread):
-    def __init__(self, wm):
+class PyWMIdleThread(Thread, Generic[ViewT]):
+    def __init__(self, wm: PyWM[ViewT]) -> None:
         super().__init__()
         self.wm = wm
 
         self._running = True
-        self.start()
 
-    def run(self):
+    def run(self) -> None:
         while self._running:
             t = time.time()
             time.sleep(.5)
@@ -79,16 +80,13 @@ class PyWMIdleThread(Thread):
             else:
                 self.wm._update_idle(False)
 
-    def stop(self):
+    def stop(self) -> None:
         self._running = False
 
-class PyWM:
-    def __init__(self, view_class=PyWMView, **kwargs):
-        global _instance
-        if _instance is not None:
-            raise Exception("Can only have one instance!")
-        _instance = self
 
+
+class PyWM(Generic[ViewT]):
+    def __init__(self, view_class: type=PyWMView, **kwargs: dict[str, Any]) -> None:
         logger.debug("PyWM init")
 
         register("ready", self._ready)
@@ -113,14 +111,14 @@ class PyWM:
 
         self._view_class = view_class
 
-        self._views = {}
-        self._widgets = {}
+        self._views: dict[int, ViewT] = {}
+        self._widgets: dict[int, PyWMWidget] = {}
 
-        self._pending_widgets = []
-        self._pending_destroy_widgets = []
+        self._pending_widgets: list[PyWMWidget] = []
+        self._pending_destroy_widgets: list[PyWMWidget] = []
 
-        self._last_absolute_x = None
-        self._last_absolute_y = None
+        self._last_absolute_x: float = 0.
+        self._last_absolute_y: float = 0.
 
         self._touchpad_daemon = TouchpadDaemon(self._gesture)
         self._touchpad_captured = False
@@ -139,15 +137,15 @@ class PyWM:
         """
         Consider these read-only
         """
-        self.config = kwargs
+        self.config: dict[str, Any] = kwargs
         self.width = 0
         self.height = 0
         self.modifiers = 0
 
-        self._idle_thread = None
-        self._idle_last_activity = time.time()
-        self._idle_last_update_active = time.time()
-        self._idle_last_update_inactive = time.time()
+        self._idle_thread: PyWMIdleThread[ViewT] = PyWMIdleThread(self)
+        self._idle_last_activity: float = time.time()
+        self._idle_last_update_active: float = time.time()
+        self._idle_last_update_inactive: float = time.time()
 
         self._lock = Lock()
 
@@ -156,20 +154,18 @@ class PyWM:
         # Is called from touchpad thread as well as regular thread
         if self._lock.acquire(blocking=False):
             try:
-                def is_inhibited():
-                    inhibited = False
-                    for _, v in self._views.items():
-                        if v.up_state.is_inhibiting_idle:
-                            inhibited = True
-                            break
-                    return inhibited
+                inhibited = False
+                for _, v in self._views.items():
+                    if (up_state := v.up_state) is not None and up_state.is_inhibiting_idle:
+                        inhibited = True
+                        break
 
                 if activity:
                     self._idle_last_activity = time.time()
 
                     if time.time() - self._idle_last_update_active > 1:
                         try:
-                            self.on_idle(0.0, is_inhibited())
+                            self.on_idle(0.0, inhibited)
                         except Exception:
                             logger.exception("on_idle active")
                         self._idle_last_update_active = time.time()
@@ -177,7 +173,7 @@ class PyWM:
                     inactive_time = time.time() - self._idle_last_activity
                     if time.time() - self._idle_last_update_inactive > 5 and inactive_time > 5:
                         try:
-                            self.on_idle(inactive_time, is_inhibited())
+                            self.on_idle(inactive_time, inhibited)
                         except Exception:
                             logger.exception("on_idle inactive")
                         self._idle_last_update_inactive = time.time()
@@ -193,12 +189,12 @@ class PyWM:
             self._touchpad_daemon.start()
 
         logger.debug("Starting idle thread")
-        self._idle_thread = PyWMIdleThread(self)
+        self._idle_thread.start()
         logger.debug("Executing main")
         self.main()
 
     @callback
-    def _ready(self):
+    def _ready(self) -> None:
         logger.debug("PyWM ready")
         Thread(target=self._exec_main).start()
 
@@ -220,16 +216,10 @@ class PyWM:
         if self._touchpad_captured:
             return True
 
-        if self._last_absolute_x is not None and self._last_absolute_y is not None:
-            x -= self._last_absolute_x
-            y -= self._last_absolute_y
-            self._last_absolute_x += x
-            self._last_absolute_y += y
-        else:
-            self._last_absolute_x = x
-            self._last_absolute_y = y
-            x = 0
-            y = 0
+        x -= self._last_absolute_x
+        y -= self._last_absolute_y
+        self._last_absolute_x += x
+        self._last_absolute_y += y
         return self.on_motion(time_msec, x, y)
 
     @callback
@@ -269,8 +259,7 @@ class PyWM:
         self.on_layout_change()
 
     @callback
-    def _update_view(self, handle: int, *args
-                     ) -> Optional[Tuple[Tuple[float, float, float, float], float, float, int, bool, bool, Tuple[int, int], int, int, int, int, int]]:
+    def _update_view(self, handle: int, *args): # type: ignore
         try:
             v = self._views[handle]
             try:
@@ -290,7 +279,7 @@ class PyWM:
             return res
 
     @callback
-    def _update_widget(self, handle: int, *args):
+    def _update_widget(self, handle: int, *args): # type: ignore
         try:
             res = self._widgets[handle]._update(*args)
             return res
@@ -299,11 +288,10 @@ class PyWM:
 
 
     @callback
-    def _update_widget_pixels(self, handle: int, *args):
-
-       try:
+    def _update_widget_pixels(self, handle: int, *args): # type: ignore
+        try:
             return self._widgets[handle]._update_pixels(*args)
-       except Exception:
+        except Exception:
             return None
 
 
@@ -318,7 +306,7 @@ class PyWM:
             pass
 
         for h in self._views:
-            if self._views[h].parent is not None and self._views[h].parent._handle == handle:
+            if (p := self._views[h].parent) is not None and p._handle == handle:
                 self._views[h].parent = None
 
         if view is not None:
@@ -350,7 +338,7 @@ class PyWM:
         return None
 
     @callback
-    def _update(self) -> Tuple[int, float, bool]:
+    def _update(self) -> tuple[int, float, bool]:
         if self._damaged:
             self._damaged = False
             self._down_state = self.process()
@@ -400,11 +388,10 @@ class PyWM:
         logger.debug("PyWM terminating")
         if self._touchpad_daemon is not None:
             self._touchpad_daemon.stop()
-        if self._idle_thread is not None:
-            self._idle_thread.stop()
+        self._idle_thread.stop()
         self._pending_terminate = True
 
-    def create_widget(self, widget_class: Callable, *args, **kwargs) -> PyWMWidget:
+    def create_widget(self, widget_class: type, *args: list[Any], **kwargs: dict[Any, Any]) -> WidgetT:
         widget = widget_class(self, *args, **kwargs)
         self._pending_widgets += [widget]
         return widget

@@ -6,12 +6,13 @@ from .pywm_widget import (
     PyWMWidget,
     PYWM_FORMATS
 )
+from . import pywm
 
 logger = logging.getLogger(__name__)
 
 
 class PyWMBackgroundWidget(PyWMWidget):
-    def __init__(self, wm, path):
+    def __init__(self, wm: pywm.PyWM[pywm.ViewT], path: str):
         """
         transpose == 't': matrix transpose
         transpose == 'f': flip the image

@@ -13,10 +13,7 @@
 
 ** Type-checking / technical debt
 *** DONE Fix setup.py incl. requirements.txt
-*** TODO Type annotations
-- [ ] Monkeytype
-- [ ] For Python files
-- [ ] For C extension (.pyi)
+*** STRT Type annotations
 *** TODO inline TODO-comments
 
 ** Session management / Lock screen

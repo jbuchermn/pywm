@@ -2,7 +2,7 @@ import logging
 import time
 import threading
 
-from .touchpad import find_all_touchpads, Touchpad
+from .touch import find_all_touchpads, Touchpad
 from .gestures import Gestures
 
 logger = logging.getLogger(__name__)

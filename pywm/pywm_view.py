@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional, Tuple
+from typing import Optional, TypeVar
 
 from . import pywm
 from abc import abstractmethod
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 class PyWMViewUpstreamState:
     def __init__(self,
@@ -14,10 +14,10 @@ class PyWMViewUpstreamState:
                  sc_min_w: int, sc_max_w: int, sc_min_h: int, sc_max_h: int,
                  offset_x: int, offset_y: int,
                  width: int, height: int,
-                 is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool):
+                 is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool) -> None:
 
         """
-        Called from C - just to bes ure, wrap every attribute in type constrcutor
+        Called from C - just to be sure, wrap every attribute in type constrcutor
         """
         self.is_floating = bool(floating)
         self.title = str(title)
@@ -71,9 +71,9 @@ class PyWMViewUpstreamState:
 
 class PyWMViewDownstreamState:
     def __init__(self,
-                 z_index: int=0, box: Tuple[float, float, float, float]=(0, 0, 0, 0),
+                 z_index: int=0, box: tuple[float, float, float, float]=(0, 0, 0, 0),
                  opacity: float=1., corner_radius: float=0,
-                 accepts_input: bool=False, lock_enabled: bool=False, up_state: Optional[PyWMViewUpstreamState]=None):
+                 accepts_input: bool=False, lock_enabled: bool=False, up_state: Optional[PyWMViewUpstreamState]=None) -> None:
         """
         Just to be sure - wrap in type constructors
         """
@@ -87,7 +87,7 @@ class PyWMViewDownstreamState:
         """
         Request size
         """
-        self.size = (-1, -1)
+        self.size: tuple[int, int] = (-1, -1)
 
         if up_state is not None:
             self.size = up_state.size
@@ -100,7 +100,7 @@ class PyWMViewDownstreamState:
     def get(self,
             last_state: Optional[PyWMViewDownstreamState],
             focus: Optional[int], fullscreen: Optional[int], maximized: Optional[int], resizing: Optional[int], close: Optional[int]
-            ) -> Tuple[Tuple[float, float, float, float], float, float, int, bool, bool, Tuple[int, int], int, int, int, int, int]:
+            ) -> tuple[tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int]:
         return (
             self.box,
             self.opacity,
@@ -122,31 +122,28 @@ class PyWMViewDownstreamState:
         return str(self.__dict__)
 
 
-
 class PyWMView:
-    def __init__(self, wm: pywm.PyWM, handle: int): # Python imports are great
+    def __init__(self, wm: pywm.PyWM[pywm.ViewT], handle: int) -> None: # Python imports are great
         self._handle = handle
 
         self.wm = wm
-        self.parent = None
-        self.app_id = None
-        self.role = None
-        self.is_xwayland = None
+        self.parent: Optional[pywm.ViewT] = None
+        self.app_id: Optional[str] = None
+        self.role: Optional[str] = None
+        self.is_xwayland: Optional[bool] = None
 
-        self.up_state = None
-        self.last_up_state = None
+        self.up_state: Optional[PyWMViewUpstreamState] = None
+        self.last_up_state: Optional[PyWMViewUpstreamState] = None
 
         self._damaged = False
-        self._down_state = None
-        self._last_down_state = None
+        self._down_state: Optional[PyWMViewDownstreamState] = None
+        self._last_down_state: Optional[PyWMViewDownstreamState] = None
 
-        self._down_action_focus = None
-        self._down_action_fullscreen = None
-        self._down_action_maximized = None
-        self._down_action_resizing = None
-        self._down_action_close = None
-
-        self._parent: Optional[PyWMView] = None
+        self._down_action_focus: Optional[int] = None
+        self._down_action_fullscreen: Optional[int] = None
+        self._down_action_maximized: Optional[int] = None
+        self._down_action_resizing: Optional[int] = None
+        self._down_action_close: Optional[int] = None
 
 
     def _update(self, parent_handle: int, is_xwayland: bool, app_id: str, role: str,
@@ -155,10 +152,11 @@ class PyWMView:
                 offset_x: int, offset_y: int,
                 width: int, height: int,
                 is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool
-                ) -> Tuple[Tuple[float, float, float, float], float, float, int, bool, bool, Tuple[int, int], int, int, int, int, int]:
+                ) -> tuple[tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int]:
+
         if self.parent is None and parent_handle is not None:
             try:
-                self._parent = self.wm._views[parent_handle]
+                self.parent = self.wm._views[parent_handle]
             except Exception:
                 pass
 
@@ -166,51 +164,56 @@ class PyWMView:
         self.app_id = app_id
         self.role = role
 
-        self.last_up_state = self.up_state
-        self._last_down_state = self._down_state
-
-        self.up_state = PyWMViewUpstreamState(
+        up_state = PyWMViewUpstreamState(
                 floating, title,
                 sc_min_w, sc_max_w, sc_min_h, sc_max_h,
                 offset_x, offset_y,
                 width, height,
                 is_focused, is_fullscreen, is_maximized, is_resizing, is_inhibiting_idle)
+        last_up_state = self.up_state
+        down_state: Optional[PyWMViewDownstreamState] = self._down_state
 
-        if self._down_state is None:
+        self.last_up_state = last_up_state
+        self.up_state = up_state
+
+        if down_state is None:
             """
             Initial
             """
-            self._last_down_state = PyWMViewDownstreamState(up_state=self.up_state)
-            self._down_state = self._last_down_state.copy()
+            down_state = PyWMViewDownstreamState(up_state=up_state)
 
-        elif self._damaged or self.last_up_state is None or self.up_state.is_update(self.last_up_state):
+        elif self._damaged or last_up_state is None or up_state.is_update(last_up_state):
             self._damaged = False
             """
             Update
             """
-            if self.up_state.is_focused != self.last_up_state.is_focused:
+            if last_up_state is None or up_state.is_focused != last_up_state.is_focused:
                 self.on_focus_change()
 
-            if self.up_state.size != self.last_up_state.size or \
-                    self.up_state.size_constraints != self.last_up_state.size_constraints:
+            if last_up_state is None or up_state.size != last_up_state.size or \
+                    up_state.size_constraints != last_up_state.size_constraints:
                 self.on_size_or_constraints_change()
 
             try:
-                self._down_state = self.process(self.up_state)
+                down_state = self.process(up_state)
             except Exception as e:
                 logger.exception("Exception during view.process")
-                self._down_state = self._last_down_state
+                down_state = self._last_down_state
 
             # BEGIN DEBUG
-            try:
-                if self._down_state.size != self.up_state.size:
-                    logger.debug("Size (%d %s) %s -> %s", self._handle, self.app_id, self.up_state.size, self._down_state.size)
-            except:
-                pass
+            if down_state is not None and down_state.size != up_state.size:
+                logger.debug("Size (%d %s) %s -> %s", self._handle, self.app_id, up_state.size, down_state.size)
             # END DEBUG
 
-        res = self._down_state.get(
-            self._last_down_state, 
+        self._last_down_state = self._down_state
+        self._down_state = down_state
+
+        if down_state is None:
+            logger.warn("No down stream state")
+            down_state = PyWMViewDownstreamState()
+
+        res = down_state.get(
+            self._last_down_state,
             self._down_action_focus,
             self._down_action_fullscreen,
             self._down_action_maximized,
@@ -247,7 +250,7 @@ class PyWMView:
     """
     Virtual methods
     """
-    def main(self, *args) -> None:
+    def main(self, *args) -> None: # type: ignore
 
         """
         Called after view is initialized, before first process
