@@ -86,7 +86,7 @@ class PyWMIdleThread(Thread, Generic[ViewT]):
 
 
 class PyWM(Generic[ViewT]):
-    def __init__(self, view_class: type=PyWMView, **kwargs: dict[str, Any]) -> None:
+    def __init__(self, view_class: type=PyWMView, **kwargs: Any) -> None:
         logger.debug("PyWM init")
 
         register("ready", self._ready)

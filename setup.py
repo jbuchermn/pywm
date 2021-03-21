@@ -21,6 +21,6 @@ setup(name='pywm',
       url="https://github.com/jbuchermn/pywm",
       author='Jonas Bucher',
       author_email='j.bucher.mn@gmail.com',
-      package_data={'pywm': ['_pywm.so']},
+      package_data={'pywm': ['_pywm.so', 'py.typed'], 'pywm.touchpad': ['py.typed']},
       packages=['pywm', 'pywm.touchpad'],
       install_requires=['evdev', 'imageio', 'pycairo', 'numpy'])

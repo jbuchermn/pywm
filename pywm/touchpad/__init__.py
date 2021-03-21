@@ -1,6 +1,6 @@
 from .touch import Touchpad, find_all_touchpads
 from .daemon import TouchpadDaemon
-from .gestures import (  # noqa F401
+from .gestures import (
     Gesture,
     Gestures,
     SingleFingerMoveGesture,
