@@ -49,6 +49,7 @@ void wm_layout_add_output(struct wm_layout* layout, struct wlr_output* out){
     wlr_output_layout_add_auto(layout->wlr_output_layout, out);
 
     if(!layout->default_output) layout->default_output = output;
+    else wlr_log(WLR_ERROR, "Only one output supported");
 }
 
 

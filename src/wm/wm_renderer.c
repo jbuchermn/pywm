@@ -443,13 +443,12 @@ void wm_renderer_render_texture_at(struct wm_renderer *renderer,
 				renderer,
 				texture,
 				&fbox, matrix, opacity,
-
 				box, corner_radius, lock_perc);
 #else
 		wlr_render_subtexture_with_matrix(
 				renderer->wlr_renderer,
 				texture,
-				&fbox, matrix, 1.);
+				&fbox, matrix, opacity);
 #endif
 	}
 }

@@ -10,8 +10,8 @@
 *** KILL Wrong view / floating children handling in vlc / zoom (see ideas below)
 *** KILL Zoom works really poorly (apparently similar under sway...)
 *** STRT Bugs concerning movement onto popups (e.g. Chrome)
+*** STRT Make flutter work
 *** TODO Occasional rounding errors in damaging
-*** TODO inline TODO-comments
 
 ** Type-checking / technical debt
 *** DONE Fix setup.py incl. requirements.txt
@@ -23,11 +23,12 @@
 *** DONE Clean-up touchpad creation / enable hotplugging / get rid of necessity to configure touchpad name
 
 ** Documentation
-*** TODO README improvements
-*** TODO Proper documentation which applications have been tested with which issues
+*** TODO README
+*** TODO Proper documentation which applications have been tested with which issues / exact steps to repeat testing
 
 * Backlog / Ideas
 ** Screensharing using xdg-desktop-portal-wlr
 ** Proper handling of popup constraints on scaling
 ** Various TODO Comments inline
 ** Multiple outputs
+** Inline comments "TODO"

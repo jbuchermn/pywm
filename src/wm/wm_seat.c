@@ -122,7 +122,12 @@ void wm_seat_destroy(struct wm_seat* seat) {
     wl_list_remove(&seat->request_set_primary_selection.link);
     wl_list_remove(&seat->destroy.link);
 
-    /* TODO */
+    wm_cursor_destroy(seat->wm_cursor);
+    free(seat->wm_cursor);
+
+    wlr_seat_destroy(seat->wlr_seat);
+
+    wlr_log(WLR_ERROR, "Seat destroy is not supported");
 }
 
 void wm_seat_add_input_device(struct wm_seat* seat, struct wlr_input_device* input_device){
