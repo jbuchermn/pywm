@@ -391,7 +391,7 @@ class PyWM(Generic[ViewT]):
         self._idle_thread.stop()
         self._pending_terminate = True
 
-    def create_widget(self, widget_class: type, *args: list[Any], **kwargs: dict[Any, Any]) -> WidgetT:
+    def create_widget(self, widget_class: Callable[..., WidgetT], *args: list[Any], **kwargs: dict[Any, Any]) -> WidgetT:
         widget = widget_class(self, *args, **kwargs)
         self._pending_widgets += [widget]
         return widget

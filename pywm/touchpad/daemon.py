@@ -1,21 +1,22 @@
 import logging
 import time
 import threading
+from typing import Callable
 
 from .touch import find_all_touchpads, Touchpad
-from .gestures import Gestures
+from .gestures import Gestures, Gesture
 
 logger = logging.getLogger(__name__)
 
 class TouchpadDaemon(threading.Thread):
-    def __init__(self, gesture_listener):
+    def __init__(self, gesture_listener: Callable[[Gesture], None]) -> None:
         super().__init__()
         self.gesture_listener = gesture_listener
-        self._touchpads = []
+        self._touchpads: list[tuple[Touchpad, Gestures]] = []
 
         self._running = True
 
-    def _start_pad(self, name, path):
+    def _start_pad(self, name: str, path: str) -> None:
         touchpad = Touchpad(path)
         gestures = Gestures(touchpad)
         gestures.listener(self.gesture_listener)
@@ -26,14 +27,14 @@ class TouchpadDaemon(threading.Thread):
         touchpad.start()
         logger.info("Started touchpad at %s", self._touchpads[-1][0].path)
 
-    def _stop_pad(self, idx):
+    def _stop_pad(self, idx: int) -> None:
         self._touchpads[idx][0].stop()
         logger.info("Stopping touchpad at %s...", self._touchpads[idx][0].path)
         self._touchpads[idx][0].join()
         logger.info("...stopped")
         del self._touchpads[idx]
 
-    def update(self):
+    def update(self) -> None:
         validated = [False for _ in self._touchpads]
         for name, path in find_all_touchpads():
             try:
@@ -48,14 +49,14 @@ class TouchpadDaemon(threading.Thread):
                 logger.info("Touchpad at %s disappeared", self._touchpads[i][0].path)
                 self._stop_pad(i)
 
-    def stop(self):
+    def stop(self) -> None:
         self._running = False
 
-    def reset_gestures(self):
+    def reset_gestures(self) -> None:
         for _, g in self._touchpads:
             g.reset()
 
-    def run(self):
+    def run(self) -> None:
         try:
             while self._running:
                 self.update()

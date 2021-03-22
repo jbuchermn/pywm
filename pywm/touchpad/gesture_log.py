@@ -1,20 +1,20 @@
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt # type: ignore
 import time
 
 from .touch import find_all_touchpads, Touchpad
-from .gestures import Gestures, GestureListener, LowpassGesture
+from .gestures import Gestures, GestureListener, LowpassGesture, Gesture
 
 
 class GesturesLog:
-    def __init__(self, gestures):
-        self.ts = []
-        self.values = []
-        self.lp_ts = []
-        self.lp_values = []
+    def __init__(self, gestures: Gestures) -> None:
+        self.ts: list[float] = []
+        self.values: list[dict[str, float]] = []
+        self.lp_ts: list[float] = []
+        self.lp_values: list[dict[str, float]] = []
 
         gestures.listener(self.on_update)
 
-    def plot(self):
+    def plot(self) -> None:
         if len(self.ts) == 0:
             return
 
@@ -32,25 +32,25 @@ class GesturesLog:
         input("Done? ")
         plt.close(fig)
 
-    def on_gesture_lp_update(self, values):
+    def on_gesture_lp_update(self, values: dict[str, float]) -> None:
         self.lp_ts += [time.time()]
         self.lp_values += [values]
 
-    def on_gesture_update(self, values):
+    def on_gesture_update(self, values: dict[str, float]) -> None:
         self.ts += [time.time()]
         self.values += [values]
 
-    def on_gesture_terminate(self):
+    def on_gesture_terminate(self) -> None:
         self.plot()
         self.ts = []
         self.values = []
         self.lp_ts = []
         self.lp_values = []
 
-    def on_update(self, gesture):
+    def on_update(self, gesture: Gesture) -> None:
         gesture.listener(GestureListener(
             self.on_gesture_update,
-            None))
+            lambda: None))
         LowpassGesture(gesture).listener(GestureListener(
             self.on_gesture_lp_update,
             self.on_gesture_terminate))

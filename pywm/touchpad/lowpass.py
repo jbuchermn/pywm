@@ -1,14 +1,16 @@
+from typing import Optional
+
 class Lowpass:
-    def __init__(self, inertia):
-        self._last_val = None
+    def __init__(self, inertia: float) -> None:
+        self._last_val: Optional[float] = None
         self._inertia = inertia
 
-    def next(self, val):
+    def next(self, val: float) -> float:
         if self._last_val is None:
             self._last_val = val
-
-        self._last_val = self._inertia * self._last_val + \
-            (1. - self._inertia) * val
+        else:
+            self._last_val = self._inertia * self._last_val + \
+                (1. - self._inertia) * val
         return self._last_val
 
 

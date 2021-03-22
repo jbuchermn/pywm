@@ -1,4 +1,4 @@
-from .touch import Touchpad, find_all_touchpads
+from .touch import Touchpad
 from .daemon import TouchpadDaemon
 from .gestures import (
     Gesture,
@@ -9,3 +9,16 @@ from .gestures import (
     GestureListener,
     LowpassGesture
 )
+
+__all__ = [
+    'Touchpad',
+    'TouchpadDaemon',
+    'GestureListener',
+    'Gesture',
+    'Gestures',
+    'SingleFingerMoveGesture',
+    'TwoFingerSwipePinchGesture',
+    'HigherSwipeGesture',
+    'GestureListener',
+    'LowpassGesture'
+]

@@ -1,6 +1,6 @@
 import numpy as np
 import logging
-from imageio import imread
+from imageio import imread # type: ignore
 
 from .pywm_widget import (
     PyWMWidget,

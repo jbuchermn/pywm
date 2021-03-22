@@ -1,14 +1,15 @@
 from select import select
-import evdev
+import evdev # type: ignore
 import time
 import logging
 from threading import Thread
+from typing import Callable, Generator, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class Slot:
-    def __init__(self, parent, n):
+    def __init__(self, parent: Touchpad, n: int) -> None:
         self.parent = parent
         self.n = n
 
@@ -17,19 +18,19 @@ class Slot:
         self.y = -1
         self.z = -1
 
-    def set_tracking_id(self, i):
+    def set_tracking_id(self, i: int) -> None:
         self.tracking_id = i
         if self.tracking_id < 0:
             self.x = -1
             self.y = -1
             self.z = -1
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "%d: (%d, %d, %d)" % (self.tracking_id, self.x, self.y, self.z)
 
 
 class TouchpadUpdate:
-    def __init__(self, n_touches, touches):
+    def __init__(self, n_touches: int, touches: list[tuple[int, float, float, float]]) -> None:
         """
         touches is an array of tuples (id, x, y, z)
         """
@@ -40,7 +41,7 @@ class TouchpadUpdate:
 
 
 class Touchpad(Thread):
-    def __init__(self, path):
+    def __init__(self, path: str) -> None:
         super().__init__()
         self.path = path
         self._device = evdev.InputDevice(path)
@@ -49,16 +50,16 @@ class Touchpad(Thread):
         self._n_touches = 0
 
         self._n_slots = 2
-        self._slots = []
+        self._slots: list[Slot] = []
 
-        self._listeners = []
+        self._listeners: list[Callable[[TouchpadUpdate], None]] = []
 
-        self.min_x = None
-        self.max_x = None
-        self.min_y = None
-        self.max_y = None
-        self.min_z = None
-        self.max_z = None
+        min_x: Optional[int] = None
+        max_x: Optional[int] = None
+        min_y: Optional[int] = None
+        max_y: Optional[int] = None
+        min_z: Optional[int] = None
+        max_z: Optional[int] = None
         for code, info in self._device.capabilities()[evdev.ecodes.EV_ABS]:
             if code == evdev.ecodes.ABS_MT_POSITION_X:
                 self.min_x = info.min
@@ -72,11 +73,18 @@ class Touchpad(Thread):
             elif code == evdev.ecodes.ABS_MT_SLOT:
                 self._n_slots = info.max - info.min + 1
 
+        self.min_x = min_x if min_x is not None else 0
+        self.max_x = max_x if max_x is not None else 1
+        self.min_y = min_y if min_y is not None else 0
+        self.max_y = max_y if max_y is not None else 1
+        self.min_z = min_z if min_z is not None else 0
+        self.max_z = max_z if max_z is not None else 1
 
-    def listener(self, l):
+
+    def listener(self, l: Callable[[TouchpadUpdate], None]) -> None:
         self._listeners += [l]
 
-    def _get_slot(self, n):
+    def _get_slot(self, n: int) -> Slot:
         if n < 0:
             raise Exception("Invalid slot")
 
@@ -85,10 +93,10 @@ class Touchpad(Thread):
 
         return self._slots[n]
 
-    def close(self):
+    def close(self) -> None:
         self._device.close()
 
-    def synchronize(self):
+    def synchronize(self) -> None:
         if len([s for s in self._slots if s.tracking_id >= 0]) == 0:
             self._n_touches = 0
 
@@ -112,7 +120,7 @@ class Touchpad(Thread):
         for l in self._listeners:
             l(update)
 
-    def run(self):
+    def run(self) -> None:
         try:
             slot = 0
             while self._running:
@@ -153,11 +161,11 @@ class Touchpad(Thread):
         finally:
             self._device.close()
 
-    def stop(self):
+    def stop(self) -> None:
         self._running = False
 
 
-def find_all_touchpads():
+def find_all_touchpads() -> Generator[tuple[str, str], None, None]:
     for device in [evdev.InputDevice(d) for d in evdev.list_devices()]:
         if evdev.ecodes.EV_ABS in device.capabilities():
             yield (device.name, device.path)

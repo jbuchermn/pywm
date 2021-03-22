@@ -1,17 +1,17 @@
-import matplotlib.pyplot as plt
-from .touch import find_all_touchpads, Touchpad
+import matplotlib.pyplot as plt # type: ignore
+from .touch import find_all_touchpads, Touchpad, TouchpadUpdate
 
 
 class TouchpadLog:
-    def __init__(self, touchpad):
-        self.ns = []
-        self.xs = {}
-        self.ys = {}
-        self.zs = {}
+    def __init__(self, touchpad: Touchpad) -> None:
+        self.ns: list[tuple[float, int]] = []
+        self.xs: dict[int, list[tuple[float, float]]] = {}
+        self.ys: dict[int, list[tuple[float, float]]] = {}
+        self.zs: dict[int, list[tuple[float, float]]] = {}
 
         touchpad.listener(self.on_update)
 
-    def plot(self):
+    def plot(self) -> None:
         if len(self.ns) == 0 or max([d[1] for d in self.ns]) <= 1:
             return
 
@@ -38,7 +38,7 @@ class TouchpadLog:
         input("Done? ")
         plt.close(fig)
 
-    def on_update(self, update):
+    def on_update(self, update: TouchpadUpdate) -> None:
         if update.n_touches == 0:
             self.plot()
             self.ns = []
