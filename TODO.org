@@ -9,12 +9,13 @@
 *** DONE idle_inhibit_manager (see mpv)
 *** KILL Wrong view / floating children handling in vlc / zoom (see ideas below)
 *** KILL Zoom works really poorly (apparently similar under sway...)
+*** STRT Bugs concerning movement onto popups (e.g. Chrome)
 *** TODO Occasional rounding errors in damaging
+*** TODO inline TODO-comments
 
 ** Type-checking / technical debt
 *** DONE Fix setup.py incl. requirements.txt
-*** STRT Type annotations
-*** TODO inline TODO-comments
+*** DONE Type annotations
 
 ** Session management / Lock screen
 *** DONE Improve blur (Gaussian, configurable, do not skip pixels)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import matplotlib.pyplot as plt # type: ignore
 from .touch import find_all_touchpads, Touchpad, TouchpadUpdate
 

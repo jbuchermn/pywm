@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import time
 import threading
@@ -55,6 +57,11 @@ class TouchpadDaemon(threading.Thread):
     def reset_gestures(self) -> None:
         for _, g in self._touchpads:
             g.reset()
+
+    def update_config(self, *args: float) -> None:
+        for _, g in self._touchpads:
+            g.update_config(*args)
+
 
     def run(self) -> None:
         try:

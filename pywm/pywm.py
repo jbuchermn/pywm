@@ -375,6 +375,9 @@ class PyWM(Generic[ViewT]):
         if self._touchpad_daemon is not None:
             self._touchpad_daemon.reset_gestures()
 
+    def configure_gestures(self, *args: float) -> None:
+        self._touchpad_daemon.update_config(*args)
+
     """
     Public API
     """

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from select import select
 import evdev # type: ignore
 import time
@@ -54,12 +56,12 @@ class Touchpad(Thread):
 
         self._listeners: list[Callable[[TouchpadUpdate], None]] = []
 
-        min_x: Optional[int] = None
-        max_x: Optional[int] = None
-        min_y: Optional[int] = None
-        max_y: Optional[int] = None
-        min_z: Optional[int] = None
-        max_z: Optional[int] = None
+        self.min_x: int = 0
+        self.max_x: int = 1
+        self.min_y: int = 0
+        self.max_y: int = 1
+        self.min_z: int = 0
+        self.max_z: int = 1
         for code, info in self._device.capabilities()[evdev.ecodes.EV_ABS]:
             if code == evdev.ecodes.ABS_MT_POSITION_X:
                 self.min_x = info.min
@@ -72,14 +74,6 @@ class Touchpad(Thread):
                 self.max_z = info.max
             elif code == evdev.ecodes.ABS_MT_SLOT:
                 self._n_slots = info.max - info.min + 1
-
-        self.min_x = min_x if min_x is not None else 0
-        self.max_x = max_x if max_x is not None else 1
-        self.min_y = min_y if min_y is not None else 0
-        self.max_y = max_y if max_y is not None else 1
-        self.min_z = min_z if min_z is not None else 0
-        self.max_z = max_z if max_z is not None else 1
-
 
     def listener(self, l: Callable[[TouchpadUpdate], None]) -> None:
         self._listeners += [l]

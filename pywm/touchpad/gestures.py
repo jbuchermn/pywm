@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 from pywm.touchpad.touch import TouchpadUpdate
 from threading import Thread
@@ -8,23 +10,36 @@ from typing import Callable, Optional
 from .lowpass import Lowpass
 
 
-_two_finger_min_dist = 0.1
-_lp_freq = 200.
-_lp_inertia = 0.8
+class GesturesConfig:
+    def __init__(self) -> None:
+        self.two_finger_min_dist = 0.
+        self.lp_freq = 0.
+        self.lp_inertia = 0.
+        self.validate_threshold = 0.
+        self.validate_thresholds: dict[str, float] = {}
 
-_validate_thresholds = {
-    'delta_x': .02,
-    'delta_y': .02,
-    'delta2_s': .0005,
-    'scale': .02
-}
+        self.validate_centers = {
+            'delta_x': 0.,
+            'delta_y': 0.,
+            'delta2_s': 0.,
+            'scale': 1.
+        }
 
-_validate_centers = {
-    'delta_x': 0.,
-    'delta_y': 0.,
-    'delta2_s': 0.,
-    'scale': 1.
-}
+        self.update(.1, 200., .8, .02)
+
+    def update(self, two_finger_min_dist: float, lp_freq: float, lp_inertia: float, validate_threshold: float) -> None:
+        self.two_finger_min_dist = two_finger_min_dist
+        self.lp_freq = lp_freq
+        self.lp_inertia = lp_inertia
+        self.validate_threshold = validate_threshold
+
+        self.validate_thresholds = {
+            'delta_x': self.validate_threshold,
+            'delta_y': self.validate_threshold,
+            'delta2_s': self.validate_threshold**2,
+            'scale': self.validate_threshold
+        }
+
 
 
 class GestureListener:
@@ -77,11 +92,11 @@ class LowpassGesture(Thread):
                 lp_values = {}
                 for k in self._values:
                     if k not in self._lp:
-                        self._lp[k] = Lowpass(_lp_inertia)
+                        self._lp[k] = Lowpass(self.gesture.parent.config.lp_inertia)
                     lp_values[k] = self._lp[k].next(self._values[k])
                 for l in self._listeners:
                     l.update(lp_values)
-            time.sleep(1./_lp_freq)
+            time.sleep(1./self.gesture.parent.config.lp_freq)
 
 
 class Gesture:
@@ -105,12 +120,12 @@ class Gesture:
             validate = False
             for k in values:
                 v = values[k]
-                if abs(v - _validate_centers[k]) > _validate_thresholds[k]:
+                if abs(v - self.parent.config.validate_centers[k]) > self.parent.config.validate_thresholds[k]:
                     validate = True
                     break
 
             if validate:
-                self._offset = {k: values[k] - _validate_centers[k]
+                self._offset = {k: values[k] - self.parent.config.validate_centers[k]
                                 for k in values}
                 self.pending = False
 
@@ -165,7 +180,7 @@ class TwoFingerSwipePinchGesture(Gesture):
             (update.touches[0][2] - update.touches[1][2])**2
         )
 
-        return cog_x, cog_y, max(_two_finger_min_dist, dist)
+        return cog_x, cog_y, max(self.parent.config.two_finger_min_dist, dist)
 
     def process(self, update: TouchpadUpdate) -> bool:
         if update.n_touches != 2:
@@ -260,6 +275,8 @@ class Gestures:
         self._listeners: list[Callable[[Gesture], None]] = []
         self._active_gesture: Optional[Gesture] = None
 
+        self.config = GesturesConfig()
+
         touchpad.listener(self.on_update)
 
     def listener(self, l: Callable[[Gesture], None]) -> None:
@@ -267,6 +284,9 @@ class Gestures:
 
     def reset(self) -> None:
         self._active_gesture = None
+
+    def update_config(self, two_finger_min_dist: float, lp_freq: float, lp_inertia: float, validate_threshold: float) -> None:
+        self.config.update(two_finger_min_dist, lp_freq, lp_inertia, validate_threshold)
 
     def on_update(self, update: TouchpadUpdate) -> None:
         was_pending = True
