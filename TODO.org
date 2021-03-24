@@ -9,7 +9,7 @@
 *** DONE idle_inhibit_manager (see mpv)
 *** KILL Wrong view / floating children handling in vlc / zoom (see ideas below)
 *** KILL Zoom works really poorly (apparently similar under sway...)
-*** STRT Bugs concerning movement onto popups (e.g. Chrome)
+*** KILL Bugs concerning movement onto popups (e.g. Chrome)
 *** DONE Make flutter work
 *** TODO Occasional rounding errors in damaging
 

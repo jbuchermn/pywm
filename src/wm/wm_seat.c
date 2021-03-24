@@ -171,7 +171,6 @@ void wm_seat_add_input_device(struct wm_seat* seat, struct wlr_input_device* inp
 
 void wm_seat_clear_focus(struct wm_seat* seat){
     wm_seat_focus_surface(seat, NULL);
-    wlr_seat_keyboard_clear_focus(seat->wlr_seat);
 }
 
 void wm_seat_focus_surface(struct wm_seat* seat, struct wlr_surface* surface){
@@ -189,18 +188,25 @@ void wm_seat_focus_surface(struct wm_seat* seat, struct wlr_surface* surface){
         return;
     }
 
+    wlr_log(WLR_DEBUG, "Updating focus");
+
     if(prev_view) wm_view_set_activated(prev_view, false);
 
-    /* Guard keyboard focus */
-    if(wm_server_is_locked(seat->wm_server)){
-        if(!view) return;
-        if(!view->super.lock_enabled) return;
+    if(view){
+        /* Guard keyboard focus */
+        if(wm_server_is_locked(seat->wm_server)){
+            if(!view->super.lock_enabled) return;
+        }
+
+        wm_view_set_activated(view, true);
+        struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat->wlr_seat);
+        wlr_seat_keyboard_notify_enter(seat->wlr_seat, surface,
+                keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
+    }else{
+        wlr_seat_keyboard_clear_focus(seat->wlr_seat);
+        wlr_seat_pointer_clear_focus(seat->wlr_seat);
     }
 
-    if(view) wm_view_set_activated(view, true);
-    struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat->wlr_seat);
-    wlr_seat_keyboard_notify_enter(seat->wlr_seat, surface,
-            keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
 
 }
 
@@ -252,12 +258,8 @@ static void _handle_focus(struct wm_seat* seat, double x, double y){
     double sy;
 
     wm_server_surface_at(seat->wm_server, x, y, &surface, &sx, &sy);
-    if(!surface){
-        wlr_seat_pointer_clear_focus(seat->wlr_seat);
-        return;
-    }
-
     wm_seat_focus_surface(seat, surface);
+
 }
 
 void wm_seat_dispatch_button(struct wm_seat* seat, struct wlr_event_pointer_button* event){

@@ -4,37 +4,7 @@ Documentation to come
 
 ## Status
 
-| Application            |  XWayland | Status              | Open issues                                              |
-|------------------------|-----------|---------------------|----------------------------------------------------------|
-| Termite                |           | working             |                none                                      |
-| imv                    |           | working             |                none                                      |
-| LibreOffice            |           | working             |                none                                      |
-| Alacritty              |           | working             |                none                                      |
-| Firefox                |           | working             |                none                                      |
-| Matplotlib (Qt5)       |           | working             |                none                                      |
-| GIMP-2.99              |           | working             |                none                                      |
-| nemo                   |           | working             |                none                                      |
-| Nautilus               |           | working             |                none                                      |
-| masm11/Emacs           |           | working             |                none                                      |
-| Chromium               |           | working             | Too large popups are placed wrong (this is an issue with sway as well) |
-| OpenSCAD               |           | working             |                none                                      |
-| VLC                    |           | working             | Video playback does not work porperly (this is an ussue with sway as  well) |
-| mpv                    |           | working             |                none                                      |
-| Zoom                   |           | working             | Popup-toplevels are not recognized as floating (this is an issue with sway as well) / scaling does not work properly           |
-| Atom                   |           | ?                   | ?                                                        |
-| VSCodium               |           | ?                   | ?                                                        |
-| IntelliJ               |    ?      | ?                   | ?                                                        |
-| FreeCAD                |    ?      | ?                   | ?                                                        |
-| Spotify                |    yes    | working             |                none                                      |
-| VSCodium               |    yes    | working             |                none                                      |
-| Atom                   |    yes    | working             |                none                                      |
-| VLC                    |    yes    | working             |                none                                      |
-| Firefox                |    yes    | working             |                none                                      |
-| Zoom                   |    yes    | working             | Does not look very nice                                  |
-| Matplotlib             |    yes    | not working         |                                                          |
-| Emacs                  |    yes    | working             | ?                                                        |
-| Atom                   |    yes    | ?                   | ?                                                        |
-| Chromium               |    yes    | ?                   | ?                                                        |
+See [TESTS.org]
 
 
 ## Installing

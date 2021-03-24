@@ -1,0 +1,67 @@
+#+TITLE: PyWM Test Cases
+
+* Termite
+** Wayland-native
+** Steps
+- [ ] Open
+- [ ] Execute some commands
+- [ ] Copy and paste text with S-C-x/v
+
+* Alacritty
+** Wayland-native
+** Steps
+- [ ] Open
+- [ ] Execute some commands
+- [ ] Copy and paste text with S-C-x/v
+
+* imv
+** Wayland-native
+** Steps
+- [ ] Open from terminal
+- [ ] Zoom in/out / move
+
+* mpv
+** Wayland-native
+** Steps
+- [ ] Open from terminal
+- [ ] Start / stop
+- [ ] Switch fullscreen
+- [ ] Ensure idle is inhibited
+
+* Chromium
+** Wayland-native (run with --enable-features=UseOzonePlatform --ozone-platform=wayland)
+** Steps
+- [ ] Open
+- [ ] Go to YT, start video, toggle fullscreen
+- [ ] Copy and paste text
+- [ ] Search for an image, right-click, save as -> anywhere
+- [ ] Ctrl-F search
+- [ ] Open the menus, go to bookmark (repeat this multiple times, different window sizes)
+*** WAIT At this point (if popups open to the top) two issues appear (both appear with sway as well --> probably Chromium bugs)
+**** Very large popups are placed on top of the window making them effectively unusable
+**** Occassionally (with bookmarks bar) closing a popup leaves the main surface with an invalid input-state, i.e. not accepting input anymore
+
+* Firefox
+** Wayland-native (Run with MOZ_ENABLE_WAYLAND=1)
+* Matplotlib
+** Wayland-native (Qt5 backend, be sure to set DISPLAY=":0")
+
+* GIMP-2.99
+
+* Nemo
+* Nautilus
+* masm11/Emacs
+
+* Zoom
+* LibreOffice
+* OpenSCAD
+* VLC
+
+* GIMP (XWayland)
+* VLC (XWayland)
+* Atom (XWayland)
+* Spotify (XWayland)
+* VSCodium (XWayland)
+
+* FreeCAD
+* IntelliJ
