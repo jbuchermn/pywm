@@ -23,6 +23,44 @@ struct wm_view_vtable wm_view_xdg_vtable;
 /*
  * Callbacks
  */
+static void subsurface_handle_map(struct wl_listener* listener, void* data){
+    struct wm_xdg_subsurface* subsurface = wl_container_of(listener, subsurface, map);
+
+    wm_layout_damage_from(
+        subsurface->toplevel->super.super.wm_server->wm_layout,
+        &subsurface->toplevel->super.super,
+        subsurface->wlr_subsurface->surface);
+}
+
+static void subsurface_handle_unmap(struct wl_listener* listener, void* data){
+    struct wm_xdg_subsurface* subsurface = wl_container_of(listener, subsurface, unmap);
+
+    wm_layout_damage_whole(subsurface->toplevel->super.super.wm_server->wm_layout);
+}
+
+static void subsurface_handle_destroy(struct wl_listener* listener, void* data){
+    struct wm_xdg_subsurface* subsurface = wl_container_of(listener, subsurface, destroy);
+    wm_xdg_subsurface_destroy(subsurface);
+    free(subsurface);
+}
+
+static void subsurface_handle_new_subsurface(struct wl_listener* listener, void* data){
+    struct wm_xdg_subsurface* subsurface = wl_container_of(listener, subsurface, new_subsurface);
+    struct wlr_subsurface* wlr_subsurface = data;
+
+    struct wm_xdg_subsurface* new_subsurface = calloc(1, sizeof(struct wm_xdg_subsurface));
+    wm_xdg_subsurface_init(new_subsurface, subsurface->toplevel, wlr_subsurface);
+}
+
+static void subsurface_handle_surface_commit(struct wl_listener* listener, void* data){
+    struct wm_xdg_subsurface* subsurface = wl_container_of(listener, subsurface, surface_commit);
+
+    wm_layout_damage_from(
+            subsurface->toplevel->super.super.wm_server->wm_layout,
+            &subsurface->toplevel->super.super,
+            subsurface->wlr_subsurface->surface
+    );
+}
 static void popup_handle_map(struct wl_listener* listener, void* data){
     struct wm_popup_xdg* popup = wl_container_of(listener, popup, map);
 
@@ -50,6 +88,14 @@ static void popup_handle_new_popup(struct wl_listener* listener, void* data){
 
     struct wm_popup_xdg* new_popup = calloc(1, sizeof(struct wm_popup_xdg));
     wm_popup_xdg_init(new_popup, popup->toplevel, wlr_xdg_popup);
+}
+
+static void popup_handle_new_subsurface(struct wl_listener* listener, void* data){
+    struct wm_popup_xdg* popup = wl_container_of(listener, popup, new_subsurface);
+    struct wlr_subsurface* wlr_subsurface = data;
+
+    struct wm_xdg_subsurface* subsurface = calloc(1, sizeof(struct wm_xdg_subsurface));
+    wm_xdg_subsurface_init(subsurface, popup->toplevel, wlr_subsurface);
 }
 
 static void popup_handle_surface_commit(struct wl_listener* listener, void* data){
@@ -117,6 +163,14 @@ static void handle_new_popup(struct wl_listener* listener, void* data){
     wm_popup_xdg_init(popup, view, wlr_xdg_popup);
 }
 
+static void handle_new_subsurface(struct wl_listener* listener, void* data){
+    struct wm_view_xdg* view = wl_container_of(listener, view, new_subsurface);
+    struct wlr_subsurface* wlr_subsurface = data;
+
+    struct wm_xdg_subsurface* subsurface = calloc(1, sizeof(struct wm_xdg_subsurface));
+    wm_xdg_subsurface_init(subsurface, view, wlr_subsurface);
+}
+
 static void handle_surface_commit(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, surface_commit);
 
@@ -162,6 +216,38 @@ static void handle_show_window_menu(struct wl_listener* listener, void* data){
 }
 
 /*
+ * Class implementation wm_xdg_subsurface
+ */
+void wm_xdg_subsurface_init(struct wm_xdg_subsurface* subsurface, struct wm_view_xdg* toplevel, struct wlr_subsurface* wlr_subsurface){
+    subsurface->toplevel = toplevel;
+    subsurface->wlr_subsurface = wlr_subsurface;
+
+    subsurface->map.notify = &subsurface_handle_map;
+    wl_signal_add(&wlr_subsurface->events.map, &subsurface->map);
+
+    subsurface->unmap.notify = &subsurface_handle_unmap;
+    wl_signal_add(&wlr_subsurface->events.unmap, &subsurface->unmap);
+
+    subsurface->destroy.notify = &subsurface_handle_destroy;
+    wl_signal_add(&wlr_subsurface->events.destroy, &subsurface->destroy);
+
+    subsurface->new_subsurface.notify = &subsurface_handle_new_subsurface;
+    wl_signal_add(&wlr_subsurface->surface->events.new_subsurface, &subsurface->new_subsurface);
+
+    subsurface->surface_commit.notify = &subsurface_handle_surface_commit;
+    wl_signal_add(&wlr_subsurface->surface->events.commit, &subsurface->surface_commit);
+}
+
+void wm_xdg_subsurface_destroy(struct wm_xdg_subsurface* subsurface){
+    wl_list_remove(&subsurface->map.link);
+    wl_list_remove(&subsurface->unmap.link);
+    wl_list_remove(&subsurface->destroy.link);
+    wl_list_remove(&subsurface->new_subsurface.link);
+    wl_list_remove(&subsurface->surface_commit.link);
+}
+
+
+/*
  * Class implementation wm_popup_xdg
  */
 void wm_popup_xdg_init(struct wm_popup_xdg* popup, struct wm_view_xdg* toplevel, struct wlr_xdg_popup* wlr_xdg_popup){
@@ -180,6 +266,9 @@ void wm_popup_xdg_init(struct wm_popup_xdg* popup, struct wm_view_xdg* toplevel,
 
     popup->new_popup.notify = &popup_handle_new_popup;
     wl_signal_add(&wlr_xdg_popup->base->events.new_popup, &popup->new_popup);
+
+    popup->new_subsurface.notify = &popup_handle_new_subsurface;
+    wl_signal_add(&wlr_xdg_popup->base->surface->events.new_subsurface, &popup->new_subsurface);
 
     popup->surface_commit.notify = &popup_handle_surface_commit;
     wl_signal_add(&wlr_xdg_popup->base->surface->events.commit, &popup->surface_commit);
@@ -217,6 +306,7 @@ void wm_popup_xdg_destroy(struct wm_popup_xdg* popup){
     wl_list_remove(&popup->unmap.link);
     wl_list_remove(&popup->destroy.link);
     wl_list_remove(&popup->new_popup.link);
+    wl_list_remove(&popup->new_subsurface.link);
     wl_list_remove(&popup->surface_commit.link);
 }
 
@@ -241,6 +331,9 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
 
     view->new_popup.notify = &handle_new_popup;
     wl_signal_add(&surface->events.new_popup, &view->new_popup);
+
+    view->new_subsurface.notify = &handle_new_subsurface;
+    wl_signal_add(&surface->surface->events.new_subsurface, &view->new_subsurface);
 
     view->surface_commit.notify = &handle_surface_commit;
     wl_signal_add(&surface->surface->events.commit, &view->surface_commit);
@@ -278,6 +371,7 @@ static void wm_view_xdg_destroy(struct wm_view* super){
     wl_list_remove(&view->unmap.link);
     wl_list_remove(&view->destroy.link);
     wl_list_remove(&view->new_popup.link);
+    wl_list_remove(&view->new_subsurface.link);
 
     wl_list_remove(&view->surface_commit.link);
 

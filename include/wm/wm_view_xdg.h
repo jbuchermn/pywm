@@ -8,6 +8,22 @@
 
 struct wm_view_xdg;
 
+struct wm_xdg_subsurface {
+    struct wm_view_xdg* toplevel;
+
+    struct wlr_subsurface* wlr_subsurface;
+
+    struct wl_listener map;
+    struct wl_listener unmap;
+    struct wl_listener destroy;
+    struct wl_listener new_subsurface;
+    struct wl_listener surface_commit;
+};
+
+void wm_xdg_subsurface_init(struct wm_xdg_subsurface* subsurface, struct wm_view_xdg* toplevel, struct wlr_subsurface* wlr_subsurface);
+void wm_xdg_subsurface_destroy(struct wm_xdg_subsurface* subsurface);
+
+
 struct wm_popup_xdg {
     struct wm_view_xdg* toplevel;
 
@@ -17,6 +33,7 @@ struct wm_popup_xdg {
     struct wl_listener unmap;
     struct wl_listener destroy;
     struct wl_listener new_popup;
+    struct wl_listener new_subsurface;
     struct wl_listener surface_commit;
 };
 
@@ -35,6 +52,7 @@ struct wm_view_xdg {
     struct wl_listener unmap;
     struct wl_listener destroy;
     struct wl_listener new_popup;
+    struct wl_listener new_subsurface;
 
     struct wl_listener surface_commit;
 
