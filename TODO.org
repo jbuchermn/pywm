@@ -12,6 +12,7 @@
 *** KILL Bugs concerning movement onto popups (e.g. Chrome)
 *** DONE Make flutter work
 *** TODO Occasional rounding errors in damaging
+*** STRT XWayland does not seem to use GL_NEAREST
 
 ** Type-checking / technical debt
 *** DONE Fix setup.py incl. requirements.txt
@@ -23,7 +24,7 @@
 *** DONE Clean-up touchpad creation / enable hotplugging / get rid of necessity to configure touchpad name
 
 ** Documentation
-*** TODO README
+*** STRT README
 *** STRT Proper documentation which applications have been tested with which issues / exact steps to repeat testing
 
 * Backlog / Ideas

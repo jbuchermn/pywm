@@ -268,7 +268,7 @@ void wm_server_destroy(struct wm_server* server){
 }
 
 void wm_server_surface_at(struct wm_server* server, double at_x, double at_y, 
-        struct wlr_surface** result, double* result_sx, double* result_sy){
+        struct wlr_surface** result, double* result_sx, double* result_sy, double* result_scale_x, double* result_scale_y){
     struct wm_content* content;
     wl_list_for_each(content, &server->wm_contents, link){
         if(!wm_content_is_view(content)) continue;
@@ -298,8 +298,10 @@ void wm_server_surface_at(struct wm_server* server, double at_x, double at_y,
 
         if(surface){
             *result = surface;
-            *result_sx = sx;
-            *result_sy = sy;
+            if(result_sx) *result_sx = sx;
+            if(result_sy) *result_sy = sy;
+            if(result_scale_x) *result_scale_x = scale_x;
+            if(result_scale_y) *result_scale_y = scale_y;
             return;
         }
     }

@@ -222,55 +222,74 @@ void wm_seat_dispatch_modifiers(struct wm_seat* seat, struct wlr_input_device* i
 
 
 bool wm_seat_dispatch_motion(struct wm_seat* seat, double x, double y, uint32_t time_msec){
-    struct wlr_surface* surface;
-    double sx;
-    double sy;
+    if(seat->seatop_down.active){
+        double sx = seat->seatop_down.x0 + x*seat->seatop_down.xm;
+        double sy = seat->seatop_down.y0 + y*seat->seatop_down.ym;
+        wlr_seat_pointer_notify_motion(seat->wlr_seat, time_msec, sx, sy);
 
-    wm_server_surface_at(seat->wm_server, x, y, &surface, &sx, &sy);
-    if(!surface){
-        wlr_seat_pointer_clear_focus(seat->wlr_seat);
-        return false;
-    }
+        return true;
+    }else{
+        struct wlr_surface* surface;
+        double sx;
+        double sy;
 
-    if(seat->wm_server->wm_config->focus_follows_mouse){
-        /* Automatically focus surface on mouse enter  */
-        wm_seat_focus_surface(seat, surface);
-    }
-
-    /* Guard mouse focus */
-    if(wm_server_is_locked(seat->wm_server)){
-        struct wm_view* view = wm_server_view_for_surface(seat->wm_server, surface);
-        if(!view || !view->super.lock_enabled){
-            goto Guard;
+        wm_server_surface_at(seat->wm_server, x, y, &surface, &sx, &sy, NULL, NULL);
+        if(!surface){
+            wlr_seat_pointer_clear_focus(seat->wlr_seat);
+            return false;
         }
-    }
-    wlr_seat_pointer_notify_enter(seat->wlr_seat, surface, sx, sy);
+
+        if(seat->wm_server->wm_config->focus_follows_mouse){
+            /* Automatically focus surface on mouse enter  */
+            wm_seat_focus_surface(seat, surface);
+        }
+
+        /* Guard mouse focus */
+        if(wm_server_is_locked(seat->wm_server)){
+            struct wm_view* view = wm_server_view_for_surface(seat->wm_server, surface);
+            if(!view || !view->super.lock_enabled){
+                goto Guard;
+            }
+        }
+        wlr_seat_pointer_notify_enter(seat->wlr_seat, surface, sx, sy);
 
 Guard:
-    wlr_seat_pointer_notify_motion(seat->wlr_seat, time_msec, sx, sy);
+        wlr_seat_pointer_notify_motion(seat->wlr_seat, time_msec, sx, sy);
 
-    return true;
+        return true;
+    }
 }
 
-static void _handle_focus(struct wm_seat* seat, double x, double y){
+
+void wm_seat_dispatch_button(struct wm_seat* seat, struct wlr_event_pointer_button* event){
     struct wlr_surface* surface;
     double sx;
     double sy;
-
-    wm_server_surface_at(seat->wm_server, x, y, &surface, &sx, &sy);
+    double scale_x;
+    double scale_y;
+    wm_server_surface_at(seat->wm_server, seat->wm_cursor->wlr_cursor->x, seat->wm_cursor->wlr_cursor->y, &surface, &sx, &sy, &scale_x, &scale_y);
     wm_seat_focus_surface(seat, surface);
 
-}
-
-void wm_seat_dispatch_button(struct wm_seat* seat, struct wlr_event_pointer_button* event){
-    /* Focus clicked surface */
-    _handle_focus(seat, seat->wm_cursor->wlr_cursor->x, seat->wm_cursor->wlr_cursor->y);
-
     wlr_seat_pointer_notify_button(seat->wlr_seat, event->time_msec, event->button, event->state);
+
+    if(surface && event->state == WLR_BUTTON_PRESSED){
+        double x = seat->wm_cursor->wlr_cursor->x;
+        double y = seat->wm_cursor->wlr_cursor->y;
+        seat->seatop_down.xm = 1. / scale_x;
+        seat->seatop_down.ym = 1. / scale_y;
+        seat->seatop_down.x0 = sx - x * seat->seatop_down.xm;
+        seat->seatop_down.y0 = sy - y * seat->seatop_down.ym;
+        seat->seatop_down.active = true;
+    }else{
+        seat->seatop_down.active = false;
+    }
 }
 void wm_seat_dispatch_axis(struct wm_seat* seat, struct wlr_event_pointer_axis* event){
-    /* Focus acted on surface */
-    _handle_focus(seat, seat->wm_cursor->wlr_cursor->x, seat->wm_cursor->wlr_cursor->y);
+    struct wlr_surface* surface;
+    double sx;
+    double sy;
+    wm_server_surface_at(seat->wm_server, seat->wm_cursor->wlr_cursor->x, seat->wm_cursor->wlr_cursor->y, &surface, &sx, &sy, NULL, NULL);
+    wm_seat_focus_surface(seat, surface);
 
     wlr_seat_pointer_notify_axis(seat->wlr_seat,
             event->time_msec, event->orientation, event->delta, event->delta_discrete, event->source);

@@ -1,67 +1,186 @@
 #+TITLE: PyWM Test Cases
 
 * Termite
-** Wayland-native
 ** Steps
 - [ ] Open
 - [ ] Execute some commands
 - [ ] Copy and paste text with S-C-x/v
+** Wayland-native
+No issues
 
 * Alacritty
-** Wayland-native
 ** Steps
 - [ ] Open
 - [ ] Execute some commands
 - [ ] Copy and paste text with S-C-x/v
+** Wayland-native
+No issues
 
 * imv
-** Wayland-native
 ** Steps
 - [ ] Open from terminal
 - [ ] Zoom in/out / move
+** Wayland-native
+No issues
 
 * mpv
-** Wayland-native
 ** Steps
 - [ ] Open from terminal
 - [ ] Start / stop
 - [ ] Switch fullscreen
 - [ ] Ensure idle is inhibited
+** Wayland-native
+No issues
 
 * Chromium
-** Wayland-native (run with --enable-features=UseOzonePlatform --ozone-platform=wayland)
 ** Steps
 - [ ] Open
 - [ ] Go to YT, start video, toggle fullscreen
 - [ ] Copy and paste text
 - [ ] Search for an image, right-click, save as -> anywhere
 - [ ] Ctrl-F search
+- [ ] Open github, use drag-n-drop to rearrange repos
 - [ ] Open the menus, go to bookmark (repeat this multiple times, different window sizes)
-*** WAIT At this point (if popups open to the top) two issues appear (both appear with sway as well --> probably Chromium bugs)
+** Wayland-native (run with --enable-features=UseOzonePlatform --ozone-platform=wayland)
+*** WAIT If popups open to the top two issues appear (both appear with sway as well --> probably Chromium bugs)
 **** Very large popups are placed on top of the window making them effectively unusable
 **** Occassionally (with bookmarks bar) closing a popup leaves the main surface with an invalid input-state, i.e. not accepting input anymore
 
 * Firefox
+** Steps
+- [ ] Open
+- [ ] Go to YT, start video, toggle fullscreen
+- [ ] Copy and paste text
+- [ ] Search for an image, right-click, save as -> anywhere
+- [ ] Ctrl-F search
+- [ ] Open github, use drag-n-drop to rearrange repos
+- [ ] Open DevTools
+- [ ] Open the menus, go to bookmark (repeat this multiple times, different window sizes)
 ** Wayland-native (Run with MOZ_ENABLE_WAYLAND=1)
+*** STRT Jittery popups (especially after clicking profile icon)
+
 * Matplotlib
+** Steps
+- [ ] Open plot (e.g. =ngp= with =env.sh= setup)
+- [ ] Zoom in / Move around
+- [ ] Save as
 ** Wayland-native (Qt5 backend, be sure to set DISPLAY=":0")
+No issues
 
 * GIMP-2.99
+** Steps
+- [ ] Open
+- [ ] File > New -> Open advanced Options
+- [ ] Drag background color
+- [ ] Colors > Hue / Saturation or similar
+- [ ] Save as
+** Wayland-native
+No issues
 
 * Nemo
+** Steps
+- [ ] Open
+- [ ] Open preferences
+- [ ] Move around / open files
+- [ ] Drag'n'drop within nemo
+- [ ] Drag'n'drop from / into chromium
+- [ ] Copy / paste / delete
+- [ ] Search
+** Wayland-native
+No issues
+
 * Nautilus
+** Steps
+- [ ] Open
+- [ ] Open preferences
+- [ ] Move around / open files
+- [ ] Drag'n'drop within nemo
+- [ ] Drag'n'drop from / into chromium
+- [ ] Copy / paste / delete
+- [ ] Search
+** Wayland-native
+No issues
+
 * masm11/Emacs
+** Steps
+- [ ] Daily use without menu bar
+** Wayland-native
+No issues
 
 * Zoom
-* LibreOffice
-* OpenSCAD
-* VLC
+** Steps
+- [ ] Login
+- [ ] Adjust settings
+- [ ] Join video call
+** Wayland-native
+*** WAIT Works very poorly, but this is true for sway as well - Zoom's just shitty software
+*** STRT Home > Chat > Contact requests in quarter-screen --> suddenly sized up
+** XWayland
 
-* GIMP (XWayland)
-* VLC (XWayland)
-* Atom (XWayland)
-* Spotify (XWayland)
-* VSCodium (XWayland)
+* LibreOffice
+** Steps
+- [ ] Open
+- [ ] Select new worksheet
+- [ ] Enter a couple of values, drag-to-complete
+- [ ] Copy and paste
+- [ ] Change formatting
+- [ ] Save as / open again
+- [ ] Open new wiriter document
+- [ ] Write some text / change formatting
+- [ ] Open print preview
+- [ ] Save as / open again
+** Wayland-native
+*** TODO Startup is very mad (related to an intermediate view which weirdly is XWayland)
+*** DONE Drag-to-complete is very jittery
+
+* OpenSCAD
+** Steps
+- [ ] Open
+- [ ] Create new
+- [ ] Open example
+- [ ] Update preview
+- [ ] Save as
+- [ ] Copy / paste
+** Wayland-native
+No issues
+
+* Spotify
+** Steps
+- [ ] Open
+- [ ] Navigate / play music
+- [ ] Stream to device
+- [ ] Open account
+** Wayland-native (Use --enable-features=UseOzonePlatform --ozone-platfom=wayland, be sure DISPLAY is set)
+*** WAIT Opens second black screen - same for sway --> probably Spotify bug
+** XWayland
+No issues
+
+* VLC
+** Steps
+- [ ] Open
+- [ ] Open video
+- [ ] Start playback / pause / jump around
+** Wayland-native (Be sure to unset DISPLAY before)
+*** WAIT Playback is not working (damage not received) - same for sway --> probably VLC bug
+** XWayland
+No issues / however useless as scaled-up videos do not make sense
 
 * FreeCAD
-* IntelliJ
+** Steps
+- [ ] Open
+- [ ] Open example
+- [ ] Move around / open some dialogs
+- [ ] Save as
+** Wayland-native
+No issues
+
+* Flutter basic app
+** Steps
+- [ ] Open
+- [ ] Increment a couple of times
+** Wayland-native
+No issues
+
+* Atom (XWayland)
+* VSCodium (XWayland)
+* IntelliJ (XWayland)

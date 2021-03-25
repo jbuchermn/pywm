@@ -25,6 +25,12 @@ struct wm_seat{
     struct wl_listener request_set_primary_selection;
     struct wl_listener request_set_cursor;
     struct wl_listener destroy;
+
+    struct {
+        double x0, xm;
+        double y0, ym;
+        bool active;
+    } seatop_down;
 };
 
 void wm_seat_init(struct wm_seat* seat, struct wm_server* server, struct wm_layout* layout);
