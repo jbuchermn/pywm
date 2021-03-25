@@ -42,6 +42,7 @@ struct wm_view_vtable {
     void (*for_each_surface)(struct wm_view* view, wlr_surface_iterator_func_t iterator, void* user_data);
     void (*set_activated)(struct wm_view* view, bool activated);
 
+    void (*get_credentials)(struct wm_view* view, pid_t* pid, uid_t* uid, gid_t* gid);
     void (*get_info)(struct wm_view* view, const char** title, const char** app_id, const char** role);
     void (*get_size)(struct wm_view* view, int* width, int* height);
     void (*get_offset)(struct wm_view* view, int* offset_x, int* offset_y);
@@ -56,6 +57,10 @@ struct wm_view_vtable {
     void (*focus)(struct wm_view* view, struct wm_seat* seat);
     void (*request_close)(struct wm_view* view);
 };
+
+static inline void wm_view_get_credentials(struct wm_view* view, pid_t* pid, uid_t* uid, gid_t* gid){
+    (*view->vtable->get_credentials)(view, pid, uid, gid);
+}
 
 static inline void wm_view_get_info(struct wm_view* view, const char** title, const char** app_id, const char** role){
     (*view->vtable->get_info)(view, title, app_id, role);

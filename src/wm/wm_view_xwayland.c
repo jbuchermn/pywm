@@ -268,6 +268,11 @@ static void wm_view_xwayland_destroy(struct wm_view* super){
     if(view->super.mapped) wl_list_remove(&view->surface_commit.link);
 }
 
+static void wm_view_xwayland_get_credentials(struct wm_view* super, pid_t* pid, uid_t* uid, gid_t* gid){
+    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
+    *pid = view->wlr_xwayland_surface->pid;
+}
+
 static void wm_view_xwayland_get_info(struct wm_view* super, const char** title, const char** app_id, const char** role){
     struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
 
@@ -424,6 +429,7 @@ static struct wm_view* wm_view_xwayland_get_parent(struct wm_view* super){
 
 struct wm_view_vtable wm_view_xwayland_vtable = {
     .destroy = wm_view_xwayland_destroy,
+    .get_credentials = wm_view_xwayland_get_credentials,
     .get_info = wm_view_xwayland_get_info,
     .request_size = wm_view_xwayland_request_size,
     .request_close = wm_view_xwayland_request_close,

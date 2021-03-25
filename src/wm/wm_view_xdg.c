@@ -383,6 +383,11 @@ static void wm_view_xdg_destroy(struct wm_view* super){
     wl_list_remove(&view->request_show_window_menu.link);
 }
 
+static void wm_view_xdg_get_credentials(struct wm_view* super, pid_t* pid, uid_t* uid, gid_t* gid){
+    struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
+    wl_client_get_credentials(view->wlr_xdg_surface->client->client, pid, uid, gid);
+}
+
 static void wm_view_xdg_get_info(struct wm_view* super, const char** title, const char** app_id, const char** role){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
 
@@ -522,6 +527,7 @@ static struct wm_view* wm_view_xdg_get_parent(struct wm_view* super){
 
 struct wm_view_vtable wm_view_xdg_vtable = {
     .destroy = wm_view_xdg_destroy,
+    .get_credentials = wm_view_xdg_get_credentials,
     .get_info = wm_view_xdg_get_info,
     .request_size = wm_view_xdg_request_size,
     .request_close = wm_view_xdg_request_close,

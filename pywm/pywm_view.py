@@ -128,6 +128,7 @@ class PyWMView:
 
         self.wm = wm
         self.parent: Optional[pywm.ViewT] = None
+        self.pid: Optional[int] = None
         self.app_id: Optional[str] = None
         self.role: Optional[str] = None
         self.is_xwayland: Optional[bool] = None
@@ -146,7 +147,7 @@ class PyWMView:
         self._down_action_close: Optional[int] = None
 
 
-    def _update(self, parent_handle: int, is_xwayland: bool, app_id: str, role: str,
+    def _update(self, parent_handle: int, is_xwayland: bool, pid: int, app_id: str, role: str,
                 floating: bool, title: str,
                 sc_min_w: int, sc_max_w: int, sc_min_h: int, sc_max_h: int,
                 offset_x: int, offset_y: int,
@@ -161,6 +162,7 @@ class PyWMView:
                 pass
 
         self.is_xwayland = is_xwayland
+        self.pid = pid
         self.app_id = app_id
         self.role = role
 

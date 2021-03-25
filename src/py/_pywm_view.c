@@ -32,6 +32,11 @@ void _pywm_view_update(struct _pywm_view* view){
     }
     int is_floating = wm_view_is_floating(view->view);
 
+    pid_t pid;
+    uid_t uid;
+    gid_t gid;
+    wm_view_get_credentials(view->view, &pid, &uid, &gid);
+
     const char* title;
     const char* app_id; 
     const char* role;
@@ -57,11 +62,12 @@ void _pywm_view_update(struct _pywm_view* view){
     int is_inhibiting_idle = wm_view_is_inhibiting_idle(view->view);
 
     PyObject* args = Py_BuildValue(
-            "(llOssOsiiiiiiiiOOOOO)",
+            "(llOissOsiiiiiiiiOOOOO)",
 
             view->handle,
             parent_handle,
             xwayland ? Py_True : Py_False,
+            pid,
             app_id,
             role,
 
