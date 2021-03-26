@@ -9,9 +9,13 @@
 struct wm_view_xdg;
 
 struct wm_xdg_subsurface {
+    struct wl_list link; //wm_view_xdg::subsurfaces / wm_popup_xdg::subsurfaces / wm_xdg_subsurface::subsurfaces
+
     struct wm_view_xdg* toplevel;
 
     struct wlr_subsurface* wlr_subsurface;
+
+    struct wl_list subsurfaces;
 
     struct wl_listener map;
     struct wl_listener unmap;
@@ -25,9 +29,14 @@ void wm_xdg_subsurface_destroy(struct wm_xdg_subsurface* subsurface);
 
 
 struct wm_popup_xdg {
+    struct wl_list link; //wm_view_xdg::popups / wm_popup_xdg::popups
+
     struct wm_view_xdg* toplevel;
 
     struct wlr_xdg_popup* wlr_xdg_popup;
+
+    struct wl_list popups;
+    struct wl_list subsurfaces;
 
     struct wl_listener map;
     struct wl_listener unmap;
@@ -44,6 +53,9 @@ struct wm_view_xdg {
     struct wm_view super;
 
     struct wlr_xdg_surface* wlr_xdg_surface;
+
+    struct wl_list popups;
+    struct wl_list subsurfaces;
 
     bool floating;
     bool constrain_popups_to_toplevel; /* false = constrain to output */

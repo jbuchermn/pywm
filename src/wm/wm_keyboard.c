@@ -42,22 +42,28 @@ static void handle_key(struct wl_listener* listener, void* data){
     assert(at < KEYS_STRING_LENGTH - 1);
 
     /* Copied from sway - switch VT on CTRL-ALT-Fx */
-	for (size_t i = 0; i < keysyms_len; ++i) {
-		xkb_keysym_t keysym = keysyms[i];
-		if (keysym >= XKB_KEY_XF86Switch_VT_1 &&
-				keysym <= XKB_KEY_XF86Switch_VT_12) {
-			if (wlr_backend_is_multi(keyboard->wm_seat->wm_server->wlr_backend)) {
-				struct wlr_session *session =
-					wlr_backend_get_session(keyboard->wm_seat->wm_server->wlr_backend);
-				if (session) {
-					unsigned vt = keysym - XKB_KEY_XF86Switch_VT_1 + 1;
-					wlr_session_change_vt(session, vt);
-				}
-			}
-			return;
-		}
-	}
+    for (size_t i = 0; i < keysyms_len; ++i) {
+        xkb_keysym_t keysym = keysyms[i];
+        if (keysym >= XKB_KEY_XF86Switch_VT_1 &&
+            keysym <= XKB_KEY_XF86Switch_VT_12) {
+            if (wlr_backend_is_multi(
+                    keyboard->wm_seat->wm_server->wlr_backend)) {
+                struct wlr_session *session = wlr_backend_get_session(
+                    keyboard->wm_seat->wm_server->wlr_backend);
+                if (session) {
+                    unsigned vt = keysym - XKB_KEY_XF86Switch_VT_1 + 1;
+                    wlr_session_change_vt(session, vt);
+                }
+            }
+            return;
+        }
+    }
 
+    if(keyboard->wm_seat->wm_server->wm_config->debug_f1){
+        if(!strcmp(keys, "F1")){
+            wm_server_printf(stderr, keyboard->wm_seat->wm_server);
+        }
+    }
 
     if(wm_callback_key(event, keys)){
         return;

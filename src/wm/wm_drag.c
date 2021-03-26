@@ -154,8 +154,14 @@ bool wm_content_is_drag(struct wm_content* content){
     return content->vtable == &wm_drag_vtable;
 }
 
+static void wm_drag_printf(FILE* file, struct wm_content* super){
+    struct wm_drag* drag = wm_cast(wm_drag, super);
+    fprintf(file, "wm_drag (%f, %f - %f, %f)\n", drag->super.display_x, drag->super.display_y, drag->super.display_width, drag->super.display_height);
+}
+
 struct wm_content_vtable wm_drag_vtable = {
     .destroy = &wm_drag_destroy,
     .render = &wm_drag_render,
     .damage_output = &wm_drag_damage_output,
+    .printf = &wm_drag_printf,
 };

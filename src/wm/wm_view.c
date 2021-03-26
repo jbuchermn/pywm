@@ -212,9 +212,39 @@ static void wm_view_damage_output(struct wm_content* super, struct wm_output* ou
     wm_view_for_each_surface(view, damage_surface, &ddata);
 }
 
+static void print_surface(struct wlr_surface *surface, int sx, int sy,
+        void *data) {
+    FILE* file = data;
+    fprintf(file, "  surface (%d, %d) of size %d, %d: %p\n", sx, sy, surface->current.width, surface->current.height, surface);
+}
+
+static void wm_view_printf(FILE* file, struct wm_content* super){
+    struct wm_view* view = wm_cast(wm_view, super);
+    const char* title;
+    const char* app_id;
+    const char* role;
+    pid_t pid;
+    uid_t uid;
+    gid_t gid;
+    int width;
+    int height;
+    wm_view_get_info(view, &title, &app_id, &role);
+    wm_view_get_credentials(view, &pid, &uid, &gid);
+    wm_view_get_size(view, &width, &height);
+
+    fprintf(file, "wm_view: %s, %s, %s, %d (%f, %f - %f, %f) of size %d, %d\n",
+            title, app_id, role, pid, view->super.display_x, view->super.display_y, view->super.display_width, view->super.display_height,
+            width, height);
+
+    wm_view_for_each_surface(view, print_surface, file);
+
+    wm_view_structure_printf(file, view);
+}
+
 
 struct wm_content_vtable wm_view_vtable = {
     .destroy = &wm_view_base_destroy,
     .render = &wm_view_render,
     .damage_output = &wm_view_damage_output,
+    .printf = &wm_view_printf
 };

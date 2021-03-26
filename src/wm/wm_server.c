@@ -29,6 +29,9 @@
 #include "wm/wm_output.h"
 #include "wm/wm_renderer.h"
 #include "wm/wm_idle_inhibit.h"
+#include "wm/wm_widget.h"
+#include "wm/wm_view.h"
+#include "wm/wm_drag.h"
 
 
 /*
@@ -402,4 +405,16 @@ void wm_server_set_locked(struct wm_server* server, double lock_perc){
 
 bool wm_server_is_locked(struct wm_server* server){
     return server->lock_perc > 0.001;
+}
+
+void wm_server_printf(FILE* file, struct wm_server* server){
+    fprintf(file, "---- server begin ----\n");
+
+    struct wm_content* content;
+    wl_list_for_each(content, &server->wm_contents, link){
+        wm_content_printf(file, content);
+    }
+
+    fprintf(file, "---- server end ------\n");
+
 }

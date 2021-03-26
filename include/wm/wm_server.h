@@ -76,4 +76,6 @@ void wm_server_callback_update(struct wm_server* server);
 void wm_server_set_locked(struct wm_server* server, double lock_perc);
 bool wm_server_is_locked(struct wm_server* server);
 
+void wm_server_printf(FILE* file, struct wm_server* server);
+
 #endif

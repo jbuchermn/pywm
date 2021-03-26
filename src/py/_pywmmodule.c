@@ -90,6 +90,7 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
         o = PyDict_GetItemString(kwargs, "focus_follows_mouse"); if(o){ conf.focus_follows_mouse = o == Py_True; }
         o = PyDict_GetItemString(kwargs, "constrain_popups_to_toplevel"); if(o){ conf.constrain_popups_to_toplevel = o == Py_True; }
         o = PyDict_GetItemString(kwargs, "encourage_csd"); if(o){ conf.encourage_csd = o == Py_True; }
+        o = PyDict_GetItemString(kwargs, "debug_f1"); if(o){ conf.debug_f1 = o == Py_True; }
     }
 
     /* Register callbacks immediately, might be called during init */

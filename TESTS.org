@@ -57,7 +57,7 @@ No issues
 - [ ] Open DevTools
 - [ ] Open the menus, go to bookmark (repeat this multiple times, different window sizes)
 ** Wayland-native (Run with MOZ_ENABLE_WAYLAND=1)
-*** STRT Jittery popups (especially after clicking profile icon)
+*** WAIT Occasional damaging bugs (start-up, popups); this seems to stem from a quite weird way of handling this Firefox-side and is an issue on sway as well
 
 * Matplotlib
 ** Steps

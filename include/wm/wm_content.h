@@ -1,6 +1,7 @@
 #ifndef WM_CONTENT_H
 #define WM_CONTENT_H
 
+#include <stdio.h>
 #include <wayland-server.h>
 #include <pixman.h>
 #include <wlr/types/wlr_surface.h>
@@ -52,6 +53,8 @@ struct wm_content_vtable {
 
     /* origin == NULL means damage whole */
     void (*damage_output)(struct wm_content* content, struct wm_output* output, struct wlr_surface* origin);
+
+    void (*printf)(FILE* file, struct wm_content* content);
 };
 
 static inline void wm_content_destroy(struct wm_content* content){
@@ -62,6 +65,9 @@ static inline void wm_content_render(struct wm_content* content, struct wm_outpu
 }
 static inline void wm_content_damage_output(struct wm_content* content, struct wm_output* output, struct wlr_surface* origin){
     (*content->vtable->damage_output)(content, output, origin);
+}
+static inline void wm_content_printf(FILE* file, struct wm_content* content){
+    (*content->vtable->printf)(file, content);
 }
 
 #endif

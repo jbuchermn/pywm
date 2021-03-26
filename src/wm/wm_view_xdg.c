@@ -50,6 +50,7 @@ static void subsurface_handle_new_subsurface(struct wl_listener* listener, void*
 
     struct wm_xdg_subsurface* new_subsurface = calloc(1, sizeof(struct wm_xdg_subsurface));
     wm_xdg_subsurface_init(new_subsurface, subsurface->toplevel, wlr_subsurface);
+    wl_list_insert(&subsurface->subsurfaces, &new_subsurface->link);
 }
 
 static void subsurface_handle_surface_commit(struct wl_listener* listener, void* data){
@@ -88,6 +89,7 @@ static void popup_handle_new_popup(struct wl_listener* listener, void* data){
 
     struct wm_popup_xdg* new_popup = calloc(1, sizeof(struct wm_popup_xdg));
     wm_popup_xdg_init(new_popup, popup->toplevel, wlr_xdg_popup);
+    wl_list_insert(&popup->popups, &new_popup->link);
 }
 
 static void popup_handle_new_subsurface(struct wl_listener* listener, void* data){
@@ -96,6 +98,7 @@ static void popup_handle_new_subsurface(struct wl_listener* listener, void* data
 
     struct wm_xdg_subsurface* subsurface = calloc(1, sizeof(struct wm_xdg_subsurface));
     wm_xdg_subsurface_init(subsurface, popup->toplevel, wlr_subsurface);
+    wl_list_insert(&popup->subsurfaces, &subsurface->link);
 }
 
 static void popup_handle_surface_commit(struct wl_listener* listener, void* data){
@@ -161,6 +164,7 @@ static void handle_new_popup(struct wl_listener* listener, void* data){
 
     struct wm_popup_xdg* popup = calloc(1, sizeof(struct wm_popup_xdg));
     wm_popup_xdg_init(popup, view, wlr_xdg_popup);
+    wl_list_insert(&view->popups, &popup->link);
 }
 
 static void handle_new_subsurface(struct wl_listener* listener, void* data){
@@ -169,6 +173,7 @@ static void handle_new_subsurface(struct wl_listener* listener, void* data){
 
     struct wm_xdg_subsurface* subsurface = calloc(1, sizeof(struct wm_xdg_subsurface));
     wm_xdg_subsurface_init(subsurface, view, wlr_subsurface);
+    wl_list_insert(&view->subsurfaces, &subsurface->link);
 }
 
 static void handle_surface_commit(struct wl_listener* listener, void* data){
@@ -222,6 +227,8 @@ void wm_xdg_subsurface_init(struct wm_xdg_subsurface* subsurface, struct wm_view
     subsurface->toplevel = toplevel;
     subsurface->wlr_subsurface = wlr_subsurface;
 
+    wl_list_init(&subsurface->subsurfaces);
+
     subsurface->map.notify = &subsurface_handle_map;
     wl_signal_add(&wlr_subsurface->events.map, &subsurface->map);
 
@@ -236,9 +243,18 @@ void wm_xdg_subsurface_init(struct wm_xdg_subsurface* subsurface, struct wm_view
 
     subsurface->surface_commit.notify = &subsurface_handle_surface_commit;
     wl_signal_add(&wlr_subsurface->surface->events.commit, &subsurface->surface_commit);
+
+    struct wlr_subsurface* ss;
+    wl_list_for_each(ss, &wlr_subsurface->surface->subsurfaces, parent_link){
+        wlr_log(WLR_DEBUG, "Subsurface: Adding \"old\" subsurface");
+        subsurface_handle_new_subsurface(&subsurface->new_subsurface, ss);
+    }
+
 }
 
 void wm_xdg_subsurface_destroy(struct wm_xdg_subsurface* subsurface){
+    wl_list_remove(&subsurface->link);
+    wl_list_remove(&subsurface->subsurfaces);
     wl_list_remove(&subsurface->map.link);
     wl_list_remove(&subsurface->unmap.link);
     wl_list_remove(&subsurface->destroy.link);
@@ -254,6 +270,9 @@ void wm_popup_xdg_init(struct wm_popup_xdg* popup, struct wm_view_xdg* toplevel,
 
     popup->wlr_xdg_popup = wlr_xdg_popup;
     popup->toplevel = toplevel;
+
+    wl_list_init(&popup->subsurfaces);
+    wl_list_init(&popup->popups);
 
     popup->map.notify = &popup_handle_map;
     wl_signal_add(&wlr_xdg_popup->base->events.map, &popup->map);
@@ -299,9 +318,19 @@ void wm_popup_xdg_init(struct wm_popup_xdg* popup, struct wm_view_xdg* toplevel,
         };
         wlr_xdg_popup_unconstrain_from_box(popup->wlr_xdg_popup, &box);
     }
+
+    struct wlr_subsurface* ss;
+    wl_list_for_each(ss, &wlr_xdg_popup->base->surface->subsurfaces, parent_link){
+        wlr_log(WLR_DEBUG, "Popup: Adding \"old\" subsurface");
+        popup_handle_new_subsurface(&popup->new_subsurface, ss);
+    }
 }
 
 void wm_popup_xdg_destroy(struct wm_popup_xdg* popup){
+    wl_list_remove(&popup->link);
+    wl_list_remove(&popup->popups);
+    wl_list_remove(&popup->subsurfaces);
+
     wl_list_remove(&popup->map.link);
     wl_list_remove(&popup->unmap.link);
     wl_list_remove(&popup->destroy.link);
@@ -319,6 +348,9 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
     view->super.vtable = &wm_view_xdg_vtable;
 
     view->wlr_xdg_surface = surface;
+
+    wl_list_init(&view->popups);
+    wl_list_init(&view->subsurfaces);
 
     view->map.notify = &handle_map;
     wl_signal_add(&surface->events.map, &view->map);
@@ -362,10 +394,19 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
     wlr_xdg_toplevel_set_tiled(surface, 15);
 
     view->constrain_popups_to_toplevel = server->wm_config->constrain_popups_to_toplevel;
+
+    struct wlr_subsurface* ss;
+    wl_list_for_each(ss, &surface->surface->subsurfaces, parent_link){
+        wlr_log(WLR_DEBUG, "View: Adding \"old\" subsurface");
+        handle_new_subsurface(&view->new_subsurface, ss);
+    }
 }
 
 static void wm_view_xdg_destroy(struct wm_view* super){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
+
+    wl_list_remove(&view->subsurfaces);
+    wl_list_remove(&view->popups);
 
     wl_list_remove(&view->map.link);
     wl_list_remove(&view->unmap.link);
@@ -525,6 +566,42 @@ static struct wm_view* wm_view_xdg_get_parent(struct wm_view* super){
     return NULL;
 }
 
+static void wm_xdg_subsurface_printf(FILE* file, struct wm_xdg_subsurface* subsurface, int indent){
+    fprintf(file, "%*swm_xdg_subsurface for %p\n", indent, "", subsurface->wlr_subsurface->surface);
+
+    struct wm_xdg_subsurface* nsubsurface;
+    wl_list_for_each(nsubsurface, &subsurface->subsurfaces, link){
+        wm_xdg_subsurface_printf(file, nsubsurface, indent + 2);
+    }
+}
+
+static void wm_popup_xdg_printf(FILE* file, struct wm_popup_xdg* popup, int indent){
+    fprintf(file, "%*swm_popup_xdg for %p\n", indent, "", popup->wlr_xdg_popup->base->surface);
+
+    struct wm_popup_xdg* npopup;
+    wl_list_for_each(npopup, &popup->popups, link){
+        wm_popup_xdg_printf(file, npopup, indent + 2);
+    }
+    struct wm_xdg_subsurface* subsurface;
+    wl_list_for_each(subsurface, &popup->subsurfaces, link){
+        wm_xdg_subsurface_printf(file, subsurface, indent + 2);
+    }
+}
+
+static void wm_view_xdg_structure_printf(FILE* file, struct wm_view* super){
+    struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
+
+    fprintf(file, "  wm_view_xdg for %p\n", view->wlr_xdg_surface->surface);
+    struct wm_popup_xdg* popup;
+    wl_list_for_each(popup, &view->popups, link){
+        wm_popup_xdg_printf(file, popup, 4);
+    }
+    struct wm_xdg_subsurface* subsurface;
+    wl_list_for_each(subsurface, &view->subsurfaces, link){
+        wm_xdg_subsurface_printf(file, subsurface, 4);
+    }
+}
+
 struct wm_view_vtable wm_view_xdg_vtable = {
     .destroy = wm_view_xdg_destroy,
     .get_credentials = wm_view_xdg_get_credentials,
@@ -542,5 +619,6 @@ struct wm_view_vtable wm_view_xdg_vtable = {
     .surface_at = wm_view_xdg_surface_at,
     .for_each_surface = wm_view_xdg_for_each_surface,
     .is_floating = wm_view_xdg_is_floating,
-    .get_parent = wm_view_xdg_get_parent
+    .get_parent = wm_view_xdg_get_parent,
+    .structure_printf = wm_view_xdg_structure_printf
 };

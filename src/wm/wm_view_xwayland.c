@@ -427,6 +427,12 @@ static struct wm_view* wm_view_xwayland_get_parent(struct wm_view* super){
     return view->parent ? &view->parent->super : NULL;
 }
 
+static void wm_view_xwayland_structure_printf(FILE* file, struct wm_view* super){
+    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
+
+    fprintf(file, "  wm_view_xwayland\n");
+}
+
 struct wm_view_vtable wm_view_xwayland_vtable = {
     .destroy = wm_view_xwayland_destroy,
     .get_credentials = wm_view_xwayland_get_credentials,
@@ -444,7 +450,8 @@ struct wm_view_vtable wm_view_xwayland_vtable = {
     .surface_at = wm_view_xwayland_surface_at,
     .for_each_surface = wm_view_xwayland_for_each_surface,
     .is_floating = wm_view_xwayland_is_floating,
-    .get_parent = wm_view_xwayland_get_parent
+    .get_parent = wm_view_xwayland_get_parent,
+    .structure_printf = wm_view_xwayland_structure_printf
 };
 
 int wm_view_is_xwayland(struct wm_view* view){

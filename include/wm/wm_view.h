@@ -56,6 +56,8 @@ struct wm_view_vtable {
     void (*set_maximized)(struct wm_view* view, bool maximized);
     void (*focus)(struct wm_view* view, struct wm_seat* seat);
     void (*request_close)(struct wm_view* view);
+
+    void (*structure_printf)(FILE* file, struct wm_view* view);
 };
 
 static inline void wm_view_get_credentials(struct wm_view* view, pid_t* pid, uid_t* uid, gid_t* gid){
@@ -140,6 +142,10 @@ static inline bool wm_view_is_floating(struct wm_view* view){
 
 static inline struct wm_view* wm_view_get_parent(struct wm_view* view){
     return (*view->vtable->get_parent)(view);
+}
+
+static inline void wm_view_structure_printf(FILE* file, struct wm_view* view){
+    (*view->vtable->structure_printf)(file, view);
 }
 
 

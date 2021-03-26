@@ -18,6 +18,8 @@ struct wm_config {
     int constrain_popups_to_toplevel;
 
     int encourage_csd;
+
+    int debug_f1;
 };
 
 void wm_config_init_default(struct wm_config* config);

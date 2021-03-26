@@ -77,8 +77,14 @@ static void wm_widget_damage_output(struct wm_content* super, struct wm_output* 
     pixman_region32_fini(&region);
 }
 
+static void wm_widget_printf(FILE* file, struct wm_content* super){
+    struct wm_widget* widget = wm_cast(wm_widget, super);
+    fprintf(file, "wm_widget (%f, %f - %f, %f)\n", widget->super.display_x, widget->super.display_y, widget->super.display_width, widget->super.display_height);
+}
+
 struct wm_content_vtable wm_widget_vtable = {
     .destroy = &wm_widget_destroy,
     .render = &wm_widget_render,
-    .damage_output = &wm_widget_damage_output
+    .damage_output = &wm_widget_damage_output,
+    .printf = &wm_widget_printf
 };
