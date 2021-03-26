@@ -105,15 +105,13 @@ static void wm_view_render(struct wm_content* super, struct wm_output* output, p
     int width, height;
     wm_view_get_size(view, &width, &height);
 
-    if (width <= 0 || height <= 0) {
-        return;
-    }
-
     double display_x, display_y, display_width, display_height;
     wm_content_get_box(&view->super, &display_x, &display_y, &display_width,
             &display_height);
     double corner_radius = wm_content_get_corner_radius(&view->super);
 
+    // Firefox starts off as a 1x1 view which causes subsurfaces to be scaled up,
+    // that's why we require at least size 2x2 for the root surface
     struct render_data rdata = {
         .output = output,
         .when = now,
@@ -121,11 +119,12 @@ static void wm_view_render(struct wm_content* super, struct wm_output* output, p
         .x = display_x,
         .y = display_y,
         .opacity = wm_content_get_opacity(&view->super),
-        .x_scale = display_width / width,
-        .y_scale = display_height / height,
+        .x_scale = width > 1 ? display_width / width : 0,
+        .y_scale = width > 1 ? display_height / height : 0,
         .corner_radius = corner_radius,
         .lock_perc = view->super.lock_enabled ? 0.0 : view->super.wm_server->lock_perc
     };
+
 
     wm_view_for_each_surface(view, render_surface, &rdata);
 }
