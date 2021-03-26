@@ -154,6 +154,7 @@ static void damage_surface(struct wlr_surface *surface, int sx, int sy,
         .height = round(surface->current.height * ddata->y_scale *
                 output->wlr_output->scale)};
 
+    /* origin == NULL means damage everything */
     if(!ddata->origin){
         pixman_region32_t region;
         pixman_region32_init(&region);
@@ -164,8 +165,9 @@ static void damage_surface(struct wlr_surface *surface, int sx, int sy,
         wlr_output_damage_add(output->wlr_output_damage, &region);
         pixman_region32_fini(&region);
 
-    }else
+    }
 
+    /* effective damage might go beyond box, so do this even if origin == NULL */
 	if (pixman_region32_not_empty(&surface->buffer_damage)) {
 		pixman_region32_t region;
 		pixman_region32_init(&region);
@@ -181,6 +183,10 @@ static void damage_surface(struct wlr_surface *surface, int sx, int sy,
 
 		wlr_output_damage_add(output->wlr_output_damage, &region);
 		pixman_region32_fini(&region);
+	}
+
+	if (!wl_list_empty(&surface->current.frame_callback_list)) {
+		wlr_output_schedule_frame(output->wlr_output);
 	}
 
 }

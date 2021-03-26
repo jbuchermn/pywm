@@ -13,6 +13,7 @@
 *** DONE Make flutter work
 *** TODO Occasional rounding errors in damaging
 *** DONE XWayland does not seem to use GL_NEAREST
+*** TODO High RAM usage?
 
 ** Type-checking / technical debt
 *** DONE Fix setup.py incl. requirements.txt

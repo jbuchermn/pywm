@@ -60,7 +60,7 @@ static void handle_key(struct wl_listener* listener, void* data){
     }
 
     if(keyboard->wm_seat->wm_server->wm_config->debug_f1){
-        if(!strcmp(keys, "F1")){
+        if(!strcmp(keys, "F1") && event->state == WL_KEYBOARD_KEY_STATE_PRESSED){
             wm_server_printf(stderr, keyboard->wm_seat->wm_server);
         }
     }

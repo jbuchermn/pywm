@@ -14,7 +14,8 @@
 #include <wlr/util/region.h>
 #include <wlr/types/wlr_matrix.h>
 
-/* #define DEBUG_DAMAGE */
+/* #define DEBUG_DAMAGE_HIGHLIGHT */
+/* #define DEBUG_DAMAGE_RERENDER */
 
 /*
  * Callbacks
@@ -53,7 +54,7 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     /* Begin render */
     wm_renderer_begin(renderer, output);
 
-#ifdef DEBUG_DAMAGE
+#ifdef DEBUG_DAMAGE_HIGHLIGHT
     wlr_renderer_clear(renderer->wlr_renderer, (float[]){1, 1, 0, 1});
 #endif
 
@@ -102,7 +103,7 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     wm_renderer_end(renderer, damage, output);
 
     /* Commit */
-#ifdef DEBUG_DAMAGE
+#ifdef DEBUG_DAMAGE_HIGHLIGHT
     pixman_region32_t frame_damage;
     pixman_region32_init(&frame_damage);
     pixman_region32_union_rect(&frame_damage, &frame_damage,
@@ -129,6 +130,10 @@ static void handle_damage_frame(struct wl_listener *listener, void *data) {
     pixman_region32_init(&damage);
     if (wlr_output_damage_attach_render(
                 output->wlr_output_damage, &needs_frame, &damage)) {
+#ifdef DEBUG_DAMAGE_RERENDER
+        pixman_region32_union_rect(&damage, &damage, 0, 0, output->wlr_output->width, output->wlr_output->height);
+        needs_frame = true;
+#endif
 
         if (needs_frame) {
             struct timespec now;
