@@ -39,6 +39,7 @@ static void handle_start_drag(struct wl_listener* listener, void* data){
     struct wm_drag* drag = calloc(1, sizeof(struct wm_drag));
     wm_drag_init(drag, seat, wlr_drag);
 
+    seat->seatop_down.active = false;
 }
 
 static void handle_request_set_selection(struct wl_listener* listener, void* data){
