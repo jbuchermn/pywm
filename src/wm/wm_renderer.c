@@ -124,7 +124,8 @@ static bool render_subtexture_with_matrix(
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(texture->target, texture->tex);
 
-	glTexParameteri(texture->target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(texture->target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(texture->target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	glUseProgram(shader->shader);
 

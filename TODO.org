@@ -12,7 +12,7 @@
 *** KILL Bugs concerning movement onto popups (e.g. Chrome)
 *** DONE Make flutter work
 *** TODO Occasional rounding errors in damaging
-*** STRT XWayland does not seem to use GL_NEAREST
+*** DONE XWayland does not seem to use GL_NEAREST
 
 ** Type-checking / technical debt
 *** DONE Fix setup.py incl. requirements.txt

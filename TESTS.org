@@ -130,7 +130,7 @@ No issues
 - [ ] Open print preview
 - [ ] Save as / open again
 ** Wayland-native
-*** TODO Startup is very mad (related to an intermediate view which weirdly is XWayland)
+*** STRT Startup is very mad (related to an intermediate view which weirdly is XWayland)
 *** DONE Drag-to-complete is very jittery
 
 * OpenSCAD
