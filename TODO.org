@@ -11,9 +11,8 @@
 *** KILL Zoom works really poorly (apparently similar under sway...)
 *** KILL Bugs concerning movement onto popups (e.g. Chrome)
 *** DONE Make flutter work
-*** TODO Occasional rounding errors in damaging
+*** TODO Occasional rounding errors in damaging (use sway logic)
 *** DONE XWayland does not seem to use GL_NEAREST
-*** TODO High RAM usage (700MB more than sway)
 
 ** Type-checking / technical debt
 *** DONE Fix setup.py incl. requirements.txt
@@ -25,7 +24,7 @@
 *** DONE Clean-up touchpad creation / enable hotplugging / get rid of necessity to configure touchpad name
 
 ** Documentation
-*** STRT README
+*** TODO README
 *** DONE Proper documentation which applications have been tested with which issues / exact steps to repeat testing
 
 * Backlog / Ideas
