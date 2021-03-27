@@ -60,11 +60,6 @@ static void handle_new_output(struct wl_listener* listener, void* data){
         wl_event_source_timer_update(
                 server->callback_timer,
                 1000 / server->wm_config->callback_frequency);
-
-        /* Inject the ready signal at this point */
-        if(!server->wlr_xwayland){
-            wm_callback_ready();
-        }
     }
 }
 
