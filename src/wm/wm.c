@@ -58,7 +58,9 @@ void* run(){
 	}
 
 	setenv("WAYLAND_DISPLAY", socket, true);
-	setenv("DISPLAY", wm.server->wlr_xwayland->display_name, true);
+    if(wm.server->wlr_xwayland){
+        setenv("DISPLAY", wm.server->wlr_xwayland->display_name, true);
+    }
 
     /* Main */
 	wlr_log(WLR_INFO, "Main...");

@@ -60,6 +60,11 @@ static void handle_new_output(struct wl_listener* listener, void* data){
         wl_event_source_timer_update(
                 server->callback_timer,
                 1000 / server->wm_config->callback_frequency);
+
+        /* Inject the ready signal at this point */
+        if(!server->wlr_xwayland){
+            wm_callback_ready();
+        }
     }
 }
 
@@ -184,8 +189,11 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
 
     wlr_screencopy_manager_v1_create(server->wl_display);
 
-    server->wlr_xwayland = wlr_xwayland_create(server->wl_display, server->wlr_compositor, false);
-    assert(server->wlr_xwayland);
+    server->wlr_xwayland = NULL;
+    if(config->enable_xwayland){
+        server->wlr_xwayland = wlr_xwayland_create(server->wl_display, server->wlr_compositor, false);
+        assert(server->wlr_xwayland);
+    }
 
     server->wlr_xcursor_manager = wlr_xcursor_manager_create(server->wm_config->xcursor_theme, server->wm_config->xcursor_size);
     assert(server->wlr_xcursor_manager);
@@ -213,7 +221,9 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wm_seat = calloc(1, sizeof(struct wm_seat));
     wm_seat_init(server->wm_seat, server, server->wm_layout);
 
-    wlr_xwayland_set_seat(server->wlr_xwayland, server->wm_seat->wlr_seat);
+    if(server->wlr_xwayland){
+        wlr_xwayland_set_seat(server->wlr_xwayland, server->wm_seat->wlr_seat);
+    }
 
     server->wm_idle_inhibit = calloc(1, sizeof(struct wm_idle_inhibit));
     wm_idle_inhibit_init(server->wm_idle_inhibit, server);
@@ -234,15 +244,17 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->new_xdg_decoration.notify = handle_new_xdg_decoration;
     wl_signal_add(&server->wlr_xdg_decoration_manager->events.new_toplevel_decoration, &server->new_xdg_decoration);
 
-    server->new_xwayland_surface.notify = handle_new_xwayland_surface;
-    wl_signal_add(&server->wlr_xwayland->events.new_surface, &server->new_xwayland_surface);
+    if(server->wlr_xwayland){
+        server->new_xwayland_surface.notify = handle_new_xwayland_surface;
+        wl_signal_add(&server->wlr_xwayland->events.new_surface, &server->new_xwayland_surface);
 
-    /*
-     * Due to the unfortunate handling of XWayland forks via SIGUSR1, we need to be sure not
-     * to create any threads before the XWayland server is ready
-     */
-    server->xwayland_ready.notify = handle_ready;
-    wl_signal_add(&server->wlr_xwayland->events.ready, &server->xwayland_ready);
+       /*
+        * Due to the unfortunate handling of XWayland forks via SIGUSR1, we need to be sure not
+        * to create any threads before the XWayland server is ready
+        */
+        server->xwayland_ready.notify = handle_ready;
+        wl_signal_add(&server->wlr_xwayland->events.ready, &server->xwayland_ready);
+    }
 
 
 	server->callback_timer = wl_event_loop_add_timer(server->wl_event_loop,

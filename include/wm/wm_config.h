@@ -1,9 +1,12 @@
 #ifndef WM_CONFIG_H
 #define WM_CONFIG_H
 
+#include <stdbool.h>
+
 struct wm_config {
     double output_scale;
-    int enable_output_manager;
+    bool enable_output_manager;
+    bool enable_xwayland;
 
     int callback_frequency;
 

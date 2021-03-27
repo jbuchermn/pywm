@@ -79,6 +79,7 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
         PyObject* o;
         o = PyDict_GetItemString(kwargs, "output_scale"); if(o){ conf.output_scale = PyFloat_AsDouble(o); }
         o = PyDict_GetItemString(kwargs, "enable_output_manager"); if(o){ conf.enable_output_manager = o == Py_True; }
+        o = PyDict_GetItemString(kwargs, "enable_xwayland"); if(o){ conf.enable_xwayland = o == Py_True; }
 
         o = PyDict_GetItemString(kwargs, "xkb_model"); if(o){ conf.xkb_model = PyBytes_AsString(o); }
         o = PyDict_GetItemString(kwargs, "xkb_layout"); if(o){ conf.xkb_layout = PyBytes_AsString(o); }
