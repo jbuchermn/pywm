@@ -11,7 +11,7 @@
 *** KILL Zoom works really poorly (apparently similar under sway...)
 *** KILL Bugs concerning movement onto popups (e.g. Chrome)
 *** DONE Make flutter work
-*** TODO Occasional rounding errors in damaging (use sway logic)
+*** DONE Occasional rounding errors in damaging
 *** DONE XWayland does not seem to use GL_NEAREST
 
 ** Type-checking / technical debt

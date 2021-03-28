@@ -146,13 +146,16 @@ static void damage_surface(struct wlr_surface *surface, int sx, int sy,
 
     if(ddata->origin && ddata->origin != surface) return;
 
+    double x = (ddata->x + sx * ddata->x_scale) * output->wlr_output->scale;
+    double y = (ddata->y + sy * ddata->y_scale) * output->wlr_output->scale;
+    double width = surface->current.width * ddata->x_scale * output->wlr_output->scale;
+    double height = surface->current.height * ddata->y_scale * output->wlr_output->scale;
+
     struct wlr_box box = {
-        .x = round((ddata->x + sx * ddata->x_scale) * output->wlr_output->scale),
-        .y = round((ddata->y + sy * ddata->y_scale) * output->wlr_output->scale),
-        .width = round(surface->current.width * ddata->x_scale *
-                output->wlr_output->scale),
-        .height = round(surface->current.height * ddata->y_scale *
-                output->wlr_output->scale)};
+        .x = floor(x),
+        .y = floor(y),
+        .width = ceil(x + width) - floor(x),
+        .height = ceil(y + height) - floor(y)};
 
     /* origin == NULL means damage everything */
     if(!ddata->origin){
