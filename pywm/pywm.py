@@ -109,6 +109,9 @@ class PyWM(Generic[ViewT]):
 
         register("update", self._update)
 
+        self.output_scale: float = kwargs['output_scale'] if 'output_scale' in kwargs else 1.0
+        self.round_scale: float = kwargs['round_scale'] if 'round_scale' in kwargs else 1.0
+
         self._view_class = view_class
 
         self._views: dict[int, ViewT] = {}
@@ -404,6 +407,14 @@ class PyWM(Generic[ViewT]):
 
     def is_locked(self) -> bool:
         return self._down_state.lock_perc != 0.0
+
+    def round(self, x: float, y: float, w: float, h: float) -> tuple[float, float, float, float]:
+        return (
+            round(x * self.round_scale) / self.round_scale,
+            round(y * self.round_scale) / self.round_scale,
+            round((x+w) * self.round_scale) / self.round_scale - round(x * self.round_scale) / self.round_scale,
+            round((y+h) * self.round_scale) / self.round_scale - round(y * self.round_scale) / self.round_scale)
+
 
     """
     Virtual methods

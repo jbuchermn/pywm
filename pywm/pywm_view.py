@@ -97,12 +97,12 @@ class PyWMViewDownstreamState:
         res.size = self.size
         return res
 
-    def get(self,
+    def get(self, root: pywm.PyWM[pywm.ViewT],
             last_state: Optional[PyWMViewDownstreamState],
             focus: Optional[int], fullscreen: Optional[int], maximized: Optional[int], resizing: Optional[int], close: Optional[int]
             ) -> tuple[tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int]:
         return (
-            self.box,
+            root.round(*self.box),
             self.opacity,
             self.corner_radius,
             int(self.z_index),
@@ -215,6 +215,7 @@ class PyWMView:
             down_state = PyWMViewDownstreamState()
 
         res = down_state.get(
+            self.wm,
             self._last_down_state,
             self._down_action_focus,
             self._down_action_fullscreen,
