@@ -6,7 +6,6 @@ import time
 from threading import Thread, Lock
 from typing import Callable, Optional, Any, Type, TypeVar, Generic
 
-
 from .pywm_widget import PyWMWidget
 from .pywm_view import PyWMView
 from .touchpad import TouchpadDaemon, GestureListener, Gesture
@@ -397,7 +396,7 @@ class PyWM(Generic[ViewT]):
         self._idle_thread.stop()
         self._pending_terminate = True
 
-    def create_widget(self, widget_class: Callable[..., WidgetT], *args: list[Any], **kwargs: dict[Any, Any]) -> WidgetT:
+    def create_widget(self, widget_class: Callable[..., WidgetT], *args: Any, **kwargs: Any) -> WidgetT:
         widget = widget_class(self, *args, **kwargs)
         self._pending_widgets += [widget]
         return widget
@@ -430,8 +429,8 @@ class PyWM(Generic[ViewT]):
     def main(self) -> None:
         pass
 
-    def _execute_view_main(self, view: PyWMView) -> None:
-        view.main()
+    def _execute_view_main(self, view: ViewT) -> None:
+        pass
 
     def on_layout_change(self) -> None:
         pass
@@ -466,3 +465,4 @@ class PyWM(Generic[ViewT]):
         idle_inhibited is True if there is at least one view with is_inhibiting_idle==True
         """
         pass
+

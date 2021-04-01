@@ -1,10 +1,14 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING, TypeVar, Optional, Generic
 
 from abc import abstractmethod
-from typing import TypeVar, Optional
-from .pywm_view import PyWMView
 
-from . import pywm
+# Python imports are great
+if TYPE_CHECKING:
+    from .pywm import PyWM, ViewT
+    PyWMT = TypeVar('PyWMT', bound=PyWM)
+else:
+    PyWMT = TypeVar('PyWMT')
 
 PYWM_FORMATS: dict[str, int] = dict()
 
@@ -29,7 +33,7 @@ class PyWMWidgetDownstreamState:
     def copy(self) -> PyWMWidgetDownstreamState:
         return PyWMWidgetDownstreamState(self.z_index, self.box)
 
-    def get(self, root: pywm.PyWM[pywm.ViewT]) -> tuple[bool, tuple[float, float, float, float], float, int]:
+    def get(self, root: PyWM[ViewT]) -> tuple[bool, tuple[float, float, float, float], float, int]:
         return (
             self.lock_enabled,
             root.round(*self.box),
@@ -37,8 +41,8 @@ class PyWMWidgetDownstreamState:
             self.z_index
         )
 
-class PyWMWidget:
-    def __init__(self, wm: pywm.PyWM[pywm.ViewT]) -> None:
+class PyWMWidget(Generic[PyWMT]):
+    def __init__(self, wm: PyWMT) -> None:
         self._handle = -1
 
         self.wm = wm

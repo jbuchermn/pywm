@@ -1,10 +1,15 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING, Optional, TypeVar, Generic, Any
 
 import logging
-from typing import Optional, TypeVar
-
-from . import pywm
 from abc import abstractmethod
+
+# Python imports are great
+if TYPE_CHECKING:
+    from .pywm import PyWM, ViewT
+    PyWMT = TypeVar('PyWMT', bound=PyWM)
+else:
+    PyWMT = TypeVar('PyWMT')
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -97,7 +102,7 @@ class PyWMViewDownstreamState:
         res.size = self.size
         return res
 
-    def get(self, root: pywm.PyWM[pywm.ViewT],
+    def get(self, root: PyWM[ViewT],
             last_state: Optional[PyWMViewDownstreamState],
             focus: Optional[int], fullscreen: Optional[int], maximized: Optional[int], resizing: Optional[int], close: Optional[int]
             ) -> tuple[tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int]:
@@ -122,12 +127,12 @@ class PyWMViewDownstreamState:
         return str(self.__dict__)
 
 
-class PyWMView:
-    def __init__(self, wm: pywm.PyWM[pywm.ViewT], handle: int) -> None: # Python imports are great
+class PyWMView(Generic[PyWMT]):
+    def __init__(self, wm: PyWMT, handle: int) -> None: # Python imports are great
         self._handle = handle
 
         self.wm = wm
-        self.parent: Optional[pywm.ViewT] = None
+        self.parent: Optional[PyWMView] = None
         self.pid: Optional[int] = None
         self.app_id: Optional[str] = None
         self.role: Optional[str] = None
@@ -253,13 +258,6 @@ class PyWMView:
     """
     Virtual methods
     """
-    def main(self, *args) -> None: # type: ignore
-
-        """
-        Called after view is initialized, before first process
-        """
-        pass
-
     def on_event(self, event: str) -> None:
         pass
 
