@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import numpy as np
 import logging
 from imageio import imread # type: ignore
@@ -6,13 +9,15 @@ from .pywm_widget import (
     PyWMWidget,
     PYWM_FORMATS
 )
-from . import pywm
+
+if TYPE_CHECKING:
+    from .pywm import PyWM, ViewT
 
 logger = logging.getLogger(__name__)
 
 
 class PyWMBackgroundWidget(PyWMWidget):
-    def __init__(self, wm: pywm.PyWM[pywm.ViewT], path: str):
+    def __init__(self, wm: PyWM[ViewT], path: str):
         """
         transpose == 't': matrix transpose
         transpose == 'f': flip the image

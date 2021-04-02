@@ -6,9 +6,9 @@ import time
 from threading import Thread, Lock
 from typing import Callable, Optional, Any, Type, TypeVar, Generic
 
+from .touchpad import TouchpadDaemon, GestureListener, Gesture
 from .pywm_widget import PyWMWidget
 from .pywm_view import PyWMView
-from .touchpad import TouchpadDaemon, GestureListener, Gesture
 
 from ._pywm import (
     run,

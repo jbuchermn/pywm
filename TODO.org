@@ -14,7 +14,7 @@
 *** DONE Occasional rounding errors in damaging
 *** DONE XWayland does not seem to use GL_NEAREST
 *** DONE Kill setup if meson / ninja fails
-*** TODO Clean-up imports
+*** DONE Clean-up imports
 
 ** Type-checking / technical debt
 *** DONE Fix setup.py incl. requirements.txt
