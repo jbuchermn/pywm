@@ -13,7 +13,7 @@
 *** DONE Make flutter work
 *** DONE Occasional rounding errors in damaging
 *** DONE XWayland does not seem to use GL_NEAREST
-*** TODO Kill setup if meson / ninja fails
+*** DONE Kill setup if meson / ninja fails
 *** TODO Clean-up imports
 
 ** Type-checking / technical debt
