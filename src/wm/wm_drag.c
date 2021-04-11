@@ -93,6 +93,7 @@ void wm_drag_init(struct wm_drag* drag, struct wm_seat* seat, struct wlr_drag* w
 void wm_drag_update_position(struct wm_drag* drag){
     wm_layout_damage_from(drag->wm_seat->wm_server->wm_layout, &drag->super, NULL);
     /* Surface width / height are not set correctly - hacky way via default_output */
+    if(!drag->wlr_drag_icon || !drag->wlr_drag_icon->surface) return;
     double width = drag->wlr_drag_icon->surface->current.buffer_width / (double)drag->wm_seat->wm_server->wm_layout->default_output->wlr_output->scale;
     double height = drag->wlr_drag_icon->surface->current.buffer_height / (double)drag->wm_seat->wm_server->wm_layout->default_output->wlr_output->scale;;
     wm_content_set_box(&drag->super,

@@ -15,6 +15,8 @@
 *** DONE XWayland does not seem to use GL_NEAREST
 *** DONE Kill setup if meson / ninja fails
 *** DONE Clean-up imports
+*** TODO Try KiCAD
+*** TODO XWayland: Fix CURA keyboard input
 
 ** Type-checking / technical debt
 *** DONE Fix setup.py incl. requirements.txt
@@ -30,8 +32,7 @@
 *** DONE Proper documentation which applications have been tested with which issues / exact steps to repeat testing
 
 * Backlog / Ideas
-** Screensharing using xdg-desktop-portal-wlr
-** Proper handling of popup constraints on scaling
-** Various TODO Comments inline
 ** Multiple outputs
 ** Inline comments "TODO"
+** Screensharing using xdg-desktop-portal-wlr
+** Proper handling of popup constraints on scaling

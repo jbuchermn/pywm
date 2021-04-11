@@ -203,6 +203,50 @@ No issues
 ** Wayland-native (--enable-features=UseOzonePlatform --ozone-platform=wayland)
 *** WAIT Crashes immediately (also on sway) --> probably VSCodium bug
 
+* Oregano
+** Steps
+- [X] Open
+- [X] Place RC lowpass circuit
+- [X] Save
+- [X] Simulate
+** Wayland-native
+No apparent issues
+
+* CURA
+** Steps
+- [ ] Open STL / Place
+- [ ] Change Config incl. start G-Code
+- [ ] Slice and save
+** XWayland
+Start with QT_QPA_PLATFORM=xcb and possibly QT_SCALE_FACTOR=2
+*** TODO No keyboard input
+** Wayland-native
+*** WAIT Weird UI (same for sway) - not yet supported
+
+* KiCAD
+** Steps
+- [ ] Open
+- [ ] Draw RC lowpass circuit
+- [ ] Save
+- [ ] PCB design
+- [ ] Export
+** XWayland
+*** TODO
+** Wayland-native
+*** WAIT Not yet supported
+
+* Arduino IDE
+** Steps
+- [ ] Open file
+- [ ] Edit some code
+- [ ] Open new file
+- [ ] Change some preferences
+- [ ] Burn bootloader
+** XWayland (set _JAVA_AWT_WM_NONREPARENTING=1, possibly adjust interface scale in preferences)
+*** TODO All windows are wrongly recognized as floating
+** Wayland-native
+*** WAIT Not yet supported
+
 * IntelliJ
 ** XWayland (set _JAVA_AWT_WM_NONREPARENTING=1)
 *** TODO All windows are wrongly recognized as floating
