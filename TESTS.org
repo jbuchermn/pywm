@@ -231,7 +231,7 @@ Start with QT_QPA_PLATFORM=xcb and possibly QT_SCALE_FACTOR=2
 - [ ] PCB design
 - [ ] Export
 ** XWayland
-*** TODO
+*** TODO All windows are wrongly recognized as floating
 ** Wayland-native
 *** WAIT Not yet supported
 
