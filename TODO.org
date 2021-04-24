@@ -2,7 +2,8 @@
 
 * Current (aiming for v0.1.0)
 
-** Bugs
+** Bugs / Technical debt
+*** TODO Cura keyboard input
 
 ** Documentation
 *** TODO README
