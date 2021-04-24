@@ -2,46 +2,46 @@
 
 * Termite
 ** Steps
-- [X] Open
-- [X] Execute some commands
-- [X] Copy and paste text with S-C-x/v
+- [ ] Open
+- [ ] Execute some commands
+- [ ] Copy and paste text with S-C-x/v
 ** Wayland-native
 No issues
 
 * Alacritty
 ** Steps
-- [X] Open
-- [X] Execute some commands
-- [X] Copy and paste text with S-C-x/v
+- [ ] Open
+- [ ] Execute some commands
+- [ ] Copy and paste text with S-C-x/v
 ** Wayland-native
 No issues
 
 * imv
 ** Steps
-- [X] Open from terminal
-- [X] Zoom in/out / move
+- [ ] Open from terminal
+- [ ] Zoom in/out / move
 ** Wayland-native
 No issues
 
 * mpv
 ** Steps
-- [X] Open from terminal
-- [X] Start / stop
-- [X] Switch fullscreen
-- [X] Ensure idle is inhibited
+- [ ] Open from terminal
+- [ ] Start / stop
+- [ ] Switch fullscreen
+- [ ] Ensure idle is inhibited
 ** Wayland-native
 No issues
 
 * Chromium
 ** Steps
-- [X] Open
-- [X] Go to YT, start video, toggle fullscreen
-- [X] Copy and paste text
-- [X] Search for an image, right-click, save as -> anywhere
-- [X] Ctrl-F search
-- [X] Open github, use drag-n-drop to rearrange repos
-- [X] Open DevTools
-- [X] Open the menus, go to bookmark (repeat this multiple times, different window sizes)
+- [ ] Open
+- [ ] Go to YT, start video, toggle fullscreen
+- [ ] Copy and paste text
+- [ ] Search for an image, right-click, save as -> anywhere
+- [ ] Ctrl-F search
+- [ ] Open github, use drag-n-drop to rearrange repos
+- [ ] Open DevTools
+- [ ] Open the menus, go to bookmark (repeat this multiple times, different window sizes)
 ** Wayland-native (run with --enable-features=UseOzonePlatform --ozone-platform=wayland)
 *** WAIT If popups open to the top two issues appear (both appear with sway as well --> probably Chromium bugs)
 **** Very large popups are placed on top of the window making them effectively unusable
@@ -49,108 +49,107 @@ No issues
 
 * Firefox
 ** Steps
-- [X] Open
-- [X] Go to YT, start video, toggle fullscreen
-- [X] Copy and paste text
-- [X] Search for an image, right-click, save as -> anywhere
-- [X] Ctrl-F search
-- [X] Open github, use drag-n-drop to rearrange repos
-- [X] Open DevTools
-- [X] Open the menus, go to bookmark (repeat this multiple times, different window sizes)
+- [ ] Open
+- [ ] Go to YT, start video, toggle fullscreen
+- [ ] Copy and paste text
+- [ ] Search for an image, right-click, save as -> anywhere
+- [ ] Ctrl-F search
+- [ ] Open github, use drag-n-drop to rearrange repos
+- [ ] Open DevTools
+- [ ] Open the menus, go to bookmark (repeat this multiple times, different window sizes)
 ** Wayland-native (Run with MOZ_ENABLE_WAYLAND=1)
 *** WAIT Occasional damaging bugs (popups); this seems to stem from a quite weird way of handling this Firefox-side and is an issue on sway as well
 
 * Matplotlib
 ** Steps
-- [X] Open plot (e.g. =ngp= with =env.sh= setup)
-- [X] Zoom in / Move around
-- [X] Save as
+- [ ] Open plot (e.g. =ngp= with =env.sh= setup)
+- [ ] Zoom in / Move around
+- [ ] Save as
 ** Wayland-native (Qt5 backend, be sure to set DISPLAY=":0")
 No issues
 
 * GIMP-2.99
 ** Steps
-- [X] Open
-- [X] File > New -> Open advanced Options
-- [X] Drag background color
-- [X] Colors > Hue / Saturation or similar
-- [X] Save as
+- [ ] Open
+- [ ] File > New -> Open advanced Options
+- [ ] Drag background color
+- [ ] Colors > Hue / Saturation or similar
+- [ ] Save as
 ** Wayland-native
 No issues
 
 * Nemo
 ** Steps
-- [X] Open
-- [X] Open preferences
-- [X] Move around / open files
-- [X] Drag'n'drop within nemo
-- [X] Drag'n'drop from / into chromium
-- [X] Copy / paste / delete
-- [X] Search
+- [ ] Open
+- [ ] Open preferences
+- [ ] Move around / open files
+- [ ] Drag'n'drop within nemo
+- [ ] Drag'n'drop from / into chromium
+- [ ] Copy / paste / delete
+- [ ] Search
 ** Wayland-native
 No issues
 
 * Nautilus
 ** Steps
-- [X] Open
-- [X] Open preferences
-- [X] Move around / open files
-- [X] Drag'n'drop within nemo
-- [X] Drag'n'drop from / into chromium
-- [X] Copy / paste / delete
-- [X] Search
+- [ ] Open
+- [ ] Open preferences
+- [ ] Move around / open files
+- [ ] Drag'n'drop within nemo
+- [ ] Drag'n'drop from / into chromium
+- [ ] Copy / paste / delete
+- [ ] Search
 ** Wayland-native
 No issues
 
 * masm11/Emacs
 ** Steps
-- [X] Daily use without menu bar
+- [ ] Daily use without menu bar
 ** Wayland-native
 No issues
 
 * Zoom
 ** Steps
-- [X] Login
-- [X] Adjust settings
-- [X] Join video call
-- [X] Chat
+- [ ] Login
+- [ ] Adjust settings
+- [ ] Join video call
+- [ ] Chat
 ** Wayland-native
 *** WAIT Works very poorly, but this is true for sway as well - Zoom's just shitty software
 ** XWayland
 
 * LibreOffice
 ** Steps
-- [X] Open
-- [X] Select new worksheet
-- [X] Enter a couple of values, drag-to-complete
-- [X] Copy and paste
-- [X] Change formatting
-- [X] Save as / open again
-- [X] Open new wiriter document
-- [X] Write some text / change formatting
-- [X] Open print preview
-- [X] Save as / open again
+- [ ] Open
+- [ ] Select new worksheet
+- [ ] Enter a couple of values, drag-to-complete
+- [ ] Copy and paste
+- [ ] Change formatting
+- [ ] Save as / open again
+- [ ] Open new wiriter document
+- [ ] Write some text / change formatting
+- [ ] Open print preview
+- [ ] Save as / open again
 ** Wayland-native
-*** TODO Startup sometimes is very mad (related to an intermediate view which weirdly is XWayland)
-*** DONE Drag-to-complete is very jittery
+No issues
 
 * OpenSCAD
 ** Steps
-- [X] Open
-- [X] Create new
-- [X] Open example
-- [X] Update preview
-- [X] Save as
-- [X] Copy / paste
+- [ ] Open
+- [ ] Create new
+- [ ] Open example
+- [ ] Update preview
+- [ ] Save as
+- [ ] Copy / paste
 ** Wayland-native
 No issues
 
 * Spotify
 ** Steps
-- [X] Open
-- [X] Navigate / play music
-- [X] Stream to device
-- [X] Open account
+- [ ] Open
+- [ ] Navigate / play music
+- [ ] Stream to device
+- [ ] Open account
 ** XWayland
 No issues
 ** Wayland-native (Use --enable-features=UseOzonePlatform --ozone-platfom=wayland, be sure DISPLAY is set)
@@ -158,10 +157,10 @@ No issues
 
 * VLC
 ** Steps
-- [X] Open
-- [X] Open video
-- [X] Start playback / pause / jump around
-- [X] Fullscreen view
+- [ ] Open
+- [ ] Open video
+- [ ] Start playback / pause / jump around
+- [ ] Fullscreen view
 ** Wayland-native (Be sure to unset DISPLAY before)
 *** WAIT Playback is not working (damage not received) - same for sway --> probably VLC bug
 ** XWayland
@@ -169,35 +168,35 @@ No issues / however useless as scaled-up videos do not make sense
 
 * FreeCAD
 ** Steps
-- [X] Open
-- [X] Open example
-- [X] Move around / open some dialogs
-- [X] Save as
+- [ ] Open
+- [ ] Open example
+- [ ] Move around / open some dialogs
+- [ ] Save as
 ** Wayland-native
 No issues
 
 * Flutter basic app
 ** Steps
-- [X] Open
-- [X] Increment a couple of times
+- [ ] Open
+- [ ] Increment a couple of times
 ** Wayland-native
 No issues
 
 * Atom
 ** Steps
-- [X] Open
-- [X] Open file
-- [X] Edit
-- [X] Save file
+- [ ] Open
+- [ ] Open file
+- [ ] Edit
+- [ ] Save file
 ** XWayland
 No issues
 
 * VSCodium
 ** Steps
-- [X] Open
-- [X] Open file
-- [X] Edit
-- [X] Save file
+- [ ] Open
+- [ ] Open file
+- [ ] Edit
+- [ ] Save file
 ** XWayland
 No issues
 ** Wayland-native (--enable-features=UseOzonePlatform --ozone-platform=wayland)
@@ -205,10 +204,10 @@ No issues
 
 * Oregano
 ** Steps
-- [X] Open
-- [X] Place RC lowpass circuit
-- [X] Save
-- [X] Simulate
+- [ ] Open
+- [ ] Place RC lowpass circuit
+- [ ] Save
+- [ ] Simulate
 ** Wayland-native
 No apparent issues
 
@@ -221,7 +220,7 @@ No apparent issues
 Start with QT_QPA_PLATFORM=xcb and possibly QT_SCALE_FACTOR=2
 *** TODO No keyboard input
 ** Wayland-native
-*** WAIT Weird UI (same for sway) - not yet supported
+*** WAIT Menu bar issues (same for sway) - not yet supported
 
 * KiCAD
 ** Steps
@@ -231,7 +230,7 @@ Start with QT_QPA_PLATFORM=xcb and possibly QT_SCALE_FACTOR=2
 - [ ] PCB design
 - [ ] Export
 ** XWayland
-*** TODO All windows are wrongly recognized as floating
+*** WAIT All windows are wrongly recognized as floating (won't fix)
 ** Wayland-native
 *** WAIT Not yet supported
 
@@ -243,12 +242,12 @@ Start with QT_QPA_PLATFORM=xcb and possibly QT_SCALE_FACTOR=2
 - [ ] Change some preferences
 - [ ] Burn bootloader
 ** XWayland (set _JAVA_AWT_WM_NONREPARENTING=1, possibly adjust interface scale in preferences)
-*** TODO All windows are wrongly recognized as floating
+*** WAIT All windows are wrongly recognized as floating (won't fix)
 ** Wayland-native
 *** WAIT Not yet supported
 
 * IntelliJ
 ** XWayland (set _JAVA_AWT_WM_NONREPARENTING=1)
-*** TODO All windows are wrongly recognized as floating
+*** WAIT All windows are wrongly recognized as floating (won't fix)
 ** Wayland-native
 *** WAIT Not yet supported
