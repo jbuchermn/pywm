@@ -125,6 +125,9 @@ static void handle_map(struct wl_listener* listener, void* data){
     if(has_parent || (min_w > 0 && (min_w == max_w) && min_h > 0 && (min_h = max_h))){
         view->floating = true;
         wlr_xdg_toplevel_set_tiled(view->wlr_xdg_surface, 0);
+    }else{
+        /* Get rid of white spaces around; therefore geometry.width/height should always equal current.width/height */
+        wlr_xdg_toplevel_set_tiled(view->wlr_xdg_surface, 15);
     }
 
     const char* title;
@@ -389,9 +392,7 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
     wl_signal_add(&surface->toplevel->events.request_show_window_menu, &view->request_show_window_menu);
 
 
-    /* Get rid of white spaces around; therefore geometry.width/height should always equal current.width/height */
     view->floating = false;
-    wlr_xdg_toplevel_set_tiled(surface, 15);
 
     view->constrain_popups_to_toplevel = server->wm_config->constrain_popups_to_toplevel;
 
