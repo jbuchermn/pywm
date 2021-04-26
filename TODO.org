@@ -3,7 +3,7 @@
 * Current (aiming for v0.1.0)
 
 ** Bugs / Technical debt
-*** TODO Cura keyboard input
+*** DONE Cura keyboard input
 *** DONE Firefox YT fullscreen
 
 ** Documentation

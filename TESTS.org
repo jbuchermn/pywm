@@ -219,7 +219,6 @@ No apparent issues
 - [ ] Slice and save
 ** XWayland
 Start with QT_QPA_PLATFORM=xcb and possibly QT_SCALE_FACTOR=2
-*** TODO No keyboard input
 ** Wayland-native
 *** WAIT Menu bar issues (same for sway) - not yet supported
 
