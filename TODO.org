@@ -4,6 +4,7 @@
 
 ** Bugs / Technical debt
 *** TODO Cura keyboard input
+*** TODO Firefox YT fullscreen
 
 ** Documentation
 *** TODO README

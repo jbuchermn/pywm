@@ -351,6 +351,7 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
     view->super.vtable = &wm_view_xdg_vtable;
 
     view->wlr_xdg_surface = surface;
+    view->wlr_deco = NULL;
 
     wl_list_init(&view->popups);
     wl_list_init(&view->subsurfaces);
@@ -601,6 +602,24 @@ static void wm_view_xdg_structure_printf(FILE* file, struct wm_view* super){
     wl_list_for_each(subsurface, &view->subsurfaces, link){
         wm_xdg_subsurface_printf(file, subsurface, 4);
     }
+}
+
+bool wm_view_is_xdg(struct wm_view* view){
+    return view->vtable == &wm_view_xdg_vtable;
+}
+
+static void deco_handle_request_mode(struct wl_listener* listener, void* data){
+    struct wm_view_xdg* view = wl_container_of(listener, view, deco_request_mode);
+    wlr_xdg_toplevel_decoration_v1_set_mode(view->wlr_deco, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+}
+
+void wm_view_xdg_register_decoration(struct wm_view_xdg* view, struct wlr_xdg_toplevel_decoration_v1* wlr_deco){
+    view->wlr_deco = wlr_deco;
+    wlr_xdg_toplevel_decoration_v1_set_mode(wlr_deco, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+
+
+    view->deco_request_mode.notify = &deco_handle_request_mode;
+    wl_signal_add(&wlr_deco->events.request_mode, &view->deco_request_mode);
 }
 
 struct wm_view_vtable wm_view_xdg_vtable = {
