@@ -189,8 +189,14 @@ static void handle_surface_commit(struct wl_listener* listener, void* data){
 
 static void handle_fullscreen(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, request_fullscreen);
+    struct wlr_xdg_toplevel_set_fullscreen_event* event = data;
 
-    wm_callback_view_event(&view->super, "request_fullscreen");
+    wlr_log(WLR_DEBUG, "DDEBUGG - request_fullscreen");
+    if(event->fullscreen){
+        wm_callback_view_event(&view->super, "request_fullscreen");
+    }else{
+        wm_callback_view_event(&view->super, "request_nofullscreen");
+    }
 }
 
 static void handle_move(struct wl_listener* listener, void* data){
@@ -499,6 +505,7 @@ static void wm_view_xdg_set_resizing(struct wm_view* super, bool resizing){
 }
 static void wm_view_xdg_set_fullscreen(struct wm_view* super, bool fullscreen){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
+    wlr_log(WLR_DEBUG, "DDEBUGG - Setting fullscreen %d", fullscreen);
     wlr_xdg_toplevel_set_fullscreen(view->wlr_xdg_surface, fullscreen);
 }
 static void wm_view_xdg_set_maximized(struct wm_view* super, bool maximized){
