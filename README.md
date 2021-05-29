@@ -1,10 +1,15 @@
 # pywm - backend for [newm](https://github.com/jbuchermn/newm)
 
-TODO
+pywm is an abstraction layer for [newm](https://github.com/jbuchermn/newm) encapsulating all c code.
+
+Basically this is a very tiny compositor built on top ob [wlroots](https://github.com/swaywm/wlroots), making all the assumptions that wlroots does not. On the Python side pywm exposes Wayland clients (xdg and xwayland) as so-called views and passes along all input. This way, handling the positioning of views, animating their movement, ... based on keystrokes or touchpad inputs (i.e. the logical, not performance-critical part of any compositor) is possible Python-side, whereas rendering and all other performance-critical aspects are handled by c code.
+
+Check the Python class `PyWM` and c struct `wm_server` for a start, as well as `newm`s `Layout`. 
+
 
 ## Status
 
-See [TESTS.org] for known issues and software with which pywm and newm have been tested.
+See [TESTS.org] for known issues and software with which pywm and newm have been tested. The goal here is to have (apart from XWayland) all software working on [sway](https://github.com/swaywm/sway) also working on pywm in a comparable manner - a lot of code dealing with special client-behaviour therefore is simply taken form sway.
 
 ## Installing
 
@@ -48,7 +53,7 @@ ls -al /dev/input/event*
 
 As a sidenote, this is not necessary for a Wayland compositor in general as the devices can be accessed through `systemd-logind` or `seatd` or similar.
 However the python `evdev` module does not allow instantiation given a file descriptor (only a path which it then opens itself),
-so usage of that module would no longer be possible in this case (plus at first side there is no easy way of getting that file descriptor to the 
+so usage of that module would no longer be possible in this case (plus at first sight there is no easy way of getting that file descriptor to the 
 Python side). Also `wlroots` (`libinput` in the backend) does not expose touchpads as what they are (`touch-down`, `touch-up`, `touch-motion` for any
 number of parallel slots), but only as pointers (`motion` / `axis`), so gesture detection around `libinput`-events is not possible as well.
 
@@ -56,7 +61,7 @@ Therefore, we're stuck with the less secure (and a lot easier) way of using the 
 
 ## Notes
 
-- Depending on the settings (see main.py) XWayland apps are responsible for handling HiDPI themselves and will per default appear very small
+- Depending on the settings (see newm) XWayland apps are responsible for handling HiDPI themselves and will per default appear very small
     - GDK on XWayland: GDK_DPI_SCALE=2
     - Electron apps: --force-device-scale-factor=2
 
