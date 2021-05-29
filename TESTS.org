@@ -251,3 +251,6 @@ Start with QT_QPA_PLATFORM=xcb and possibly QT_SCALE_FACTOR=2
 *** WAIT All windows are wrongly recognized as floating (won't fix)
 ** Wayland-native
 *** WAIT Not yet supported
+
+* VirtualBox
+* qemu

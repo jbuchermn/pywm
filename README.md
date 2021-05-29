@@ -1,19 +1,42 @@
-# PyWM - Python-based Wayland window manager
+# pywm - backend for [newm](https://github.com/jbuchermn/newm)
 
-Documentation to come
+TODO
 
 ## Status
 
-See [TESTS.org]
-
+See [TESTS.org] for known issues and software with which pywm and newm have been tested.
 
 ## Installing
 
-### Install PyWM
+### Prerequisites
+
+Prerequisites for PyWM, apart from Python, are given by [wlroots](https://github.com/swaywm/wlroots):
+
+* python and pip
+* gcc, meson and ninja
+* pkg-config
+* wayland
+* wayland-protocols
+* xorg-xwayland
+* EGL
+* GLESv2
+* libdrm
+* GBM
+* libinput
+* xkbcommon
+* udev
+* pixman
+
+### Install
+
+Compilation is handled by meson and started automatically via pip:
 
 ```
-sudo pip3 install -v git+https://github.com/jbuchermn/pywm
+pip3 install git+https://github.com/jbuchermn/pywm@v0.1
 ```
+
+In case of issues, clone the repo and execute `meson build && ninja -C build` in order to debug.
+
 
 ### Getting touchpads up and running
 

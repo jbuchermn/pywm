@@ -7,7 +7,8 @@
 *** DONE Firefox YT fullscreen
 
 ** Documentation
-*** TODO README
+*** STRT README
+*** TODO Update and check TESTS.org
 
 * Backlog / Ideas
 ** Multiple outputs
