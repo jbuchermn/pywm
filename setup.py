@@ -5,8 +5,7 @@ from setuptools import setup
 
 res = os.system("meson build && ninja -C build")
 if res != 0:
-    print("Fatal: Error building PyWM")
-    exit(1)
+    raise Exception("Fatal: Error executing 'meson build && ninja -C build'")
 
 so = None
 for f in glob.glob('build/_pywm.*.so'):
@@ -15,8 +14,7 @@ for f in glob.glob('build/_pywm.*.so'):
 if so is not None:
     shutil.copy(so, 'pywm/_pywm.so')
 else:
-    print("Fatal: Could not find shared library")
-    exit(1)
+    raise Exception("Fatal: Could not find shared library")
 
 setup(name='pywm',
       version='0.0.9',
