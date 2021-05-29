@@ -2,14 +2,14 @@
 
 pywm is an abstraction layer for [newm](https://github.com/jbuchermn/newm) encapsulating all c code.
 
-Basically this is a very tiny compositor built on top ob [wlroots](https://github.com/swaywm/wlroots), making all the assumptions that wlroots does not. On the Python side pywm exposes Wayland clients (xdg and xwayland) as so-called views and passes along all input. This way, handling the positioning of views, animating their movement, ... based on keystrokes or touchpad inputs (i.e. the logical, not performance-critical part of any compositor) is possible Python-side, whereas rendering and all other performance-critical aspects are handled by c code.
+Basically this is a very tiny compositor built on top of [wlroots](https://github.com/swaywm/wlroots), making all the assumptions that wlroots does not. On the Python side pywm exposes Wayland clients (XDG and XWayland) as so-called views and passes along all input. This way, handling the positioning of views, animating their movement, ... based on keystrokes or touchpad inputs (i.e. the logical, not performance-critical part of any compositor) is possible Python-side, whereas rendering and all other performance-critical aspects are handled by c code.
 
-Check the Python class `PyWM` and c struct `wm_server` for a start, as well as `newm`s `Layout`. 
+Check the Python class `PyWM` and c struct `wm_server` for a start, as well as newms `Layout`. 
 
 
 ## Status
 
-See [TESTS.org] for known issues and software with which pywm and newm have been tested. The goal here is to have (apart from XWayland) all software working on [sway](https://github.com/swaywm/sway) also working on pywm in a comparable manner - a lot of code dealing with special client-behaviour therefore is simply taken form sway.
+See [TESTS.org](TESTS.org) for known issues and software with which pywm and newm have been tested. The goal here is to have (apart from XWayland) all software working on [sway](https://github.com/swaywm/sway) also working on pywm in a comparable manner - a lot of code dealing with special client-behaviour therefore is simply taken form sway.
 
 ## Installing
 
