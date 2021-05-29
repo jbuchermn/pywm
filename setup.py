@@ -1,11 +1,18 @@
-import os
+import subprocess
 import glob
 import shutil
 from setuptools import setup
 
-res = os.system("meson build && ninja -C build")
-if res != 0:
-    raise Exception("Fatal: Error executing 'meson build && ninja -C build'")
+proc = subprocess.Popen(["meson", "build"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+stdout, stderr = proc.communicate()
+if proc.returncode != 0:
+    raise Exception("Fatal: Error executing 'meson build': \n%r" % stderr)
+
+
+proc1 = subprocess.Popen(["ninja", "-C", "build"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+stdout, stderr = proc1.communicate()
+if proc1.returncode != 0:
+    raise Exception("Fatal: Error executing 'ninja -C build': \n%r" % stderr)
 
 so = None
 for f in glob.glob('build/_pywm.*.so'):
@@ -17,7 +24,7 @@ else:
     raise Exception("Fatal: Could not find shared library")
 
 setup(name='pywm',
-      version='0.0.9',
+      version='0.1.0',
       description='wlroots-based Wayland compositor with Python frontend',
       url="https://github.com/jbuchermn/pywm",
       author='Jonas Bucher',
