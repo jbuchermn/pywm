@@ -136,6 +136,20 @@ static void handle_map(struct wl_listener* listener, void* data){
     wm_view_get_info(&view->super, &title, &app_id, &role);
     wlr_log(WLR_DEBUG, "New wm_view (xdg): %s, %s, %s", title, app_id, role);
 
+    /*
+     * Accomodation for Chromium bug: The initial size reported by Chromium is not the same as when the same size is explicitly set
+     *
+     * This is only relevant, when the initial size (width, height below) equals the size we want and therefore no request_size
+     * is triggered.
+     *
+     * Without explicitly requesting the size Chromium will tell us it's 624x384 (true for the toplevel) but resize the main surface
+     * to the smallest possible size (behaviour only when tiled is set).
+     */
+    int width, height;
+    wm_view_get_size(&view->super, &width, &height);
+    wm_view_request_size(&view->super, width, height);
+
+
     wm_callback_init_view(&view->super);
 
     view->super.mapped = true;
@@ -478,7 +492,6 @@ static void wm_view_xdg_get_size_constraints(struct wm_view* super, int* min_wid
 
 static void wm_view_xdg_get_size(struct wm_view* super, int* width, int* height){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
-
 
     /* Again following sway here */
     *width = view->wlr_xdg_surface->geometry.width;
