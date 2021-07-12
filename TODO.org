@@ -2,10 +2,6 @@
 
 * Current (aiming for v0.1.0)
 
-** Bugs
-*** DONE Chromium bug 1: Initially sized too small (scaled correctly) - possibly related to set_tiled
-*** DONE Chromium bug 2: Size update -> buffers are not used fully / weird scaling - possibly Chromium needs an additional trigger to render correctly (as opposed to every single other app) -> Fixed by probably improper use of viewporter pywm-side
-
 ** Documentation
 *** STRT Update and check TESTS.org
 

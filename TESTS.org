@@ -222,6 +222,14 @@ Start with QT_QPA_PLATFORM=xcb and possibly QT_SCALE_FACTOR=2
 ** Wayland-native
 *** WAIT Menu bar issues (same for sway) - not yet supported
 
+* qemu
+** Steps
+- [ ] Start VM and get display output (virtio-vga) / keyboard mouse input
+- [ ] Open menus / change screens
+- [ ] Change size of display
+** Wayland-native
+*** TODO Changing size using virtio-vga does not work
+
 * KiCAD
 ** Steps
 - [ ] Open
@@ -253,4 +261,7 @@ Start with QT_QPA_PLATFORM=xcb and possibly QT_SCALE_FACTOR=2
 *** WAIT Not yet supported
 
 * VirtualBox
-* qemu
+** XWayland
+*** WAIT Not usable
+** Wayland-native
+*** WAIT Not yet supported
