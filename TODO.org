@@ -1,9 +1,9 @@
 #+TITLE: PyWM agenda
 
 * Current (aiming for v0.1.0)
-
-** Documentation
-*** STRT Update and check TESTS.org
+** DONE Bump wlroots version and endorse libseat
+** TODO GIMPs weird test errors (session / ui / tools)
+** STRT Update and check TESTS.org
 
 * Backlog / Ideas
 ** Multiple outputs

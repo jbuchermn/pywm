@@ -31,6 +31,7 @@ Prerequisites for PyWM, apart from Python, are given by [wlroots](https://github
 * xkbcommon
 * udev
 * pixman
+* libseat
 
 ### Install
 
@@ -42,8 +43,28 @@ pip3 install git+https://github.com/jbuchermn/pywm@v0.1
 
 In case of issues, clone the repo and execute `meson build && ninja -C build` in order to debug.
 
+### Troubleshooting
 
-### Getting touchpads up and running
+#### seatd
+
+Be aware that current wlroots requires `seatd` - example systemd service (replace `<YourUser>` or handle via groups, see `man seatd`):
+
+```
+[Unit]
+Description=Seatd daemon
+Requires=multi-user.target
+After=multi-user.target
+
+[Service]
+ExecStart=/usr/local/bin/seatd -u <YourUser>
+Type=simple
+
+[Install]
+WantedBy=graphical.target
+```
+
+
+#### Touchpads
 
 Ensure that your user is in the correct group
 

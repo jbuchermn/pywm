@@ -267,8 +267,12 @@ void wm_xdg_subsurface_init(struct wm_xdg_subsurface* subsurface, struct wm_view
     wl_signal_add(&wlr_subsurface->surface->events.commit, &subsurface->surface_commit);
 
     struct wlr_subsurface* ss;
-    wl_list_for_each(ss, &wlr_subsurface->surface->subsurfaces, parent_link){
-        wlr_log(WLR_DEBUG, "Subsurface: Adding \"old\" subsurface");
+    wl_list_for_each(ss, &wlr_subsurface->surface->subsurfaces_below, parent_link){
+        wlr_log(WLR_DEBUG, "Subsurface: Adding \"old\" subsurface (below)");
+        subsurface_handle_new_subsurface(&subsurface->new_subsurface, ss);
+    }
+    wl_list_for_each(ss, &wlr_subsurface->surface->subsurfaces_above, parent_link){
+        wlr_log(WLR_DEBUG, "Subsurface: Adding \"old\" subsurface (above)");
         subsurface_handle_new_subsurface(&subsurface->new_subsurface, ss);
     }
 
@@ -342,8 +346,12 @@ void wm_popup_xdg_init(struct wm_popup_xdg* popup, struct wm_view_xdg* toplevel,
     }
 
     struct wlr_subsurface* ss;
-    wl_list_for_each(ss, &wlr_xdg_popup->base->surface->subsurfaces, parent_link){
-        wlr_log(WLR_DEBUG, "Popup: Adding \"old\" subsurface");
+    wl_list_for_each(ss, &wlr_xdg_popup->base->surface->subsurfaces_below, parent_link){
+        wlr_log(WLR_DEBUG, "Popup: Adding \"old\" subsurface (below)");
+        popup_handle_new_subsurface(&popup->new_subsurface, ss);
+    }
+    wl_list_for_each(ss, &wlr_xdg_popup->base->surface->subsurfaces_above, parent_link){
+        wlr_log(WLR_DEBUG, "Popup: Adding \"old\" subsurface (above)");
         popup_handle_new_subsurface(&popup->new_subsurface, ss);
     }
 }
@@ -417,8 +425,12 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
     view->constrain_popups_to_toplevel = server->wm_config->constrain_popups_to_toplevel;
 
     struct wlr_subsurface* ss;
-    wl_list_for_each(ss, &surface->surface->subsurfaces, parent_link){
-        wlr_log(WLR_DEBUG, "View: Adding \"old\" subsurface");
+    wl_list_for_each(ss, &surface->surface->subsurfaces_below, parent_link){
+        wlr_log(WLR_DEBUG, "View: Adding \"old\" subsurface (below)");
+        handle_new_subsurface(&view->new_subsurface, ss);
+    }
+    wl_list_for_each(ss, &surface->surface->subsurfaces_below, parent_link){
+        wlr_log(WLR_DEBUG, "View: Adding \"old\" subsurface (below)");
         handle_new_subsurface(&view->new_subsurface, ss);
     }
 }
