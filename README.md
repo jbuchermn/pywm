@@ -51,16 +51,17 @@ Be aware that current wlroots requires `seatd` - example systemd service (replac
 
 ```
 [Unit]
-Description=Seatd daemon
-Requires=multi-user.target
-After=multi-user.target
+Description=Seat management daemon
+Documentation=man:seatd(1)
 
 [Service]
-ExecStart=/usr/local/bin/seatd -u <YourUser>
 Type=simple
+ExecStart=seatd -g _seatd
+Restart=always
+RestartSec=1
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target
 ```
 
 

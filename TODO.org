@@ -1,9 +1,9 @@
 #+TITLE: PyWM agenda
 
 * Current (aiming for v0.1.0)
-** DONE Bump wlroots version and endorse libseat
-** TODO GIMPs weird test errors (session / ui / tools)
-** STRT Update and check TESTS.org
+** TODO Update wlroots
+** TODO Update and check TESTS.org
+** TODO How to install seatd, greetd properly? After newm finishes, agreety does not get the seat
 
 * Backlog / Ideas
 ** Multiple outputs
