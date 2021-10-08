@@ -6,13 +6,13 @@ from setuptools import setup
 proc = subprocess.Popen(["meson", "build"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 stdout, stderr = proc.communicate()
 if proc.returncode != 0:
-    raise Exception("Fatal: Error executing 'meson build': \n%r" % stderr)
+    raise Exception("Fatal: Error executing 'meson build': \n%r\n%r" % (stdout, stderr))
 
 
 proc1 = subprocess.Popen(["ninja", "-C", "build"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 stdout, stderr = proc1.communicate()
 if proc1.returncode != 0:
-    raise Exception("Fatal: Error executing 'ninja -C build': \n%r" % stderr)
+    raise Exception("Fatal: Error executing 'ninja -C build': \n%r\n%r" % (stdout, stderr))
 
 so = None
 for f in glob.glob('build/_pywm.*.so'):
