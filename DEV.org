@@ -1,4 +1,4 @@
-#+TITLE: PyWM agenda
+#+TITLE: pywm developer information
 
 * Current (aiming for v0.1.0)
 ** TODO Update wlroots
