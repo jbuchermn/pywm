@@ -10,9 +10,13 @@
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/config.h>
+#include <wlr/types/wlr_data_control_v1.h>
+#include <wlr/types/wlr_export_dmabuf_v1.h>
 #include <wlr/types/wlr_linux_dmabuf_v1.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_screencopy_v1.h>
+#include <wlr/types/wlr_primary_selection_v1.h>
+#include <wlr/types/wlr_viewporter.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/util/log.h>
 #include <wlr/xwayland.h>
@@ -75,7 +79,7 @@ static void handle_new_xdg_surface(struct wl_listener* listener, void* data){
                 server->wm_layout->default_output->wlr_output);
     }
 
-    if(surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL){
+    if(surface->role == WLR_XDG_SURFACE_ROLE_POPUP){
         /* Popups should be handled by the parent */
         return;
     }
@@ -106,10 +110,30 @@ static void handle_new_server_decoration(struct wl_listener* listener, void* dat
 }
 
 static void handle_new_xdg_decoration(struct wl_listener* listener, void* data){
-    /* struct wm_server* server = wl_container_of(listener, server, new_xdg_decoration); */
-    /* struct wlr_xdg_toplevel_decoration_v1* wlr_deco = data; */
+    struct wm_server* server = wl_container_of(listener, server, new_xdg_decoration);
+    struct wlr_xdg_toplevel_decoration_v1* wlr_deco = data;
 
-    wlr_log(WLR_DEBUG, "Server: New XDG toplevel decoration");
+    bool found=false;
+    struct wm_content* content;
+    wl_list_for_each(content, &server->wm_contents, link){
+        if(!wm_content_is_view(content)) continue;
+        struct wm_view* view = wm_cast(wm_view, content);
+        if(!wm_view_is_xdg(view)) continue;
+        struct wm_view_xdg* xdg_view = wm_cast(wm_view_xdg, view);
+        if(xdg_view->wlr_xdg_surface == wlr_deco->surface){
+            wm_view_xdg_register_decoration(xdg_view, wlr_deco);
+            found=true;
+            break;
+        }
+    }
+
+    if(!found){
+        wlr_log(WLR_INFO, "Could not find view for XDG toplevel decoration");
+    }
+
+    wlr_xdg_toplevel_decoration_v1_set_mode(
+            wlr_deco, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+
 }
 
 static void handle_ready(struct wl_listener* listener, void* data){
@@ -182,7 +206,11 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wlr_xdg_decoration_manager = wlr_xdg_decoration_manager_v1_create(server->wl_display);
     assert(server->wlr_xdg_decoration_manager);
 
+    wlr_export_dmabuf_manager_v1_create(server->wl_display);
     wlr_screencopy_manager_v1_create(server->wl_display);
+    wlr_data_control_manager_v1_create(server->wl_display);
+    wlr_primary_selection_v1_device_manager_create(server->wl_display);
+    /* wlr_viewporter_create(server->wl_display); */
 
     server->wlr_xwayland = NULL;
     if(config->enable_xwayland){
@@ -193,12 +221,12 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wlr_xcursor_manager = wlr_xcursor_manager_create(server->wm_config->xcursor_theme, server->wm_config->xcursor_size);
     assert(server->wlr_xcursor_manager);
 
-    if(wlr_xcursor_manager_load(server->wlr_xcursor_manager, server->wm_config->output_scale)){
+    if(!wlr_xcursor_manager_load(server->wlr_xcursor_manager, server->wm_config->output_scale)){
         wlr_log(WLR_ERROR, "Cannot load XCursor");
     }
 
     struct wlr_xcursor* xcursor = wlr_xcursor_manager_get_xcursor(server->wlr_xcursor_manager, "left_ptr", 1);
-    if(xcursor){
+    if(config->enable_xwayland && xcursor){
         struct wlr_xcursor_image* image = xcursor->images[0];
         wlr_xwayland_set_cursor(server->wlr_xwayland,
                 image->buffer, image->width * 4, image->width, image->height, image->hotspot_x, image->hotspot_y);

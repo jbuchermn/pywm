@@ -42,6 +42,7 @@ No issues
 - [ ] Open github, use drag-n-drop to rearrange repos
 - [ ] Open DevTools
 - [ ] Open the menus, go to bookmark (repeat this multiple times, different window sizes)
+- [ ] Drag tab from one browser instance to create new one
 ** Wayland-native (run with --enable-features=UseOzonePlatform --ozone-platform=wayland)
 *** WAIT If popups open to the top two issues appear (both appear with sway as well --> probably Chromium bugs)
 **** Very large popups are placed on top of the window making them effectively unusable
@@ -218,9 +219,16 @@ No apparent issues
 - [ ] Slice and save
 ** XWayland
 Start with QT_QPA_PLATFORM=xcb and possibly QT_SCALE_FACTOR=2
-*** TODO No keyboard input
 ** Wayland-native
 *** WAIT Menu bar issues (same for sway) - not yet supported
+
+* qemu
+** Steps
+- [ ] Start VM and get display output (virtio-vga) / keyboard mouse input
+- [ ] Open menus / change screens
+- [ ] Change size of display
+** Wayland-native
+*** TODO Changing size using virtio-vga does not work
 
 * KiCAD
 ** Steps
@@ -249,5 +257,11 @@ Start with QT_QPA_PLATFORM=xcb and possibly QT_SCALE_FACTOR=2
 * IntelliJ
 ** XWayland (set _JAVA_AWT_WM_NONREPARENTING=1)
 *** WAIT All windows are wrongly recognized as floating (won't fix)
+** Wayland-native
+*** WAIT Not yet supported
+
+* VirtualBox
+** XWayland
+*** WAIT Not usable
 ** Wayland-native
 *** WAIT Not yet supported

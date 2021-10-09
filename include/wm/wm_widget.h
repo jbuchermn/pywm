@@ -17,6 +17,6 @@ struct wm_widget {
 
 void wm_widget_init(struct wm_widget* widget, struct wm_server* server);
 
-void wm_widget_set_pixels(struct wm_widget* widget, enum wl_shm_format format, uint32_t stride, uint32_t width, uint32_t height, const void* data);
+void wm_widget_set_pixels(struct wm_widget* widget, uint32_t format, uint32_t stride, uint32_t width, uint32_t height, const void* data);
 
 #endif

@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <drm_fourcc.h>
 
 #include "wm/wm.h"
 #include "wm/wm_widget.h"
@@ -52,15 +53,15 @@ void _pywm_widget_update(struct _pywm_widget* widget){
     Py_XDECREF(args);
     if(res && res != Py_None){
         /* Handle update_pixels */
-        int format, stride, width, height;
+        int stride, width, height;
         PyObject* data;
-        if(!PyArg_ParseTuple(res, "iiiiS", &format, &stride, &width, &height, &data)){
+        if(!PyArg_ParseTuple(res, "iiiS", &stride, &width, &height, &data)){
             PyErr_SetString(PyExc_TypeError, "Cannot parse update_widget_pixels return");
             return;
         }
 
         wm_widget_set_pixels(widget->widget,
-                format,
+                DRM_FORMAT_ARGB8888,
                 stride,
                 width,
                 height,

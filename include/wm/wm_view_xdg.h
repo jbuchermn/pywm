@@ -53,6 +53,7 @@ struct wm_view_xdg {
     struct wm_view super;
 
     struct wlr_xdg_surface* wlr_xdg_surface;
+    struct wlr_xdg_toplevel_decoration_v1* wlr_deco;
 
     struct wl_list popups;
     struct wl_list subsurfaces;
@@ -67,6 +68,7 @@ struct wm_view_xdg {
     struct wl_listener new_subsurface;
 
     struct wl_listener surface_commit;
+    struct wl_listener deco_request_mode;
 
     struct wl_listener request_fullscreen;
     struct wl_listener request_move;
@@ -77,6 +79,9 @@ struct wm_view_xdg {
 };
 
 void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct wlr_xdg_surface* surface);
+bool wm_view_is_xdg(struct wm_view* view);
+
+void wm_view_xdg_register_decoration(struct wm_view_xdg* view, struct wlr_xdg_toplevel_decoration_v1* wlr_deco);
 
 
 #endif

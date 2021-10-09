@@ -1,15 +1,11 @@
-#+TITLE: PyWM agenda
+#+TITLE: pywm developer information
 
-* Current (aiming for v0.1.0)
-
-** Bugs
-
-** Documentation
-*** TODO README
+* Current
+** DONE Update wlroots
+** STRT Update and check TESTS.org
 
 * Backlog / Ideas
 ** Multiple outputs
 ** Inline comments "TODO"
 ** Screensharing using xdg-desktop-portal-wlr
-** Proper handling of popup constraints on scaling
 ** Decorations for floating windows (dialogs)

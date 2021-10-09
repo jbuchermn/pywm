@@ -6,8 +6,6 @@
 
 #include "wm/wm_util.h"
 
-#include <render/shm_format.h>
-
 struct wm_content_vtable wm_widget_vtable;
 
 void wm_widget_init(struct wm_widget* widget, struct wm_server* server){
@@ -24,13 +22,12 @@ static void wm_widget_destroy(struct wm_content* super){
     wm_content_base_destroy(super);
 }
 
-void wm_widget_set_pixels(struct wm_widget* widget, enum wl_shm_format format, uint32_t stride, uint32_t width, uint32_t height, const void* data){
+void wm_widget_set_pixels(struct wm_widget* widget, uint32_t format, uint32_t stride, uint32_t width, uint32_t height, const void* data){
     if(widget->wlr_texture){
         wlr_texture_write_pixels(widget->wlr_texture, stride, width, height, 0, 0, 0, 0, data);
     }else{
         widget->wlr_texture = wlr_texture_from_pixels(widget->super.wm_server->wm_renderer->wlr_renderer,
-                convert_wl_shm_format_to_drm(format),
-                stride, width, height, data);
+                format, stride, width, height, data);
     }
     wm_layout_damage_from(widget->super.wm_server->wm_layout, &widget->super, NULL);
 }

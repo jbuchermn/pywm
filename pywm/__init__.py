@@ -16,8 +16,7 @@ from .pywm_view import (  # noqa F401
 
 from .pywm_widget import (  # noqa F401
     PyWMWidget,
-    PyWMWidgetDownstreamState,
-    PYWM_FORMATS
+    PyWMWidgetDownstreamState
 )
 
 from .pywm_background_widget import PyWMBackgroundWidget  # noqa F401
