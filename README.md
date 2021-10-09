@@ -13,6 +13,8 @@ See [TESTS.org](TESTS.org) for known issues and software with which pywm and new
 
 ## Installing
 
+If you install [newm](https://github.com/jbuchermn/newm) via the AUR, pywm is installed automatically.
+
 ### Prerequisites
 
 Prerequisites for PyWM, apart from Python, are given by [wlroots](https://github.com/swaywm/wlroots):

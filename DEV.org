@@ -1,9 +1,8 @@
 #+TITLE: pywm developer information
 
-* Current (aiming for v0.1.0)
+* Current
 ** DONE Update wlroots
-** TODO Update and check TESTS.org
-** TODO How to install seatd, greetd properly? After newm finishes, agreety does not get the seat
+** STRT Update and check TESTS.org
 
 * Backlog / Ideas
 ** Multiple outputs
