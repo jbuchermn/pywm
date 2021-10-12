@@ -7,10 +7,6 @@ Basically this is a very tiny compositor built on top of [wlroots](https://githu
 Check the Python class `PyWM` and c struct `wm_server` for a start, as well as newms `Layout`. 
 
 
-## Status
-
-See [TESTS.org](TESTS.org) for known issues and software with which pywm and newm have been tested. The goal here is to have (apart from XWayland) all software working on [sway](https://github.com/swaywm/sway) also working on pywm in a comparable manner - a lot of code dealing with special client-behaviour therefore is simply taken form sway.
-
 ## Installing
 
 If you install [newm](https://github.com/jbuchermn/newm) via the AUR, pywm is installed automatically.
@@ -47,9 +43,25 @@ In case of issues, clone the repo and execute `meson build && ninja -C build` in
 
 ### Troubleshooting
 
+#### Touchpads
+
+Ensure that your user is in the correct group
+
+```
+ls -al /dev/input/event*
+```
+
+As a sidenote, this is not necessary for a Wayland compositor in general as the devices can be accessed through `systemd-logind` or `seatd` or similar.
+However the python `evdev` module does not allow instantiation given a file descriptor (only a path which it then opens itself),
+so usage of that module would no longer be possible in this case (plus at first sight there is no easy way of getting that file descriptor to the 
+Python side). Also `wlroots` (`libinput` in the backend) does not expose touchpads as what they are (`touch-down`, `touch-up`, `touch-motion` for any
+number of parallel slots), but only as pointers (`motion` / `axis`), so gesture detection around `libinput`-events is not possible as well.
+
+Therefore, we're stuck with the less secure (and a lot easier) way of using the (probably named `input`) group.
+
 #### seatd
 
-Be aware that current wlroots requires `seatd` - example systemd service (replace `<YourUser>` or handle via groups, see `man seatd`):
+Be aware that current wlroots requires `seatd` under certain circumstances. Example systemd service (replace `<YourUser>` or handle via groups, see `man seatd`):
 
 ```
 [Unit]
@@ -67,21 +79,11 @@ WantedBy=multi-user.target
 ```
 
 
-#### Touchpads
 
-Ensure that your user is in the correct group
+## Status
 
-```
-ls -al /dev/input/event*
-```
+See [TESTS.org](TESTS.org) for known issues and software with which pywm and newm have been tested. The goal here is to have (apart from XWayland) all software working on [sway](https://github.com/swaywm/sway) also working on pywm in a comparable manner - a lot of code dealing with special client-behaviour therefore is simply taken form sway.
 
-As a sidenote, this is not necessary for a Wayland compositor in general as the devices can be accessed through `systemd-logind` or `seatd` or similar.
-However the python `evdev` module does not allow instantiation given a file descriptor (only a path which it then opens itself),
-so usage of that module would no longer be possible in this case (plus at first sight there is no easy way of getting that file descriptor to the 
-Python side). Also `wlroots` (`libinput` in the backend) does not expose touchpads as what they are (`touch-down`, `touch-up`, `touch-motion` for any
-number of parallel slots), but only as pointers (`motion` / `axis`), so gesture detection around `libinput`-events is not possible as well.
-
-Therefore, we're stuck with the less secure (and a lot easier) way of using the (probably named `input`) group.
 
 ## Notes
 
