@@ -41,6 +41,27 @@ pip3 install git+https://github.com/jbuchermn/pywm
 
 In case of issues, clone the repo and execute `meson build && ninja -C build` in order to debug.
 
+### Configuration
+
+Configuration is handled via key-value pairs given to the `PyWM` contructor:
+
+| Key                             | Possible values | Default | Description                                                                                                                                                                 |
+|---------------------------------|-----------------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `output_scale`                  | number (float)  | 1.0     | HiDPI scale of output                                                                                                                                                       |
+| `round_scale`                   | number (float)  | 1.0     | Scale used for rounding positions and widths (i.e. if set equal to `output_scale`, windows will be positioned according to logical pixels, if set to 1 according to pixels) |
+| `xkb_model`                     | string          |         | Keyboard model (`xkb`)                                                                                                                                                      |
+| `xkb_layout`                    | string          | us      | Keyboard layout (`xkb`)                                                                                                                                                     |
+| `xkb_options`                   | string          |         | Keyboard options (`xkb`)                                                                                                                                                    |
+| `enable_xwayland`               | True\|False     | False   | Start `XWayland`                                                                                                                                                            |
+| `enable_output_manager`         | True\|False     | True    | Enable the wayland protocol `xdg_output_manager_v1`                                                                                                                         |
+| `xcursor_theme`                 | string          |         | `XCursor` theme                                                                                                                                                             |
+| `xcursor_size`                  | number (int)    | 24      | `XCursor` size                                                                                                                                                              |
+| `focus_follows_mouse`           | True\|False     | True    | `Focus` window upon mouse enter                                                                                                                                             |
+| `contstrain_popups_to_toplevel` | True\|False     | False   | Try to keep popups contrained within their window                                                                                                                                                                            |
+| `encourage_csd`                 | True\|False     | True    | Encourage clients to show client-side-decorations (see `wlr_server_decoration_manager`)                                                                                     |
+| `debug_f1`                      | True\|False     | False   | (Debug only) Output debug information to stdout on every F1 press                                                                                                           |
+
+
 ### Troubleshooting
 
 #### Touchpads
