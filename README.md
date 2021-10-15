@@ -110,17 +110,3 @@ WantedBy=multi-user.target
 See [TESTS.org](TESTS.org) for known issues and software with which pywm and newm have been tested. The goal here is to have (apart from XWayland) all software working on [sway](https://github.com/swaywm/sway) also working on pywm in a comparable manner - a lot of code dealing with special client-behaviour therefore is simply taken form sway.
 
 
-## Notes
-
-- Depending on the settings (see newm) XWayland apps are responsible for handling HiDPI themselves and will per default appear very small
-    - GDK on XWayland: GDK_DPI_SCALE=2
-    - Electron apps: --force-device-scale-factor=2
-
-- Screen record: wf-recorder
-- Screen shot: grim
-- Firefox: MOZ_ENABLE_WAYLAND=1
-- Chromium: --enable-features=UseOzonePlatform --ozone-platform=wayland
-- Matplotlib / Qt5 on Wayland requires DISPLAY=":0" to be set
-- Apple Trackpad
-    https://medium.com/macoclock/how-to-pair-apple-magic-keyboard-a1314-on-ubuntu-18-04-and-act-as-numpad-42fe4402454c
-    https://wiki.archlinux.org/index.php/Bluetooth

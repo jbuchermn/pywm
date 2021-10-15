@@ -1,13 +1,29 @@
 #+TITLE: pywm developer information
 
-* Current
-** DONE Update wlroots
-** STRT Update and check TESTS.org
+* Development
+** Current
+*** DONE Update wlroots
+*** STRT Update and check TESTS.org
 
-* v0.2
-** Multiple outputs
-** Complete libinput device config
-** Screensharing using xdg-desktop-portal-wlr
+** v0.2
+*** Multiple outputs
+*** Complete libinput device config
+*** Screensharing using xdg-desktop-portal-wlr
 
-* Backlog / Ideas
-** Decorations for floating windows (dialogs)
+** Backlog / Ideas
+*** Decorations for floating windows (dialogs)
+
+
+* Notes
+- Depending on the settings (see newm) XWayland apps are responsible for handling HiDPI themselves and will per default appear very small
+- GDK on XWayland: GDK_DPI_SCALE=2
+- Electron apps: --force-device-scale-factor=2
+
+- Screen record: wf-recorder
+- Screen shot: grim
+- Firefox: MOZ_ENABLE_WAYLAND=1
+- Chromium: --enable-features=UseOzonePlatform --ozone-platform=wayland
+- Matplotlib / Qt5 on Wayland requires DISPLAY=":0" to be set
+- Apple Trackpad
+        https://medium.com/macoclock/how-to-pair-apple-magic-keyboard-a1314-on-ubuntu-18-04-and-act-as-numpad-42fe4402454c
+        https://wiki.archlinux.org/index.php/Bluetooth
