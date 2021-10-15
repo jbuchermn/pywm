@@ -47,19 +47,19 @@ Configuration is handled via key-value pairs given to the `PyWM` contructor:
 
 | Key                             | Default | Description                                                                                                                                                                 |
 |---------------------------------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `output_scale`                  | 1.0     | Number: HiDPI scale of output                                                                                                                                                       |
-| `round_scale`                   | 1.0     | Number: Scale used for rounding positions and widths (i.e. if set equal to `output_scale`, windows will be positioned according to logical pixels, if set to 1 according to pixels) |
+| `output_scale`                  | `1.0`     | Number: HiDPI scale of output                                                                                                                                                       |
+| `round_scale`                   | `1.0`     | Number: Scale used for rounding positions and widths (i.e. if set equal to `output_scale`, windows will be positioned according to logical pixels, if set to 1 according to pixels) |
 | `xkb_model`                     |         | String: Keyboard model (`xkb`)                                                                                                                                                      |
-| `xkb_layout`                    | us      | String: Keyboard layout (`xkb`)                                                                                                                                                     |
+| `xkb_layout`                    | `us`      | String: Keyboard layout (`xkb`)                                                                                                                                                     |
 | `xkb_options`                   |         | String: Keyboard options (`xkb`)                                                                                                                                                    |
-| `enable_xwayland`               | False   | Boolean: Start `XWayland`                                                                                                                                                            |
-| `enable_output_manager`         | True    | Boolean: Enable the wayland protocol `xdg_output_manager_v1`                                                                                                                         |
+| `enable_xwayland`               | `False`   | Boolean: Start `XWayland`                                                                                                                                                            |
+| `enable_output_manager`         | `True`    | Boolean: Enable the wayland protocol `xdg_output_manager_v1`                                                                                                                         |
 | `xcursor_theme`                 |         | String: `XCursor` theme                                                                                                                                                             |
-| `xcursor_size`                  | 24      | Integer: `XCursor` size                                                                                                                                                              |
-| `focus_follows_mouse`           | True    | Boolean: `Focus` window upon mouse enter                                                                                                                                             |
-| `contstrain_popups_to_toplevel` | False   | Boolean: Try to keep popups contrained within their window                                                                                                                                                                            |
-| `encourage_csd`                 | True    | Boolean: Encourage clients to show client-side-decorations (see `wlr_server_decoration_manager`)                                                                                     |
-| `debug_f1`                      | False   | Boolean (Debug only): Output debug information to stdout on every F1 press                                                                                                           |
+| `xcursor_size`                  | `24`      | Integer: `XCursor` size                                                                                                                                                              |
+| `focus_follows_mouse`           | `True`    | Boolean: `Focus` window upon mouse enter                                                                                                                                             |
+| `contstrain_popups_to_toplevel` | `False`   | Boolean: Try to keep popups contrained within their window                                                                                                                                                                            |
+| `encourage_csd`                 | `True`    | Boolean: Encourage clients to show client-side-decorations (see `wlr_server_decoration_manager`)                                                                                     |
+| `debug_f1`                      | `False`   | Boolean (Debug only): Output debug information to stdout on every F1 press                                                                                                           |
 
 
 ### Troubleshooting
