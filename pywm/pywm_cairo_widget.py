@@ -15,8 +15,8 @@ class PyWMCairoWidget(PyWMWidget):
     def __init__(self, wm: PyWM[ViewT], width: int, height: int) -> None:
         super().__init__(wm)
 
-        self.width = width
-        self.height = height
+        self.width = max(1, width)
+        self.height = max(1, height)
 
     def render(self) -> None:
         surface = cairo.ImageSurface(cairo.FORMAT_ARGB32,

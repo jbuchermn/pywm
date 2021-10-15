@@ -15,6 +15,9 @@ struct wm_layout {
     struct wlr_output_layout* wlr_output_layout;
     struct wl_list wm_outputs; // wm_output::link
 
+    int width;
+    int height;
+
     /* First registered output for now - multiple screens are not
      * properly supported anyway - used to notify clients about 
      * the output they are on */
@@ -27,6 +30,7 @@ void wm_layout_init(struct wm_layout* layout, struct wm_server* server);
 void wm_layout_destroy(struct wm_layout* layout);
 
 void wm_layout_add_output(struct wm_layout* layout, struct wlr_output* output);
+void wm_layout_remove_output(struct wm_layout* layout, struct wm_output* output);
 
 /* Damage whole output layout */
 void wm_layout_damage_whole(struct wm_layout* layout);

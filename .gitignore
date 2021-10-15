@@ -6,3 +6,4 @@ pywm/*.so
 pywm/touchpad/tmp.png
 subprojects
 .mypy_cache
+pywm.egg-info

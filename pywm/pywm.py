@@ -255,10 +255,12 @@ class PyWM(Generic[ViewT]):
 
     @callback
     def _layout_change(self, width: int, height: int) -> None:
+        logger.debug("PyWM layout change: %dx%d" % (width, height))
         self._update_idle()
         self.width = width
         self.height = height
         self.on_layout_change()
+        
 
     @callback
     def _update_view(self, handle: int, *args): # type: ignore

@@ -165,7 +165,7 @@ static void handle_damage_destroy(struct wl_listener *listener, void *data) {
  */
 void wm_output_init(struct wm_output *output, struct wm_server *server,
         struct wm_layout *layout, struct wlr_output *out) {
-    wlr_log(WLR_DEBUG, "New output");
+    wlr_log(WLR_INFO, "New output: %s: %s - %s", out->make, out->model, out->description);
     output->wm_server = server;
     output->wm_layout = layout;
     output->wlr_output = out;
@@ -174,14 +174,45 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
 
     /* Set mode */
     if (!wl_list_empty(&output->wlr_output->modes)) {
-        struct wlr_output_mode *mode =
+        struct wlr_output_mode *pref =
             wlr_output_preferred_mode(output->wlr_output);
-        wlr_output_set_mode(output->wlr_output, mode);
 
-        wlr_output_enable(output->wlr_output, true);
-        if (!wlr_output_commit(output->wlr_output)) {
-            wlr_log(WLR_INFO, "New output: Could not commit");
+        struct wlr_output_mode* best = NULL;
+        struct wlr_output_mode* mode;
+        wl_list_for_each(mode, &output->wlr_output->modes, link){
+            wlr_log(WLR_INFO, "New output: Output supports %dx%d(%d) %s",
+                    mode->width, mode->height, mode->refresh, mode->preferred ? "(Preferred)" : "") ;
+
+            // Sway logic
+            if (mode->width == server->wm_config->output_width && mode->height == server->wm_config->output_height) {
+                if (mode->refresh == server->wm_config->output_mHz) {
+                    best = mode;
+                    break;
+                }
+                if (best == NULL || mode->refresh > best->refresh) {
+                    best = mode;
+                }
+            }
         }
+
+        if(!best) best = pref;
+
+        wlr_log(WLR_INFO, "New output: Setting mode: %dx%d(%d)", best->width, best->height, best->refresh);
+        wlr_output_set_mode(output->wlr_output, best);
+    }else{
+        wlr_log(WLR_INFO, "New output: Setting custom mode - %dx%d(%d)",
+                server->wm_config->output_width,
+                server->wm_config->output_height,
+                server->wm_config->output_mHz);
+        wlr_output_set_custom_mode(output->wlr_output,
+                                   server->wm_config->output_width,
+                                   server->wm_config->output_height,
+                                   server->wm_config->output_mHz);
+    }
+
+    wlr_output_enable(output->wlr_output, true);
+    if (!wlr_output_commit(output->wlr_output)) {
+        wlr_log(WLR_INFO, "New output: Could not commit");
     }
 
     /* Set HiDPI scale */
@@ -210,6 +241,7 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
 }
 
 void wm_output_destroy(struct wm_output *output) {
+    wm_layout_remove_output(output->wm_layout, output);
     wl_list_remove(&output->destroy.link);
     wl_list_remove(&output->commit.link);
     wl_list_remove(&output->mode.link);

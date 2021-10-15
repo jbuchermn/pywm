@@ -14,6 +14,11 @@ struct wm_config {
     const char *xkb_layout;
     const char *xkb_options;
 
+    const char *output_name;
+    int output_width;
+    int output_height;
+    int output_mHz;
+
     const char* xcursor_theme;
     int xcursor_size;
 

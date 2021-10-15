@@ -88,6 +88,11 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
         o = PyDict_GetItemString(kwargs, "xcursor_theme"); if(o){ conf.xcursor_theme = PyBytes_AsString(o); }
         o = PyDict_GetItemString(kwargs, "xcursor_size"); if(o){ conf.xcursor_size = PyLong_AsLong(o); }
 
+        o = PyDict_GetItemString(kwargs, "output_name"); if(o){ conf.output_name = PyBytes_AsString(o); }
+        o = PyDict_GetItemString(kwargs, "output_width"); if(o){ conf.output_width = PyLong_AsLong(o); }
+        o = PyDict_GetItemString(kwargs, "output_height"); if(o){ conf.output_height = PyLong_AsLong(o); }
+        o = PyDict_GetItemString(kwargs, "output_mHz"); if(o){ conf.output_mHz= PyLong_AsLong(o); }
+
         o = PyDict_GetItemString(kwargs, "focus_follows_mouse"); if(o){ conf.focus_follows_mouse = o == Py_True; }
         o = PyDict_GetItemString(kwargs, "constrain_popups_to_toplevel"); if(o){ conf.constrain_popups_to_toplevel = o == Py_True; }
         o = PyDict_GetItemString(kwargs, "encourage_csd"); if(o){ conf.encourage_csd = o == Py_True; }

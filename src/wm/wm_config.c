@@ -12,6 +12,11 @@ void wm_config_init_default(struct wm_config* config){
     config->xkb_layout = "us";
     config->xkb_options = "";
 
+    config->output_name = "";
+    config->output_width = 0;
+    config->output_height = 0;
+    config->output_mHz = 0;
+
     config->xcursor_theme = NULL;
     config->xcursor_size = 24;
 

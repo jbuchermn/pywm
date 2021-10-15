@@ -41,8 +41,7 @@ static void call_void(PyObject* callable, PyObject* args){
 static void call_layout_change(struct wm_layout* layout){
     if(callbacks.layout_change){
         PyGILState_STATE gil = PyGILState_Ensure();
-        struct wlr_box* box = wlr_output_layout_get_box(layout->wlr_output_layout, NULL);
-        PyObject* args = Py_BuildValue("(ii)", box->width, box->height);
+        PyObject* args = Py_BuildValue("(ii)", layout->width, layout->height);
         call_void(callbacks.layout_change, args);
         PyGILState_Release(gil);
     }

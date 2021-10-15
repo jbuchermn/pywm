@@ -8,6 +8,7 @@
 #include "wm/wm.h"
 #include "wm/wm_view.h"
 #include "wm/wm_server.h"
+#include "wm/wm_config.h"
 
 /*
  * Callbacks
@@ -16,6 +17,12 @@ static void handle_change(struct wl_listener* listener, void* data){
     wlr_log(WLR_DEBUG, "Layout: Change");
     struct wm_layout* layout = wl_container_of(listener, layout, change);
 
+    if(layout->default_output){
+        wlr_output_effective_resolution(layout->default_output->wlr_output, &layout->width, &layout->height);
+    }else{
+        layout->width = 0;
+        layout->height = 0;
+    }
     wm_callback_layout_change(layout);
 }
 
@@ -33,6 +40,8 @@ void wm_layout_init(struct wm_layout* layout, struct wm_server* server){
     wl_signal_add(&layout->wlr_output_layout->events.change, &layout->change);
 
     layout->default_output = NULL;
+    layout->width = 0;
+    layout->height = 0;
 }
 
 void wm_layout_destroy(struct wm_layout* layout) {
@@ -48,8 +57,19 @@ void wm_layout_add_output(struct wm_layout* layout, struct wlr_output* out){
 
     wlr_output_layout_add_auto(layout->wlr_output_layout, out);
 
-    if(!layout->default_output) layout->default_output = output;
-    else wlr_log(WLR_ERROR, "Only one output supported");
+    if((strlen(layout->wm_server->wm_config->output_name) == 0 || !strcmp(layout->wm_server->wm_config->output_name, out->name)) && 
+            !layout->default_output){
+        layout->default_output = output;
+    }else{
+        wlr_log(WLR_ERROR, "Only one output supported - ignoring %s", out->name);
+    }
+}
+
+void wm_layout_remove_output(struct wm_layout* layout, struct wm_output* output){
+    if(output == layout->default_output){
+        layout->default_output = NULL;
+    }
+    wlr_output_layout_remove(layout->wlr_output_layout, output->wlr_output);
 }
 
 
