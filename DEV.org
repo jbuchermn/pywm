@@ -4,8 +4,10 @@
 ** DONE Update wlroots
 ** STRT Update and check TESTS.org
 
-* Backlog / Ideas
+* v0.2
 ** Multiple outputs
-** Inline comments "TODO"
+** Complete libinput device config
 ** Screensharing using xdg-desktop-portal-wlr
+
+* Backlog / Ideas
 ** Decorations for floating windows (dialogs)

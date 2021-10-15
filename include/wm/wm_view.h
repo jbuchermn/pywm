@@ -21,7 +21,7 @@ struct wm_view {
 
     bool accepts_input;
 
-    /* TODO Move to impl-specific getter */
+    /* Server-side determined states - stored from setter */
     bool focused;
     bool fullscreen;
     bool maximized;

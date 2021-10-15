@@ -24,7 +24,7 @@ void _pywm_view_init(struct _pywm_view* _view, struct wm_view* view){
 
 void _pywm_view_update(struct _pywm_view* view){
 
-    /* General info - TODO Should not be updated this often */
+    /* General info */
     long parent_handle = 0;
     struct wm_view* parent = wm_view_get_parent(view->view);
     if(parent){
