@@ -7,7 +7,11 @@
 
 ** v0.2
 *** Enable wayvnc.sh
-- [ ] virtual_pointer and virtual_keyboard
+- [X] virtual_pointer and virtual_keyboard
+- [X] Possibility to add an output (following swaymsg create_output)
+- [ ] Proper configuration of virtual outputs
+- [ ] Layout callback issues newm-side
+- [ ] Software cursor log on virtual output
 *** Output transforms
 *** Multiple outputs
 - [ ] Accept config per output

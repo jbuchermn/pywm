@@ -5,6 +5,7 @@
 #include <wayland-server.h>
 #include <wlr/backend.h>
 #include <wlr/backend/headless.h>
+#include <wlr/backend/noop.h>
 #include <wlr/backend/multi.h>
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_data_device.h>
@@ -48,6 +49,24 @@ static void handle_new_input(struct wl_listener* listener, void* data){
     struct wlr_input_device* input_device = data;
 
     wm_seat_add_input_device(server->wm_seat, input_device);
+}
+
+static void handle_new_virtual_pointer(struct wl_listener* listener, void* data){
+    wlr_log(WLR_DEBUG, "Server: New virtual pointer");
+
+    struct wm_server* server = wl_container_of(listener, server, new_virtual_pointer);
+    struct wlr_virtual_pointer_v1_new_pointer_event* evt = data;
+
+    wm_seat_add_input_device(server->wm_seat, &evt->new_pointer->input_device);
+}
+
+static void handle_new_virtual_keyboard(struct wl_listener* listener, void* data){
+    wlr_log(WLR_DEBUG, "Server: New virtual keyboard");
+
+    struct wm_server* server = wl_container_of(listener, server, new_virtual_keyboard);
+    struct wlr_virtual_keyboard_v1* keyboard = data;
+
+    wm_seat_add_input_device(server->wm_seat, &keyboard->input_device);
 }
 
 static void handle_new_output(struct wl_listener* listener, void* data){
@@ -161,6 +180,7 @@ static int callback_timer_handler(void* data){
     return 0;
 }
 
+
 /*
  * Class implementation
  */
@@ -176,12 +196,11 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wlr_backend = wlr_backend_autocreate(server->wl_display);
     assert(server->wlr_backend);
 
-
     /* Renderer */
     server->wm_renderer = calloc(1, sizeof(struct wm_renderer));
     wm_renderer_init(server->wm_renderer, server);
 
-    /* Renderer */
+    /* Event loop */
     server->wl_event_loop = 
         wl_display_get_event_loop(server->wl_display);
     assert(server->wl_event_loop);
@@ -232,6 +251,9 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
                 image->buffer, image->width * 4, image->width, image->height, image->hotspot_x, image->hotspot_y);
     }
 
+    server->wlr_virtual_keyboard_manager = wlr_virtual_keyboard_manager_v1_create(server->wl_display);
+    server->wlr_virtual_pointer_manager = wlr_virtual_pointer_manager_v1_create(server->wl_display);
+
 
     /* Children */
     server->wm_layout = calloc(1, sizeof(struct wm_layout));
@@ -251,9 +273,23 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wm_idle_inhibit = calloc(1, sizeof(struct wm_idle_inhibit));
     wm_idle_inhibit_init(server->wm_idle_inhibit, server);
 
+
+    /* Additional headless backend and outputs for vnc - TODO: Configure */
+    wlr_log(WLR_INFO, "Creating secondary output");
+    struct wlr_backend* headless = wlr_headless_backend_create_with_renderer(server->wl_display, server->wm_renderer->wlr_renderer);
+    wlr_multi_backend_add(server->wlr_backend, headless);
+    wlr_headless_add_output(headless, 1920, 1280);
+
+
     /* Handlers */
     server->new_input.notify = handle_new_input;
     wl_signal_add(&server->wlr_backend->events.new_input, &server->new_input);
+
+    server->new_virtual_pointer.notify = handle_new_virtual_pointer;
+    wl_signal_add(&server->wlr_virtual_pointer_manager->events.new_virtual_pointer, &server->new_virtual_pointer);
+
+    server->new_virtual_keyboard.notify = handle_new_virtual_keyboard;
+    wl_signal_add(&server->wlr_virtual_keyboard_manager->events.new_virtual_keyboard, &server->new_virtual_keyboard);
 
     server->new_output.notify = handle_new_output;
     wl_signal_add(&server->wlr_backend->events.new_output, &server->new_output);

@@ -200,14 +200,20 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
         wlr_log(WLR_INFO, "New output: Setting mode: %dx%d(%d)", best->width, best->height, best->refresh);
         wlr_output_set_mode(output->wlr_output, best);
     }else{
-        wlr_log(WLR_INFO, "New output: Setting custom mode - %dx%d(%d)",
-                server->wm_config->output_width,
-                server->wm_config->output_height,
-                server->wm_config->output_mHz);
-        wlr_output_set_custom_mode(output->wlr_output,
-                                   server->wm_config->output_width,
-                                   server->wm_config->output_height,
-                                   server->wm_config->output_mHz);
+        int w = server->wm_config->output_width;
+        int h = server->wm_config->output_height;
+        int mHz = server->wm_config->output_mHz;
+        if(w <= 0){
+            wlr_log(WLR_INFO, "New output: Need to configure width for custom mode - defaulting to 1920");
+            w = 1920;
+        }
+        if(h <= 0){
+            wlr_log(WLR_INFO, "New output: Need to configure height for custom mode - defaulting to 1280");
+            h = 1280;
+        }
+        wlr_log(WLR_INFO, "New output: Setting custom mode - %dx%d(%d)", w, h, mHz);
+        wlr_output_set_custom_mode(output->wlr_output, w, h, mHz);
+
     }
 
     wlr_output_enable(output->wlr_output, true);

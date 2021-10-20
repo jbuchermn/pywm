@@ -24,7 +24,7 @@ else:
     raise Exception("Fatal: Could not find shared library")
 
 setup(name='pywm',
-      version='0.1',
+      version='0.2',
       description='wlroots-based Wayland compositor with Python frontend',
       url="https://github.com/jbuchermn/pywm",
       author='Jonas Bucher',
