@@ -74,6 +74,24 @@ double wm_content_get_opacity(struct wm_content* content){
    return content->opacity;
 }
 
+void wm_content_set_mask(struct wm_content* content, double mask_x, double mask_y, double mask_w, double mask_h){
+    content->mask_x = mask_x;
+    content->mask_y = mask_y;
+    content->mask_w = mask_w;
+    content->mask_h = mask_h;
+
+    wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
+}
+void wm_content_get_mask(struct wm_content* content, double* mask_x, double* mask_y, double* mask_w, double* mask_h){
+    *mask_x = content->mask_x;
+    *mask_y = content->mask_y;
+    *mask_w = content->mask_w;
+    *mask_h = content->mask_h;
+
+    if(*mask_w < 0) *mask_w = -*mask_x + content->display_width + 1;
+    if(*mask_h < 0) *mask_h = -*mask_h + content->display_height + 1;
+}
+
 void wm_content_set_corner_radius(struct wm_content* content, double corner_radius){
     if(fabs(content->corner_radius - corner_radius) < 0.01) return;
 

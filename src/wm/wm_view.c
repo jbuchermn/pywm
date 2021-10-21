@@ -61,6 +61,10 @@ struct render_data {
     double opacity;
     double corner_radius;
     double lock_perc;
+    double mask_x;
+    double mask_y;
+    double mask_w;
+    double mask_h;
 };
 
 
@@ -82,13 +86,25 @@ static void render_surface(struct wlr_surface *surface, int sx, int sy,
         .height = round(surface->current.height * rdata->y_scale *
                 output->wlr_output->scale)};
 
+    double mask_l = fmax(0., (rdata->mask_x * output->wlr_output->scale) - box.x);
+    double mask_t = fmax(0., (rdata->mask_y * output->wlr_output->scale) - box.y);
+    double mask_r = fmax(0., box.x + box.width - (rdata->mask_x + rdata->mask_w) * output->wlr_output->scale);
+    double mask_b = fmax(0., box.y + box.height - (rdata->mask_y + rdata->mask_h) * output->wlr_output->scale);
+
+
     double corner_radius = rdata->corner_radius * output->wlr_output->scale;
     if (sx || sy) {
         /* Only for surfaces which extend fully */
+        mask_l = 0;
+        mask_t = 0;
+        mask_r = 0;
+        mask_b = 0;
         corner_radius = 0;
     }
     wm_renderer_render_texture_at(output->wm_server->wm_renderer, rdata->damage, texture, &box,
-            rdata->opacity, corner_radius, rdata->lock_perc);
+                                  rdata->opacity,
+                                  mask_l, mask_t, mask_r, mask_b,
+                                  corner_radius, rdata->lock_perc);
 
     /* Notify client */
     wlr_surface_send_frame_done(surface, &rdata->when);
@@ -108,6 +124,8 @@ static void wm_view_render(struct wm_content* super, struct wm_output* output, p
     double display_x, display_y, display_width, display_height;
     wm_content_get_box(&view->super, &display_x, &display_y, &display_width,
             &display_height);
+    double mask_x, mask_y, mask_w, mask_h;
+    wm_content_get_mask(&view->super, &mask_x, &mask_y, &mask_w, &mask_h);
     double corner_radius = wm_content_get_corner_radius(&view->super);
 
     // Firefox starts off as a 1x1 view which causes subsurfaces to be scaled up,
@@ -122,7 +140,11 @@ static void wm_view_render(struct wm_content* super, struct wm_output* output, p
         .x_scale = width > 1 ? display_width / width : 0,
         .y_scale = width > 1 ? display_height / height : 0,
         .corner_radius = corner_radius,
-        .lock_perc = view->super.lock_enabled ? 0.0 : view->super.wm_server->lock_perc
+        .lock_perc = view->super.lock_enabled ? 0.0 : view->super.wm_server->lock_perc,
+        .mask_x = display_x + mask_x,
+        .mask_y = display_y + mask_y,
+        .mask_w = mask_w,
+        .mask_h = mask_h
     };
 
 

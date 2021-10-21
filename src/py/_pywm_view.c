@@ -97,6 +97,7 @@ void _pywm_view_update(struct _pywm_view* view){
     if(res && res != Py_None){
         double x, y, w, h;
         double opacity;
+        double mask_x, mask_y, mask_w, mask_h;
         double corner_radius;
         int focus_pending, resizing_pending, fullscreen_pending, maximized_pending, close_pending;
         int width_pending, height_pending;
@@ -104,8 +105,9 @@ void _pywm_view_update(struct _pywm_view* view){
         int lock_enabled;
         
         if(!PyArg_ParseTuple(res, 
-                    "(dddd)ddipp(ii)iiiii",
+                    "(dddd)(dddd)ddipp(ii)iiiii",
                     &x, &y, &w, &h,
+                    &mask_x, &mask_y, &mask_w, &mask_h,
                     &opacity,
                     &corner_radius,
 
@@ -125,6 +127,7 @@ void _pywm_view_update(struct _pywm_view* view){
         }else{
 
             wm_content_set_opacity(&view->view->super, opacity);
+            wm_content_set_mask(&view->view->super, mask_x, mask_y, mask_w, mask_h);
             wm_content_set_corner_radius(&view->view->super, corner_radius);
             if(w >= 0.0 && h >= 0.0)
                 wm_content_set_box(&view->view->super, x, y, w, h);

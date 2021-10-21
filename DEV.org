@@ -4,23 +4,7 @@
 ** Current
 *** STRT Update and check TESTS.org
 *** TODO Damaging bugs on firefox start
-
-** v0.2
-*** Enable wayvnc.sh
-- [ ] virtual_pointer and virtual_keyboard
-*** Output transforms
-*** Multiple outputs
-- [ ] Accept config per output
-- [ ] Report detailed layout
-- [ ] Fix widgets to one output
-- [ ] Render windows / widgets / mouse according to layout
-- [ ] Is round_scale necessary? Issues if set to 1 (write test cases)? Probably only sensible to scale according to logical pixels (round_scale == output_scale)
-- [ ] Possibility to duplicate screen? or at leaast place windows (widgets also?) on multiple screens at the same time
-*** Complete libinput device config / support for external mouse
-
-** Backlog / Ideas
-*** Screensharing using xdg-desktop-portal-wlr
-*** Decorations for floating windows (dialogs)
+*** DONE Force Chromium not to use CSD (thereby bypassing corners)
 
 
 * Notes

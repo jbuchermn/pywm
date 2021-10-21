@@ -77,6 +77,7 @@ class PyWMViewUpstreamState:
 class PyWMViewDownstreamState:
     def __init__(self,
                  z_index: int=0, box: tuple[float, float, float, float]=(0, 0, 0, 0),
+                 mask: tuple[float, float, float, float]=(-1, -1, -1, -1),
                  opacity: float=1., corner_radius: float=0,
                  accepts_input: bool=False, lock_enabled: bool=False, up_state: Optional[PyWMViewUpstreamState]=None) -> None:
         """
@@ -84,6 +85,7 @@ class PyWMViewDownstreamState:
         """
         self.z_index = int(z_index)
         self.box = (float(box[0]), float(box[1]), float(box[2]), float(box[3]))
+        self.mask = (float(mask[0]), float(mask[1]), float(mask[2]), float(mask[3]))
         self.opacity = opacity
         self.corner_radius = corner_radius
         self.accepts_input = accepts_input
@@ -98,16 +100,17 @@ class PyWMViewDownstreamState:
             self.size = up_state.size
 
     def copy(self) -> PyWMViewDownstreamState:
-        res = PyWMViewDownstreamState(self.z_index, self.box, self.opacity, self.corner_radius, self.accepts_input, self.lock_enabled)
+        res = PyWMViewDownstreamState(self.z_index, self.box, self.mask, self.opacity, self.corner_radius, self.accepts_input, self.lock_enabled)
         res.size = self.size
         return res
 
     def get(self, root: PyWM[ViewT],
             last_state: Optional[PyWMViewDownstreamState],
             focus: Optional[int], fullscreen: Optional[int], maximized: Optional[int], resizing: Optional[int], close: Optional[int]
-            ) -> tuple[tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int]:
+            ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int]:
         return (
             root.round(*self.box),
+            self.mask,
             self.opacity,
             self.corner_radius,
             int(self.z_index),
@@ -158,7 +161,7 @@ class PyWMView(Generic[PyWMT]):
                 offset_x: int, offset_y: int,
                 width: int, height: int,
                 is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool
-                ) -> tuple[tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int]:
+                ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int]:
 
         if self.parent is None and parent_handle is not None:
             try:
