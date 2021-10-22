@@ -2,9 +2,27 @@
 #define WM_CONFIG_H
 
 #include <stdbool.h>
+#include <wayland-server.h>
+
+struct wm_config_output {
+    struct wl_list link; // wm_config::outputs
+
+    const char *name;
+    double scale;
+
+    /* Unit: pixels */
+    int width;
+    int height;
+
+    /* Refresh rate in mHz */
+    int mHz;
+
+    /* Unit: Logical pixels, >= 0 */
+    int pos_x;
+    int pos_y;
+};
 
 struct wm_config {
-    double output_scale;
     bool enable_output_manager;
     bool enable_xwayland;
 
@@ -14,12 +32,9 @@ struct wm_config {
     const char *xkb_layout;
     const char *xkb_options;
 
-    const char *output_name;
-    int output_width;
-    int output_height;
-    int output_mHz;
+    struct wl_list outputs;
 
-    const char* xcursor_theme;
+    const char *xcursor_theme;
     int xcursor_size;
 
     int focus_follows_mouse;
@@ -30,6 +45,12 @@ struct wm_config {
     int debug_f1;
 };
 
-void wm_config_init_default(struct wm_config* config);
+void wm_config_init_default(struct wm_config *config);
+void wm_config_add_output(struct wm_config *config, const char *name,
+                          double scale, int width, int height, int mHz,
+                          int pos_x, int pos_y);
+struct wm_config_output *wm_config_find_output(struct wm_config *config,
+                                               const char *name);
+void wm_config_destroy(struct wm_config *config);
 
 #endif

@@ -96,8 +96,9 @@ void wm_cursor_init(struct wm_cursor* cursor, struct wm_seat* seat, struct wm_la
     cursor->wlr_xcursor_manager = wlr_xcursor_manager_create(
             cursor->wm_seat->wm_server->wm_config->xcursor_theme,
             cursor->wm_seat->wm_server->wm_config->xcursor_size);
-    wlr_xcursor_manager_load(cursor->wlr_xcursor_manager,
-            cursor->wm_seat->wm_server->wm_config->output_scale);
+    wlr_xcursor_manager_load(cursor->wlr_xcursor_manager, 1.);
+            /* TODO */
+            /* cursor->wm_seat->wm_server->wm_config->output_scale); */
 
     cursor->motion.notify = handle_motion;
     wl_signal_add(&cursor->wlr_cursor->events.motion, &cursor->motion);

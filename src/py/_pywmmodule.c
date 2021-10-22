@@ -32,11 +32,14 @@ static void handle_update(){
     int update_cursor;
     double lock_perc;
     int terminate;
+    const char* open_virtual_output, *close_virtual_output;
 
-    if(!PyArg_ParseTuple(res, 
-                "idp",
+    if(!PyArg_ParseTuple(res,
+                "idssp",
                 &update_cursor,
                 &lock_perc,
+                &open_virtual_output,
+                &close_virtual_output,
                 &terminate)){
         PyErr_SetString(PyExc_TypeError, "Cannot parse query return");
     }else{
@@ -47,12 +50,19 @@ static void handle_update(){
         if(terminate){
             wm_terminate();
         }
+
+        if(strlen(open_virtual_output) > 0){
+            wm_open_virtual_output(open_virtual_output);
+        }
+        if(strlen(close_virtual_output) > 0){
+            wm_close_virtual_output(close_virtual_output);
+        }
     }
     Py_XDECREF(res);
 
 
     _pywm_widgets_update();
-    
+
     _pywm_views_update();
 
 
@@ -77,10 +87,31 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
 
     if(kwargs){
         PyObject* o;
-        o = PyDict_GetItemString(kwargs, "output_scale"); if(o){ conf.output_scale = PyFloat_AsDouble(o); }
-        o = PyDict_GetItemString(kwargs, "enable_output_manager"); if(o){ conf.enable_output_manager = o == Py_True; }
-        o = PyDict_GetItemString(kwargs, "enable_xwayland"); if(o){ conf.enable_xwayland = o == Py_True; }
 
+        o = PyDict_GetItemString(kwargs, "outputs");
+        if(o && PyList_Check(o)){
+            PyObject* l = o;
+            for(int i=0; i<PyList_Size(l); i++){
+                PyObject* c = PyList_GetItem(l, i);
+                char* name = "";
+                double scale = 0.;
+                int width = 0;
+                int height = 0;
+                int mHz = 0;
+                int pos_x = -1;
+                int pos_y = -1;
+
+                o = PyDict_GetItemString(c, "name"); if(o){ name = PyBytes_AsString(o); }
+                o = PyDict_GetItemString(c, "scale"); if(o){ scale = PyFloat_AsDouble(o); }
+                o = PyDict_GetItemString(c, "width"); if(o){ width = PyLong_AsLong(o); }
+                o = PyDict_GetItemString(c, "height"); if(o){ height = PyLong_AsLong(o); }
+                o = PyDict_GetItemString(c, "mHz"); if(o){ mHz = PyLong_AsLong(o); }
+                o = PyDict_GetItemString(c, "pos_x"); if(o){ pos_x = PyLong_AsLong(o); }
+                o = PyDict_GetItemString(c, "pos_y"); if(o){ pos_y = PyLong_AsLong(o); }
+
+                wm_config_add_output(&conf, name, scale, width, height, mHz, pos_x, pos_y);
+            }
+        }
         o = PyDict_GetItemString(kwargs, "xkb_model"); if(o){ conf.xkb_model = PyBytes_AsString(o); }
         o = PyDict_GetItemString(kwargs, "xkb_layout"); if(o){ conf.xkb_layout = PyBytes_AsString(o); }
         o = PyDict_GetItemString(kwargs, "xkb_options"); if(o){ conf.xkb_options = PyBytes_AsString(o); }
@@ -88,14 +119,12 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
         o = PyDict_GetItemString(kwargs, "xcursor_theme"); if(o){ conf.xcursor_theme = PyBytes_AsString(o); }
         o = PyDict_GetItemString(kwargs, "xcursor_size"); if(o){ conf.xcursor_size = PyLong_AsLong(o); }
 
-        o = PyDict_GetItemString(kwargs, "output_name"); if(o){ conf.output_name = PyBytes_AsString(o); }
-        o = PyDict_GetItemString(kwargs, "output_width"); if(o){ conf.output_width = PyLong_AsLong(o); }
-        o = PyDict_GetItemString(kwargs, "output_height"); if(o){ conf.output_height = PyLong_AsLong(o); }
-        o = PyDict_GetItemString(kwargs, "output_mHz"); if(o){ conf.output_mHz= PyLong_AsLong(o); }
-
         o = PyDict_GetItemString(kwargs, "focus_follows_mouse"); if(o){ conf.focus_follows_mouse = o == Py_True; }
         o = PyDict_GetItemString(kwargs, "constrain_popups_to_toplevel"); if(o){ conf.constrain_popups_to_toplevel = o == Py_True; }
         o = PyDict_GetItemString(kwargs, "encourage_csd"); if(o){ conf.encourage_csd = o == Py_True; }
+
+        o = PyDict_GetItemString(kwargs, "enable_output_manager"); if(o){ conf.enable_output_manager = o == Py_True; }
+        o = PyDict_GetItemString(kwargs, "enable_xwayland"); if(o){ conf.enable_xwayland = o == Py_True; }
         o = PyDict_GetItemString(kwargs, "debug_f1"); if(o){ conf.debug_f1 = o == Py_True; }
     }
 
@@ -127,7 +156,7 @@ static PyObject* _pywm_register(PyObject* self, PyObject* args){
         PyErr_SetString(PyExc_TypeError, "Object is not callable");
         return NULL;
     }
-    
+
     PyObject** target = _pywm_callbacks_get(name);
     if(!target){
         PyErr_SetString(PyExc_TypeError, "Unknown callback");

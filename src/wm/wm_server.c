@@ -92,12 +92,6 @@ static void handle_new_xdg_surface(struct wl_listener* listener, void* data){
     struct wm_server* server = wl_container_of(listener, server, new_xdg_surface);
     struct wlr_xdg_surface* surface = data;
 
-    /* Let clients know which (only one is supported) output they're on */
-    if(server->wm_layout->default_output) {
-        wlr_surface_send_enter(surface->surface,
-                server->wm_layout->default_output->wlr_output);
-    }
-
     if(surface->role == WLR_XDG_SURFACE_ROLE_POPUP){
         /* Popups should be handled by the parent */
         return;
@@ -240,10 +234,6 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wlr_xcursor_manager = wlr_xcursor_manager_create(server->wm_config->xcursor_theme, server->wm_config->xcursor_size);
     assert(server->wlr_xcursor_manager);
 
-    if(!wlr_xcursor_manager_load(server->wlr_xcursor_manager, server->wm_config->output_scale)){
-        wlr_log(WLR_ERROR, "Cannot load XCursor");
-    }
-
     struct wlr_xcursor* xcursor = wlr_xcursor_manager_get_xcursor(server->wlr_xcursor_manager, "left_ptr", 1);
     if(config->enable_xwayland && xcursor){
         struct wlr_xcursor_image* image = xcursor->images[0];
@@ -274,12 +264,9 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     wm_idle_inhibit_init(server->wm_idle_inhibit, server);
 
 
-    /* Additional headless backend and outputs for vnc - TODO: Configure */
-    wlr_log(WLR_INFO, "Creating secondary output");
-    struct wlr_backend* headless = wlr_headless_backend_create_with_renderer(server->wl_display, server->wm_renderer->wlr_renderer);
-    wlr_multi_backend_add(server->wlr_backend, headless);
-    wlr_headless_add_output(headless, 1920, 1280);
-
+    /* Additional headless backend for vnc */
+    server->wlr_headless_backend = wlr_headless_backend_create_with_renderer(server->wl_display, server->wm_renderer->wlr_renderer);
+    wlr_multi_backend_add(server->wlr_backend, server->wlr_headless_backend);
 
     /* Handlers */
     server->new_input.notify = handle_new_input;
@@ -330,6 +317,7 @@ void wm_server_destroy(struct wm_server* server){
     wm_layout_destroy(server->wm_layout);
     wm_seat_destroy(server->wm_seat);
     wm_idle_inhibit_destroy(server->wm_idle_inhibit);
+    wm_config_destroy(server->wm_config);
 
     free(server->wm_renderer);
     free(server->wm_layout);
@@ -419,6 +407,43 @@ struct wm_widget* wm_server_create_widget(struct wm_server* server){
     return widget;
 }
 
+void wm_server_open_virtual_output(struct wm_server* server, const char* name){
+    if(strlen(name) > 23){
+        wlr_log(WLR_ERROR, "Cannot create virtual output - name too long");
+        return;
+    }
+
+    wlr_log(WLR_INFO, "Creating virtual output: %s", name);
+    wm_output_override_name(name);
+
+    struct wlr_output* new_output = wlr_headless_add_output(
+        server->wlr_headless_backend, 1920, 1280); // Defaults will be overridden by custom modesetting
+
+    if(!new_output){
+        wm_output_override_name(NULL);
+        wlr_log(WLR_ERROR, "Failed to create virtual output");
+        return;
+    }
+
+    strcpy(new_output->name, name);
+}
+
+void wm_server_close_virtual_output(struct wm_server* server, const char* name){
+    bool found = false;
+    struct wm_output* output;
+    wl_list_for_each(output, &server->wm_layout->wm_outputs, link){
+        if(!strcmp(output->wlr_output->name, name) && wlr_output_is_headless(output->wlr_output)){
+            found = true;
+            break;
+        }
+    }
+    if(found){
+        wlr_log(WLR_INFO, "Closing virtual output %s", name);
+        wlr_output_destroy(output->wlr_output);
+    }else{
+        wlr_log(WLR_INFO, "Could not find virtual output %s - not closing", name);
+    }
+}
 
 void wm_server_update_contents(struct wm_server* server){
     /* Empty or only one element */

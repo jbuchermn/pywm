@@ -116,6 +116,14 @@ void wm_set_locked(double locked) {
     wm_server_set_locked(wm.server, locked);
 }
 
+void wm_open_virtual_output(const char* name){
+   wm_server_open_virtual_output(wm.server, name);
+}
+
+void wm_close_virtual_output(const char* name){
+   wm_server_close_virtual_output(wm.server, name);
+}
+
 struct wm_widget *wm_create_widget() {
     if (!wm.server)
         return NULL;

@@ -15,7 +15,9 @@
 #include <wlr/types/wlr_matrix.h>
 
 /* #define DEBUG_DAMAGE_HIGHLIGHT */
-/* #define DEBUG_DAMAGE_RERENDER */
+
+/* TODO */
+#define DEBUG_DAMAGE_RERENDER
 
 /*
  * Callbacks
@@ -88,15 +90,10 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
         }
     }
 
-    /* Do render */
-    if(output == output->wm_server->wm_layout->default_output){
-        struct wm_content *r;
-        wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
-            if(wm_content_get_opacity(r) < 0.0001) continue;
-            wm_content_render(r, output, damage, now);
-        }
-    }else{
-        wlr_renderer_clear(renderer->wlr_renderer, (float[]){.3, .3, .3, 1});
+    /* Do render - TODO lx, ly */
+    wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
+        if(wm_content_get_opacity(r) < 0.0001) continue;
+        wm_content_render(r, output, damage, now);
     }
 
     /* End render */
@@ -149,8 +146,6 @@ static void handle_damage_frame(struct wl_listener *listener, void *data) {
 
         pixman_region32_fini(&damage);
     }
-
-
 }
 
 static void handle_damage_destroy(struct wl_listener *listener, void *data) {
@@ -163,46 +158,66 @@ static void handle_damage_destroy(struct wl_listener *listener, void *data) {
 /*
  * Class implementation
  */
+
+static const char* wm_output_overridden_name = NULL;
+void wm_output_override_name(const char* name){
+    wm_output_overridden_name = name;
+}
+
 void wm_output_init(struct wm_output *output, struct wm_server *server,
         struct wm_layout *layout, struct wlr_output *out) {
-    wlr_log(WLR_INFO, "New output: %s: %s - %s", out->make, out->model, out->description);
+    const char* name = out->name;
+    if(wm_output_overridden_name){
+        name = wm_output_overridden_name;
+        wm_output_overridden_name = NULL;
+    }
+    wlr_log(WLR_INFO, "New output: %s: %s - %s (%s)", out->make, out->model, name, out->description);
     output->wm_server = server;
     output->wm_layout = layout;
     output->wlr_output = out;
 
     output->wlr_output_damage = wlr_output_damage_create(output->wlr_output);
 
+    struct wm_config_output* config = wm_config_find_output(server->wm_config, name);
+    double dpi = 0.;
+
     /* Set mode */
     if (!wl_list_empty(&output->wlr_output->modes)) {
         struct wlr_output_mode *pref =
             wlr_output_preferred_mode(output->wlr_output);
+        struct wlr_output_mode *best = NULL;
 
-        struct wlr_output_mode* best = NULL;
-        struct wlr_output_mode* mode;
-        wl_list_for_each(mode, &output->wlr_output->modes, link){
+        struct wlr_output_mode *mode;
+        wl_list_for_each(mode, &output->wlr_output->modes, link) {
             wlr_log(WLR_INFO, "New output: Output supports %dx%d(%d) %s",
-                    mode->width, mode->height, mode->refresh, mode->preferred ? "(Preferred)" : "") ;
+                    mode->width, mode->height, mode->refresh,
+                    mode->preferred ? "(Preferred)" : "");
 
-            // Sway logic
-            if (mode->width == server->wm_config->output_width && mode->height == server->wm_config->output_height) {
-                if (mode->refresh == server->wm_config->output_mHz) {
-                    best = mode;
-                    break;
-                }
-                if (best == NULL || mode->refresh > best->refresh) {
-                    best = mode;
+            if (config) {
+                // Sway logic
+                if (mode->width == config->width &&
+                    mode->height == config->height) {
+                    if (mode->refresh == config->mHz) {
+                        best = mode;
+                        break;
+                    }
+                    if (best == NULL || mode->refresh > best->refresh) {
+                        best = mode;
+                    }
                 }
             }
         }
 
-        if(!best) best = pref;
+        if (!best)
+            best = pref;
 
+        dpi = output->wlr_output->phys_width > 0 ? (double)best->width * 25.4 / output->wlr_output->phys_width : 0;
         wlr_log(WLR_INFO, "New output: Setting mode: %dx%d(%d)", best->width, best->height, best->refresh);
         wlr_output_set_mode(output->wlr_output, best);
     }else{
-        int w = server->wm_config->output_width;
-        int h = server->wm_config->output_height;
-        int mHz = server->wm_config->output_mHz;
+        int w = config ? config->width : 0;
+        int h = config ? config->height : 0;
+        int mHz = config ? config->mHz : 0;
         if(w <= 0){
             wlr_log(WLR_INFO, "New output: Need to configure width for custom mode - defaulting to 1920");
             w = 1920;
@@ -211,9 +226,9 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
             wlr_log(WLR_INFO, "New output: Need to configure height for custom mode - defaulting to 1280");
             h = 1280;
         }
+        dpi = output->wlr_output->phys_width > 0 ? (double)w * 25.4 / output->wlr_output->phys_width : 0;
         wlr_log(WLR_INFO, "New output: Setting custom mode - %dx%d(%d)", w, h, mHz);
         wlr_output_set_custom_mode(output->wlr_output, w, h, mHz);
-
     }
 
     wlr_output_enable(output->wlr_output, true);
@@ -222,8 +237,19 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
     }
 
     /* Set HiDPI scale */
-    wlr_output_set_scale(output->wlr_output,
-            output->wm_server->wm_config->output_scale);
+    double scale = config ? config->scale : -1.0;
+    if(scale < 0.1){
+        if(dpi > 182){
+            wlr_log(WLR_INFO, "New output: Assuming HiDPI scale");
+            scale = 2.;
+        }else{
+            scale = 1.;
+        }
+    }
+
+    wlr_log(WLR_INFO, "New output: Setting scale to %f", scale);
+    output->scale = scale;
+    wlr_output_set_scale(output->wlr_output, scale);
 
     output->destroy.notify = handle_destroy;
     wl_signal_add(&output->wlr_output->events.destroy, &output->destroy);

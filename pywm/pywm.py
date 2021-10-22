@@ -37,10 +37,12 @@ class PyWMDownstreamState:
     def copy(self) -> PyWMDownstreamState:
         return PyWMDownstreamState(self.lock_perc)
 
-    def get(self, update_cursor: int, terminate: int) -> tuple[int, float, bool]:
+    def get(self, update_cursor: int, open_virtual_output: Optional[str], close_virtual_output: Optional[str], terminate: int) -> tuple[int, float, str, str, bool]:
         return (
             int(update_cursor),
             self.lock_perc,
+            open_virtual_output if open_virtual_output is not None else "",
+            close_virtual_output if close_virtual_output is not None else "",
             bool(terminate)
         )
 
@@ -108,9 +110,6 @@ class PyWM(Generic[ViewT]):
 
         register("update", self._update)
 
-        self.output_scale: float = kwargs['output_scale'] if 'output_scale' in kwargs else 1.0
-        self.round_scale: float = kwargs['round_scale'] if 'round_scale' in kwargs else 1.0
-
         self._view_class = view_class
 
         self._views: dict[int, ViewT] = {}
@@ -134,15 +133,21 @@ class PyWM(Generic[ViewT]):
         1: Enable cursor
         """
         self._pending_update_cursor = -1
+        self._pending_open_virtual_output: Optional[str] = None
+        self._pending_close_virtual_output: Optional[str] = None
         self._pending_terminate = False
 
         """
         Consider these read-only
         """
         self.config: dict[str, Any] = kwargs
+        self.modifiers = 0
+
+        # TODO
+        self.output_scale: float = kwargs['output_scale'] if 'output_scale' in kwargs else 1.0
+        self.round_scale: float = kwargs['round_scale'] if 'round_scale' in kwargs else 1.0
         self.width = 0
         self.height = 0
-        self.modifiers = 0
 
         self._idle_thread: PyWMIdleThread[ViewT] = PyWMIdleThread(self)
         self._idle_last_activity: float = time.time()
@@ -342,17 +347,21 @@ class PyWM(Generic[ViewT]):
         return None
 
     @callback
-    def _update(self) -> tuple[int, float, bool]:
+    def _update(self) -> tuple[int, float, str, str, bool]:
         if self._damaged:
             self._damaged = False
             self._down_state = self.process()
 
         res = self._down_state.get(
             self._pending_update_cursor,
+            self._pending_open_virtual_output,
+            self._pending_close_virtual_output,
             self._pending_terminate
         )
 
         self._pending_update_cursor = -1
+        self._pending_open_virtual_output = None
+        self._pending_close_virtual_output = None
         self._pending_terminate = False
 
         return res
@@ -386,9 +395,19 @@ class PyWM(Generic[ViewT]):
     Public API
     """
 
+    def _encode(self, v: Any) -> Any:
+        if isinstance(v, str):
+            return v.encode("ascii", "ignore")
+        elif isinstance(v, dict):
+            return {k:self._encode(v[k]) for k in v}
+        elif isinstance(v, list):
+            return [self._encode(k) for k in v]
+        else:
+            return v
+
     def run(self) -> None:
         logger.debug("PyWM run")
-        run(**{k:v if not isinstance(v, str) else v.encode("ascii", "ignore") for k, v in self.config.items()})
+        run(**self._encode(self.config))
         logger.debug("PyWM finished")
 
     def terminate(self) -> None:
@@ -397,6 +416,12 @@ class PyWM(Generic[ViewT]):
             self._touchpad_daemon.stop()
         self._idle_thread.stop()
         self._pending_terminate = True
+
+    def open_virtual_output(self, name: str) -> None:
+        self._pending_open_virtual_output = name
+
+    def close_virtual_output(self, name: str) -> None:
+        self._pending_close_virtual_output = name
 
     def create_widget(self, widget_class: Callable[..., WidgetT], *args: Any, **kwargs: Any) -> WidgetT:
         widget = widget_class(self, *args, **kwargs)

@@ -8,20 +8,13 @@
 struct wm_server;
 struct wm_view;
 struct wm_content;
+struct wm_output;
 
 struct wm_layout {
     struct wm_server* wm_server;
 
     struct wlr_output_layout* wlr_output_layout;
     struct wl_list wm_outputs; // wm_output::link
-
-    int width;
-    int height;
-
-    /* First registered output for now - multiple screens are not
-     * properly supported anyway - used to notify clients about 
-     * the output they are on */
-    struct wm_output* default_output;
 
     struct wl_listener change;
 };

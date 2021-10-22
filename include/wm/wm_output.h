@@ -15,6 +15,8 @@ struct wm_output {
     struct wlr_output* wlr_output;
     struct wlr_output_damage* wlr_output_damage;
 
+    double scale;
+
     struct wl_listener destroy;
     struct wl_listener commit;
     struct wl_listener mode;
@@ -25,6 +27,14 @@ struct wm_output {
 
 void wm_output_init(struct wm_output* output, struct wm_server* server, struct wm_layout* layout, struct wlr_output* out);
 void wm_output_destroy(struct wm_output* output);
+
+
+/*
+ * Override name of next output to be initialised
+ * Necessary, as wlroots provides no way of naming
+ * headless outputs
+ */
+void wm_output_override_name(const char* name);
 
 
 #endif

@@ -24,6 +24,8 @@ struct wm_server{
     struct wl_event_loop* wl_event_loop;
 
     struct wlr_backend* wlr_backend;
+    struct wlr_backend* wlr_headless_backend;
+
     struct wlr_compositor* wlr_compositor;
     struct wlr_data_device_manager* wlr_data_device_manager;
     struct wlr_xdg_shell* wlr_xdg_shell;
@@ -71,6 +73,9 @@ void wm_server_update_contents(struct wm_server* server);
 
 /* passes ownership to caller, no need to unregister, simply destroy */
 struct wm_widget* wm_server_create_widget(struct wm_server* server);
+
+void wm_server_open_virtual_output(struct wm_server* server, const char* name);
+void wm_server_close_virtual_output(struct wm_server* server, const char* name);
 
 /*
  * Execute wm_callback_update() supressing callback_timer
