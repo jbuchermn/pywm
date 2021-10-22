@@ -3,7 +3,7 @@
 * Development
 ** Current
 *** STRT Update and check TESTS.org
-*** TODO Damaging bugs on firefox start
+*** DONE Damaging bugs on firefox start
 *** DONE Force Chromium not to use CSD (thereby bypassing corners)
 
 
