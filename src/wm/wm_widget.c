@@ -47,10 +47,18 @@ static void wm_widget_render(struct wm_content* super, struct wm_output* output,
     double corner_radius =
         wm_content_get_corner_radius(&widget->super) * output->wlr_output->scale;
 
+    double mask_x, mask_y, mask_w, mask_h;
+    wm_content_get_mask(super, &mask_x, &mask_y, &mask_w, &mask_h);
+
+    double mask_l = fmax(0., mask_x * output->wlr_output->scale);
+    double mask_t = fmax(0., mask_y * output->wlr_output->scale);
+    double mask_r = fmax(0., box.width - (mask_x + mask_w) * output->wlr_output->scale);
+    double mask_b = fmax(0., box.height - (mask_y + mask_h) * output->wlr_output->scale);
+
     wm_renderer_render_texture_at(
             output->wm_server->wm_renderer, output_damage,
             widget->wlr_texture, &box,
-            wm_content_get_opacity(super), corner_radius,
+            wm_content_get_opacity(super), mask_l, mask_t, mask_r, mask_b, corner_radius,
             super->lock_enabled ? 0.0 : super->wm_server->lock_perc);
 
 }

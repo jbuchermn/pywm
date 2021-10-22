@@ -84,7 +84,9 @@ static bool render_subtexture_with_matrix(
 		struct wm_renderer *renderer, struct wlr_texture *wlr_texture,
 		const struct wlr_fbox *box, const float matrix[static 9],
 		float alpha,
-        const struct wlr_box *display_box, float corner_radius,
+        const struct wlr_box *display_box,
+		double padding_l, double padding_t, double padding_r, double padding_b,
+		float corner_radius,
 		double lock_perc
         ) {
 	struct wlr_gles2_renderer *gles2_renderer =
@@ -135,6 +137,10 @@ static bool render_subtexture_with_matrix(
 	glUniform1f(shader->alpha, alpha);
 	glUniform1f(shader->width, display_box->width);
 	glUniform1f(shader->height, display_box->height);
+	glUniform1f(shader->padding_l, padding_l);
+	glUniform1f(shader->padding_t, padding_t);
+	glUniform1f(shader->padding_r, padding_r);
+	glUniform1f(shader->padding_b, padding_b);
 	glUniform1f(shader->cornerradius, corner_radius);
 
 	if(lock_perc > 0.001){ /* Same condition as above! Important! */
@@ -193,20 +199,28 @@ const GLchar custom_tex_fragment_src_rgba[] =
 "\n"
 "uniform float width;\n"
 "uniform float height;\n"
+"uniform float padding_l;\n"
+"uniform float padding_t;\n"
+"uniform float padding_r;\n"
+"uniform float padding_b;\n"
 "uniform float cornerradius;\n"
 "\n"
 "void main() {\n"
-"   if(v_texcoord.x*width < cornerradius && v_texcoord.y*height < cornerradius){\n"
-"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius, cornerradius)) > cornerradius) discard;\n"
+"   if(v_texcoord.x*width < padding_l) discard;\n"
+"   if(v_texcoord.y*height < padding_t) discard;\n"
+"   if(v_texcoord.x*width > width - padding_r) discard;\n"
+"   if(v_texcoord.y*height > height - padding_b) discard;\n"
+"   if(v_texcoord.x*width < cornerradius + padding_l && v_texcoord.y*height < cornerradius + padding_t){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius + padding_l, cornerradius + padding_t)) > cornerradius) discard;\n"
 "   }\n"
-"   if(v_texcoord.x*width > width - cornerradius && v_texcoord.y*height < cornerradius){\n"
-"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius, cornerradius)) > cornerradius) discard;\n"
+"   if(v_texcoord.x*width > width - cornerradius - padding_r && v_texcoord.y*height < cornerradius + padding_t){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius - padding_r, cornerradius + padding_t)) > cornerradius) discard;\n"
 "   }\n"
-"   if(v_texcoord.x*width < cornerradius && v_texcoord.y*height > height - cornerradius){\n"
-"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius, height - cornerradius)) > cornerradius) discard;\n"
+"   if(v_texcoord.x*width < cornerradius + padding_l && v_texcoord.y*height > height - cornerradius - padding_b){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius + padding_l, height - cornerradius - padding_b)) > cornerradius) discard;\n"
 "   }\n"
-"   if(v_texcoord.x*width > width - cornerradius && v_texcoord.y*height > height - cornerradius){\n"
-"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius, height - cornerradius)) > cornerradius) discard;\n"
+"   if(v_texcoord.x*width > width - cornerradius - padding_r && v_texcoord.y*height > height - cornerradius - padding_b){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius - padding_r, height - cornerradius - padding_b)) > cornerradius) discard;\n"
 "   }\n"
 "	gl_FragColor = texture2D(tex, v_texcoord) * alpha;\n"
 "}\n";
@@ -221,20 +235,28 @@ const GLchar custom_tex_fragment_src_rgbx[] =
 "\n"
 "uniform float width;\n"
 "uniform float height;\n"
+"uniform float padding_l;\n"
+"uniform float padding_t;\n"
+"uniform float padding_r;\n"
+"uniform float padding_b;\n"
 "uniform float cornerradius;\n"
 "\n"
 "void main() {\n"
-"   if(v_texcoord.x*width < cornerradius && v_texcoord.y*height < cornerradius){\n"
-"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius, cornerradius)) > cornerradius) discard;\n"
+"   if(v_texcoord.x*width < padding_l) discard;\n"
+"   if(v_texcoord.y*height < padding_t) discard;\n"
+"   if(v_texcoord.x*width > width - padding_r) discard;\n"
+"   if(v_texcoord.y*height > height - padding_b) discard;\n"
+"   if(v_texcoord.x*width < cornerradius + padding_l && v_texcoord.y*height < cornerradius + padding_t){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius + padding_l, cornerradius + padding_t)) > cornerradius) discard;\n"
 "   }\n"
-"   if(v_texcoord.x*width > width - cornerradius && v_texcoord.y*height < cornerradius){\n"
-"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius, cornerradius)) > cornerradius) discard;\n"
+"   if(v_texcoord.x*width > width - cornerradius - padding_r && v_texcoord.y*height < cornerradius + padding_t){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius - padding_r, cornerradius + padding_t)) > cornerradius) discard;\n"
 "   }\n"
-"   if(v_texcoord.x*width < cornerradius && v_texcoord.y*height > height - cornerradius){\n"
-"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius, height - cornerradius)) > cornerradius) discard;\n"
+"   if(v_texcoord.x*width < cornerradius + padding_l && v_texcoord.y*height > height - cornerradius - padding_b){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius + padding_l, height - cornerradius - padding_b)) > cornerradius) discard;\n"
 "   }\n"
-"   if(v_texcoord.x*width > width - cornerradius && v_texcoord.y*height > height - cornerradius){\n"
-"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius, height - cornerradius)) > cornerradius) discard;\n"
+"   if(v_texcoord.x*width > width - cornerradius - padding_r && v_texcoord.y*height > height - cornerradius - padding_b){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius - padding_r, height - cornerradius - padding_b)) > cornerradius) discard;\n"
 "   }\n"
 "	gl_FragColor = vec4(texture2D(tex, v_texcoord).rgb, 1.0) * alpha;\n"
 "}\n";
@@ -248,21 +270,29 @@ const GLchar custom_tex_fragment_blurred_src_rgba[] =
 "uniform float width;\n"
 "uniform float height;\n"
 "\n"
+"uniform float padding_l;\n"
+"uniform float padding_t;\n"
+"uniform float padding_r;\n"
+"uniform float padding_b;\n"
 "uniform float cornerradius;\n"
 "uniform float lock_perc;\n"
 "\n"
 "void main() {\n"
-"   if(v_texcoord.x*width < cornerradius && v_texcoord.y*height < cornerradius){\n"
-"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius, cornerradius)) > cornerradius) discard;\n"
+"   if(v_texcoord.x*width < padding_l) discard;\n"
+"   if(v_texcoord.y*height < padding_t) discard;\n"
+"   if(v_texcoord.x*width > width - padding_r) discard;\n"
+"   if(v_texcoord.y*height > height - padding_b) discard;\n"
+"   if(v_texcoord.x*width < cornerradius + padding_l && v_texcoord.y*height < cornerradius + padding_t){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius + padding_l, cornerradius + padding_t)) > cornerradius) discard;\n"
 "   }\n"
-"   if(v_texcoord.x*width > width - cornerradius && v_texcoord.y*height < cornerradius){\n"
-"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius, cornerradius)) > cornerradius) discard;\n"
+"   if(v_texcoord.x*width > width - cornerradius - padding_r && v_texcoord.y*height < cornerradius + padding_t){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius - padding_r, cornerradius + padding_t)) > cornerradius) discard;\n"
 "   }\n"
-"   if(v_texcoord.x*width < cornerradius && v_texcoord.y*height > height - cornerradius){\n"
-"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius, height - cornerradius)) > cornerradius) discard;\n"
+"   if(v_texcoord.x*width < cornerradius + padding_l && v_texcoord.y*height > height - cornerradius - padding_b){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius + padding_l, height - cornerradius - padding_b)) > cornerradius) discard;\n"
 "   }\n"
-"   if(v_texcoord.x*width > width - cornerradius && v_texcoord.y*height > height - cornerradius){\n"
-"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius, height - cornerradius)) > cornerradius) discard;\n"
+"   if(v_texcoord.x*width > width - cornerradius - padding_r && v_texcoord.y*height > height - cornerradius - padding_b){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius - padding_r, height - cornerradius - padding_b)) > cornerradius) discard;\n"
 "   }\n"
 "   float r = sqrt((v_texcoord.x - 0.5) * (v_texcoord.x - 0.5) + (v_texcoord.y - 0.5) * (v_texcoord.y - 0.5));\n"
 "   float a = atan(v_texcoord.y - 0.5, v_texcoord.x - 0.5);\n"
@@ -280,21 +310,29 @@ const GLchar custom_tex_fragment_blurred_src_rgbx[] =
 "uniform float width;\n"
 "uniform float height;\n"
 "\n"
+"uniform float padding_l;\n"
+"uniform float padding_t;\n"
+"uniform float padding_r;\n"
+"uniform float padding_b;\n"
 "uniform float cornerradius;\n"
 "uniform float lock_perc;\n"
 "\n"
 "void main() {\n"
-"   if(v_texcoord.x*width < cornerradius && v_texcoord.y*height < cornerradius){\n"
-"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius, cornerradius)) > cornerradius) discard;\n"
+"   if(v_texcoord.x*width < padding_l) discard;\n"
+"   if(v_texcoord.y*height < padding_t) discard;\n"
+"   if(v_texcoord.x*width > width - padding_r) discard;\n"
+"   if(v_texcoord.y*height > height - padding_b) discard;\n"
+"   if(v_texcoord.x*width < cornerradius + padding_l && v_texcoord.y*height < cornerradius + padding_t){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius + padding_l, cornerradius + padding_t)) > cornerradius) discard;\n"
 "   }\n"
-"   if(v_texcoord.x*width > width - cornerradius && v_texcoord.y*height < cornerradius){\n"
-"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius, cornerradius)) > cornerradius) discard;\n"
+"   if(v_texcoord.x*width > width - cornerradius - padding_r && v_texcoord.y*height < cornerradius + padding_t){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius - padding_r, cornerradius + padding_t)) > cornerradius) discard;\n"
 "   }\n"
-"   if(v_texcoord.x*width < cornerradius && v_texcoord.y*height > height - cornerradius){\n"
-"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius, height - cornerradius)) > cornerradius) discard;\n"
+"   if(v_texcoord.x*width < cornerradius + padding_l && v_texcoord.y*height > height - cornerradius - padding_b){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(cornerradius + padding_l, height - cornerradius - padding_b)) > cornerradius) discard;\n"
 "   }\n"
-"   if(v_texcoord.x*width > width - cornerradius && v_texcoord.y*height > height - cornerradius){\n"
-"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius, height - cornerradius)) > cornerradius) discard;\n"
+"   if(v_texcoord.x*width > width - cornerradius - padding_r && v_texcoord.y*height > height - cornerradius - padding_b){\n"
+"       if(length(vec2(v_texcoord.x*width, v_texcoord.y*height) - vec2(width - cornerradius - padding_r, height - cornerradius - padding_b)) > cornerradius) discard;\n"
 "   }\n"
 "   float r = sqrt((v_texcoord.x - 0.5) * (v_texcoord.x - 0.5) + (v_texcoord.y - 0.5) * (v_texcoord.y - 0.5));\n"
 "   float a = atan(v_texcoord.y - 0.5, v_texcoord.x - 0.5);\n"
@@ -330,6 +368,10 @@ void wm_renderer_init(struct wm_renderer* renderer, struct wm_server* server){
 	renderer->shader_rgba.alpha = glGetUniformLocation(renderer->shader_rgba.shader, "alpha");
 	renderer->shader_rgba.width = glGetUniformLocation(renderer->shader_rgba.shader, "width");
 	renderer->shader_rgba.height = glGetUniformLocation(renderer->shader_rgba.shader, "height");
+	renderer->shader_rgba.padding_l = glGetUniformLocation(renderer->shader_rgba.shader, "padding_l");
+	renderer->shader_rgba.padding_t = glGetUniformLocation(renderer->shader_rgba.shader, "padding_t");
+	renderer->shader_rgba.padding_r = glGetUniformLocation(renderer->shader_rgba.shader, "padding_r");
+	renderer->shader_rgba.padding_b = glGetUniformLocation(renderer->shader_rgba.shader, "padding_b");
 	renderer->shader_rgba.cornerradius = glGetUniformLocation(renderer->shader_rgba.shader, "cornerradius");
 
 	renderer->shader_rgba.pos_attrib = glGetAttribLocation(renderer->shader_rgba.shader, "pos");
@@ -345,6 +387,10 @@ void wm_renderer_init(struct wm_renderer* renderer, struct wm_server* server){
 	renderer->shader_rgbx.alpha = glGetUniformLocation(renderer->shader_rgbx.shader, "alpha");
 	renderer->shader_rgbx.width = glGetUniformLocation(renderer->shader_rgbx.shader, "width");
 	renderer->shader_rgbx.height = glGetUniformLocation(renderer->shader_rgbx.shader, "height");
+	renderer->shader_rgbx.padding_l = glGetUniformLocation(renderer->shader_rgbx.shader, "padding_l");
+	renderer->shader_rgbx.padding_t = glGetUniformLocation(renderer->shader_rgbx.shader, "padding_t");
+	renderer->shader_rgbx.padding_r = glGetUniformLocation(renderer->shader_rgbx.shader, "padding_r");
+	renderer->shader_rgbx.padding_b = glGetUniformLocation(renderer->shader_rgbx.shader, "padding_b");
 	renderer->shader_rgbx.cornerradius = glGetUniformLocation(renderer->shader_rgbx.shader, "cornerradius");
 
 	renderer->shader_rgbx.pos_attrib = glGetAttribLocation(renderer->shader_rgbx.shader, "pos");
@@ -360,7 +406,10 @@ void wm_renderer_init(struct wm_renderer* renderer, struct wm_server* server){
 	renderer->shader_blurred_rgba.alpha = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "alpha");
 	renderer->shader_blurred_rgba.width = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "width");
 	renderer->shader_blurred_rgba.height = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "height");
-
+	renderer->shader_blurred_rgba.padding_l = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "padding_l");
+	renderer->shader_blurred_rgba.padding_t = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "padding_t");
+	renderer->shader_blurred_rgba.padding_r = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "padding_r");
+	renderer->shader_blurred_rgba.padding_b = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "padding_b");
 	renderer->shader_blurred_rgba.cornerradius = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "cornerradius");
 	renderer->shader_blurred_rgba.lock_perc = glGetUniformLocation(renderer->shader_blurred_rgba.shader, "lock_perc");
 
@@ -377,7 +426,10 @@ void wm_renderer_init(struct wm_renderer* renderer, struct wm_server* server){
 	renderer->shader_blurred_rgbx.alpha = glGetUniformLocation(renderer->shader_blurred_rgbx.shader, "alpha");
 	renderer->shader_blurred_rgbx.width = glGetUniformLocation(renderer->shader_blurred_rgbx.shader, "width");
 	renderer->shader_blurred_rgbx.height = glGetUniformLocation(renderer->shader_blurred_rgbx.shader, "height");
-
+	renderer->shader_blurred_rgbx.padding_l = glGetUniformLocation(renderer->shader_blurred_rgbx.shader, "padding_l");
+	renderer->shader_blurred_rgbx.padding_t = glGetUniformLocation(renderer->shader_blurred_rgbx.shader, "padding_t");
+	renderer->shader_blurred_rgbx.padding_r = glGetUniformLocation(renderer->shader_blurred_rgbx.shader, "padding_r");
+	renderer->shader_blurred_rgbx.padding_b = glGetUniformLocation(renderer->shader_blurred_rgbx.shader, "padding_b");
 	renderer->shader_blurred_rgbx.cornerradius = glGetUniformLocation(renderer->shader_blurred_rgbx.shader, "cornerradius");
 	renderer->shader_blurred_rgbx.lock_perc = glGetUniformLocation(renderer->shader_blurred_rgbx.shader, "lock_perc");
 
@@ -410,6 +462,7 @@ void wm_renderer_render_texture_at(struct wm_renderer *renderer,
                                    pixman_region32_t *damage,
                                    struct wlr_texture *texture,
                                    struct wlr_box *box, double opacity,
+                                   double padding_l, double padding_t, double padding_r, double padding_b,
                                    double corner_radius, double lock_perc) {
 
     float matrix[9];
@@ -444,7 +497,9 @@ void wm_renderer_render_texture_at(struct wm_renderer *renderer,
 				renderer,
 				texture,
 				&fbox, matrix, opacity,
-				box, corner_radius, lock_perc);
+				box,
+				padding_l, padding_t, padding_r, padding_b,
+				corner_radius, lock_perc);
 #else
 		wlr_render_subtexture_with_matrix(
 				renderer->wlr_renderer,
