@@ -39,8 +39,8 @@ static void wm_widget_render(struct wm_content* super, struct wm_output* output,
         return;
 
     struct wlr_box box = {
-        .x = round(widget->super.display_x * output->wlr_output->scale),
-        .y = round(widget->super.display_y * output->wlr_output->scale),
+        .x = round((widget->super.display_x - output->layout_x) * output->wlr_output->scale),
+        .y = round((widget->super.display_y - output->layout_y) * output->wlr_output->scale),
         .width = round(widget->super.display_width * output->wlr_output->scale),
         .height =
             round(widget->super.display_height * output->wlr_output->scale)};
@@ -62,6 +62,9 @@ static void wm_widget_damage_output(struct wm_content* super, struct wm_output* 
 
     double x, y, w, h;
     wm_content_get_box(super, &x, &y, &w, &h);
+    x -= output->layout_x;
+    y -= output->layout_y;
+
     x *= output->wlr_output->scale;
     y *= output->wlr_output->scale;
     w *= output->wlr_output->scale;

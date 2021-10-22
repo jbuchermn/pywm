@@ -15,9 +15,7 @@
 #include <wlr/types/wlr_matrix.h>
 
 /* #define DEBUG_DAMAGE_HIGHLIGHT */
-
-/* TODO */
-#define DEBUG_DAMAGE_RERENDER
+/* #define DEBUG_DAMAGE_RERENDER */
 
 /*
  * Callbacks
@@ -90,7 +88,7 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
         }
     }
 
-    /* Do render - TODO lx, ly */
+    /* Do render */
     wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
         if(wm_content_get_opacity(r) < 0.0001) continue;
         wm_content_render(r, output, damage, now);
@@ -175,6 +173,8 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
     output->wm_server = server;
     output->wm_layout = layout;
     output->wlr_output = out;
+    output->layout_x = 0;
+    output->layout_y = 0;
 
     output->wlr_output_damage = wlr_output_damage_create(output->wlr_output);
 
@@ -248,7 +248,6 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
     }
 
     wlr_log(WLR_INFO, "New output: Setting scale to %f", scale);
-    output->scale = scale;
     wlr_output_set_scale(output->wlr_output, scale);
 
     output->destroy.notify = handle_destroy;

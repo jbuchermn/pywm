@@ -116,8 +116,8 @@ static void wm_view_render(struct wm_content* super, struct wm_output* output, p
         .output = output,
         .when = now,
         .damage = output_damage,
-        .x = display_x,
-        .y = display_y,
+        .x = display_x - output->layout_x,
+        .y = display_y - output->layout_y,
         .opacity = wm_content_get_opacity(&view->super),
         .x_scale = width > 1 ? display_width / width : 0,
         .y_scale = width > 1 ? display_height / height : 0,
@@ -210,8 +210,8 @@ static void wm_view_damage_output(struct wm_content* super, struct wm_output* ou
 
     struct damage_data ddata = {
         .output = output,
-        .x = display_x,
-        .y = display_y,
+        .x = display_x - output->layout_x,
+        .y = display_y - output->layout_y,
         .x_scale = display_width / width,
         .y_scale = display_height / height,
         .origin = origin

@@ -506,6 +506,8 @@ bool wm_server_is_locked(struct wm_server* server){
 void wm_server_printf(FILE* file, struct wm_server* server){
     fprintf(file, "---- server begin ----\n");
 
+    wm_layout_printf(file, server->wm_layout);
+
     struct wm_content* content;
     wl_list_for_each(content, &server->wm_contents, link){
         wm_content_printf(file, content);

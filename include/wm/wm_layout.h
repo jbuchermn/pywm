@@ -1,6 +1,7 @@
 #ifndef WM_LAYOUT_H
 #define WM_LAYOUT_H
 
+#include <stdio.h>
 #include <wayland-server.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_layout.h>
@@ -29,5 +30,9 @@ void wm_layout_remove_output(struct wm_layout* layout, struct wm_output* output)
 void wm_layout_damage_whole(struct wm_layout* layout);
 
 void wm_layout_damage_from(struct wm_layout* layout, struct wm_content* content, struct wlr_surface* origin);
+
+void wm_layout_update_content_outputs(struct wm_layout* layout, struct wm_content* content);
+
+void wm_layout_printf(FILE* file, struct wm_layout* layout);
 
 #endif

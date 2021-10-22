@@ -37,6 +37,7 @@ void wm_content_set_box(struct wm_content* content, double x, double y, double w
             fabs(content->display_width - width) +
             fabs(content->display_height - height) < 0.01) return;
 
+    wm_layout_update_content_outputs(content->wm_server->wm_layout, content);
 
     wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
     content->display_x = x;

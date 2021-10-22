@@ -12,10 +12,11 @@ struct wm_output {
     struct wm_layout* wm_layout;
     struct wl_list link; // wm_layout::wm_outputs
 
+    double layout_x; // Duplicated from wlr_output_layout
+    double layout_y; // Duplicated from wlr_output_layout
+
     struct wlr_output* wlr_output;
     struct wlr_output_damage* wlr_output_damage;
-
-    double scale;
 
     struct wl_listener destroy;
     struct wl_listener commit;

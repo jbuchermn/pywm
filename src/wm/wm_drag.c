@@ -118,8 +118,8 @@ static void wm_drag_render(struct wm_content* super, struct wm_output* output, p
     if(!drag->wlr_drag_icon) return;
 
     struct wlr_box box = {
-        .x = round(drag->super.display_x * output->wlr_output->scale),
-        .y = round(drag->super.display_y * output->wlr_output->scale),
+        .x = round((drag->super.display_x - output->layout_x) * output->wlr_output->scale),
+        .y = round((drag->super.display_y - output->layout_y) * output->wlr_output->scale),
         .width = round(drag->super.display_width * output->wlr_output->scale),
         .height = round(drag->super.display_height * output->wlr_output->scale)};
 
@@ -137,8 +137,8 @@ static void wm_drag_render(struct wm_content* super, struct wm_output* output, p
 static void wm_drag_damage_output(struct wm_content* super, struct wm_output* output, struct wlr_surface* origin){
     struct wm_drag* drag = wm_cast(wm_drag, super);
 
-    double x = drag->super.display_x * output->wlr_output->scale;
-    double y = drag->super.display_y * output->wlr_output->scale;
+    double x = (drag->super.display_x - output->layout_x) * output->wlr_output->scale;
+    double y = (drag->super.display_y - output->layout_y) * output->wlr_output->scale;
     double width = drag->super.display_width * output->wlr_output->scale;
     double height = drag->super.display_height * output->wlr_output->scale;
     struct wlr_box box = {
