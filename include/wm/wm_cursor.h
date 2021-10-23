@@ -8,6 +8,7 @@
 struct wm_cursor;
 struct wm_seat;
 struct wm_layout;
+struct wm_output;
 struct wm_pointer;
 
 struct wm_cursor {
@@ -37,6 +38,7 @@ struct wm_cursor {
 };
 
 void wm_cursor_init(struct wm_cursor* cursor, struct wm_seat* seat, struct wm_layout* layout);
+void wm_cursor_ensure_loaded_for_scale(struct wm_cursor* cursor, double scale);
 
 void wm_cursor_set_visible(struct wm_cursor* cursor, int visible);
 void wm_cursor_set_image(struct wm_cursor* cursor, const char* image);

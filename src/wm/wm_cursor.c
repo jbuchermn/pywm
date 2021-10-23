@@ -7,6 +7,7 @@
 #include "wm/wm_cursor.h"
 #include "wm/wm_seat.h"
 #include "wm/wm_layout.h"
+#include "wm/wm_output.h"
 #include "wm/wm_pointer.h"
 #include "wm/wm_config.h"
 #include "wm/wm_server.h"
@@ -97,8 +98,6 @@ void wm_cursor_init(struct wm_cursor* cursor, struct wm_seat* seat, struct wm_la
             cursor->wm_seat->wm_server->wm_config->xcursor_theme,
             cursor->wm_seat->wm_server->wm_config->xcursor_size);
     wlr_xcursor_manager_load(cursor->wlr_xcursor_manager, 1.);
-            /* TODO */
-            /* cursor->wm_seat->wm_server->wm_config->output_scale); */
 
     cursor->motion.notify = handle_motion;
     wl_signal_add(&cursor->wlr_cursor->events.motion, &cursor->motion);
@@ -119,6 +118,10 @@ void wm_cursor_init(struct wm_cursor* cursor, struct wm_seat* seat, struct wm_la
     cursor->surface_destroy.notify = handle_surface_destroy;
 
     cursor->cursor_visible = 0;
+}
+
+void wm_cursor_ensure_loaded_for_scale(struct wm_cursor* cursor, double scale){
+    wlr_xcursor_manager_load(cursor->wlr_xcursor_manager, scale);
 }
 
 void wm_cursor_destroy(struct wm_cursor* cursor) {

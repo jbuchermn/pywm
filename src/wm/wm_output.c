@@ -8,6 +8,8 @@
 #include "wm/wm_util.h"
 #include "wm/wm_view.h"
 #include "wm/wm_widget.h"
+#include "wm/wm_seat.h"
+#include "wm/wm_cursor.h"
 #include <assert.h>
 #include <time.h>
 #include <wlr/util/log.h>
@@ -164,12 +166,11 @@ void wm_output_override_name(const char* name){
 
 void wm_output_init(struct wm_output *output, struct wm_server *server,
         struct wm_layout *layout, struct wlr_output *out) {
-    const char* name = out->name;
     if(wm_output_overridden_name){
-        name = wm_output_overridden_name;
+        strcpy(out->name, wm_output_overridden_name);
         wm_output_overridden_name = NULL;
     }
-    wlr_log(WLR_INFO, "New output: %s: %s - %s (%s)", out->make, out->model, name, out->description);
+    wlr_log(WLR_INFO, "New output: %s: %s - %s (%s)", out->make, out->model, out->name, out->description);
     output->wm_server = server;
     output->wm_layout = layout;
     output->wlr_output = out;
@@ -178,7 +179,7 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
 
     output->wlr_output_damage = wlr_output_damage_create(output->wlr_output);
 
-    struct wm_config_output* config = wm_config_find_output(server->wm_config, name);
+    struct wm_config_output* config = wm_config_find_output(server->wm_config, out->name);
     double dpi = 0.;
 
     /* Set mode */
@@ -269,6 +270,9 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
     output->damage_destroy.notify = handle_damage_destroy;
     wl_signal_add(&output->wlr_output_damage->events.destroy,
             &output->damage_destroy);
+
+    /* Let the cursor know we possibly have a new scale */
+    wm_cursor_ensure_loaded_for_scale(server->wm_seat->wm_cursor, scale);
 }
 
 void wm_output_destroy(struct wm_output *output) {
