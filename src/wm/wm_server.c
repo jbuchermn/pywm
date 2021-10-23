@@ -26,6 +26,7 @@
 #include "wm/wm_util.h"
 #include "wm/wm.h"
 #include "wm/wm_seat.h"
+#include "wm/wm_cursor.h"
 #include "wm/wm_view_xdg.h"
 #include "wm/wm_view_xwayland.h"
 #include "wm/wm_layout.h"
@@ -58,6 +59,11 @@ static void handle_new_virtual_pointer(struct wl_listener* listener, void* data)
     struct wlr_virtual_pointer_v1_new_pointer_event* evt = data;
 
     wm_seat_add_input_device(server->wm_seat, &evt->new_pointer->input_device);
+
+    if(evt->suggested_output){
+        wlr_cursor_map_input_to_output(server->wm_seat->wm_cursor->wlr_cursor,
+                                       &evt->new_pointer->input_device, evt->suggested_output);
+    }
 }
 
 static void handle_new_virtual_keyboard(struct wl_listener* listener, void* data){
