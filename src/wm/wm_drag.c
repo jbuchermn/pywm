@@ -95,9 +95,8 @@ void wm_drag_update_position(struct wm_drag* drag){
     /* Surface width / height are not set correctly - hacky way via output scale */
     if(!drag->wlr_drag_icon || !drag->wlr_drag_icon->surface) return;
 
-    /* TODO */
-    double width = drag->wlr_drag_icon->surface->current.buffer_width; // / (double)drag->wm_seat->wm_server->wm_layout->default_output->wlr_output->scale;
-    double height = drag->wlr_drag_icon->surface->current.buffer_height; // / (double)drag->wm_seat->wm_server->wm_layout->default_output->wlr_output->scale;;
+    double width = drag->wlr_drag_icon->surface->current.buffer_width;
+    double height = drag->wlr_drag_icon->surface->current.buffer_height;
     wm_content_set_box(&drag->super,
                        drag->wm_seat->wm_cursor->wlr_cursor->x - .5*width,
                        drag->wm_seat->wm_cursor->wlr_cursor->y - .5*height,
@@ -117,11 +116,19 @@ static void wm_drag_render(struct wm_content* super, struct wm_output* output, p
     struct wm_drag* drag = wm_cast(wm_drag, super);
     if(!drag->wlr_drag_icon) return;
 
-    struct wlr_box box = {
+    struct wlr_box unscaled = {
         .x = round((drag->super.display_x - output->layout_x) * output->wlr_output->scale),
         .y = round((drag->super.display_y - output->layout_y) * output->wlr_output->scale),
         .width = round(drag->super.display_width * output->wlr_output->scale),
         .height = round(drag->super.display_height * output->wlr_output->scale)};
+
+    /* drag icons do not seem to properly handle scaling - therefore simply crop by output_scale */
+    struct wlr_box box = {
+        .x = unscaled.x + .5 * unscaled.width * (1. - 1. / output->wlr_output->scale),
+        .y = unscaled.y + .5 * unscaled.height * (1. - 1. / output->wlr_output->scale),
+        .width = unscaled.width / output->wlr_output->scale,
+        .height = unscaled.height / output->wlr_output->scale
+    };
 
     struct wlr_texture *texture = wlr_surface_get_texture(drag->wlr_drag_icon->surface);
     if (!texture) {

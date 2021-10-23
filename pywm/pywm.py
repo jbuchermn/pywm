@@ -154,11 +154,12 @@ class PyWM(Generic[ViewT]):
         self.layout: list[PyWMOutput] = []
         self.modifiers = 0
 
-        # TODO Remove all of these
+        # -------------- Will be removed soon ---------
         self.output_scale: float = kwargs['output_scale'] if 'output_scale' in kwargs else 1.0
         self.round_scale: float = kwargs['round_scale'] if 'round_scale' in kwargs else 1.0
         self.width = 0
         self.height = 0
+        # ----------------------------------------------
 
         self._idle_thread: PyWMIdleThread[ViewT] = PyWMIdleThread(self)
         self._idle_last_activity: float = time.time()
