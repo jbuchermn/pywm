@@ -99,17 +99,6 @@ static bool call_motion(double delta_x, double delta_y, uint32_t time_msec){
     return false;
 }
 
-static bool call_motion_absolute(double x, double y, uint32_t time_msec){
-    if(callbacks.motion_absolute){
-        PyGILState_STATE gil = PyGILState_Ensure();
-        PyObject* args = Py_BuildValue("(idd)", time_msec, x, y);
-        bool result = call_bool(callbacks.motion_absolute, args);
-        PyGILState_Release(gil);
-        return result;
-    }
-
-    return false;
-}
 
 static bool call_button(struct wlr_event_pointer_button* event){
     if(callbacks.button){
@@ -179,7 +168,6 @@ void _pywm_callbacks_init(){
     get_wm()->callback_key = &call_key;
     get_wm()->callback_modifiers = &call_modifiers;
     get_wm()->callback_motion = &call_motion;
-    get_wm()->callback_motion_absolute = &call_motion_absolute;
     get_wm()->callback_button = &call_button;
     get_wm()->callback_axis = &call_axis;
     get_wm()->callback_init_view = &call_init_view;
@@ -190,8 +178,6 @@ void _pywm_callbacks_init(){
 PyObject** _pywm_callbacks_get(const char* name){
     if(!strcmp(name, "motion")){
         return &callbacks.motion;
-    }else if(!strcmp(name, "motion_absolute")){
-        return &callbacks.motion_absolute;
     }else if(!strcmp(name, "button")){
         return &callbacks.button;
     }else if(!strcmp(name, "axis")){

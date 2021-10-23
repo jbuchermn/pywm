@@ -103,7 +103,6 @@ class PyWM(Generic[ViewT]):
         register("ready", self._ready)
         register("layout_change", self._layout_change)
         register("motion", self._motion)
-        register("motion_absolute", self._motion_absolute)
         register("button", self._button)
         register("axis", self._axis)
         register("key", self._key)
@@ -127,9 +126,6 @@ class PyWM(Generic[ViewT]):
 
         self._pending_widgets: list[PyWMWidget] = []
         self._pending_destroy_widgets: list[PyWMWidget] = []
-
-        self._last_absolute_x: float = 0.
-        self._last_absolute_y: float = 0.
 
         self._touchpad_daemon = TouchpadDaemon(self._gesture)
         self._touchpad_captured = False
@@ -223,23 +219,7 @@ class PyWM(Generic[ViewT]):
         if self._touchpad_captured:
             return True
 
-        if self.width > 0:
-            delta_x /= self.width
-        if self.height > 0:
-            delta_y /= self.height
         return self.on_motion(time_msec, delta_x, delta_y)
-
-    @callback
-    def _motion_absolute(self, time_msec: int, x: float, y: float) -> bool:
-        self._update_idle()
-        if self._touchpad_captured:
-            return True
-
-        x -= self._last_absolute_x
-        y -= self._last_absolute_y
-        self._last_absolute_x += x
-        self._last_absolute_y += y
-        return self.on_motion(time_msec, x, y)
 
     @callback
     def _button(self, time_msec: int, button: int, state: int) -> bool:
@@ -278,8 +258,10 @@ class PyWM(Generic[ViewT]):
         for o in self.layout:
             logger.debug("  %s", str(o))
 
+        # -------------- Will be removed soon ---------
         self.width = max([o.pos[0] + o.width for o in self.layout])
         self.height = max([o.pos[1] + o.height for o in self.layout])
+        # ---------------------------------------------
 
         self.on_layout_change()
 

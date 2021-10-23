@@ -9,7 +9,7 @@
 - [X] Config per output from Python
 - [X] Report detailed layout to python
 - [X] Properly load xcursor
-- [ ] Handle scaling of motion properly (without pywm.width, pywm.height) and remove motion_absolute
+- [X] Handle scaling of motion properly (without pywm.width, pywm.height) and remove motion_absolute
 - [X] Properly handle cursor on vnc - check what sway does
 - [ ] Get rid of pywm.output_scale, pywm.width, pywm.height
 - [ ] Is pywm.round_scale necessary? Issues if set to 1 (write test cases)? Probably only sensible to scale according to logical pixels (round_scale == output_scale)

@@ -18,7 +18,6 @@ struct wm {
     bool (*callback_key)(struct wlr_event_keyboard_key*, const char* keysyms);
     bool (*callback_modifiers)(struct wlr_keyboard_modifiers*);
     bool (*callback_motion)(double, double, uint32_t);
-    bool (*callback_motion_absolute)(double, double, uint32_t);
     bool (*callback_button)(struct wlr_event_pointer_button*);
     bool (*callback_axis)(struct wlr_event_pointer_axis*);
     void (*callback_init_view)(struct wm_view*);
@@ -62,7 +61,6 @@ void wm_callback_layout_change(struct wm_layout* layout);
 bool wm_callback_key(struct wlr_event_keyboard_key* event, const char* keysyms);
 bool wm_callback_modifiers(struct wlr_keyboard_modifiers* modifiers);
 bool wm_callback_motion(double delta_x, double delta_y, uint32_t time_msec);
-bool wm_callback_motion_absolute(double x, double y, uint32_t time_msec);
 bool wm_callback_button(struct wlr_event_pointer_button* event);
 bool wm_callback_axis(struct wlr_event_pointer_axis* event);
 

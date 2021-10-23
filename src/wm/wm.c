@@ -176,14 +176,6 @@ bool wm_callback_motion(double delta_x, double delta_y, uint32_t time_msec) {
     return (*wm.callback_motion)(delta_x, delta_y, time_msec);
 }
 
-bool wm_callback_motion_absolute(double x, double y, uint32_t time_msec) {
-    if (!wm.callback_motion_absolute) {
-        return false;
-    }
-
-    return (*wm.callback_motion_absolute)(x, y, time_msec);
-}
-
 bool wm_callback_button(struct wlr_event_pointer_button *event) {
     if (!wm.callback_button) {
         return false;
