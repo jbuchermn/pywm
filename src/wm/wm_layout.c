@@ -19,11 +19,13 @@ static void handle_change(struct wl_listener* listener, void* data){
 
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
-        double lx = 0;
-        double ly = 0;
-        wlr_output_layout_output_coords(layout->wlr_output_layout, output->wlr_output, &lx, &ly);
-        output->layout_x = -lx;
-        output->layout_y = -ly;
+        struct wlr_output_layout_output* o = wlr_output_layout_get(layout->wlr_output_layout, output->wlr_output);
+        if(!o){
+            wlr_log(WLR_ERROR, "Output not in output layout: %s", output->wlr_output->name);
+        }else{
+            output->layout_x = o->x;
+            output->layout_y = o->y;
+        }
     }
 
     wm_callback_layout_change(layout);
@@ -137,6 +139,6 @@ void wm_layout_printf(FILE* file, struct wm_layout* layout){
     fprintf(file, "wm_layout\n");
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
-        fprintf(file, "  wm_output: %s (%d x %d) at %f, %f\n", output->wlr_output->name, output->wlr_output->width, output->wlr_output->height, output->layout_x, output->layout_y);
+        fprintf(file, "  wm_output: %s (%d x %d) at %d, %d\n", output->wlr_output->name, output->wlr_output->width, output->wlr_output->height, output->layout_x, output->layout_y);
     }
 }

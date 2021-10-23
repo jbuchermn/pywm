@@ -5,6 +5,7 @@
 #include <wlr/util/log.h>
 #include "wm/wm.h"
 #include "wm/wm_layout.h"
+#include "wm/wm_output.h"
 #include "py/_pywm_callbacks.h"
 #include "py/_pywm_view.h"
 
@@ -39,11 +40,24 @@ static void call_void(PyObject* callable, PyObject* args){
  * Callbacks
  */
 static void call_layout_change(struct wm_layout* layout){
-    /* TODO */
-    struct wlr_box* box = wlr_output_layout_get_box(layout->wlr_output_layout, NULL);
     if(callbacks.layout_change){
         PyGILState_STATE gil = PyGILState_Ensure();
-        PyObject* args = Py_BuildValue("(ii)", box->width, box->height);
+
+        PyObject* list = PyList_New(wl_list_length(&layout->wm_outputs));
+        struct wm_output* output;
+        int i=0;
+        wl_list_for_each(output, &layout->wm_outputs, link){
+            PyList_SetItem(list, i, Py_BuildValue(
+                               "(sdiiii)",
+                               output->wlr_output->name,
+                               output->wlr_output->scale,
+                               (int)round(output->wlr_output->width / output->wlr_output->scale),
+                               (int)round(output->wlr_output->height / output->wlr_output->scale),
+                               output->layout_x,
+                               output->layout_y));
+            i++;
+        }
+        PyObject* args = Py_BuildValue("(O)", list);
         call_void(callbacks.layout_change, args);
         PyGILState_Release(gil);
     }

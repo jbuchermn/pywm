@@ -141,8 +141,8 @@ static void wm_view_render(struct wm_content* super, struct wm_output* output, p
         .y_scale = width > 1 ? display_height / height : 0,
         .corner_radius = corner_radius,
         .lock_perc = view->super.lock_enabled ? 0.0 : view->super.wm_server->lock_perc,
-        .mask_x = display_x + mask_x,
-        .mask_y = display_y + mask_y,
+        .mask_x = display_x - output->layout_x + mask_x,
+        .mask_y = display_y - output->layout_y + mask_y,
         .mask_w = mask_w,
         .mask_h = mask_h
     };

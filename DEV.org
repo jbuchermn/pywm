@@ -7,13 +7,14 @@
 - [X] Accept config per output
 - [X] wlr_surface_send_enter
 - [X] Config per output from Python
-- [ ] Report detailed layout to python
+- [X] Report detailed layout to python
 - [ ] Cursors ?!
 - [ ] Get rid of pywm.output_scale
 - [ ] Is pywm.round_scale necessary? Issues if set to 1 (write test cases)? Probably only sensible to scale according to logical pixels (round_scale == output_scale)
 - [ ] Fix widgets to one output ?!
-- [ ] Render windows / widgets / mouse according to layout
+- [X] Render windows / widgets / mouse according to layout
 - [ ] Possibility to duplicate screen? or at least place windows (widgets also?) on multiple screens at the same time
+- [ ] Crashes on closing virtual outputs (seems to only work the first time HEADLESS-1 is closed)
 *** Output transforms
 *** Complete libinput device config / support for external mouse
 

@@ -84,6 +84,16 @@ class PyWMIdleThread(Thread, Generic[ViewT]):
     def stop(self) -> None:
         self._running = False
 
+class PyWMOutput:
+    def __init__(self, name: str, scale: float, width: int, height: int, pos: tuple[int, int]):
+        self.name = name
+        self.scale = scale
+        self.width = width
+        self.height = height
+        self.pos = pos
+
+    def __str__(self) -> str:
+        return "Output(%s) with %dx%d, scale %f at %d, %d" % (self.name, self.width, self.height, self.scale, *self.pos)
 
 
 class PyWM(Generic[ViewT]):
@@ -141,9 +151,10 @@ class PyWM(Generic[ViewT]):
         Consider these read-only
         """
         self.config: dict[str, Any] = kwargs
+        self.layout: list[PyWMOutput] = []
         self.modifiers = 0
 
-        # TODO
+        # TODO Remove all of these
         self.output_scale: float = kwargs['output_scale'] if 'output_scale' in kwargs else 1.0
         self.round_scale: float = kwargs['round_scale'] if 'round_scale' in kwargs else 1.0
         self.width = 0
@@ -259,13 +270,18 @@ class PyWM(Generic[ViewT]):
         return self.on_modifiers(self.modifiers)
 
     @callback
-    def _layout_change(self, width: int, height: int) -> None:
-        logger.debug("PyWM layout change: %dx%d" % (width, height))
+    def _layout_change(self, outputs: list[tuple[str, float, int, int, int, int]]) -> None:
         self._update_idle()
-        self.width = width
-        self.height = height
+        self.layout = [PyWMOutput(n, s, w, h, (px, py)) for n, s, w, h, px, py in outputs]
+        logger.debug("PyWM layout change:")
+        for o in self.layout:
+            logger.debug("  %s", str(o))
+
+        self.width = max([o.pos[0] + o.width for o in self.layout])
+        self.height = max([o.pos[1] + o.height for o in self.layout])
+
         self.on_layout_change()
-        
+
 
     @callback
     def _update_view(self, handle: int, *args): # type: ignore

@@ -272,10 +272,10 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
 }
 
 void wm_output_destroy(struct wm_output *output) {
-    wm_layout_remove_output(output->wm_layout, output);
     wl_list_remove(&output->destroy.link);
     wl_list_remove(&output->commit.link);
     wl_list_remove(&output->mode.link);
     wl_list_remove(&output->present.link);
     wl_list_remove(&output->link);
+    wm_layout_remove_output(output->wm_layout, output);
 }
