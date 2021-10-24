@@ -26,20 +26,21 @@ void _pywm_widget_update(struct _pywm_widget* widget){
     if(res && res != Py_None){
         double x, y, w, h;
         double mask_x, mask_y, mask_w, mask_h;
+        char* output_name;
         double opacity;
         int z_index;
         int lock_enabled;
         if(!PyArg_ParseTuple(res, 
-                    "p(dddd)(dddd)di",
+                    "p(dddd)(dddd)sdi",
                     &lock_enabled,
                     &x, &y, &w, &h,
                     &mask_x, &mask_y, &mask_w, &mask_h,
+                    &output_name,
                     &opacity,
                     &z_index)){
             PyErr_SetString(PyExc_TypeError, "Cannot parse update_widget return");
             return;
         }
-
 
         wm_content_set_opacity(&widget->widget->super, opacity);
         if(w >= 0.0 && h >= 0.0)
@@ -48,6 +49,7 @@ void _pywm_widget_update(struct _pywm_widget* widget){
         wm_content_set_z_index(&widget->widget->super, z_index);
         wm_content_set_lock_enabled(&widget->widget->super, lock_enabled);
 
+        wm_widget_set_output(widget->widget, output_name);
     }
     Py_XDECREF(res);
 

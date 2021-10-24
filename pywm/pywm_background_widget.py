@@ -10,18 +10,18 @@ from .pywm_widget import (
 )
 
 if TYPE_CHECKING:
-    from .pywm import PyWM, ViewT
+    from .pywm import PyWM, PyWMOutput, ViewT
 
 logger = logging.getLogger(__name__)
 
 
 class PyWMBackgroundWidget(PyWMWidget):
-    def __init__(self, wm: PyWM[ViewT], path: str):
+    def __init__(self, wm: PyWM[ViewT], output: PyWMOutput, path: str):
         """
         transpose == 't': matrix transpose
         transpose == 'f': flip the image
         """
-        super().__init__(wm)
+        super().__init__(wm, output)
 
         # Prevent division by zero
         self.width = 1

@@ -1,5 +1,6 @@
 from .pywm import (  # noqa F401
     PyWM,
+    PyWMOutput,
     PyWMDownstreamState,
     PYWM_MOD_CTRL,
     PYWM_MOD_ALT,

@@ -5,7 +5,7 @@ from abc import abstractmethod
 
 # Python imports are great
 if TYPE_CHECKING:
-    from .pywm import PyWM, ViewT
+    from .pywm import PyWM, PyWMOutput, ViewT
     PyWMT = TypeVar('PyWMT', bound=PyWM)
 else:
     PyWMT = TypeVar('PyWMT')
@@ -22,20 +22,22 @@ class PyWMWidgetDownstreamState:
     def copy(self) -> PyWMWidgetDownstreamState:
         return PyWMWidgetDownstreamState(self.z_index, self.box, self.mask)
 
-    def get(self, root: PyWM[ViewT]) -> tuple[bool, tuple[float, float, float, float], tuple[float, float, float, float], float, int]:
+    def get(self, root: PyWM[ViewT], output: Optional[PyWMOutput]) -> tuple[bool, tuple[float, float, float, float], tuple[float, float, float, float], str, float, int]:
         return (
             self.lock_enabled,
             root.round(*self.box),
             self.mask,
+            output.name if output is not None else "",
             self.opacity,
             self.z_index
         )
 
 class PyWMWidget(Generic[PyWMT]):
-    def __init__(self, wm: PyWMT) -> None:
+    def __init__(self, wm: PyWMT, output: Optional[PyWMOutput]) -> None:
         self._handle = -1
 
         self.wm = wm
+        self.output = output
 
         self._down_state = PyWMWidgetDownstreamState(0, (0, 0, 0, 0))
         self._damaged = True
@@ -45,11 +47,11 @@ class PyWMWidget(Generic[PyWMT]):
         """
         self._pending_pixels: Optional[tuple[int, int, int, bytes]] = None
 
-    def _update(self) -> tuple[bool, tuple[float, float, float, float], tuple[float, float, float, float], float, int]:
+    def _update(self) -> tuple[bool, tuple[float, float, float, float], tuple[float, float, float, float], str, float, int]:
         if self._damaged:
             self._damaged = False
             self._down_state = self.process()
-        return self._down_state.get(self.wm)
+        return self._down_state.get(self.wm, self.output)
 
     def _update_pixels(self) -> Optional[tuple[int, int, int, bytes]]:
         if self._pending_pixels is not None:

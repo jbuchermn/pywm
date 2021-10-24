@@ -95,6 +95,10 @@ class PyWMOutput:
     def __str__(self) -> str:
         return "Output(%s) with %dx%d, scale %f at %d, %d" % (self.name, self.width, self.height, self.scale, *self.pos)
 
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, PyWMOutput):
+            return False
+        return self.name == other.name
 
 class PyWM(Generic[ViewT]):
     def __init__(self, view_class: type=PyWMView, **kwargs: Any) -> None:
@@ -422,8 +426,8 @@ class PyWM(Generic[ViewT]):
     def close_virtual_output(self, name: str) -> None:
         self._pending_close_virtual_output = name
 
-    def create_widget(self, widget_class: Callable[..., WidgetT], *args: Any, **kwargs: Any) -> WidgetT:
-        widget = widget_class(self, *args, **kwargs)
+    def create_widget(self, widget_class: Callable[..., WidgetT], output: Optional[PyWMOutput], *args: Any, **kwargs: Any) -> WidgetT:
+        widget = widget_class(self, output, *args, **kwargs)
         self._pending_widgets += [widget]
         return widget
 
