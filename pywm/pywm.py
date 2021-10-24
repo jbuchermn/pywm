@@ -155,10 +155,7 @@ class PyWM(Generic[ViewT]):
         self.modifiers = 0
 
         # -------------- Will be removed soon ---------
-        self.output_scale: float = kwargs['output_scale'] if 'output_scale' in kwargs else 1.0
         self.round_scale: float = kwargs['round_scale'] if 'round_scale' in kwargs else 1.0
-        self.width = 0
-        self.height = 0
         # ----------------------------------------------
 
         self._idle_thread: PyWMIdleThread[ViewT] = PyWMIdleThread(self)
@@ -261,11 +258,6 @@ class PyWM(Generic[ViewT]):
         logger.debug("PyWM layout change:")
         for o in self.layout:
             logger.debug("  %s", str(o))
-
-        # -------------- Will be removed soon ---------
-        self.width = max([o.pos[0] + o.width for o in self.layout])
-        self.height = max([o.pos[1] + o.height for o in self.layout])
-        # ---------------------------------------------
 
         self.on_layout_change()
 
