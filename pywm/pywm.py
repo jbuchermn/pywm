@@ -154,10 +154,6 @@ class PyWM(Generic[ViewT]):
         self.layout: list[PyWMOutput] = []
         self.modifiers = 0
 
-        # -------------- Will be removed soon ---------
-        self.round_scale: float = kwargs['round_scale'] if 'round_scale' in kwargs else 1.0
-        # ----------------------------------------------
-
         self._idle_thread: PyWMIdleThread[ViewT] = PyWMIdleThread(self)
         self._idle_last_activity: float = time.time()
         self._idle_last_update_active: float = time.time()
@@ -429,12 +425,34 @@ class PyWM(Generic[ViewT]):
     def is_locked(self) -> bool:
         return self._down_state.lock_perc != 0.0
 
+    def _get_round_scale(self, x: float, y: float, w: float, h: float) -> float:
+        scale: Optional[float] = None
+        for o in self.layout:
+            if o.pos[0] + o.width < x or x + w < o.pos[0]:
+                continue
+            if o.pos[1] + o.height < y or y + h < o.pos[1]:
+                continue
+            if scale is None or o.scale < scale:
+                scale = o.scale
+        return scale if scale is not None else 1.
+
+
     def round(self, x: float, y: float, w: float, h: float) -> tuple[float, float, float, float]:
+        # Round positions to 1/scale logical pixels, width and height to logical pixels
+        # where scale is the smallest hidpi scale intersected by (x, y, w, h)
+
+        scale = self._get_round_scale(x, y, w, h)
+
+        cx = x + .5*w
+        cy = y + .5*h
+        w = round(w)
+        h = round(h)
+
         return (
-            round(x * self.round_scale) / self.round_scale,
-            round(y * self.round_scale) / self.round_scale,
-            round((x+w) * self.round_scale) / self.round_scale - round(x * self.round_scale) / self.round_scale,
-            round((y+h) * self.round_scale) / self.round_scale - round(y * self.round_scale) / self.round_scale)
+            round((cx - .5*w) * scale) / scale,
+            round((cy - .5*h) * scale) / scale,
+            w,
+            h)
 
 
     """
