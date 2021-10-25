@@ -5,7 +5,8 @@
 *** DONE Enable wayvnc.sh
 *** STRT Update wlroots
 - [X] Reenable wm_renderer
-- [ ] Keep an eye on Chromium bug: https://bugs.chromium.org/p/chromium/issues/detail?id=1246834
+- [-] Keep an eye on Chromium bug: https://bugs.chromium.org/p/chromium/issues/detail?id=1246834
+  So long patch by undoing https://github.com/swaywm/wlroots/commit/d290b13871fa18dcad6cd90d9ee93e7205742124?diff=unified
 *** STRT Multiple outputs
 - [X] Accept config per output
 - [X] wlr_surface_send_enter
