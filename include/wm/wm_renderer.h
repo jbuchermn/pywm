@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <wlr/render/wlr_renderer.h>
 
-// #define WM_CUSTOM_RENDERER
+#define WM_CUSTOM_RENDERER
 
 struct wm_output;
 
@@ -19,6 +19,7 @@ struct wm_renderer_shader {
     GLint alpha;
     GLint pos_attrib;
     GLint tex_attrib;
+
     GLint width;
     GLint height;
 
@@ -42,9 +43,11 @@ struct wm_renderer {
     /* Custom shaders */
     struct wm_renderer_shader shader_rgba;
     struct wm_renderer_shader shader_rgbx;
+    struct wm_renderer_shader shader_ext;
 
     struct wm_renderer_shader shader_blurred_rgba;
     struct wm_renderer_shader shader_blurred_rgbx;
+    struct wm_renderer_shader shader_blurred_ext;
 #endif
 };
 
