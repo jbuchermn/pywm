@@ -8,6 +8,7 @@ void wm_config_init_default(struct wm_config *config) {
     config->enable_xwayland = false;
 
     config->callback_frequency = 30;
+    config->max_callback_frequency = 100;
 
     config->xkb_model = "";
     config->xkb_layout = "us";

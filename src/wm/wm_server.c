@@ -488,7 +488,16 @@ void wm_server_update_contents(struct wm_server* server){
 
 
 void wm_server_callback_update(struct wm_server* server){
-    clock_gettime(CLOCK_MONOTONIC, &server->last_callback_externally_sourced);
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+
+    long long msec_diff = now.tv_nsec / 1000000 - server->last_callback_externally_sourced.tv_nsec / 1000000;
+    msec_diff += (now.tv_sec - server->last_callback_externally_sourced.tv_sec)*1000;
+    if(msec_diff < 1000 / server->wm_config->max_callback_frequency){
+        return;
+    }
+
+    server->last_callback_externally_sourced = now;
     wm_callback_update();
 }
 
