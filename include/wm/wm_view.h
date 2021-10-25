@@ -5,7 +5,7 @@
 #include <wayland-server.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
-#include <wlr/types/wlr_box.h>
+#include <wlr/util/box.h>
 
 #include "wm_content.h"
 

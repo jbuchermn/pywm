@@ -267,11 +267,11 @@ void wm_xdg_subsurface_init(struct wm_xdg_subsurface* subsurface, struct wm_view
     wl_signal_add(&wlr_subsurface->surface->events.commit, &subsurface->surface_commit);
 
     struct wlr_subsurface* ss;
-    wl_list_for_each(ss, &wlr_subsurface->surface->subsurfaces_below, parent_link){
+    wl_list_for_each(ss, &wlr_subsurface->surface->current.subsurfaces_below, current.link){
         wlr_log(WLR_DEBUG, "Subsurface: Adding \"old\" subsurface (below)");
         subsurface_handle_new_subsurface(&subsurface->new_subsurface, ss);
     }
-    wl_list_for_each(ss, &wlr_subsurface->surface->subsurfaces_above, parent_link){
+    wl_list_for_each(ss, &wlr_subsurface->surface->current.subsurfaces_above, current.link){
         wlr_log(WLR_DEBUG, "Subsurface: Adding \"old\" subsurface (above)");
         subsurface_handle_new_subsurface(&subsurface->new_subsurface, ss);
     }
@@ -346,11 +346,11 @@ void wm_popup_xdg_init(struct wm_popup_xdg* popup, struct wm_view_xdg* toplevel,
     }
 
     struct wlr_subsurface* ss;
-    wl_list_for_each(ss, &wlr_xdg_popup->base->surface->subsurfaces_below, parent_link){
+    wl_list_for_each(ss, &wlr_xdg_popup->base->surface->current.subsurfaces_below, current.link){
         wlr_log(WLR_DEBUG, "Popup: Adding \"old\" subsurface (below)");
         popup_handle_new_subsurface(&popup->new_subsurface, ss);
     }
-    wl_list_for_each(ss, &wlr_xdg_popup->base->surface->subsurfaces_above, parent_link){
+    wl_list_for_each(ss, &wlr_xdg_popup->base->surface->current.subsurfaces_above, current.link){
         wlr_log(WLR_DEBUG, "Popup: Adding \"old\" subsurface (above)");
         popup_handle_new_subsurface(&popup->new_subsurface, ss);
     }
@@ -425,12 +425,12 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
     view->constrain_popups_to_toplevel = server->wm_config->constrain_popups_to_toplevel;
 
     struct wlr_subsurface* ss;
-    wl_list_for_each(ss, &surface->surface->subsurfaces_below, parent_link){
+    wl_list_for_each(ss, &surface->surface->current.subsurfaces_below, current.link){
         wlr_log(WLR_DEBUG, "View: Adding \"old\" subsurface (below)");
         handle_new_subsurface(&view->new_subsurface, ss);
     }
-    wl_list_for_each(ss, &surface->surface->subsurfaces_below, parent_link){
-        wlr_log(WLR_DEBUG, "View: Adding \"old\" subsurface (below)");
+    wl_list_for_each(ss, &surface->surface->current.subsurfaces_above, current.link){
+        wlr_log(WLR_DEBUG, "View: Adding \"old\" subsurface (above)");
         handle_new_subsurface(&view->new_subsurface, ss);
     }
 }
@@ -506,8 +506,8 @@ static void wm_view_xdg_get_size(struct wm_view* super, int* width, int* height)
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
 
     /* Again following sway here */
-    *width = view->wlr_xdg_surface->geometry.width;
-    *height = view->wlr_xdg_surface->geometry.height;
+    *width = view->wlr_xdg_surface->current.geometry.width;
+    *height = view->wlr_xdg_surface->current.geometry.height;
 
     if(!(*width) || !(*height)){
         *width = view->wlr_xdg_surface->surface->current.width;
@@ -519,8 +519,8 @@ static void wm_view_xdg_get_size(struct wm_view* super, int* width, int* height)
 static void wm_view_xdg_get_offset(struct wm_view* super, int* offset_x, int* offset_y){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
 
-    *offset_x = view->wlr_xdg_surface->geometry.x;
-    *offset_y = view->wlr_xdg_surface->geometry.y;
+    *offset_x = view->wlr_xdg_surface->current.geometry.x;
+    *offset_y = view->wlr_xdg_surface->current.geometry.y;
 }
 
 static void wm_view_xdg_set_resizing(struct wm_view* super, bool resizing){

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <wlr/render/wlr_renderer.h>
 
-#define WM_CUSTOM_RENDERER
+// #define WM_CUSTOM_RENDERER
 
 struct wm_output;
 
