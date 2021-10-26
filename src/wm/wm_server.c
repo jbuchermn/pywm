@@ -84,10 +84,10 @@ static void handle_new_output(struct wl_listener* listener, void* data){
     wm_layout_add_output(server->wm_layout, output);
 
     /* Start the timer loop once an output is there */
-    if(!server->callback_timer_started){
-        server->callback_timer_started = true;
+    if(!server->callback_fallback_timer_started){
+        server->callback_fallback_timer_started = true;
         wl_event_source_timer_update(
-                server->callback_timer,
+                server->callback_fallback_timer,
                 1000 / server->wm_config->callback_frequency);
     }
 }
@@ -167,15 +167,25 @@ static int callback_timer_handler(void* data){
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
 
-    long long msec_diff = now.tv_nsec / 1000000 - server->last_callback_externally_sourced.tv_nsec / 1000000;
-    msec_diff += (now.tv_sec - server->last_callback_externally_sourced.tv_sec)*1000;
-    if(msec_diff > 1000 / server->wm_config->callback_frequency){
+    long long msec_diff = now.tv_nsec / 1000000 - server->last_callback.tv_nsec / 1000000;
+    msec_diff += (now.tv_sec - server->last_callback.tv_sec)*1000;
+
+    if(msec_diff > 0.9 * 1000000 / server->wm_layout->fastest_output_mHz){
+        server->last_callback = now;
         wm_callback_update();
     }
 
+    return 0;
+}
+
+static int callback_fallback_timer_handler(void* data){
+    struct wm_server* server = data;
+
+    callback_timer_handler(data);
+
     /* Reschedule */
     wl_event_source_timer_update(
-            server->callback_timer,
+            server->callback_fallback_timer,
             1000 / server->wm_config->callback_frequency);
     return 0;
 }
@@ -308,12 +318,12 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
         wl_signal_add(&server->wlr_xwayland->events.ready, &server->xwayland_ready);
     }
 
-
-	server->callback_timer = wl_event_loop_add_timer(server->wl_event_loop,
-		callback_timer_handler, server);
-    server->callback_timer_started = false;
-
-    clock_gettime(CLOCK_MONOTONIC, &server->last_callback_externally_sourced);
+    server->callback_timer = wl_event_loop_add_timer(
+        server->wl_event_loop, callback_timer_handler, server);
+    server->callback_fallback_timer = wl_event_loop_add_timer(
+        server->wl_event_loop, callback_fallback_timer_handler, server);
+    server->callback_fallback_timer_started = false;
+    clock_gettime(CLOCK_MONOTONIC, &server->last_callback);
 
     server->lock_perc = 0.0;
 }
@@ -487,18 +497,8 @@ void wm_server_update_contents(struct wm_server* server){
 }
 
 
-void wm_server_callback_update(struct wm_server* server){
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-
-    long long msec_diff = now.tv_nsec / 1000000 - server->last_callback_externally_sourced.tv_nsec / 1000000;
-    msec_diff += (now.tv_sec - server->last_callback_externally_sourced.tv_sec)*1000;
-    if(msec_diff < 1000 / server->wm_config->max_callback_frequency){
-        return;
-    }
-
-    server->last_callback_externally_sourced = now;
-    wm_callback_update();
+void wm_server_schedule_update(struct wm_server* server){
+    wl_event_source_timer_update(server->callback_timer, 1);
 }
 
 void wm_server_set_locked(struct wm_server* server, double lock_perc){

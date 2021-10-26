@@ -17,17 +17,19 @@
 - [X] Properly handle cursor on vnc - check what sway does
 - [X] Render windows / widgets / mouse according to layout
 - [X] Possibility to duplicate screen? or at least place windows (widgets also?) on multiple screens at the same time
-- [ ] Crashes on closing virtual outputs
+- [X] Crashes on closing virtual outputs: Caused by removing (callback_update) an output during its present event
 - [ ] Check valgrind for lost memory
 - [X] Is pywm.round_scale necessary? Issues if set to 1 (write test cases)? Probably only sensible to scale according to logical pixels (round_scale == output_scale) or: positions according to lowest scaled monitor the content is on / width according to logical pixels
 - [X] Get rid of pywm.output_scale, pywm.width, pywm.height
 - [X] Fix widgets to one output ?! Useful if we have overlapping screens of different resolution?
 *** Output transforms
 *** Updatable config
-*** Complete libinput device config / support for external mouse
 *** Documentation / Update config keys
 
 ** Backlog / Ideas
+*** Complete libinput device config / support for external mouse
+*** Configurable gestures (abstraction layer) + possibility to use external "gesture providers" (e.g. detection from webcam video)
+*** Support newm-sidecar (or similar, via ws://) as touchpad
 *** Touch input from yoga or similar
 *** Screensharing using xdg-desktop-portal-wlr
 *** Decorations for floating windows (dialogs)

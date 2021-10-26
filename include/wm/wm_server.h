@@ -54,10 +54,10 @@ struct wm_server{
     struct wl_listener xwayland_ready;
     struct wl_listener new_xwayland_surface;
 
-    struct timespec last_callback_externally_sourced;
-
-    bool callback_timer_started;
+    struct timespec last_callback;
     struct wl_event_source* callback_timer;
+    struct wl_event_source* callback_fallback_timer;
+    bool callback_fallback_timer_started;
 
     double lock_perc;
 };
@@ -78,11 +78,11 @@ void wm_server_open_virtual_output(struct wm_server* server, const char* name);
 void wm_server_close_virtual_output(struct wm_server* server, const char* name);
 
 /*
- * Execute wm_callback_update() supressing callback_timer
+ * Schedule wm_callback_update() assuming now is a good time (e.g. after frame)
  *
  * Calling the update this way is preferred over callback_timer
  */
-void wm_server_callback_update(struct wm_server* server);
+void wm_server_schedule_update(struct wm_server* server);
 
 void wm_server_set_locked(struct wm_server* server, double lock_perc);
 bool wm_server_is_locked(struct wm_server* server);

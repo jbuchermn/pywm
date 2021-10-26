@@ -44,7 +44,7 @@ static void handle_present(struct wl_listener *listener, void *data) {
      * Synchronous update is best scheduled immediately after
      * frame present
      */
-    wm_server_callback_update(output->wm_server);
+    wm_server_schedule_update(output->wm_server);
 }
 
 static void render(struct wm_output *output, struct timespec now, pixman_region32_t *damage) {

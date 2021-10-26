@@ -16,9 +16,14 @@
  */
 static void handle_change(struct wl_listener* listener, void* data){
     struct wm_layout* layout = wl_container_of(listener, layout, change);
+    layout->fastest_output_mHz = 1000;
 
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
+        if(output->wlr_output->refresh > layout->fastest_output_mHz){
+            layout->fastest_output_mHz = output->wlr_output->refresh;
+        }
+
         struct wlr_output_layout_output* o = wlr_output_layout_get(layout->wlr_output_layout, output->wlr_output);
         if(!o){
             wlr_log(WLR_ERROR, "Output not in output layout: %s", output->wlr_output->name);
@@ -44,6 +49,9 @@ void wm_layout_init(struct wm_layout* layout, struct wm_server* server){
 
     layout->change.notify = &handle_change;
     wl_signal_add(&layout->wlr_output_layout->events.change, &layout->change);
+
+    /* Some sensible (too slow) default */
+    layout->fastest_output_mHz = 1000;
 }
 
 void wm_layout_destroy(struct wm_layout* layout) {

@@ -18,6 +18,8 @@ struct wm_layout {
     struct wl_list wm_outputs; // wm_output::link
 
     struct wl_listener change;
+
+    int fastest_output_mHz;
 };
 
 void wm_layout_init(struct wm_layout* layout, struct wm_server* server);

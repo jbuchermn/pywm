@@ -27,7 +27,6 @@ struct wm_config {
     bool enable_xwayland;
 
     int callback_frequency;
-    int max_callback_frequency;
 
     const char *xkb_model;
     const char *xkb_layout;
