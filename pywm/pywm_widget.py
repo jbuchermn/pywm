@@ -25,7 +25,7 @@ class PyWMWidgetDownstreamState:
     def get(self, root: PyWM[ViewT], output: Optional[PyWMOutput]) -> tuple[bool, tuple[float, float, float, float], tuple[float, float, float, float], str, float, int]:
         return (
             self.lock_enabled,
-            root.round(*self.box),
+            root.round(*self.box, wh_logical=False),
             self.mask,
             output.name if output is not None else "",
             self.opacity,
