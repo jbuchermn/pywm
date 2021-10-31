@@ -164,22 +164,8 @@ void wm_output_override_name(const char* name){
     wm_output_overridden_name = name;
 }
 
-void wm_output_init(struct wm_output *output, struct wm_server *server,
-        struct wm_layout *layout, struct wlr_output *out) {
-    if(wm_output_overridden_name){
-        strcpy(out->name, wm_output_overridden_name);
-        wm_output_overridden_name = NULL;
-    }
-    wlr_log(WLR_INFO, "New output: %s: %s - %s (%s)", out->make, out->model, out->name, out->description);
-    output->wm_server = server;
-    output->wm_layout = layout;
-    output->wlr_output = out;
-    output->layout_x = 0;
-    output->layout_y = 0;
-
-    output->wlr_output_damage = wlr_output_damage_create(output->wlr_output);
-
-    struct wm_config_output* config = wm_config_find_output(server->wm_config, out->name);
+static double configure(struct wm_output* output){
+    struct wm_config_output* config = wm_config_find_output(output->wm_layout->wm_server->wm_config, output->wlr_output->name);
     double dpi = 0.;
 
     /* Set mode */
@@ -190,7 +176,7 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
 
         struct wlr_output_mode *mode;
         wl_list_for_each(mode, &output->wlr_output->modes, link) {
-            wlr_log(WLR_INFO, "New output: Output supports %dx%d(%d) %s",
+            wlr_log(WLR_INFO, "Output: Output supports %dx%d(%d) %s",
                     mode->width, mode->height, mode->refresh,
                     mode->preferred ? "(Preferred)" : "");
 
@@ -213,43 +199,63 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
             best = pref;
 
         dpi = output->wlr_output->phys_width > 0 ? (double)best->width * 25.4 / output->wlr_output->phys_width : 0;
-        wlr_log(WLR_INFO, "New output: Setting mode: %dx%d(%d)", best->width, best->height, best->refresh);
+        wlr_log(WLR_INFO, "Output: Setting mode: %dx%d(%d)", best->width, best->height, best->refresh);
         wlr_output_set_mode(output->wlr_output, best);
     }else{
         int w = config ? config->width : 0;
         int h = config ? config->height : 0;
         int mHz = config ? config->mHz : 0;
         if(w <= 0){
-            wlr_log(WLR_INFO, "New output: Need to configure width for custom mode - defaulting to 1920");
+            wlr_log(WLR_INFO, "Output: Need to configure width for custom mode - defaulting to 1920");
             w = 1920;
         }
         if(h <= 0){
-            wlr_log(WLR_INFO, "New output: Need to configure height for custom mode - defaulting to 1280");
+            wlr_log(WLR_INFO, "Output: Need to configure height for custom mode - defaulting to 1280");
             h = 1280;
         }
         dpi = output->wlr_output->phys_width > 0 ? (double)w * 25.4 / output->wlr_output->phys_width : 0;
-        wlr_log(WLR_INFO, "New output: Setting custom mode - %dx%d(%d)", w, h, mHz);
+        wlr_log(WLR_INFO, "Output: Setting custom mode - %dx%d(%d)", w, h, mHz);
         wlr_output_set_custom_mode(output->wlr_output, w, h, mHz);
     }
 
     wlr_output_enable(output->wlr_output, true);
     if (!wlr_output_commit(output->wlr_output)) {
-        wlr_log(WLR_INFO, "New output: Could not commit");
+        wlr_log(WLR_INFO, "Output: Could not commit");
     }
 
     /* Set HiDPI scale */
     double scale = config ? config->scale : -1.0;
     if(scale < 0.1){
         if(dpi > 182){
-            wlr_log(WLR_INFO, "New output: Assuming HiDPI scale");
+            wlr_log(WLR_INFO, "Output: Assuming HiDPI scale");
             scale = 2.;
         }else{
             scale = 1.;
         }
     }
 
-    wlr_log(WLR_INFO, "New output: Setting scale to %f", scale);
+    wlr_log(WLR_INFO, "Output: Setting scale to %f", scale);
     wlr_output_set_scale(output->wlr_output, scale);
+
+    return scale;
+}
+
+void wm_output_init(struct wm_output *output, struct wm_server *server,
+        struct wm_layout *layout, struct wlr_output *out) {
+    if(wm_output_overridden_name){
+        strcpy(out->name, wm_output_overridden_name);
+        wm_output_overridden_name = NULL;
+    }
+    wlr_log(WLR_INFO, "New output: %s: %s - %s (%s)", out->make, out->model, out->name, out->description);
+    output->wm_server = server;
+    output->wm_layout = layout;
+    output->wlr_output = out;
+    output->layout_x = 0;
+    output->layout_y = 0;
+
+    output->wlr_output_damage = wlr_output_damage_create(output->wlr_output);
+
+    double scale = configure(output);
 
     output->destroy.notify = handle_destroy;
     wl_signal_add(&output->wlr_output->events.destroy, &output->destroy);
@@ -273,6 +279,11 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
 
     /* Let the cursor know we possibly have a new scale */
     wm_cursor_ensure_loaded_for_scale(server->wm_seat->wm_cursor, scale);
+}
+
+void wm_output_reconfigure(struct wm_output* output){
+    double scale = configure(output);
+    wm_cursor_ensure_loaded_for_scale(output->wm_layout->wm_server->wm_seat->wm_cursor, scale);
 }
 
 void wm_output_destroy(struct wm_output *output) {

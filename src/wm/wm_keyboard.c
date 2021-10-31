@@ -94,16 +94,22 @@ void wm_keyboard_init(struct wm_keyboard* keyboard, struct wm_seat* seat, struct
 	rules.layout = seat->wm_server->wm_config->xkb_layout;
     rules.options = seat->wm_server->wm_config->xkb_options;
 
+
 	struct xkb_context* context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     assert(context);
-	struct xkb_keymap* keymap = xkb_map_new_from_names(context, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
-    assert(keymap);
 
-	wlr_keyboard_set_keymap(keyboard->wlr_input_device->keyboard, keymap);
-	wlr_keyboard_set_repeat_info(keyboard->wlr_input_device->keyboard, 25, 600);
+    struct xkb_keymap* keymap = xkb_map_new_from_names(context, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
+    if(keymap){
+        wlr_keyboard_set_keymap(keyboard->wlr_input_device->keyboard, keymap);
+        wlr_keyboard_set_repeat_info(keyboard->wlr_input_device->keyboard, 25, 600);
 
-	xkb_keymap_unref(keymap);
-	xkb_context_unref(context);
+        xkb_keymap_unref(keymap);
+    }else{
+        wlr_log(WLR_ERROR, "Could not load keymap for %s / %s / %s", rules.model, rules.layout, rules.options);
+    }
+
+    xkb_context_unref(context);
+
 
     /* Handlers */
     keyboard->destroy.notify = handle_destroy;

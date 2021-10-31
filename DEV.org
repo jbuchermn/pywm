@@ -22,6 +22,8 @@
 - [X] Fix widgets to one output ?! Useful if we have overlapping screens of different resolution?
 *** Output transforms
 *** Updatable config
+- [X] Outputs
+- [ ] See TODO marks
 *** Release
 - [ ] Documentation / Update config keys
 - [ ] Check valgrind for lost memory

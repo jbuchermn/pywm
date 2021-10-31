@@ -28,6 +28,8 @@ void wm_layout_destroy(struct wm_layout* layout);
 void wm_layout_add_output(struct wm_layout* layout, struct wlr_output* output);
 void wm_layout_remove_output(struct wm_layout* layout, struct wm_output* output);
 
+void wm_layout_reconfigure(struct wm_layout* layout);
+
 /* Damage whole output layout */
 void wm_layout_damage_whole(struct wm_layout* layout);
 

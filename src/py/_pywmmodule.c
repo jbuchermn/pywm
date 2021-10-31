@@ -7,6 +7,7 @@
 #include <wlr/util/log.h>
 #include "wm/wm.h"
 #include "wm/wm_config.h"
+#include "wm/wm_server.h"
 #include "py/_pywm_callbacks.h"
 #include "py/_pywm_view.h"
 #include "py/_pywm_widget.h"
@@ -21,6 +22,58 @@ static void sig_handler(int sig) {
     exit(1);
 }
 
+static void set_config(struct wm_config* conf, PyObject* dict, int reconfigure){
+    if(reconfigure){
+        wm_config_reset_default(conf);
+    }
+
+    PyObject* o;
+    o = PyDict_GetItemString(dict, "outputs");
+    if(o && PyList_Check(o)){
+        PyObject* l = o;
+        for(int i=0; i<PyList_Size(l); i++){
+            PyObject* c = PyList_GetItem(l, i);
+            char* name = "";
+            double scale = 0.;
+            int width = 0;
+            int height = 0;
+            int mHz = 0;
+            int pos_x = WM_CONFIG_POS_MIN - 1;
+            int pos_y = WM_CONFIG_POS_MIN - 1;
+
+            o = PyDict_GetItemString(c, "name"); if(o){ name = PyBytes_AsString(o); }
+            o = PyDict_GetItemString(c, "scale"); if(o){ scale = PyFloat_AsDouble(o); }
+            o = PyDict_GetItemString(c, "width"); if(o){ width = PyLong_AsLong(o); }
+            o = PyDict_GetItemString(c, "height"); if(o){ height = PyLong_AsLong(o); }
+            o = PyDict_GetItemString(c, "mHz"); if(o){ mHz = PyLong_AsLong(o); }
+            o = PyDict_GetItemString(c, "pos_x"); if(o){ pos_x = PyLong_AsLong(o); }
+            o = PyDict_GetItemString(c, "pos_y"); if(o){ pos_y = PyLong_AsLong(o); }
+
+            wm_config_add_output(conf, name, scale, width, height, mHz, pos_x, pos_y);
+        }
+    }
+    o = PyDict_GetItemString(dict, "xkb_model"); if(o){ strncpy(conf->xkb_model, PyBytes_AsString(o), WM_CONFIG_STRLEN-1); }
+    o = PyDict_GetItemString(dict, "xkb_layout"); if(o){ strncpy(conf->xkb_layout, PyBytes_AsString(o), WM_CONFIG_STRLEN-1); }
+    o = PyDict_GetItemString(dict, "xkb_options"); if(o){ strncpy(conf->xkb_options, PyBytes_AsString(o), WM_CONFIG_STRLEN-1); }
+
+    o = PyDict_GetItemString(dict, "xcursor_theme"); if(o){ conf->xcursor_theme = PyBytes_AsString(o); }
+    o = PyDict_GetItemString(dict, "xcursor_size"); if(o){ conf->xcursor_size = PyLong_AsLong(o); }
+
+    o = PyDict_GetItemString(dict, "focus_follows_mouse"); if(o){ conf->focus_follows_mouse = o == Py_True; }
+    o = PyDict_GetItemString(dict, "constrain_popups_to_toplevel"); if(o){ conf->constrain_popups_to_toplevel = o == Py_True; }
+    o = PyDict_GetItemString(dict, "encourage_csd"); if(o){ conf->encourage_csd = o == Py_True; }
+
+    o = PyDict_GetItemString(dict, "enable_output_manager"); if(o){ conf->enable_output_manager = o == Py_True; }
+    o = PyDict_GetItemString(dict, "enable_xwayland"); if(o){ conf->enable_xwayland = o == Py_True; }
+    o = PyDict_GetItemString(dict, "debug_f1"); if(o){ conf->debug_f1 = o == Py_True; }
+
+    if(reconfigure){
+        wlr_log(WLR_DEBUG, "Reconfiguring PyWM...");
+        wm_config_reconfigure(conf, get_wm()->server);
+        wlr_log(WLR_DEBUG, "...done");
+    }
+}
+
 
 static void handle_update(){
     PyGILState_STATE gil = PyGILState_Ensure();
@@ -33,14 +86,16 @@ static void handle_update(){
     double lock_perc;
     int terminate;
     const char* open_virtual_output, *close_virtual_output;
+    PyObject* config;
 
     if(!PyArg_ParseTuple(res,
-                "idssp",
+                "idsspO",
                 &update_cursor,
                 &lock_perc,
                 &open_virtual_output,
                 &close_virtual_output,
-                &terminate)){
+                &terminate,
+                &config)){
         PyErr_SetString(PyExc_TypeError, "Cannot parse query return");
     }else{
         if(update_cursor >= 0){
@@ -56,6 +111,9 @@ static void handle_update(){
         }
         if(strlen(close_virtual_output) > 0){
             wm_close_virtual_output(close_virtual_output);
+        }
+        if(config && config != Py_None){
+            set_config(get_wm()->server->wm_config, config, 1);
         }
     }
     Py_XDECREF(res);
@@ -86,46 +144,7 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
     wm_config_init_default(&conf);
 
     if(kwargs){
-        PyObject* o;
-
-        o = PyDict_GetItemString(kwargs, "outputs");
-        if(o && PyList_Check(o)){
-            PyObject* l = o;
-            for(int i=0; i<PyList_Size(l); i++){
-                PyObject* c = PyList_GetItem(l, i);
-                char* name = "";
-                double scale = 0.;
-                int width = 0;
-                int height = 0;
-                int mHz = 0;
-                int pos_x = -1;
-                int pos_y = -1;
-
-                o = PyDict_GetItemString(c, "name"); if(o){ name = PyBytes_AsString(o); }
-                o = PyDict_GetItemString(c, "scale"); if(o){ scale = PyFloat_AsDouble(o); }
-                o = PyDict_GetItemString(c, "width"); if(o){ width = PyLong_AsLong(o); }
-                o = PyDict_GetItemString(c, "height"); if(o){ height = PyLong_AsLong(o); }
-                o = PyDict_GetItemString(c, "mHz"); if(o){ mHz = PyLong_AsLong(o); }
-                o = PyDict_GetItemString(c, "pos_x"); if(o){ pos_x = PyLong_AsLong(o); }
-                o = PyDict_GetItemString(c, "pos_y"); if(o){ pos_y = PyLong_AsLong(o); }
-
-                wm_config_add_output(&conf, name, scale, width, height, mHz, pos_x, pos_y);
-            }
-        }
-        o = PyDict_GetItemString(kwargs, "xkb_model"); if(o){ conf.xkb_model = PyBytes_AsString(o); }
-        o = PyDict_GetItemString(kwargs, "xkb_layout"); if(o){ conf.xkb_layout = PyBytes_AsString(o); }
-        o = PyDict_GetItemString(kwargs, "xkb_options"); if(o){ conf.xkb_options = PyBytes_AsString(o); }
-
-        o = PyDict_GetItemString(kwargs, "xcursor_theme"); if(o){ conf.xcursor_theme = PyBytes_AsString(o); }
-        o = PyDict_GetItemString(kwargs, "xcursor_size"); if(o){ conf.xcursor_size = PyLong_AsLong(o); }
-
-        o = PyDict_GetItemString(kwargs, "focus_follows_mouse"); if(o){ conf.focus_follows_mouse = o == Py_True; }
-        o = PyDict_GetItemString(kwargs, "constrain_popups_to_toplevel"); if(o){ conf.constrain_popups_to_toplevel = o == Py_True; }
-        o = PyDict_GetItemString(kwargs, "encourage_csd"); if(o){ conf.encourage_csd = o == Py_True; }
-
-        o = PyDict_GetItemString(kwargs, "enable_output_manager"); if(o){ conf.enable_output_manager = o == Py_True; }
-        o = PyDict_GetItemString(kwargs, "enable_xwayland"); if(o){ conf.enable_xwayland = o == Py_True; }
-        o = PyDict_GetItemString(kwargs, "debug_f1"); if(o){ conf.debug_f1 = o == Py_True; }
+        set_config(&conf, kwargs, 0);
     }
 
     /* Register callbacks immediately, might be called during init */

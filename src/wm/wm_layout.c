@@ -58,23 +58,35 @@ void wm_layout_destroy(struct wm_layout* layout) {
     wl_list_remove(&layout->change.link);
 }
 
+static void place(struct wm_layout* layout, struct wm_output* output){
+    struct wm_config_output* config = wm_config_find_output(layout->wm_server->wm_config, output->wlr_output->name);
+    if(!config || (config->pos_x < WM_CONFIG_POS_MIN || config->pos_y < WM_CONFIG_POS_MIN)){
+        wlr_log(WLR_INFO, "Layout: Placing automatically");
+        wlr_output_layout_add_auto(layout->wlr_output_layout, output->wlr_output);
+    }else{
+        wlr_log(WLR_INFO, "Layout: Placing at %d / %d", config->pos_x, config->pos_y);
+        wlr_output_layout_add(layout->wlr_output_layout, output->wlr_output, config->pos_x, config->pos_y);
+    }
+}
+
 void wm_layout_add_output(struct wm_layout* layout, struct wlr_output* out){
     struct wm_output* output = calloc(1, sizeof(struct wm_output));
     wm_output_init(output, layout->wm_server, layout, out);
     wl_list_insert(&layout->wm_outputs, &output->link);
 
-    struct wm_config_output* config = wm_config_find_output(layout->wm_server->wm_config, output->wlr_output->name);
-    if(!config || (config->pos_x < 0 || config->pos_y < 0)){
-        wlr_log(WLR_INFO, "New output: Placing automatically");
-        wlr_output_layout_add_auto(layout->wlr_output_layout, out);
-    }else{
-        wlr_log(WLR_INFO, "New output: Placing at %d / %d", config->pos_x, config->pos_y);
-        wlr_output_layout_add(layout->wlr_output_layout, out, config->pos_x, config->pos_y);
-    }
+    place(layout, output);
 }
 
 void wm_layout_remove_output(struct wm_layout* layout, struct wm_output* output){
     wlr_output_layout_remove(layout->wlr_output_layout, output->wlr_output);
+}
+
+void wm_layout_reconfigure(struct wm_layout* layout){
+    struct wm_output* output;
+    wl_list_for_each(output, &layout->wm_outputs, link){
+        wm_output_reconfigure(output);
+        place(layout, output);
+    }
 }
 
 

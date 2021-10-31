@@ -3,15 +3,18 @@
 #include <string.h>
 #include <wlr/util/log.h>
 
+#include "wm/wm_server.h"
+#include "wm/wm_layout.h"
+
 void wm_config_init_default(struct wm_config *config) {
     config->enable_output_manager = true;
     config->enable_xwayland = false;
 
     config->callback_frequency = 20;
 
-    config->xkb_model = "";
-    config->xkb_layout = "us";
-    config->xkb_options = "";
+    strcpy(config->xkb_model, "");
+    strcpy(config->xkb_layout, "");
+    strcpy(config->xkb_options, "");
 
     wl_list_init(&config->outputs);
 
@@ -25,6 +28,19 @@ void wm_config_init_default(struct wm_config *config) {
     config->debug_f1 = false;
 }
 
+void wm_config_reset_default(struct wm_config* config){
+    struct wm_config_output *output, *tmp;
+    wl_list_for_each_safe(output, tmp, &config->outputs, link) {
+        wl_list_remove(&output->link);
+        free(output);
+    }
+    wm_config_init_default(config);
+}
+
+void wm_config_reconfigure(struct wm_config* config, struct wm_server* server){
+    wm_layout_reconfigure(server->wm_layout);
+}
+
 void wm_config_add_output(struct wm_config *config, const char *name,
                           double scale, int width, int height, int mHz,
                           int pos_x, int pos_y) {
@@ -34,7 +50,7 @@ void wm_config_add_output(struct wm_config *config, const char *name,
     }
     struct wm_config_output *new = calloc(1, sizeof(struct wm_config_output));
 
-    new->name = name;
+    strncpy(new->name, name, WM_CONFIG_STRLEN-1);
     new->scale = scale;
     new->width = width;
     new->height = height;

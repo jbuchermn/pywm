@@ -29,6 +29,8 @@ struct wm_output {
 void wm_output_init(struct wm_output* output, struct wm_server* server, struct wm_layout* layout, struct wlr_output* out);
 void wm_output_destroy(struct wm_output* output);
 
+void wm_output_reconfigure(struct wm_output* output);
+
 
 /*
  * Override name of next output to be initialised

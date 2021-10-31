@@ -37,13 +37,14 @@ class PyWMDownstreamState:
     def copy(self) -> PyWMDownstreamState:
         return PyWMDownstreamState(self.lock_perc)
 
-    def get(self, update_cursor: int, open_virtual_output: Optional[str], close_virtual_output: Optional[str], terminate: int) -> tuple[int, float, str, str, bool]:
+    def get(self, update_cursor: int, open_virtual_output: Optional[str], close_virtual_output: Optional[str], terminate: int, config: Optional[dict[str, Any]]) -> tuple[int, float, str, str, bool, Optional[dict[str, Any]]]:
         return (
             int(update_cursor),
             self.lock_perc,
             open_virtual_output if open_virtual_output is not None else "",
             close_virtual_output if close_virtual_output is not None else "",
-            bool(terminate)
+            bool(terminate),
+            config
         )
 
 
@@ -130,6 +131,8 @@ class PyWM(Generic[ViewT]):
 
         self._pending_widgets: list[PyWMWidget] = []
         self._pending_destroy_widgets: list[PyWMWidget] = []
+
+        self._pending_config: Optional[dict[str, Any]] = None
 
         self._touchpad_daemon = TouchpadDaemon(self._gesture)
         self._touchpad_captured = False
@@ -340,7 +343,7 @@ class PyWM(Generic[ViewT]):
         return None
 
     @callback
-    def _update(self) -> tuple[int, float, str, str, bool]:
+    def _update(self) -> tuple[int, float, str, str, bool, Optional[dict[str, Any]]]:
         if self._damaged:
             self._damaged = False
             self._down_state = self.process()
@@ -349,13 +352,15 @@ class PyWM(Generic[ViewT]):
             self._pending_update_cursor,
             self._pending_open_virtual_output,
             self._pending_close_virtual_output,
-            self._pending_terminate
+            self._pending_terminate,
+            self._encode(self._pending_config)
         )
 
         self._pending_update_cursor = -1
         self._pending_open_virtual_output = None
         self._pending_close_virtual_output = None
         self._pending_terminate = False
+        self._pending_config = None
 
         return res
     
@@ -366,6 +371,8 @@ class PyWM(Generic[ViewT]):
         self._widgets.pop(widget._handle, None)
         if widget._handle >= 0:
             self._pending_destroy_widgets += [widget]
+        else:
+            self._pending_widgets = [w for w in self._pending_widgets if id(w) != id(widget)]
 
     def _gesture(self, gesture: Gesture) -> None:
         self._update_idle()
@@ -385,9 +392,6 @@ class PyWM(Generic[ViewT]):
     def configure_gestures(self, *args: float) -> None:
         self._touchpad_daemon.update_config(*args)
 
-    """
-    Public API
-    """
 
     def _encode(self, v: Any) -> Any:
         if isinstance(v, str):
@@ -398,11 +402,18 @@ class PyWM(Generic[ViewT]):
             return [self._encode(k) for k in v]
         else:
             return v
+    """
+    Public API
+    """
 
     def run(self) -> None:
         logger.debug("PyWM run")
         run(**self._encode(self.config))
         logger.debug("PyWM finished")
+
+    def reconfigure(self, config: dict[str, Any]) -> None:
+        self._pending_config = config
+        self.config = config
 
     def terminate(self) -> None:
         logger.debug("PyWM terminating")
