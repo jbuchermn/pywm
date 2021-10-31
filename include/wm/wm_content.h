@@ -22,6 +22,9 @@ struct wm_content {
     double display_width;
     double display_height;
 
+    /* Fix to one output - only for comparison; don't dereference */
+    struct wm_output* fixed_output;
+
     /* Only applied to root surface(s) */
     double mask_x;
     double mask_y;
@@ -38,6 +41,8 @@ struct wm_content {
 
 void wm_content_init(struct wm_content* content, struct wm_server* server);
 void wm_content_base_destroy(struct wm_content* content);
+
+void wm_content_set_output(struct wm_content* content, char* name);
 
 void wm_content_set_box(struct wm_content* content, double x, double y, double width, double height);
 void wm_content_get_box(struct wm_content* content, double* display_x, double* display_y, double* display_width, double* display_height);

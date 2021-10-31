@@ -6,6 +6,7 @@
 #include <wlr/util/log.h>
 
 #include "wm/wm_content.h"
+#include "wm/wm_output.h"
 #include "wm/wm_server.h"
 #include "wm/wm_layout.h"
 
@@ -20,6 +21,7 @@ void wm_content_init(struct wm_content* content, struct wm_server* server) {
     content->display_width = 0.;
     content->display_height = 0.;
     content->corner_radius = 0.;
+    content->fixed_output = NULL;
 
     content->z_index = 0;
     wl_list_insert(&content->wm_server->wm_contents, &content->link);
@@ -29,6 +31,18 @@ void wm_content_init(struct wm_content* content, struct wm_server* server) {
 
 void wm_content_base_destroy(struct wm_content* content) {
     wl_list_remove(&content->link);
+}
+
+void wm_content_set_output(struct wm_content* content, char* name){
+    content->fixed_output = NULL;
+    if(!name || !strcmp(name, "")) return;
+
+    struct wm_output* output;
+    wl_list_for_each(output, &content->wm_server->wm_layout->wm_outputs, link){
+        if(!strcmp(output->wlr_output->name, name)){
+            content->fixed_output = output;
+        }
+    }
 }
 
 void wm_content_set_box(struct wm_content* content, double x, double y, double width, double height) {

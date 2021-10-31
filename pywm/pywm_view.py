@@ -6,7 +6,7 @@ from abc import abstractmethod
 
 # Python imports are great
 if TYPE_CHECKING:
-    from .pywm import PyWM, ViewT
+    from .pywm import PyWM, PyWMOutput, ViewT
     PyWMT = TypeVar('PyWMT', bound=PyWM)
 else:
     PyWMT = TypeVar('PyWMT')
@@ -79,7 +79,7 @@ class PyWMViewDownstreamState:
                  z_index: int=0, box: tuple[float, float, float, float]=(0, 0, 0, 0),
                  mask: tuple[float, float, float, float]=(-1, -1, -1, -1),
                  opacity: float=1., corner_radius: float=0,
-                 accepts_input: bool=False, lock_enabled: bool=False, up_state: Optional[PyWMViewUpstreamState]=None) -> None:
+                 accepts_input: bool=False, lock_enabled: bool=False, fixed_output: Optional[PyWMOutput]=None, up_state: Optional[PyWMViewUpstreamState]=None) -> None:
         """
         Just to be sure - wrap in type constructors
         """
@@ -90,6 +90,7 @@ class PyWMViewDownstreamState:
         self.corner_radius = corner_radius
         self.accepts_input = accepts_input
         self.lock_enabled = lock_enabled
+        self.fixed_output = fixed_output
 
         """
         Request size
@@ -107,7 +108,8 @@ class PyWMViewDownstreamState:
     def get(self, root: PyWM[ViewT],
             last_state: Optional[PyWMViewDownstreamState],
             focus: Optional[int], fullscreen: Optional[int], maximized: Optional[int], resizing: Optional[int], close: Optional[int]
-            ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int]:
+            ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int, str]:
+
         return (
             root.round(*self.box),
             self.mask,
@@ -123,7 +125,8 @@ class PyWMViewDownstreamState:
             int(fullscreen) if fullscreen is not None else -1,
             int(maximized) if maximized is not None else -1,
             int(resizing) if resizing is not None else -1,
-            int(close) if close is not None else -1
+            int(close) if close is not None else -1,
+            self.fixed_output.name if self.fixed_output is not None else ""
         )
 
     def __str__(self) -> str:
@@ -161,7 +164,7 @@ class PyWMView(Generic[PyWMT]):
                 offset_x: int, offset_y: int,
                 width: int, height: int,
                 is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool
-                ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int]:
+                ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int, str]:
 
         if self.parent is None and parent_handle is not None:
             try:

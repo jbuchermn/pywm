@@ -13,7 +13,6 @@ void wm_widget_init(struct wm_widget* widget, struct wm_server* server){
     widget->super.vtable = &wm_widget_vtable;
 
     widget->wlr_texture = NULL;
-    widget->wm_output = NULL;
 }
 
 static void wm_widget_destroy(struct wm_content* super){
@@ -33,19 +32,10 @@ void wm_widget_set_pixels(struct wm_widget* widget, uint32_t format, uint32_t st
     wm_layout_damage_from(widget->super.wm_server->wm_layout, &widget->super, NULL);
 }
 
-void wm_widget_set_output(struct wm_widget* widget, char* name){
-    widget->wm_output = NULL;
-    if(!name || !strcmp(name, "")) return;
-
-    struct wm_output* output;
-    wl_list_for_each(output, &widget->super.wm_server->wm_layout->wm_outputs, link){
-        if(!strcmp(output->wlr_output->name, name)) widget->wm_output = output;
-    }
-}
 
 static void wm_widget_render(struct wm_content* super, struct wm_output* output, pixman_region32_t* output_damage, struct timespec now){
     struct wm_widget* widget = wm_cast(wm_widget, super);
-    if(widget->wm_output && output != widget->wm_output) return;
+    if(widget->super.fixed_output && output != widget->super.fixed_output) return;
 
     if (!widget->wlr_texture)
         return;

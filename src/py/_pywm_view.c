@@ -103,9 +103,10 @@ void _pywm_view_update(struct _pywm_view* view){
         int width_pending, height_pending;
         int accepts_input, z_index;
         int lock_enabled;
+        char* output_name;
         
         if(!PyArg_ParseTuple(res, 
-                    "(dddd)(dddd)ddipp(ii)iiiii",
+                    "(dddd)(dddd)ddipp(ii)iiiiis",
                     &x, &y, &w, &h,
                     &mask_x, &mask_y, &mask_w, &mask_h,
                     &opacity,
@@ -120,7 +121,8 @@ void _pywm_view_update(struct _pywm_view* view){
                     &fullscreen_pending,
                     &maximized_pending,
                     &resizing_pending,
-                    &close_pending
+                    &close_pending,
+                    &output_name
         )){
             fprintf(stderr, "Error parsing update view return...\n");
             PyErr_SetString(PyExc_TypeError, "Cannot parse update_view return");
@@ -147,6 +149,8 @@ void _pywm_view_update(struct _pywm_view* view){
             wm_content_set_lock_enabled(&view->view->super, lock_enabled);
 
             view->view->accepts_input = accepts_input;
+
+            wm_content_set_output(&view->view->super, output_name);
         }
 
     }

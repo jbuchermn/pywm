@@ -113,6 +113,7 @@ static void render_surface(struct wlr_surface *surface, int sx, int sy,
 
 static void wm_view_render(struct wm_content* super, struct wm_output* output, pixman_region32_t* output_damage, struct timespec now){
     struct wm_view* view = wm_cast(wm_view, super);
+    if(view->super.fixed_output && output != view->super.fixed_output) return;
 
     if (!view->mapped) {
         return;
