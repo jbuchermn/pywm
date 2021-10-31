@@ -2,12 +2,11 @@
 
 * Development
 ** Current (v0.2)
+*** TODO Background scaling uglyness (GL_NEAREST unsuitable) --> Make filter an attribute of wm_content
 *** DONE Enable wayvnc.sh
-*** STRT Update wlroots
+*** DONE Update wlroots
 - [X] Reenable wm_renderer
-- [-] Keep an eye on Chromium bug: https://bugs.chromium.org/p/chromium/issues/detail?id=1246834
-  So long patch by undoing https://github.com/swaywm/wlroots/commit/d290b13871fa18dcad6cd90d9ee93e7205742124?diff=unified
-*** STRT Multiple outputs
+*** DONE Multiple outputs
 - [X] Accept config per output
 - [X] wlr_surface_send_enter
 - [X] Config per output from Python
@@ -18,13 +17,15 @@
 - [X] Render windows / widgets / mouse according to layout
 - [X] Possibility to duplicate screen? or at least place windows (widgets also?) on multiple screens at the same time
 - [X] Crashes on closing virtual outputs: Caused by removing (callback_update) an output during its present event
-- [ ] Check valgrind for lost memory
 - [X] Is pywm.round_scale necessary? Issues if set to 1 (write test cases)? Probably only sensible to scale according to logical pixels (round_scale == output_scale) or: positions according to lowest scaled monitor the content is on / width according to logical pixels
 - [X] Get rid of pywm.output_scale, pywm.width, pywm.height
 - [X] Fix widgets to one output ?! Useful if we have overlapping screens of different resolution?
 *** Output transforms
 *** Updatable config
-*** Documentation / Update config keys
+*** Release
+- [ ] Documentation / Update config keys
+- [ ] Check valgrind for lost memory
+- [ ] Terminate newm without faults
 
 ** Backlog / Ideas
 *** Complete libinput device config / support for external mouse
@@ -36,6 +37,8 @@
 
 
 * Notes
+- Keep an eye on Chromium bug: https://bugs.chromium.org/p/chromium/issues/detail?id=1246834 So long patch by undoing https://github.com/swaywm/wlroots/commit/d290b13871fa18dcad6cd90d9ee93e7205742124?diff=unified
+
 - Depending on the settings (see newm) XWayland apps are responsible for handling HiDPI themselves and will per default appear very small
 - GDK on XWayland: GDK_DPI_SCALE=2
 - Electron apps: --force-device-scale-factor=2

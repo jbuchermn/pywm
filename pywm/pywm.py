@@ -153,6 +153,7 @@ class PyWM(Generic[ViewT]):
         self.config: dict[str, Any] = kwargs
         self.layout: list[PyWMOutput] = []
         self.modifiers = 0
+        self.cursor_pos: tuple[float, float] = (0, 0)
 
         self._idle_thread: PyWMIdleThread[ViewT] = PyWMIdleThread(self)
         self._idle_last_activity: float = time.time()
@@ -211,11 +212,12 @@ class PyWM(Generic[ViewT]):
         Thread(target=self._exec_main).start()
 
     @callback
-    def _motion(self, time_msec: int, delta_x: float, delta_y: float) -> bool:
+    def _motion(self, time_msec: int, delta_x: float, delta_y: float, abs_x: float, abs_y: float) -> bool:
         self._update_idle()
         if self._touchpad_captured:
             return True
 
+        self.cursor_pos = (abs_x, abs_y)
         return self.on_motion(time_msec, delta_x, delta_y)
 
     @callback
@@ -362,7 +364,8 @@ class PyWM(Generic[ViewT]):
 
     def widget_destroy(self, widget: PyWMWidget) -> None:
         self._widgets.pop(widget._handle, None)
-        self._pending_destroy_widgets += [widget]
+        if widget._handle >= 0:
+            self._pending_destroy_widgets += [widget]
 
     def _gesture(self, gesture: Gesture) -> None:
         self._update_idle()

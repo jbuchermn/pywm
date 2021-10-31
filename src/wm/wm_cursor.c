@@ -26,11 +26,12 @@ static void handle_motion(struct wl_listener* listener, void* data){
     clock_t t_msec = clock() * 1000 / CLOCKS_PER_SEC;
     cursor->msec_delta = event->time_msec - t_msec;
 
-    if(wm_callback_motion(event->delta_x, event->delta_y, event->time_msec)){
+    wlr_cursor_move(cursor->wlr_cursor, event->device, event->delta_x, event->delta_y);
+    if(wm_callback_motion(event->delta_x, event->delta_y, cursor->wlr_cursor->x, cursor->wlr_cursor->y, event->time_msec)){
+        wlr_cursor_move(cursor->wlr_cursor, event->device, -event->delta_x, -event->delta_y);
         return;
     }
 
-    wlr_cursor_move(cursor->wlr_cursor, event->device, event->delta_x, event->delta_y);
     wm_cursor_update(cursor);
 }
 
@@ -44,7 +45,7 @@ static void handle_motion_absolute(struct wl_listener* listener, void* data){
     double dx = lx - cursor->wlr_cursor->x;
     double dy = ly - cursor->wlr_cursor->y;
 
-    if(wm_callback_motion(dx, dy, event->time_msec)){
+    if(wm_callback_motion(dx, dy, lx, ly, event->time_msec)){
         return;
     }
 

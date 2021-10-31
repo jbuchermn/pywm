@@ -168,12 +168,12 @@ bool wm_callback_modifiers(struct wlr_keyboard_modifiers *modifiers) {
     return (*wm.callback_modifiers)(modifiers);
 }
 
-bool wm_callback_motion(double delta_x, double delta_y, uint32_t time_msec) {
+bool wm_callback_motion(double delta_x, double delta_y, double abs_x, double abs_y, uint32_t time_msec) {
     if (!wm.callback_motion) {
         return false;
     }
 
-    return (*wm.callback_motion)(delta_x, delta_y, time_msec);
+    return (*wm.callback_motion)(delta_x, delta_y, abs_x, abs_y, time_msec);
 }
 
 bool wm_callback_button(struct wlr_event_pointer_button *event) {

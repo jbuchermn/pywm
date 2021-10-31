@@ -78,7 +78,7 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
     signal(SIGTERM, sig_handler);
     signal(SIGHUP, sig_handler);
 
-    fprintf(stderr, "Running PyWM...\n");
+    wlr_log(WLR_INFO, "Running PyWM...\n");
 
     int status = 0;
 
@@ -138,7 +138,7 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
     status = wm_run();
     Py_END_ALLOW_THREADS;
 
-    fprintf(stderr, "...finished\n");
+    wlr_log(WLR_INFO, "...finished\n");
 
     return Py_BuildValue("i", status);
 }

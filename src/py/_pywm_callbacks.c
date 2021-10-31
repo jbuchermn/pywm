@@ -87,10 +87,10 @@ static bool call_modifiers(struct wlr_keyboard_modifiers* modifiers){
     return false;
 }
 
-static bool call_motion(double delta_x, double delta_y, uint32_t time_msec){
+static bool call_motion(double delta_x, double delta_y, double abs_x, double abs_y, uint32_t time_msec){
     if(callbacks.motion){
         PyGILState_STATE gil = PyGILState_Ensure();
-        PyObject* args = Py_BuildValue("(idd)", time_msec, delta_x, delta_y);
+        PyObject* args = Py_BuildValue("(idddd)", time_msec, delta_x, delta_y, abs_x, abs_y);
         bool result = call_bool(callbacks.motion, args);
         PyGILState_Release(gil);
         return result;
