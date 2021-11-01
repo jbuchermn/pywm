@@ -79,7 +79,10 @@ class PyWMViewDownstreamState:
                  z_index: int=0, box: tuple[float, float, float, float]=(0, 0, 0, 0),
                  mask: tuple[float, float, float, float]=(-1, -1, -1, -1),
                  opacity: float=1., corner_radius: float=0,
-                 accepts_input: bool=False, lock_enabled: bool=False, fixed_output: Optional[PyWMOutput]=None, up_state: Optional[PyWMViewUpstreamState]=None) -> None:
+                 accepts_input: bool=False,
+                 lock_enabled: bool=False,
+                 workspace: Optional[tuple[float, float, float, float]]=None,
+                 up_state: Optional[PyWMViewUpstreamState]=None) -> None:
         """
         Just to be sure - wrap in type constructors
         """
@@ -90,7 +93,7 @@ class PyWMViewDownstreamState:
         self.corner_radius = corner_radius
         self.accepts_input = accepts_input
         self.lock_enabled = lock_enabled
-        self.fixed_output = fixed_output
+        self.workspace = workspace
 
         """
         Request size
@@ -108,7 +111,7 @@ class PyWMViewDownstreamState:
     def get(self, root: PyWM[ViewT],
             last_state: Optional[PyWMViewDownstreamState],
             focus: Optional[int], fullscreen: Optional[int], maximized: Optional[int], resizing: Optional[int], close: Optional[int]
-            ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int, str]:
+            ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int, tuple[float, float, float, float]]:
 
         return (
             root.round(*self.box),
@@ -126,7 +129,7 @@ class PyWMViewDownstreamState:
             int(maximized) if maximized is not None else -1,
             int(resizing) if resizing is not None else -1,
             int(close) if close is not None else -1,
-            self.fixed_output.name if self.fixed_output is not None else ""
+            root.round(*self.workspace) if self.workspace is not None else (0, 0, -1, -1)
         )
 
     def __str__(self) -> str:
@@ -164,7 +167,7 @@ class PyWMView(Generic[PyWMT]):
                 offset_x: int, offset_y: int,
                 width: int, height: int,
                 is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool
-                ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int, str]:
+                ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int, tuple[float, float, float, float]]:
 
         if self.parent is None and parent_handle is not None:
             try:

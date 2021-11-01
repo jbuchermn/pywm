@@ -21,7 +21,13 @@ void wm_content_init(struct wm_content* content, struct wm_server* server) {
     content->display_width = 0.;
     content->display_height = 0.;
     content->corner_radius = 0.;
+
     content->fixed_output = NULL;
+    content->workspace_x = 0.;
+    content->workspace_y = 0.;
+    content->workspace_width = -1.;
+    content->workspace_height = -1.;
+
 
     content->z_index = 0;
     wl_list_insert(&content->wm_server->wm_contents, &content->link);
@@ -34,15 +40,49 @@ void wm_content_base_destroy(struct wm_content* content) {
 }
 
 void wm_content_set_output(struct wm_content* content, char* name){
-    content->fixed_output = NULL;
-    if(!name || !strcmp(name, "")) return;
-
-    struct wm_output* output;
-    wl_list_for_each(output, &content->wm_server->wm_layout->wm_outputs, link){
-        if(!strcmp(output->wlr_output->name, name)){
-            content->fixed_output = output;
+    struct wm_output* res = NULL;
+    if(name && strcmp(name, "")){
+        struct wm_output* output;
+        wl_list_for_each(output, &content->wm_server->wm_layout->wm_outputs, link){
+            if(!strcmp(output->wlr_output->name, name)){
+                res = output;
+                break;
+            }
         }
     }
+
+    if(res != content->fixed_output){
+        wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
+        content->fixed_output = res;
+        wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
+    }
+}
+
+void wm_content_set_workspace(struct wm_content* content, double x, double y, double width, double height){
+    if(fabs(content->workspace_x - x) +
+            fabs(content->workspace_y - y) +
+            fabs(content->workspace_width - width) +
+            fabs(content->workspace_height - height) < 0.01) return;
+
+    wm_layout_update_content_outputs(content->wm_server->wm_layout, content);
+
+    wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
+    content->workspace_x = x;
+    content->workspace_y = y;
+    content->workspace_width = width;
+    content->workspace_height = height;
+    wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
+}
+
+void wm_content_get_workspace(struct wm_content* content, double* workspace_x, double* workspace_y, double* workspace_width, double* workspace_height){
+    *workspace_x = content->workspace_x;
+    *workspace_y = content->workspace_y;
+    *workspace_width = content->workspace_width;
+    *workspace_height = content->workspace_height;
+}
+
+bool wm_content_has_workspace(struct wm_content* content){
+    return !(content->workspace_width < 0 || content->workspace_height < 0);
 }
 
 void wm_content_set_box(struct wm_content* content, double x, double y, double width, double height) {
@@ -123,6 +163,23 @@ void wm_content_set_lock_enabled(struct wm_content* content, bool lock_enabled){
 
 double wm_content_get_corner_radius(struct wm_content* content){
     return content->corner_radius;
+}
+
+void wm_content_render(struct wm_content* content, struct wm_output* output, pixman_region32_t* output_damage, struct timespec now){
+    pixman_region32_t damage_on_workspace;
+    pixman_region32_init(&damage_on_workspace);
+    pixman_region32_copy(&damage_on_workspace, output_damage);
+    if(wm_content_has_workspace(content)){
+        int x = round((content->workspace_x - output->layout_x) * output->wlr_output->scale);
+        int y = round((content->workspace_y - output->layout_y) * output->wlr_output->scale);
+        int w = round(content->workspace_width * output->wlr_output->scale);
+        int h = round(content->workspace_height * output->wlr_output->scale);
+        pixman_region32_intersect_rect(&damage_on_workspace, &damage_on_workspace, x, y, w, h);
+    }
+
+    (*content->vtable->render)(content, output, &damage_on_workspace, now);
+
+    pixman_region32_fini(&damage_on_workspace);
 }
 
 struct wm_content_vtable wm_content_base_vtable = {

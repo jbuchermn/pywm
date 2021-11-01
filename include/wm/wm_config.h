@@ -39,7 +39,6 @@ struct wm_config {
     char xkb_layout[WM_CONFIG_STRLEN];
     char xkb_options[WM_CONFIG_STRLEN];
 
-    /* TODO: Update - requires modesetting all outputs plus moving the layout (wlr_output_layout_add and wlr_output_layout_add_auto can be used) */
     struct wl_list outputs;
 
     /* TODO: Update - Requires updating / reallocating wlr_xcursor_managers */

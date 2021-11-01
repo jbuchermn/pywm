@@ -3,28 +3,16 @@
 * Development
 ** Current (v0.2)
 *** TODO Background scaling uglyness (GL_NEAREST unsuitable) --> Make filter an attribute of wm_content
-*** DONE Enable wayvnc.sh
-*** DONE Update wlroots
-- [X] Reenable wm_renderer
-*** DONE Multiple outputs
-- [X] Accept config per output
-- [X] wlr_surface_send_enter
-- [X] Config per output from Python
-- [X] Report detailed layout to python
-- [X] Properly load xcursor
-- [X] Handle scaling of motion properly (without pywm.width, pywm.height) and remove motion_absolute
-- [X] Properly handle cursor on vnc - check what sway does
-- [X] Render windows / widgets / mouse according to layout
-- [X] Possibility to duplicate screen? or at least place windows (widgets also?) on multiple screens at the same time
-- [X] Crashes on closing virtual outputs: Caused by removing (callback_update) an output during its present event
-- [X] Is pywm.round_scale necessary? Issues if set to 1 (write test cases)? Probably only sensible to scale according to logical pixels (round_scale == output_scale) or: positions according to lowest scaled monitor the content is on / width according to logical pixels
-- [X] Get rid of pywm.output_scale, pywm.width, pywm.height
-- [X] Fix widgets to one output ?! Useful if we have overlapping screens of different resolution?
-*** Output transforms
-*** Updatable config
+*** STRT Additionally to wm_content->fixed_output enable wm_content->workspace (x, y, w, h) with output scissoring and proper input handling + proper damage tracking
+- [X] Render only on workspace
+- [X] Accept input only on workspace
+- [ ] Add damage only on workspace (see TODO marks)
+*** TODO Output transforms
+*** STRT Updatable config
 - [X] Outputs
 - [ ] See TODO marks
-*** Release
+- [ ] Config update is very slow
+*** TODO Release
 - [ ] Documentation / Update config keys
 - [ ] Check valgrind for lost memory
 - [ ] Terminate newm without faults

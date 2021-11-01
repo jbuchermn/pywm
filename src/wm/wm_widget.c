@@ -67,6 +67,8 @@ static void wm_widget_render(struct wm_content* super, struct wm_output* output,
 
 static void wm_widget_damage_output(struct wm_content* super, struct wm_output* output, struct wlr_surface* origin){
 
+    /* TODO: Handle workspace */
+
     pixman_region32_t region;
     pixman_region32_init(&region);
 

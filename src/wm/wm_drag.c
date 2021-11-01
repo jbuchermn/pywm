@@ -116,6 +116,8 @@ static void wm_drag_render(struct wm_content* super, struct wm_output* output, p
     struct wm_drag* drag = wm_cast(wm_drag, super);
     if(!drag->wlr_drag_icon) return;
 
+    if(super->fixed_output && super->fixed_output != output) return;
+
     struct wlr_box unscaled = {
         .x = round((drag->super.display_x - output->layout_x) * output->wlr_output->scale),
         .y = round((drag->super.display_y - output->layout_y) * output->wlr_output->scale),
@@ -143,6 +145,8 @@ static void wm_drag_render(struct wm_content* super, struct wm_output* output, p
 
 static void wm_drag_damage_output(struct wm_content* super, struct wm_output* output, struct wlr_surface* origin){
     struct wm_drag* drag = wm_cast(wm_drag, super);
+
+    /* TODO: Handle workspace */
 
     double x = (drag->super.display_x - output->layout_x) * output->wlr_output->scale;
     double y = (drag->super.display_y - output->layout_y) * output->wlr_output->scale;

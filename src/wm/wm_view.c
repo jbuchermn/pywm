@@ -227,6 +227,8 @@ static void wm_view_damage_output(struct wm_content* super, struct wm_output* ou
         return;
     }
 
+    /* TODO: Handle workspace */
+
     double display_x, display_y, display_width, display_height;
     wm_content_get_box(&view->super, &display_x, &display_y, &display_width,
             &display_height);

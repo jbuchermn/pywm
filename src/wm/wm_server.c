@@ -355,6 +355,15 @@ void wm_server_surface_at(struct wm_server* server, double at_x, double at_y,
         if(!view->mapped) continue;
         if(!view->accepts_input) continue;
 
+        if(wm_content_has_workspace(&view->super)){
+            double x, y, w, h;
+            wm_content_get_workspace(&view->super, &x, &y, &w, &h);
+            if(at_x < x) continue;
+            if(at_y < y) continue;
+            if(at_x > x+w) continue;
+            if(at_y > y+h) continue;
+        }
+
         int width;
         int height;
         wm_view_get_size(view, &width, &height);
