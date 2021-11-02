@@ -164,15 +164,28 @@ static void handle_ready(struct wl_listener* listener, void* data){
 static int callback_timer_handler(void* data){
     struct wm_server* server = data;
 
+
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
 
-    long long msec_diff = now.tv_nsec / 1000000 - server->last_callback.tv_nsec / 1000000;
-    msec_diff += (now.tv_sec - server->last_callback.tv_sec)*1000;
+    long long ms_diff = now.tv_nsec / 1000000 - server->last_callback.tv_nsec / 1000000;
+    ms_diff += (now.tv_sec - server->last_callback.tv_sec)*1000;
 
-    if(msec_diff > 0.9 * 1000000 / server->wm_layout->fastest_output_mHz){
+    if(ms_diff > 0.9 * 1000000 / server->wm_layout->fastest_output_mHz){
         server->last_callback = now;
+
+        TIMER_DEFINE(between_callback_update);
+        TIMER_STOP(between_callback_update);
+        TIMER_PRINT(between_callback_update);
+
+        TIMER_START(callback_update);
+
         wm_callback_update();
+
+        TIMER_STOP(callback_update);
+        TIMER_PRINT(callback_update);
+
+        TIMER_STARTONLY(between_callback_update);
     }
 
     return 0;
@@ -507,7 +520,14 @@ void wm_server_update_contents(struct wm_server* server){
 
 
 void wm_server_schedule_update(struct wm_server* server){
+
+    TIMER_DEFINE(between_schedule_callback);
+    TIMER_STOP(between_schedule_callback);
+    TIMER_PRINT(between_schedule_callback);
+
     wl_event_source_timer_update(server->callback_timer, 1);
+
+    TIMER_STARTONLY(between_schedule_callback);
 }
 
 void wm_server_set_locked(struct wm_server* server, double lock_perc){
