@@ -55,14 +55,14 @@ void wm_layout_add_output(struct wm_layout* layout, struct wlr_output* out){
     wm_output_init(output, layout->wm_server, layout, out);
     wl_list_insert(&layout->wm_outputs, &output->link);
 
-    wlr_output_layout_add_auto(layout->wlr_output_layout, out);
-
     if((strlen(layout->wm_server->wm_config->output_name) == 0 || !strcmp(layout->wm_server->wm_config->output_name, out->name)) && 
             !layout->default_output){
         layout->default_output = output;
     }else{
         wlr_log(WLR_ERROR, "Only one output supported - ignoring %s", out->name);
     }
+
+    wlr_output_layout_add_auto(layout->wlr_output_layout, out);
 }
 
 void wm_layout_remove_output(struct wm_layout* layout, struct wm_output* output){
