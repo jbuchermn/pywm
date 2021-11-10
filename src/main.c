@@ -7,7 +7,6 @@
 #include "wm/wm_config.h"
 #include "wm/wm.h"
 
-
 int main(int argc, char** argv){
     struct wm_config config;
     wm_config_init_default(&config);
