@@ -30,6 +30,7 @@ void wm_pointer_init(struct wm_pointer* pointer, struct wm_seat* seat, struct wl
         if(libinput_device_config_scroll_has_natural_scroll(device)){
             libinput_device_config_scroll_set_natural_scroll_enabled(device, true);
         }
+        libinput_device_config_tap_set_enabled(device, true);
     }
 
     pointer->destroy.notify = handle_destroy;
