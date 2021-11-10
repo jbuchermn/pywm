@@ -93,9 +93,6 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
         o = PyDict_GetItemString(kwargs, "output_height"); if(o){ conf.output_height = PyLong_AsLong(o); }
         o = PyDict_GetItemString(kwargs, "output_mHz"); if(o){ conf.output_mHz= PyLong_AsLong(o); }
 
-        o = PyDict_GetItemString(kwargs, "tap_to_click"); if(o){ conf.tap_to_click = o == Py_True; }
-        o = PyDict_GetItemString(kwargs, "natural_scroll"); if(o){ conf.natural_scroll = o == Py_True; }
-
         o = PyDict_GetItemString(kwargs, "focus_follows_mouse"); if(o){ conf.focus_follows_mouse = o == Py_True; }
         o = PyDict_GetItemString(kwargs, "constrain_popups_to_toplevel"); if(o){ conf.constrain_popups_to_toplevel = o == Py_True; }
         o = PyDict_GetItemString(kwargs, "encourage_csd"); if(o){ conf.encourage_csd = o == Py_True; }

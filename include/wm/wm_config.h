@@ -22,15 +22,12 @@ struct wm_config {
     const char* xcursor_theme;
     int xcursor_size;
 
-    bool tap_to_click;
-    bool natural_scroll;
+    int focus_follows_mouse;
+    int constrain_popups_to_toplevel;
 
-    bool focus_follows_mouse;
-    bool constrain_popups_to_toplevel;
+    int encourage_csd;
 
-    bool encourage_csd;
-
-    bool debug_f1;
+    int debug_f1;
 };
 
 void wm_config_init_default(struct wm_config* config);
