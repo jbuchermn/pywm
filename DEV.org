@@ -1,13 +1,5 @@
 #+TITLE: pywm developer information
 
-* Development
-** Current
-*** STRT Update and check TESTS.org
-*** DONE Damaging bugs on firefox start
-*** DONE Force Chromium not to use CSD (thereby bypassing corners)
-*** TODO Change loglevel
-*** TODO Use libseat from python / patched python evdev
-
 
 * Notes
 - Depending on the settings (see newm) XWayland apps are responsible for handling HiDPI themselves and will per default appear very small
