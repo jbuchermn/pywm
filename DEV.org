@@ -11,8 +11,10 @@
 *** STRT Updatable config
 - [X] Outputs
 - [ ] See TODO marks
-- [ ] Config update is very slow
+- [X] Config update is very slow
 *** TODO Release
+- [ ] TODO comments
+- [ ] TESTS
 - [ ] Documentation / Update config keys
 - [ ] Check valgrind for lost memory
 - [ ] Terminate newm without faults
@@ -22,8 +24,7 @@
 *** Configurable gestures (abstraction layer) + possibility to use external "gesture providers" (e.g. detection from webcam video)
 *** Support newm-sidecar (or similar, via ws://) as touchpad
 *** Touch input from yoga or similar
-*** Screensharing using xdg-desktop-portal-wlr
-*** Decorations for floating windows (dialogs)
+*** Decorations for floating windows (dialogs) or more general borders
 
 
 * Notes
@@ -41,3 +42,5 @@
 - Apple Trackpad
         https://medium.com/macoclock/how-to-pair-apple-magic-keyboard-a1314-on-ubuntu-18-04-and-act-as-numpad-42fe4402454c
         https://wiki.archlinux.org/index.php/Bluetooth
+
+- Screensharing using `xdg-desktop-portal-wlr -r`
