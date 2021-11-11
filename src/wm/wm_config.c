@@ -20,6 +20,9 @@ void wm_config_init_default(struct wm_config* config){
     config->xcursor_theme = NULL;
     config->xcursor_size = 24;
 
+    config->natural_scroll = true;
+    config->tap_to_click = true;
+
     config->focus_follows_mouse = true;
     config->constrain_popups_to_toplevel = false;
 
