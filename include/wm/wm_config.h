@@ -53,7 +53,10 @@ struct wm_config {
     /* TODO: Update - Requires updating wlr_server_decoration manager */
     int encourage_csd;
 
-    int debug_f1;
+    bool tap_to_click;
+    bool natural_scroll;
+
+    bool debug_f1;
 };
 
 void wm_config_init_default(struct wm_config *config);

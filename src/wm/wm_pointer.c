@@ -6,6 +6,8 @@
 #include <wlr/backend/libinput.h>
 #include <libinput.h>
 #include <assert.h>
+#include "wm/wm_server.h"
+#include "wm/wm_config.h"
 #include "wm/wm_pointer.h"
 #include "wm/wm_seat.h"
 
@@ -28,8 +30,9 @@ void wm_pointer_init(struct wm_pointer* pointer, struct wm_seat* seat, struct wl
     if(wlr_input_device_is_libinput(pointer->wlr_input_device)){
         struct libinput_device* device = wlr_libinput_get_device_handle(pointer->wlr_input_device);
         if(libinput_device_config_scroll_has_natural_scroll(device)){
-            libinput_device_config_scroll_set_natural_scroll_enabled(device, true);
+            libinput_device_config_scroll_set_natural_scroll_enabled(device, pointer->wm_seat->wm_server->wm_config->natural_scroll);
         }
+        libinput_device_config_tap_set_enabled(device, pointer->wm_seat->wm_server->wm_config->tap_to_click);
     }
 
     pointer->destroy.notify = handle_destroy;
