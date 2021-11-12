@@ -2,19 +2,26 @@
 
 * Development
 ** Current (v0.2)
-*** TODO XDG views - possibly talk to python on init, not after map? Could prevent ugly startups (e.g. Firefox), however, floating detection does not seem to work, animations start early
+*** TODO XDG views - possibly talk to python on init, not after map? Could prevent ugly startups (e.g. Firefox), however, floating detection does not seem to work, animations start early, ...
 
 *** TODO Background scaling uglyness (GL_NEAREST unsuitable) --> Make filter an attribute of wm_content
+
+*** TODO Suppport gamma control
+
 *** STRT Additionally to wm_content->fixed_output enable wm_content->workspace (x, y, w, h) with output scissoring and proper input handling + proper damage tracking
 - [X] Render only on workspace
 - [X] Accept input only on workspace
 - [ ] Add damage only on workspace (see TODO marks)
-*** TODO Output transforms
+
 *** STRT Updatable config
 - [X] Outputs
 - [ ] See TODO marks
 - [X] Config update is very slow
-*** TODO Layer shell?
+
+*** TODO Output transforms
+
+*** TODO Layer shell
+
 *** TODO Release
 - [ ] TODO comments
 - [ ] TESTS

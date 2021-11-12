@@ -194,27 +194,25 @@ static void damage_surface(struct wlr_surface *surface, int sx, int sy,
     }
 
     /* effective damage might go beyond box, so do this even if origin == NULL */
-	if (pixman_region32_not_empty(&surface->buffer_damage)) {
-		pixman_region32_t region;
-		pixman_region32_init(&region);
+    if (pixman_region32_not_empty(&surface->buffer_damage)) {
+        pixman_region32_t region;
+        pixman_region32_init(&region);
 
-		wlr_surface_get_effective_damage(surface, &region);
+        wlr_surface_get_effective_damage(surface, &region);
 
-        wlr_region_scale_xy(&region, &region, 
-                ddata->x_scale * output->wlr_output->scale,
-                ddata->y_scale * output->wlr_output->scale);
+        wlr_region_scale_xy(&region, &region,
+                            ddata->x_scale * output->wlr_output->scale,
+                            ddata->y_scale * output->wlr_output->scale);
 
-		pixman_region32_translate(&region, box.x, box.y);
+        pixman_region32_translate(&region, box.x, box.y);
 
+        wlr_output_damage_add(output->wlr_output_damage, &region);
+        pixman_region32_fini(&region);
+    }
 
-		wlr_output_damage_add(output->wlr_output_damage, &region);
-		pixman_region32_fini(&region);
-	}
-
-	if (!wl_list_empty(&surface->current.frame_callback_list)) {
-		wlr_output_schedule_frame(output->wlr_output);
-	}
-
+    if (!wl_list_empty(&surface->current.frame_callback_list)) {
+        wlr_output_schedule_frame(output->wlr_output);
+    }
 }
 
 static void wm_view_damage_output(struct wm_content* super, struct wm_output* output, struct wlr_surface* origin){
