@@ -196,6 +196,16 @@ static void handle_new_subsurface(struct wl_listener* listener, void* data){
 static void handle_surface_commit(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, surface_commit);
 
+    int width = view->wlr_xdg_surface->current.geometry.width;
+    int height = view->wlr_xdg_surface->current.geometry.height;
+
+    if(width != view->width || height != view->height){
+        wm_callback_view_resize(&view->super, width, height);
+    }
+
+    view->width = width;
+    view->height = height;
+
     wm_layout_damage_from(
             view->super.super.wm_server->wm_layout,
             &view->super.super, view->wlr_xdg_surface->surface);
@@ -505,14 +515,8 @@ static void wm_view_xdg_get_size_constraints(struct wm_view* super, int* min_wid
 static void wm_view_xdg_get_size(struct wm_view* super, int* width, int* height){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
 
-    /* Again following sway here */
-    *width = view->wlr_xdg_surface->current.geometry.width;
-    *height = view->wlr_xdg_surface->current.geometry.height;
-
-    if(!(*width) || !(*height)){
-        *width = view->wlr_xdg_surface->surface->current.width;
-        *height = view->wlr_xdg_surface->surface->current.height;
-    }
+    *width = view->width;
+    *height = view->height;
 
 }
 

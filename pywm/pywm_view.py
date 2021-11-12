@@ -270,6 +270,9 @@ class PyWMView(Generic[PyWMT]):
     def on_event(self, event: str) -> None:
         pass
 
+    def on_resized(self, width: int, height: int) -> None:
+        pass
+
     @abstractmethod
     def process(self, up_state: PyWMViewUpstreamState) -> PyWMViewDownstreamState:
         """

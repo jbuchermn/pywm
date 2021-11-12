@@ -206,6 +206,8 @@ PyObject** _pywm_callbacks_get(const char* name){
         return &callbacks.update;
     }else if(!strcmp(name, "view_event")){
         return &callbacks.view_event;
+    }else if(!strcmp(name, "view_resized")){
+        return &callbacks.view_resized;
     }
 
     return NULL;

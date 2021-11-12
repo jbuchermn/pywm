@@ -15,6 +15,7 @@ struct _pywm_callbacks {
     PyObject* update_view;
     PyObject* destroy_view;
     PyObject* view_event;
+    PyObject* view_resized;
 
     PyObject* query_new_widget;
     PyObject* update_widget;

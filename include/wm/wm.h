@@ -23,6 +23,7 @@ struct wm {
     void (*callback_init_view)(struct wm_view*);
     void (*callback_destroy_view)(struct wm_view*);
     void (*callback_view_event)(struct wm_view*, const char* event);
+    void (*callback_view_resize)(struct wm_view*, int width, int height);
 
     /* Once the server is ready, and we can create new threads */
     void (*callback_ready)(void);
@@ -71,6 +72,7 @@ bool wm_callback_axis(struct wlr_event_pointer_axis* event);
 void wm_callback_init_view(struct wm_view* view);
 void wm_callback_destroy_view(struct wm_view* view);
 void wm_callback_view_event(struct wm_view* view, const char* event);
+void wm_callback_view_resize(struct wm_view* view, int width, int height);
 
 void wm_callback_update();
 void wm_callback_ready();

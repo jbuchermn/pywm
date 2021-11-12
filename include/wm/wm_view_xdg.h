@@ -61,6 +61,9 @@ struct wm_view_xdg {
     bool floating;
     bool constrain_popups_to_toplevel; /* false = constrain to output */
 
+    int width;
+    int height;
+
     struct wl_listener map;
     struct wl_listener unmap;
     struct wl_listener destroy;

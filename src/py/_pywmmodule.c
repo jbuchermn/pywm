@@ -78,6 +78,12 @@ static void set_config(struct wm_config* conf, PyObject* dict, int reconfigure){
 }
 
 
+static void handle_view_resize(struct wm_view* view, int width, int height){
+    PyGILState_STATE gil = PyGILState_Ensure();
+    _pywm_views_resize(view, width, height);
+    PyGILState_Release(gil);
+}
+
 static void handle_update(){
     PyGILState_STATE gil = PyGILState_Ensure();
 
@@ -152,6 +158,7 @@ static PyObject* _pywm_run(PyObject* self, PyObject* args, PyObject* kwargs){
 
     /* Register callbacks immediately, might be called during init */
     get_wm()->callback_update = handle_update;
+    get_wm()->callback_view_resize = handle_view_resize;
     _pywm_callbacks_init();
 
     wm_init(&conf);
