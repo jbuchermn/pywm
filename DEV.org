@@ -2,10 +2,7 @@
 
 * Development
 ** Current (v0.2)
-*** TODO XDG views - state handling improvmeents
-- [ ] Talk to python on init, not after map -> Could prevent ugly startups (e.g. Firefox)
-- [ ] Pass "mapped" to PyWMUpstreamState to enable configure on init, anim on map
-- [X] Size changes not originating from PyWMDownstreamState (i.e. size changes, and the result is different from expected), for example catapult --> need to handle as an event and place the result in Python implementation state (needs an update loop for just one view, during the size change callback)
+*** TODO XDG views - possibly talk to python on init, not after map? Could prevent ugly startups (e.g. Firefox), however, floating detection does not seem to work, animations start early
 
 *** TODO Background scaling uglyness (GL_NEAREST unsuitable) --> Make filter an attribute of wm_content
 *** STRT Additionally to wm_content->fixed_output enable wm_content->workspace (x, y, w, h) with output scissoring and proper input handling + proper damage tracking
