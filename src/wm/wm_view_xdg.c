@@ -116,6 +116,12 @@ static void popup_handle_surface_commit(struct wl_listener* listener, void* data
 static void handle_map(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, map);
 
+    view->super.mapped = true;
+
+    wm_layout_damage_from(
+        view->super.super.wm_server->wm_layout,
+        &view->super.super, NULL);
+
     int min_w, max_w, min_h, max_h;
     wm_view_get_size_constraints(&view->super, &min_w, &max_w, &min_h, &max_h);
 
@@ -131,32 +137,12 @@ static void handle_map(struct wl_listener* listener, void* data){
     }
 
     const char* title;
-    const char* app_id; 
+    const char* app_id;
     const char* role;
     wm_view_get_info(&view->super, &title, &app_id, &role);
     wlr_log(WLR_DEBUG, "New wm_view (xdg): %s, %s, %s", title, app_id, role);
 
-    /*
-     * Accomodation for Chromium bug: The initial size reported by Chromium is not the same as when the same size is explicitly set
-     *
-     * This is only relevant, when the initial size (width, height below) equals the size we want and therefore no request_size
-     * is triggered.
-     *
-     * Without explicitly requesting the size Chromium will tell us it's 624x384 (true for the toplevel) but resize the main surface
-     * to the smallest possible size (behaviour only when tiled is set).
-     */
-    int width, height;
-    wm_view_get_size(&view->super, &width, &height);
-    wm_view_request_size(&view->super, width, height);
-
-
     wm_callback_init_view(&view->super);
-
-    view->super.mapped = true;
-
-    wm_layout_damage_from(
-        view->super.super.wm_server->wm_layout,
-        &view->super.super, NULL);
 }
 
 
@@ -200,6 +186,8 @@ static void handle_surface_commit(struct wl_listener* listener, void* data){
     int height = view->wlr_xdg_surface->current.geometry.height;
 
     if(width != view->width || height != view->height){
+        view->width = width;
+        view->height = height;
         wm_callback_view_resize(&view->super, width, height);
     }
 
