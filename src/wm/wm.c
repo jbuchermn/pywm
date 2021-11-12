@@ -216,12 +216,12 @@ void wm_callback_view_event(struct wm_view *view, const char *event) {
     return (*wm.callback_view_event)(view, event);
 }
 
-void wm_callback_view_resize(struct wm_view *view, int width, int height) {
-    if (!wm.callback_view_resize) {
+void wm_callback_update_view(struct wm_view *view){
+    if (!wm.callback_update_view) {
         return;
     }
 
-    return (*wm.callback_view_resize)(view, width, height);
+    return (*wm.callback_update_view)(view);
 }
 
 void wm_callback_update() {

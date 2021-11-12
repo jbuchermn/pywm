@@ -22,21 +22,6 @@ void _pywm_view_init(struct _pywm_view* _view, struct wm_view* view){
     _view->next_view = NULL;
 }
 
-void _pywm_view_callback_resize(struct _pywm_view* view, int width, int height){
-    PyObject* args = Py_BuildValue(
-            "(lii)",
-
-            view->handle,
-            width,
-            height);
-    PyObject *_result = PyObject_Call(_pywm_callbacks_get_all()->view_resized, args, NULL);
-    Py_XDECREF(args);
-
-    if(!_result){
-        wlr_log(WLR_DEBUG, "Python error: Exception thrown");
-    }
-    Py_XDECREF(_result);
-}
 
 void _pywm_view_update(struct _pywm_view* view){
 
@@ -232,10 +217,9 @@ void _pywm_views_update(){
     TIMER_PRINT(views_update);
 }
 
-void _pywm_views_resize(struct wm_view* view, int width, int height){
+void _pywm_views_update_single(struct wm_view* view){
     for(struct _pywm_view* v=views.first_view; v; v=v->next_view){
         if(v->view == view){
-            _pywm_view_callback_resize(v, width, height);
             _pywm_view_update(v);
             break;
         }

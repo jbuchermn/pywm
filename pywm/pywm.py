@@ -116,7 +116,6 @@ class PyWM(Generic[ViewT]):
         register("update_view", self._update_view)
         register("destroy_view", self._destroy_view)
         register("view_event", self._view_event)
-        register("view_resized", self._view_resized)
 
         register("query_new_widget", self._query_new_widget)
         register("update_widget", self._update_widget)
@@ -322,13 +321,6 @@ class PyWM(Generic[ViewT]):
     def _view_event(self, handle: int, event: str) -> None:
         try:
             self._views[handle].on_event(event)
-        except Exception:
-            pass
-
-    @callback
-    def _view_resized(self, handle: int, width: int, height: int) -> None:
-        try:
-            self._views[handle].on_resized(width, height)
         except Exception:
             pass
 

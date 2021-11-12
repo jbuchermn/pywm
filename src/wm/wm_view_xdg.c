@@ -188,7 +188,7 @@ static void handle_surface_commit(struct wl_listener* listener, void* data){
     if(width != view->width || height != view->height){
         view->width = width;
         view->height = height;
-        wm_callback_view_resize(&view->super, width, height);
+        wm_callback_update_view(&view->super);
     }
 
     view->width = width;

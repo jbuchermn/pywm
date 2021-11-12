@@ -206,9 +206,8 @@ class PyWMView(Generic[PyWMT]):
             if last_up_state is None or up_state.is_focused != last_up_state.is_focused:
                 self.on_focus_change()
 
-            if last_up_state is None or up_state.size != last_up_state.size or \
-                    up_state.size_constraints != last_up_state.size_constraints:
-                self.on_size_or_constraints_change()
+            if (last_up_state is None or up_state.size != last_up_state.size) and (self._last_down_state is None or up_state.size != self._last_down_state.size):
+                self.on_resized(*up_state.size)
 
             try:
                 down_state = self.process(up_state)
@@ -270,9 +269,6 @@ class PyWMView(Generic[PyWMT]):
     def on_event(self, event: str) -> None:
         pass
 
-    def on_resized(self, width: int, height: int) -> None:
-        pass
-
     @abstractmethod
     def process(self, up_state: PyWMViewUpstreamState) -> PyWMViewDownstreamState:
         """
@@ -294,7 +290,5 @@ class PyWMView(Generic[PyWMT]):
     def on_focus_change(self) -> None:
         pass
 
-    def on_size_or_constraints_change(self) -> None:
+    def on_resized(self, width: int, height: int) -> None:
         pass
-
-
