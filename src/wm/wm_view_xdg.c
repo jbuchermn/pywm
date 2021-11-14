@@ -185,14 +185,19 @@ static void handle_surface_commit(struct wl_listener* listener, void* data){
     int width = view->wlr_xdg_surface->current.geometry.width;
     int height = view->wlr_xdg_surface->current.geometry.height;
 
+    if(!width || !height){
+        width = view->wlr_xdg_surface->surface->current.width;
+        height = view->wlr_xdg_surface->surface->current.height;
+    }
+
     if(width != view->width || height != view->height){
         view->width = width;
         view->height = height;
         wm_callback_update_view(&view->super);
+    }else{
+        view->width = width;
+        view->height = height;
     }
-
-    view->width = width;
-    view->height = height;
 
     wm_layout_damage_from(
             view->super.super.wm_server->wm_layout,

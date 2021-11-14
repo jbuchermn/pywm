@@ -216,7 +216,7 @@ class PyWMView(Generic[PyWMT]):
                 down_state = self._last_down_state
 
             # BEGIN DEBUG
-            if down_state is not None and down_state.size != up_state.size:
+            if down_state is not None and down_state.size != up_state.size and down_state.size[0] > 0 and down_state.size[1] > 0:
                 logger.debug("Size (%d %s) %s -> %s", self._handle, self.app_id, up_state.size, down_state.size)
             # END DEBUG
 
