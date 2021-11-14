@@ -19,6 +19,7 @@
 #include <wlr/types/wlr_primary_selection_v1.h>
 #include <wlr/types/wlr_viewporter.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
+#include <wlr/types/wlr_gamma_control_v1.h>
 #include <wlr/util/log.h>
 #include <wlr/xwayland.h>
 
@@ -252,6 +253,7 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     wlr_screencopy_manager_v1_create(server->wl_display);
     wlr_data_control_manager_v1_create(server->wl_display);
     wlr_primary_selection_v1_device_manager_create(server->wl_display);
+    wlr_gamma_control_manager_v1_create(server->wl_display);
     /* wlr_viewporter_create(server->wl_display); */
 
     server->wlr_xwayland = NULL;
