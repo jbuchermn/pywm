@@ -52,6 +52,7 @@ void wm_content_set_output(struct wm_content* content, char* name){
     }
 
     if(res != content->fixed_output){
+        wlr_log(WLR_DEBUG, "DDAMAGE: Fixed output");
         wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
         content->fixed_output = res;
         wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
@@ -130,6 +131,11 @@ double wm_content_get_opacity(struct wm_content* content){
 }
 
 void wm_content_set_mask(struct wm_content* content, double mask_x, double mask_y, double mask_w, double mask_h){
+    if(fabs(content->mask_x - mask_x) +
+            fabs(content->mask_y - mask_y) + 
+            fabs(content->mask_w - mask_w) +
+            fabs(content->mask_h - mask_h) < 0.01) return;
+
     content->mask_x = mask_x;
     content->mask_y = mask_y;
     content->mask_w = mask_w;
