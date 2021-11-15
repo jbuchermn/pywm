@@ -46,13 +46,18 @@ static void call_layout_change(struct wm_layout* layout){
         PyObject* list = PyList_New(wl_list_length(&layout->wm_outputs));
         struct wm_output* output;
         int i=0;
+
+
         wl_list_for_each(output, &layout->wm_outputs, link){
+            int width, height;
+            wlr_output_transformed_resolution(output->wlr_output, &width, &height);
+
             PyList_SetItem(list, i, Py_BuildValue(
                                "(sdiiii)",
                                output->wlr_output->name,
                                output->wlr_output->scale,
-                               (int)round(output->wlr_output->width / output->wlr_output->scale),
-                               (int)round(output->wlr_output->height / output->wlr_output->scale),
+                               (int)round(width / output->wlr_output->scale),
+                               (int)round(height / output->wlr_output->scale),
                                output->layout_x,
                                output->layout_y));
             i++;

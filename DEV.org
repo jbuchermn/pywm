@@ -15,7 +15,7 @@
 - [X] Config update is very slow
 
 *** TODO XDG views - possibly talk to python on init, not after map? Could prevent ugly startups (e.g. Firefox), however, floating detection does not seem to work, animations start early, ...
-*** TODO Output transforms
+*** DONE Output transforms
 *** TODO Layer shell
 
 *** TODO Release
@@ -27,6 +27,7 @@
 - [ ] Change loglevel to INFO default
 
 ** Backlog / Ideas
+*** wlroots migration to gitlab.freedesktop.org
 *** Complete libinput device config / support for external mouse
 *** Use libseat from python / patched python evdev
 *** Configurable gestures (abstraction layer) + possibility to use external "gesture providers" (e.g. detection from webcam video)

@@ -85,25 +85,24 @@ static void render_surface(struct wlr_surface *surface, int sx, int sy,
                 output->wlr_output->scale),
         .height = round(surface->current.height * rdata->y_scale *
                 output->wlr_output->scale)};
-
-    double mask_l = fmax(0., (rdata->mask_x * output->wlr_output->scale) - box.x);
-    double mask_t = fmax(0., (rdata->mask_y * output->wlr_output->scale) - box.y);
-    double mask_r = fmax(0., box.x + box.width - (rdata->mask_x + rdata->mask_w) * output->wlr_output->scale);
-    double mask_b = fmax(0., box.y + box.height - (rdata->mask_y + rdata->mask_h) * output->wlr_output->scale);
-
+    struct wlr_box mask = {
+        .x = round(rdata->mask_x * output->wlr_output->scale),
+        .y = round(rdata->mask_y * output->wlr_output->scale),
+        .width = round(rdata->mask_w * output->wlr_output->scale),
+        .height = round(rdata->mask_h * output->wlr_output->scale)};
 
     double corner_radius = rdata->corner_radius * output->wlr_output->scale;
     if (sx || sy) {
         /* Only for surfaces which extend fully */
-        mask_l = 0;
-        mask_t = 0;
-        mask_r = 0;
-        mask_b = 0;
+        mask.x = box.x;
+        mask.y = box.y;
+        mask.width = box.width;
+        mask.height = box.height;
         corner_radius = 0;
     }
     wm_renderer_render_texture_at(output->wm_server->wm_renderer, rdata->damage, texture, &box,
                                   rdata->opacity,
-                                  mask_l, mask_t, mask_r, mask_b,
+                                  &mask,
                                   corner_radius, rdata->lock_perc);
 
     /* Notify client */
@@ -129,6 +128,8 @@ static void wm_view_render(struct wm_content* super, struct wm_output* output, p
     wm_content_get_mask(&view->super, &mask_x, &mask_y, &mask_w, &mask_h);
     double corner_radius = wm_content_get_corner_radius(&view->super);
 
+    double x_scale = width > 1 ? display_width / width : 0;
+    double y_scale = width > 1 ? display_height / height : 0;
     // Firefox starts off as a 1x1 view which causes subsurfaces to be scaled up,
     // that's why we require at least size 2x2 for the root surface
     struct render_data rdata = {
@@ -138,8 +139,8 @@ static void wm_view_render(struct wm_content* super, struct wm_output* output, p
         .x = display_x - output->layout_x,
         .y = display_y - output->layout_y,
         .opacity = wm_content_get_opacity(&view->super),
-        .x_scale = width > 1 ? display_width / width : 0,
-        .y_scale = width > 1 ? display_height / height : 0,
+        .x_scale = x_scale,
+        .y_scale = y_scale,
         .corner_radius = corner_radius,
         .lock_perc = view->super.lock_enabled ? 0.0 : view->super.wm_server->lock_perc,
         .mask_x = display_x - output->layout_x + mask_x,

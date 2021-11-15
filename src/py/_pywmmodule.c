@@ -40,6 +40,7 @@ static void set_config(struct wm_config* conf, PyObject* dict, int reconfigure){
             int mHz = 0;
             int pos_x = WM_CONFIG_POS_MIN - 1;
             int pos_y = WM_CONFIG_POS_MIN - 1;
+            int transform = 0;
 
             o = PyDict_GetItemString(c, "name"); if(o){ name = PyBytes_AsString(o); }
             o = PyDict_GetItemString(c, "scale"); if(o){ scale = PyFloat_AsDouble(o); }
@@ -48,8 +49,9 @@ static void set_config(struct wm_config* conf, PyObject* dict, int reconfigure){
             o = PyDict_GetItemString(c, "mHz"); if(o){ mHz = PyLong_AsLong(o); }
             o = PyDict_GetItemString(c, "pos_x"); if(o){ pos_x = PyLong_AsLong(o); }
             o = PyDict_GetItemString(c, "pos_y"); if(o){ pos_y = PyLong_AsLong(o); }
+            o = PyDict_GetItemString(c, "transform"); if(o){ transform = PyLong_AsLong(o); }
 
-            wm_config_add_output(conf, name, scale, width, height, mHz, pos_x, pos_y);
+            wm_config_add_output(conf, name, scale, width, height, mHz, pos_x, pos_y, transform);
         }
     }
     o = PyDict_GetItemString(dict, "xkb_model"); if(o){ strncpy(conf->xkb_model, PyBytes_AsString(o), WM_CONFIG_STRLEN-1); }

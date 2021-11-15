@@ -99,20 +99,25 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     /* End render */
     wm_renderer_end(renderer, damage, output);
 
+    int width, height;
+    wlr_output_transformed_resolution(output->wlr_output, &width, &height);
+
     /* Commit */
-#ifdef DEBUG_DAMAGE_HIGHLIGHT
     pixman_region32_t frame_damage;
     pixman_region32_init(&frame_damage);
+
+    enum wl_output_transform transform =
+        wlr_output_transform_invert(output->wlr_output->transform);
+    wlr_region_transform(&frame_damage, &output->wlr_output_damage->current, transform,
+                         width, height);
+
+#ifdef DEBUG_DAMAGE_HIGHLIGHT
     pixman_region32_union_rect(&frame_damage, &frame_damage,
         0, 0, output->wlr_output->width, output->wlr_output->height);
-    wlr_output_set_damage(
-            output->wlr_output, &output->wlr_output_damage->current);
-    pixman_region32_fini(&frame_damage);
-#else
-    wlr_output_set_damage(
-            output->wlr_output, &output->wlr_output_damage->current);
 #endif
 
+    wlr_output_set_damage(output->wlr_output, &frame_damage);
+    pixman_region32_fini(&frame_damage);
 
     if (!wlr_output_commit(output->wlr_output)) {
         wlr_log(WLR_DEBUG, "Commit frame failed");
@@ -217,6 +222,10 @@ static double configure(struct wm_output* output){
         wlr_log(WLR_INFO, "Output: Setting custom mode - %dx%d(%d)", w, h, mHz);
         wlr_output_set_custom_mode(output->wlr_output, w, h, mHz);
     }
+
+
+    enum wl_output_transform transform = config ? config->transform : WL_OUTPUT_TRANSFORM_NORMAL;
+    wlr_output_set_transform(output->wlr_output, transform);
 
     wlr_output_enable(output->wlr_output, true);
     if (!wlr_output_commit(output->wlr_output)) {

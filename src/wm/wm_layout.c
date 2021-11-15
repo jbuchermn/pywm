@@ -160,6 +160,8 @@ void wm_layout_printf(FILE* file, struct wm_layout* layout){
     fprintf(file, "wm_layout\n");
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
-        fprintf(file, "  wm_output: %s (%d x %d) at %d, %d\n", output->wlr_output->name, output->wlr_output->width, output->wlr_output->height, output->layout_x, output->layout_y);
+        int width, height;
+        wlr_output_transformed_resolution(output->wlr_output, &width, &height);
+        fprintf(file, "  wm_output: %s (%d x %d) at %d, %d\n", output->wlr_output->name, width, height, output->layout_x, output->layout_y);
     }
 }

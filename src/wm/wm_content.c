@@ -52,7 +52,6 @@ void wm_content_set_output(struct wm_content* content, char* name){
     }
 
     if(res != content->fixed_output){
-        wlr_log(WLR_DEBUG, "DDAMAGE: Fixed output");
         wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
         content->fixed_output = res;
         wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);

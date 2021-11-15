@@ -46,7 +46,7 @@ void wm_config_reconfigure(struct wm_config* config, struct wm_server* server){
 
 void wm_config_add_output(struct wm_config *config, const char *name,
                           double scale, int width, int height, int mHz,
-                          int pos_x, int pos_y) {
+                          int pos_x, int pos_y, enum wl_output_transform transform) {
     if(!name){
         wlr_log(WLR_ERROR, "Cannot add output config without name");
         return;
@@ -60,6 +60,7 @@ void wm_config_add_output(struct wm_config *config, const char *name,
     new->mHz = mHz;
     new->pos_x = pos_x;
     new->pos_y = pos_y;
+    new->transform = transform;
     wl_list_insert(&config->outputs, &new->link);
 }
 

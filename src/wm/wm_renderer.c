@@ -601,8 +601,14 @@ void wm_renderer_render_texture_at(struct wm_renderer *renderer,
                                    pixman_region32_t *damage,
                                    struct wlr_texture *texture,
                                    struct wlr_box *box, double opacity,
-                                   double padding_l, double padding_t, double padding_r, double padding_b,
+                                   struct wlr_box *mask,
                                    double corner_radius, double lock_perc) {
+
+	int ow, oh;
+	wlr_output_transformed_resolution(renderer->current->wlr_output, &ow, &oh);
+
+	enum wl_output_transform transform =
+		wlr_output_transform_invert(renderer->current->wlr_output->transform);
 
     float matrix[9];
     wlr_matrix_project_box(matrix, box,
@@ -615,6 +621,7 @@ void wm_renderer_render_texture_at(struct wm_renderer *renderer,
 		.width = texture->width,
 		.height = texture->height,
 	};
+
 
 	int nrects;
 	pixman_box32_t* rects = pixman_region32_rectangles(damage, &nrects);
@@ -629,6 +636,7 @@ void wm_renderer_render_texture_at(struct wm_renderer *renderer,
 		wlr_box_intersection(&inters, box, &damage_box);
 		if(wlr_box_empty(&inters)) continue;
 
+		wlr_box_transform(&inters, &inters, transform, ow, oh);
         wlr_renderer_scissor(renderer->wlr_renderer, &inters);
 
 #ifdef WM_CUSTOM_RENDERER
@@ -637,7 +645,7 @@ void wm_renderer_render_texture_at(struct wm_renderer *renderer,
 				texture,
 				&fbox, matrix, opacity,
 				box,
-				padding_l, padding_t, padding_r, padding_b,
+				mask->x - box->x, mask->y - box->y, box->x + box->width - mask->x - mask->width, box->y + box->height - mask->y - mask->height,
 				corner_radius, lock_perc);
 #else
 		wlr_render_subtexture_with_matrix(

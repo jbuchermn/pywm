@@ -25,6 +25,8 @@ struct wm_config_output {
     /* Unit: Logical pixels, > WM_CONFIG_POS_MIN */
     int pos_x;
     int pos_y;
+
+    enum wl_output_transform transform;
 };
 
 struct wm_config {
@@ -64,7 +66,7 @@ void wm_config_reset_default(struct wm_config* config);
 void wm_config_reconfigure(struct wm_config* config, struct wm_server* server);
 void wm_config_add_output(struct wm_config *config, const char *name,
                           double scale, int width, int height, int mHz,
-                          int pos_x, int pos_y);
+                          int pos_x, int pos_y, enum wl_output_transform transform);
 struct wm_config_output *wm_config_find_output(struct wm_config *config,
                                                const char *name);
 void wm_config_destroy(struct wm_config *config);

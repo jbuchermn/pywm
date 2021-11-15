@@ -40,27 +40,31 @@ static void wm_widget_render(struct wm_content* super, struct wm_output* output,
     if (!widget->wlr_texture)
         return;
 
-    struct wlr_box box = {
-        .x = round((widget->super.display_x - output->layout_x) * output->wlr_output->scale),
-        .y = round((widget->super.display_y - output->layout_y) * output->wlr_output->scale),
-        .width = round(widget->super.display_width * output->wlr_output->scale),
-        .height =
-            round(widget->super.display_height * output->wlr_output->scale)};
-    double corner_radius =
-        wm_content_get_corner_radius(&widget->super) * output->wlr_output->scale;
+    double display_x, display_y, display_w, display_h;
+    wm_content_get_box(&widget->super, &display_x, &display_y, &display_w, &display_h);
 
     double mask_x, mask_y, mask_w, mask_h;
-    wm_content_get_mask(super, &mask_x, &mask_y, &mask_w, &mask_h);
+    wm_content_get_mask(&widget->super, &mask_x, &mask_y, &mask_w, &mask_h);
 
-    double mask_l = fmax(0., mask_x * output->wlr_output->scale);
-    double mask_t = fmax(0., mask_y * output->wlr_output->scale);
-    double mask_r = fmax(0., box.width - (mask_x + mask_w) * output->wlr_output->scale);
-    double mask_b = fmax(0., box.height - (mask_y + mask_h) * output->wlr_output->scale);
+    struct wlr_box box = {
+        .x = round((display_x - output->layout_x) * output->wlr_output->scale),
+        .y = round((display_y - output->layout_y) * output->wlr_output->scale),
+        .width = round(display_w * output->wlr_output->scale),
+        .height = round(display_h * output->wlr_output->scale)};
+
+    struct wlr_box mask = {
+        .x = round((display_x - output->layout_x + mask_x) * output->wlr_output->scale),
+        .y = round((display_y - output->layout_y + mask_y) * output->wlr_output->scale),
+        .width = round(mask_w * output->wlr_output->scale),
+        .height = round(mask_h * output->wlr_output->scale)};
+
+    double corner_radius =
+        wm_content_get_corner_radius(&widget->super) * output->wlr_output->scale;
 
     wm_renderer_render_texture_at(
             output->wm_server->wm_renderer, output_damage,
             widget->wlr_texture, &box,
-            wm_content_get_opacity(super), mask_l, mask_t, mask_r, mask_b, corner_radius,
+            wm_content_get_opacity(super), &mask, corner_radius,
             super->lock_enabled ? 0.0 : super->wm_server->lock_perc);
 
 }
