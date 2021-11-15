@@ -197,6 +197,15 @@ static int callback_fallback_timer_handler(void* data){
 
     callback_timer_handler(data);
 
+    /* A bit hacky: Prevent fallback timer from blocking subsequent regular timer. Background:
+     *  1. No more damaging client-side --> no new frames
+     *  2. Fallback timer is triggered, calls Python update
+     *  3. Python updates trigger damages scheduling new frame
+     *  4. Frame is rendered, schedule_update is called
+     *  5. Correct schedule_update is blocked due to last_callback
+     *  6. Next update is triggered again by fallback_timer */
+    server->last_callback.tv_sec -= 1;
+
     /* Reschedule */
     wl_event_source_timer_update(
             server->callback_fallback_timer,
