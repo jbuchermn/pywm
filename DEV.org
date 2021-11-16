@@ -17,6 +17,7 @@
 *** TODO XDG views - possibly talk to python on init, not after map? Could prevent ugly startups (e.g. Firefox), however, floating detection does not seem to work, animations start early, ...
 *** DONE Output transforms
 *** TODO Layer shell
+*** TODO wlr_output_manager
 
 *** TODO Release
 - [ ] TODO comments

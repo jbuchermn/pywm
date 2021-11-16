@@ -31,7 +31,6 @@ struct wm_config_output {
 
 struct wm_config {
     /* Excluded from runtime update */
-    bool enable_output_manager;
     bool enable_xwayland;
 
     int callback_frequency;

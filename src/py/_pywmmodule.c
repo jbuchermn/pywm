@@ -68,7 +68,6 @@ static void set_config(struct wm_config* conf, PyObject* dict, int reconfigure){
     o = PyDict_GetItemString(dict, "tap_to_click"); if(o){ conf->tap_to_click = o == Py_True; }
     o = PyDict_GetItemString(dict, "natural_scroll"); if(o){ conf->natural_scroll = o == Py_True; }
 
-    o = PyDict_GetItemString(dict, "enable_output_manager"); if(o){ conf->enable_output_manager = o == Py_True; }
     o = PyDict_GetItemString(dict, "enable_xwayland"); if(o){ conf->enable_xwayland = o == Py_True; }
     o = PyDict_GetItemString(dict, "debug_f1"); if(o){ conf->debug_f1 = o == Py_True; }
 

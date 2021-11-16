@@ -7,7 +7,6 @@
 #include "wm/wm_layout.h"
 
 void wm_config_init_default(struct wm_config *config) {
-    config->enable_output_manager = true;
     config->enable_xwayland = false;
 
     config->callback_frequency = 20;

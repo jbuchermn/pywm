@@ -10,6 +10,7 @@
 #include <wlr/types/wlr_idle_inhibit_v1.h>
 #include <wlr/types/wlr_virtual_keyboard_v1.h>
 #include <wlr/types/wlr_virtual_pointer_v1.h>
+#include <wlr/types/wlr_layer_shell_v1.h>
 
 struct wm_config;
 struct wm_seat;
@@ -35,6 +36,7 @@ struct wm_server{
     struct wlr_xcursor_manager* wlr_xcursor_manager;
     struct wlr_virtual_keyboard_manager_v1* wlr_virtual_keyboard_manager;
     struct wlr_virtual_pointer_manager_v1* wlr_virtual_pointer_manager;
+    struct wlr_layer_shell_v1* wlr_layer_shell;
 
     struct wm_renderer* wm_renderer;
     struct wm_seat* wm_seat;
@@ -49,6 +51,7 @@ struct wm_server{
     struct wl_listener new_virtual_keyboard;
     struct wl_listener new_output;
     struct wl_listener new_xdg_surface;
+    struct wl_listener new_layer_surface;
     struct wl_listener new_server_decoration;
     struct wl_listener new_xdg_decoration;
     struct wl_listener xwayland_ready;

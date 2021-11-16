@@ -110,6 +110,17 @@ static void handle_new_xdg_surface(struct wl_listener* listener, void* data){
     wm_view_xdg_init(view, server, surface);
 }
 
+static void handle_new_layer_surface(struct wl_listener* listener, void* data){
+    wlr_log(WLR_DEBUG, "Server: New layer surface");
+
+    struct wm_server* server = wl_container_of(listener, server, new_xdg_surface);
+    struct wlr_layer_surface_v1* surface = data;
+
+    wlr_log(WLR_DEBUG, "Layer: output=%p anchor=%d exclusive_zone=%d", surface->output, surface->pending.anchor, surface->pending.exclusive_zone);
+
+    /* TODO */
+}
+
 static void handle_new_xwayland_surface(struct wl_listener* listener, void* data){
     wlr_log(WLR_DEBUG, "Server: New xwayland surface");
     
@@ -250,6 +261,9 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wlr_xdg_shell = wlr_xdg_shell_create(server->wl_display);
     assert(server->wlr_xdg_shell);
 
+    server->wlr_layer_shell = wlr_layer_shell_v1_create(server->wl_display);
+    assert(server->wlr_layer_shell);
+
     server->wlr_server_decoration_manager = wlr_server_decoration_manager_create(server->wl_display);
 	wlr_server_decoration_manager_set_default_mode(
             server->wlr_server_decoration_manager,
@@ -289,9 +303,7 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wm_layout = calloc(1, sizeof(struct wm_layout));
     wm_layout_init(server->wm_layout, server);
 
-    if(config->enable_output_manager){
-        wlr_xdg_output_manager_v1_create(server->wl_display, server->wm_layout->wlr_output_layout);
-    }
+    wlr_xdg_output_manager_v1_create(server->wl_display, server->wm_layout->wlr_output_layout);
 
     server->wm_seat = calloc(1, sizeof(struct wm_seat));
     wm_seat_init(server->wm_seat, server, server->wm_layout);
@@ -324,8 +336,12 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->new_xdg_surface.notify = handle_new_xdg_surface;
     wl_signal_add(&server->wlr_xdg_shell->events.new_surface, &server->new_xdg_surface);
 
-	server->new_server_decoration.notify = handle_new_server_decoration;
-	wl_signal_add(&server->wlr_server_decoration_manager->events.new_decoration, &server->new_server_decoration);
+    server->new_layer_surface.notify = handle_new_layer_surface;
+    wl_signal_add(&server->wlr_layer_shell->events.new_surface, &server->new_layer_surface);
+
+    server->new_server_decoration.notify = handle_new_server_decoration;
+    wl_signal_add(&server->wlr_server_decoration_manager->events.new_decoration,
+                  &server->new_server_decoration);
 
     server->new_xdg_decoration.notify = handle_new_xdg_decoration;
     wl_signal_add(&server->wlr_xdg_decoration_manager->events.new_toplevel_decoration, &server->new_xdg_decoration);
