@@ -3,6 +3,12 @@
 * Development
 ** Current (v0.2)
 
+*** STRT Layer shell
+- [ ] Fill in missing parts on wm_view_layer.c
+- [ ] _pywm_view_update: Don't send general info like pid and parent all the time
+- [ ] Downstream floating state (probably don't need upstream) --> set_tiled()
+- [ ] Generalized upstream hints (now size_contraints --> size_contraints and layer shell) as array of ints e.g.
+
 *** STRT Additionally to wm_content->fixed_output enable wm_content->workspace (x, y, w, h) with output scissoring and proper input handling + proper damage tracking
 - [X] Render only on workspace
 - [X] Accept input only on workspace
@@ -14,14 +20,13 @@
 - [ ] See TODO marks
 - [X] Config update is very slow
 
+
 *** TODO XDG views - possibly talk to python on init, not after map? Could prevent ugly startups (e.g. Firefox), however, floating detection does not seem to work, animations start early, ...
-*** DONE Output transforms
-*** TODO Layer shell
 *** TODO wlr_output_manager
 
 *** TODO Release
 - [ ] TODO comments
-- [ ] TESTS
+- [ ] TESTS: Move from pywm here + add layer shell
 - [ ] Documentation / Update config keys
 - [ ] Check valgrind for lost memory
 - [ ] Terminate newm without faults

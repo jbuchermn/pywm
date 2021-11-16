@@ -165,7 +165,6 @@ static void handle_map(struct wl_listener* listener, void* data){
 static void handle_unmap(struct wl_listener* listener, void* data){
     struct wm_view_xwayland* view = wl_container_of(listener, view, unmap);
     view->super.mapped = false;
-    wm_callback_destroy_view(&view->super);
 
     wm_layout_damage_whole(view->super.super.wm_server->wm_layout);
 }
@@ -173,8 +172,8 @@ static void handle_unmap(struct wl_listener* listener, void* data){
 
 static void handle_destroy(struct wl_listener* listener, void* data){
     struct wm_view_xwayland* view = wl_container_of(listener, view, destroy);
+    wm_callback_destroy_view(&view->super);
     wm_content_destroy(&view->super.super);
-
     free(view);
 }
 

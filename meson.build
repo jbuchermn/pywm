@@ -65,6 +65,7 @@ sources = [
     'src/wm/wm_content.c',
     'src/wm/wm_view.c',
     'src/wm/wm_view_xdg.c',
+    'src/wm/wm_view_layer.c',
     'src/wm/wm_view_xwayland.c',
     'src/wm/wm_widget.c',
     'src/wm/wm_config.c',

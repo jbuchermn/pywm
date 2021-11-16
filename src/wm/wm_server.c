@@ -29,6 +29,7 @@
 #include "wm/wm_seat.h"
 #include "wm/wm_cursor.h"
 #include "wm/wm_view_xdg.h"
+#include "wm/wm_view_layer.h"
 #include "wm/wm_view_xwayland.h"
 #include "wm/wm_layout.h"
 #include "wm/wm_widget.h"
@@ -113,12 +114,12 @@ static void handle_new_xdg_surface(struct wl_listener* listener, void* data){
 static void handle_new_layer_surface(struct wl_listener* listener, void* data){
     wlr_log(WLR_DEBUG, "Server: New layer surface");
 
-    struct wm_server* server = wl_container_of(listener, server, new_xdg_surface);
+    struct wm_server* server = wl_container_of(listener, server, new_layer_surface);
     struct wlr_layer_surface_v1* surface = data;
 
-    wlr_log(WLR_DEBUG, "Layer: output=%p anchor=%d exclusive_zone=%d", surface->output, surface->pending.anchor, surface->pending.exclusive_zone);
 
-    /* TODO */
+    struct wm_view_layer* view = calloc(1, sizeof(struct wm_view_layer));
+    wm_view_layer_init(view, server, surface);
 }
 
 static void handle_new_xwayland_surface(struct wl_listener* listener, void* data){

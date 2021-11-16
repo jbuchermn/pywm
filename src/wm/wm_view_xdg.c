@@ -149,13 +149,13 @@ static void handle_map(struct wl_listener* listener, void* data){
 static void handle_unmap(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, unmap);
     view->super.mapped = false;
-    wm_callback_destroy_view(&view->super);
 
     wm_layout_damage_whole(view->super.super.wm_server->wm_layout);
 }
 
 static void handle_destroy(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, destroy);
+    wm_callback_destroy_view(&view->super);
     wm_content_destroy(&view->super.super);
     free(view);
 }
@@ -471,7 +471,6 @@ static void wm_view_xdg_get_info(struct wm_view* super, const char** title, cons
     *title = view->wlr_xdg_surface->toplevel->title;
     *app_id = view->wlr_xdg_surface->toplevel->app_id;
     *role = "toplevel";
-
 }
 
 static void wm_view_xdg_request_size(struct wm_view* super, int width, int height){
@@ -510,7 +509,6 @@ static void wm_view_xdg_get_size(struct wm_view* super, int* width, int* height)
 
     *width = view->width;
     *height = view->height;
-
 }
 
 static void wm_view_xdg_get_offset(struct wm_view* super, int* offset_x, int* offset_y){
