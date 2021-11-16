@@ -108,9 +108,10 @@ void wm_view_layer_init(struct wm_view_layer* view, struct wm_server* server, st
     const char* app_id;
     const char* role;
     wm_view_get_info(&view->super, &title, &app_id, &role);
-    wlr_log(WLR_DEBUG, "New wm_view (layer): %s", title);
+    wlr_log(WLR_DEBUG, "New wm_view (layer): %s", app_id);
 
     wm_callback_init_view(&view->super);
+    wm_callback_update_view(&view->super);
 }
 
 static void wm_view_layer_destroy(struct wm_view* super){
@@ -141,11 +142,22 @@ static void wm_view_layer_get_info(struct wm_view* super, const char** title, co
     *role = "layer";
 }
 
-static void wm_view_layer_get_size_constraints(struct wm_view* super, int* min_width, int* max_width, int* min_height, int* max_height){
-    *min_width = -1;
-    *max_width = -1;
-    *min_height = -1;
-    *max_height = -1;
+static void wm_view_layer_get_size_constraints(struct wm_view* super, int** size_constraints, int* n_constraints){
+    struct wm_view_layer* view = wm_cast(wm_view_layer, super);
+
+    view->size_constraints[0] = view->wlr_layer_surface->current.anchor;
+    view->size_constraints[1] = view->wlr_layer_surface->current.desired_width;
+    view->size_constraints[2] = view->wlr_layer_surface->current.desired_height;
+    view->size_constraints[3] = view->wlr_layer_surface->current.exclusive_zone;
+    view->size_constraints[4] = view->wlr_layer_surface->current.layer;
+    view->size_constraints[5] = view->wlr_layer_surface->current.margin.left;
+    view->size_constraints[6] = view->wlr_layer_surface->current.margin.top;
+    view->size_constraints[7] = view->wlr_layer_surface->current.margin.right;
+    view->size_constraints[8] = view->wlr_layer_surface->current.margin.bottom;
+
+    *size_constraints = view->size_constraints;
+    *n_constraints = 9;
+
 }
 
 static void wm_view_layer_get_offset(struct wm_view* super, int* offset_x, int* offset_y){

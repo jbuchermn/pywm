@@ -17,6 +17,8 @@ struct wm_view_layer {
     struct wl_list popups;
     struct wl_list subsurfaces;
 
+    int size_constraints[9];
+
     struct wl_listener map;
     struct wl_listener unmap;
     struct wl_listener destroy;

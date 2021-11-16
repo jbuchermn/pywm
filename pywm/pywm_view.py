@@ -15,8 +15,8 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 class PyWMViewUpstreamState:
     def __init__(self,
-                 floating: bool, title: str,
-                 sc_min_w: int, sc_max_w: int, sc_min_h: int, sc_max_h: int,
+                 floating: bool,
+                 size_constraints: list[int],
                  offset_x: int, offset_y: int,
                  width: int, height: int,
                  is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool) -> None:
@@ -25,12 +25,12 @@ class PyWMViewUpstreamState:
         Called from C - just to be sure, wrap every attribute in type constrcutor
         """
         self.is_floating = bool(floating)
-        self.title = str(title)
 
         """
-        min_w, max_w, min_h, max_h
+        min_w, max_w, min_h, max_h for regular views
+        anchor, desired_width, desired_height, exclusive_zone, layer, margin - left, top, right, bottom for layer shell
         """
-        self.size_constraints = (int(sc_min_w), int(sc_max_w), int(sc_min_h), int(sc_max_h))        
+        self.size_constraints = [int(i) for i in size_constraints]
         """
         describe the offset of actual content within the view
         (in case of CSD)
@@ -52,8 +52,6 @@ class PyWMViewUpstreamState:
 
     def is_update(self, other: PyWMViewUpstreamState) -> bool:
         if self.is_floating != other.is_floating:
-            return True
-        if self.title != other.title:
             return True
         if self.size_constraints != other.size_constraints:
             return True
@@ -161,28 +159,30 @@ class PyWMView(Generic[PyWMT]):
         self._down_action_close: Optional[int] = None
 
 
-    def _update(self, parent_handle: int, is_xwayland: bool, pid: int, app_id: str, role: str,
-                floating: bool, title: str,
-                sc_min_w: int, sc_max_w: int, sc_min_h: int, sc_max_h: int,
-                offset_x: int, offset_y: int,
+    def _update(self,
+                general: Optional[tuple[int, bool, int, str, str, str]],
                 width: int, height: int,
-                is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool
+                is_floating: bool, is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool,
+                size_constraints: list[int],
+                offset_x: int, offset_y: int,
                 ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int, tuple[float, float, float, float]]:
 
-        if self.parent is None and parent_handle is not None:
+        if self.parent is None and general is not None:
             try:
-                self.parent = self.wm._views[parent_handle]
+                self.parent = self.wm._views[general[0]]
             except Exception:
                 pass
 
-        self.is_xwayland = is_xwayland
-        self.pid = pid
-        self.app_id = app_id
-        self.role = role
+        if general is not None:
+            self.is_xwayland = general[1]
+            self.pid = general[2]
+            self.app_id = general[3]
+            self.role = general[4]
+            self.title = general[5]
 
         up_state = PyWMViewUpstreamState(
-                floating, title,
-                sc_min_w, sc_max_w, sc_min_h, sc_max_h,
+                is_floating,
+                size_constraints,
                 offset_x, offset_y,
                 width, height,
                 is_focused, is_fullscreen, is_maximized, is_resizing, is_inhibiting_idle)

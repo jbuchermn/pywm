@@ -293,19 +293,22 @@ static void wm_view_xwayland_request_close(struct wm_view* super){
     wlr_xwayland_surface_close(view->wlr_xwayland_surface);
 }
 
-static void wm_view_xwayland_get_size_constraints(struct wm_view* super, int* min_width, int* max_width, int* min_height, int* max_height){
+static void wm_view_xwayland_get_size_constraints(struct wm_view* super, int** constraints, int* n_constraints){
     struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
     if(view->wlr_xwayland_surface->size_hints){
-        *min_width = view->wlr_xwayland_surface->size_hints->min_width;
-        *max_width = view->wlr_xwayland_surface->size_hints->max_width;
-        *min_height = view->wlr_xwayland_surface->size_hints->min_height;
-        *max_height = view->wlr_xwayland_surface->size_hints->max_height;
+        view->size_constraints[0] = view->wlr_xwayland_surface->size_hints->min_width;
+        view->size_constraints[1] = view->wlr_xwayland_surface->size_hints->max_width;
+        view->size_constraints[2] = view->wlr_xwayland_surface->size_hints->min_height;
+        view->size_constraints[3] = view->wlr_xwayland_surface->size_hints->max_height;
     }else{
-        *min_width = -1;
-        *max_width = -1;
-        *min_height = -1;
-        *max_height = -1;
+        view->size_constraints[0] = -1;
+        view->size_constraints[1] = -1;
+        view->size_constraints[2] = -1;
+        view->size_constraints[3] = -1;
     }
+
+    *constraints = view->size_constraints;
+    *n_constraints = 4;
 }
 
 static void wm_view_xwayland_get_size(struct wm_view* super, int* width, int* height){

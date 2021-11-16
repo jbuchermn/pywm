@@ -7,6 +7,8 @@ struct _pywm_view {
     long handle;
     struct wm_view* view;
 
+    int update_cnt;
+
     struct _pywm_view* next_view;
 };
 

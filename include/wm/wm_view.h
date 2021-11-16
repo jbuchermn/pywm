@@ -46,7 +46,7 @@ struct wm_view_vtable {
     void (*get_info)(struct wm_view* view, const char** title, const char** app_id, const char** role);
     void (*get_size)(struct wm_view* view, int* width, int* height);
     void (*get_offset)(struct wm_view* view, int* offset_x, int* offset_y);
-    void (*get_size_constraints)(struct wm_view* view, int* min_width, int* max_width, int* min_height, int* max_height);
+    void (*get_size_constraints)(struct wm_view* view, int** constraints, int* n_constraints);
     bool (*is_floating)(struct wm_view* view);
     struct wm_view* (*get_parent)(struct wm_view* view);
 
@@ -72,8 +72,8 @@ static inline void wm_view_request_size(struct wm_view* view, int width, int hei
     (*view->vtable->request_size)(view, width, height);
 }
 
-static inline void wm_view_get_size_constraints(struct wm_view* view, int* min_width, int* max_width, int* min_height, int* max_height){
-    (*view->vtable->get_size_constraints)(view, min_width, max_width, min_height, max_height);
+static inline void wm_view_get_size_constraints(struct wm_view* view, int** constraints, int* n_constraints){
+    (*view->vtable->get_size_constraints)(view, constraints, n_constraints);
 }
 
 static inline void wm_view_get_size(struct wm_view* view, int* width, int* height){

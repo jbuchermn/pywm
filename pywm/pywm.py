@@ -289,6 +289,7 @@ class PyWM(Generic[ViewT]):
             view._update(*args)
             self._execute_view_main(view)
 
+            view.damage()
             res = view._update(*args)
             return res
 

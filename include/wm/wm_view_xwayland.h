@@ -38,6 +38,8 @@ struct wm_view_xwayland {
     bool floating;
     struct wm_view_xwayland* parent;
 
+    int size_constraints[4];
+
     struct wl_listener request_configure;
     struct wl_listener set_parent;
     struct wl_listener set_pid;

@@ -5,9 +5,10 @@
 
 *** STRT Layer shell
 - [ ] Fill in missing parts on wm_view_layer.c
-- [ ] _pywm_view_update: Don't send general info like pid and parent all the time
+- [X] _pywm_view_update: Don't send general info like pid and parent all the time
 - [ ] Downstream floating state (probably don't need upstream) --> set_tiled()
-- [ ] Generalized upstream hints (now size_contraints --> size_contraints and layer shell) as array of ints e.g.
+- [X] Generalized upstream hints (now size_contraints --> size_contraints and layer shell) as array of ints e.g.
+- [ ] Fixed output on wm_view_layer
 
 *** STRT Additionally to wm_content->fixed_output enable wm_content->workspace (x, y, w, h) with output scissoring and proper input handling + proper damage tracking
 - [X] Render only on workspace
@@ -22,6 +23,7 @@
 
 
 *** TODO XDG views - possibly talk to python on init, not after map? Could prevent ugly startups (e.g. Firefox), however, floating detection does not seem to work, animations start early, ...
+*** TODO Possible to ne trerender while windows change size (e.g. emacs)? - Render a stored view?
 *** TODO wlr_output_manager
 
 *** TODO Release

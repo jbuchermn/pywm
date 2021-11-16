@@ -64,6 +64,8 @@ struct wm_view_xdg {
     int width;
     int height;
 
+    int size_constraints[4];
+
     struct wl_listener map;
     struct wl_listener unmap;
     struct wl_listener destroy;
