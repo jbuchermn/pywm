@@ -121,29 +121,6 @@ static void handle_map(struct wl_listener* listener, void* data){
     wm_layout_damage_from(
         view->super.super.wm_server->wm_layout,
         &view->super.super, NULL);
-
-    int* sc;
-    int _;
-    wm_view_get_size_constraints(&view->super, &sc, &_);
-
-    bool has_parent = view->wlr_xdg_surface->toplevel && view->wlr_xdg_surface->toplevel->parent;
-
-    /* Logic from sway */
-    if(has_parent || (sc[0] > 0 && (sc[0] == sc[1]) && sc[2] > 0 && (sc[2] == sc[3]))){
-        view->floating = true;
-        wlr_xdg_toplevel_set_tiled(view->wlr_xdg_surface, 0);
-    }else{
-        /* Get rid of white spaces around; therefore geometry.width/height should always equal current.width/height */
-        wlr_xdg_toplevel_set_tiled(view->wlr_xdg_surface, 15);
-    }
-
-    const char* title;
-    const char* app_id;
-    const char* role;
-    wm_view_get_info(&view->super, &title, &app_id, &role);
-    wlr_log(WLR_DEBUG, "New wm_view (xdg): %s, %s, %s", title, app_id, role);
-
-    wm_callback_init_view(&view->super);
 }
 
 
@@ -183,6 +160,29 @@ static void handle_new_subsurface(struct wl_listener* listener, void* data){
 static void handle_surface_commit(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, surface_commit);
 
+    bool update = false;
+    if(!view->initialized){
+        int* sc;
+        int _;
+        wm_view_get_size_constraints(&view->super, &sc, &_);
+
+        bool has_parent = view->wlr_xdg_surface->toplevel && view->wlr_xdg_surface->toplevel->parent;
+
+        /* Logic from sway */
+        if(has_parent || (sc[0] > 0 && (sc[0] == sc[1]) && sc[2] > 0 && (sc[2] == sc[3]))){
+            view->floating = true;
+            wlr_xdg_toplevel_set_tiled(view->wlr_xdg_surface, 0);
+        }else{
+            view->floating = false;
+            wlr_xdg_toplevel_set_tiled(view->wlr_xdg_surface, 15);
+        }
+
+        wm_callback_init_view(&view->super);
+        view->initialized = true;
+        update = true;
+    }
+
+
     int width = view->wlr_xdg_surface->current.geometry.width;
     int height = view->wlr_xdg_surface->current.geometry.height;
 
@@ -194,10 +194,11 @@ static void handle_surface_commit(struct wl_listener* listener, void* data){
     if(width != view->width || height != view->height){
         view->width = width;
         view->height = height;
+        update = true;
+    }
+
+    if(update){
         wm_callback_update_view(&view->super);
-    }else{
-        view->width = width;
-        view->height = height;
     }
 
     wm_layout_damage_from(
@@ -423,10 +424,17 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
     view->request_show_window_menu.notify = &handle_show_window_menu;
     wl_signal_add(&surface->toplevel->events.request_show_window_menu, &view->request_show_window_menu);
 
+    view->initialized = false;
 
     view->floating = false;
 
     view->constrain_popups_to_toplevel = server->wm_config->constrain_popups_to_toplevel;
+
+    const char* title;
+    const char* app_id;
+    const char* role;
+    wm_view_get_info(&view->super, &title, &app_id, &role);
+    wlr_log(WLR_DEBUG, "New wm_view (xdg): %s, %s, %s", title, app_id, role);
 
     struct wlr_subsurface* ss;
     wl_list_for_each(ss, &surface->surface->current.subsurfaces_below, current.link){
@@ -526,14 +534,17 @@ static void wm_view_xdg_set_resizing(struct wm_view* super, bool resizing){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
     wlr_xdg_toplevel_set_resizing(view->wlr_xdg_surface, resizing);
 }
+
 static void wm_view_xdg_set_fullscreen(struct wm_view* super, bool fullscreen){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
     wlr_xdg_toplevel_set_fullscreen(view->wlr_xdg_surface, fullscreen);
 }
+
 static void wm_view_xdg_set_maximized(struct wm_view* super, bool maximized){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
     wlr_xdg_toplevel_set_maximized(view->wlr_xdg_surface, maximized);
 }
+
 static void wm_view_xdg_set_activated(struct wm_view* super, bool activated){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
 

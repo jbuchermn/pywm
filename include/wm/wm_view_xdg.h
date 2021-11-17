@@ -58,6 +58,8 @@ struct wm_view_xdg {
     struct wl_list popups;
     struct wl_list subsurfaces;
 
+    bool initialized;
+
     bool floating;
     bool constrain_popups_to_toplevel; /* false = constrain to output */
 

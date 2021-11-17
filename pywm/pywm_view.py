@@ -15,6 +15,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 class PyWMViewUpstreamState:
     def __init__(self,
+                 mapped: bool,
                  floating: bool,
                  size_constraints: list[int],
                  offset_x: int, offset_y: int,
@@ -24,6 +25,8 @@ class PyWMViewUpstreamState:
         """
         Called from C - just to be sure, wrap every attribute in type constrcutor
         """
+
+        self.is_mapped = bool(mapped)
         self.is_floating = bool(floating)
 
         """
@@ -162,7 +165,7 @@ class PyWMView(Generic[PyWMT]):
     def _update(self,
                 general: Optional[tuple[int, bool, int, str, str, str]],
                 width: int, height: int,
-                is_floating: bool, is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool,
+                is_mapped: bool, is_floating: bool, is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool,
                 size_constraints: list[int],
                 offset_x: int, offset_y: int,
                 ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int, tuple[float, float, float, float]]:
@@ -181,11 +184,12 @@ class PyWMView(Generic[PyWMT]):
             self.title = general[5]
 
         up_state = PyWMViewUpstreamState(
-                is_floating,
-                size_constraints,
-                offset_x, offset_y,
-                width, height,
-                is_focused, is_fullscreen, is_maximized, is_resizing, is_inhibiting_idle)
+            is_mapped,
+            is_floating,
+            size_constraints,
+            offset_x, offset_y,
+            width, height,
+            is_focused, is_fullscreen, is_maximized, is_resizing, is_inhibiting_idle)
         last_up_state = self.up_state
         down_state: Optional[PyWMViewDownstreamState] = self._down_state
 
@@ -208,6 +212,9 @@ class PyWMView(Generic[PyWMT]):
 
             if (last_up_state is None or up_state.size != last_up_state.size) and (self._last_down_state is None or up_state.size != self._last_down_state.size):
                 self.on_resized(*up_state.size)
+
+            if (last_up_state is None or up_state.is_mapped != last_up_state.is_mapped):
+                self.on_map()
 
             try:
                 down_state = self.process(up_state)
@@ -266,6 +273,11 @@ class PyWMView(Generic[PyWMT]):
     """
     Virtual methods
     """
+
+    @abstractmethod
+    def init(self) -> PyWMViewDownstreamState:
+        pass
+
     def on_event(self, event: str) -> None:
         pass
 
@@ -287,6 +299,9 @@ class PyWMView(Generic[PyWMT]):
     Callbacks on various specific updates
     Notice, that these will always be called together with (before) process
     """
+    def on_map(self) -> None:
+        pass
+
     def on_focus_change(self) -> None:
         pass
 

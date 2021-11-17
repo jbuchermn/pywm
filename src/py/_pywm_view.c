@@ -62,6 +62,8 @@ void _pywm_view_update(struct _pywm_view* view){
     int width, height;
     wm_view_get_size(view->view, &width, &height);
 
+    int is_mapped = view->view->mapped;
+
     int is_floating = wm_view_is_floating(view->view);
     int is_focused = wm_view_is_focused(view->view);
     int is_fullscreen = wm_view_is_fullscreen(view->view);
@@ -84,7 +86,7 @@ void _pywm_view_update(struct _pywm_view* view){
 
 
     PyObject* args = Py_BuildValue(
-            "(lOiiOOOOOOOii)",
+            "(lOiiOOOOOOOOii)",
 
             view->handle,
             args_general,
@@ -92,6 +94,7 @@ void _pywm_view_update(struct _pywm_view* view){
             width,
             height,
 
+            is_mapped ? Py_True : Py_False,
             is_floating ? Py_True : Py_False,
             is_focused ? Py_True : Py_False,
             is_fullscreen ? Py_True : Py_False,
