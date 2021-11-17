@@ -48,7 +48,7 @@ struct wm_content {
 void wm_content_init(struct wm_content* content, struct wm_server* server);
 void wm_content_base_destroy(struct wm_content* content);
 
-void wm_content_set_output(struct wm_content* content, char* name);
+void wm_content_set_output(struct wm_content* content, char* name, struct wlr_output* output);
 void wm_content_set_workspace(struct wm_content* content, double x, double y, double width, double height);
 void wm_content_get_workspace(struct wm_content* content, double* workspace_x, double* workspace_y, double* workspace_width, double* workspace_height);
 bool wm_content_has_workspace(struct wm_content* content);

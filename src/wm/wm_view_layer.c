@@ -103,6 +103,7 @@ void wm_view_layer_init(struct wm_view_layer* view, struct wm_server* server, st
     view->surface_commit.notify = &handle_surface_commit;
     wl_signal_add(&surface->surface->events.commit, &view->surface_commit);
 
+    wm_content_set_output(&view->super.super, NULL, surface->output);
 
     const char* title;
     const char* app_id;

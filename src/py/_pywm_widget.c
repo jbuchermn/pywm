@@ -49,7 +49,7 @@ void _pywm_widget_update(struct _pywm_widget* widget){
         wm_content_set_z_index(&widget->widget->super, z_index);
         wm_content_set_lock_enabled(&widget->widget->super, lock_enabled);
 
-        wm_content_set_output(&widget->widget->super, output_name);
+        wm_content_set_output(&widget->widget->super, output_name, NULL);
     }
     Py_XDECREF(res);
 

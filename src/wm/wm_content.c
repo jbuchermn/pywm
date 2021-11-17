@@ -39,12 +39,12 @@ void wm_content_base_destroy(struct wm_content* content) {
     wl_list_remove(&content->link);
 }
 
-void wm_content_set_output(struct wm_content* content, char* name){
+void wm_content_set_output(struct wm_content* content, char* name, struct wlr_output* outp){
     struct wm_output* res = NULL;
-    if(name && strcmp(name, "")){
+    if((name && strcmp(name, "")) || outp){
         struct wm_output* output;
         wl_list_for_each(output, &content->wm_server->wm_layout->wm_outputs, link){
-            if(!strcmp(output->wlr_output->name, name)){
+            if((name && !strcmp(output->wlr_output->name, name)) || (outp && outp == output->wlr_output)){
                 res = output;
                 break;
             }
