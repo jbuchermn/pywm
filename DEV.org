@@ -3,14 +3,17 @@
 * Development
 ** Current (v0.2)
 
-*** TODO Bug: Gestures like pinch-to-zoom in firefox not working -> wlr pointer gestures
-
 *** STRT Layer shell
 - [ ] Fill in missing parts on wm_view_layer.c
+- [ ] Keyboard interactivity
+
+*** STRT Rewrite state handling
 - [X] _pywm_view_update: Don't send general info like pid and parent all the time
-- [ ] Downstream floating state (current upstream logic only for initial setting - necessary for more complicated decisions like xwayland) --> set_tiled()
 - [X] Generalized upstream hints (now size_contraints --> size_contraints and layer shell) as array of ints e.g.
-- [ ] Upstream fixed output on wm_view_layer
+- [X] Separate init and on_map: Can this make floating_size_initial in newm superfluous? - No, not all views provide sufficient information (size constraints) on first commit
+- [X] Separate init and o_map: main call on_map
+- [ ] Upstream (possibly also downstream) fixed output on views
+- [ ] Downstream floating state (current upstream logic only for initial setting - necessary for more complicated decisions like xwayland) --> set_tiled()
 
 *** STRT Additionally to wm_content->fixed_output enable wm_content->workspace (x, y, w, h) with output scissoring and proper input handling + proper damage tracking
 - [X] Render only on workspace
@@ -18,15 +21,8 @@
 - [ ] Add damage only on workspace (see TODO marks)
 - [ ] Should frame done only be sent to visible windows?
 
-*** STRT Updatable config
-- [X] Outputs
-- [ ] See TODO marks
-- [X] Config update is very slow
-
-*** DONE XDG views (and possibly layer) - possibly talk to python on init, not after map? Prevent ugly startups (e.g. Firefox). XDG protocol specifies configure on first commit -> update python then and get initial state to python.
-- [X] Can this make floating_size_initial in newm superfluous? - No, not all views provide sufficient information (size constraints) on first commit
-- [X] main call on_map
-
+*** TODO Gestures like pinch-to-zoom in firefox not working -> wlr pointer gestures
+*** TODO Updatable config: See TODO marks
 
 *** TODO Release
 - [ ] TODO comments

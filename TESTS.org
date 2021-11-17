@@ -43,10 +43,12 @@ No issues
 - [ ] Open DevTools
 - [ ] Open the menus, go to bookmark (repeat this multiple times, different window sizes)
 - [ ] Drag tab from one browser instance to create new one
+- [ ] Drag bookmark to empty space (or terminal)
 ** Wayland-native (run with --enable-features=UseOzonePlatform --ozone-platform=wayland)
 *** WAIT If popups open to the top two issues appear (both appear with sway as well --> probably Chromium bugs)
 **** Very large popups are placed on top of the window making them effectively unusable
 **** Occassionally (with bookmarks bar) closing a popup leaves the main surface with an invalid input-state, i.e. not accepting input anymore
+*** WAIT Dragging into empty space breaks UI (happens with sway as well)
 
 * Firefox
 ** Steps

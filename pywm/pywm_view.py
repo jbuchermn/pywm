@@ -170,13 +170,13 @@ class PyWMView(Generic[PyWMT]):
                 offset_x: int, offset_y: int,
                 ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int, tuple[float, float, float, float]]:
 
-        if self.parent is None and general is not None:
-            try:
-                self.parent = self.wm._views[general[0]]
-            except Exception:
-                pass
-
         if general is not None:
+            if self.parent is None:
+                try:
+                    self.parent = self.wm._views[general[0]]
+                except Exception:
+                    pass
+
             self.is_xwayland = general[1]
             self.pid = general[2]
             self.app_id = general[3]
@@ -202,18 +202,21 @@ class PyWMView(Generic[PyWMT]):
             """
             down_state = PyWMViewDownstreamState(up_state=up_state)
 
+            if up_state.is_mapped:
+                self.on_map()
+
         elif self._damaged or last_up_state is None or up_state.is_update(last_up_state):
-            self._damaged = False
             """
             Update
             """
+            self._damaged = False
             if last_up_state is None or up_state.is_focused != last_up_state.is_focused:
                 self.on_focus_change()
 
             if (last_up_state is None or up_state.size != last_up_state.size) and (self._last_down_state is None or up_state.size != self._last_down_state.size):
                 self.on_resized(*up_state.size)
 
-            if (last_up_state is None or up_state.is_mapped != last_up_state.is_mapped):
+            if up_state.is_mapped and (last_up_state is None or not last_up_state.is_mapped):
                 self.on_map()
 
             try:
@@ -221,11 +224,6 @@ class PyWMView(Generic[PyWMT]):
             except Exception as e:
                 logger.exception("Exception during view.process")
                 down_state = self._last_down_state
-
-            # BEGIN DEBUG
-            if down_state is not None and down_state.size != up_state.size and down_state.size[0] > 0 and down_state.size[1] > 0:
-                logger.debug("Size (%d %s) %s -> %s", self._handle, self.app_id, up_state.size, down_state.size)
-            # END DEBUG
 
         self._last_down_state = self._down_state
         self._down_state = down_state
