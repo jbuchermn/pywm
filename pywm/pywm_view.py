@@ -114,7 +114,7 @@ class PyWMViewDownstreamState:
     def get(self, root: PyWM[ViewT],
             last_state: Optional[PyWMViewDownstreamState],
             focus: Optional[int], fullscreen: Optional[int], maximized: Optional[int], resizing: Optional[int], close: Optional[int]
-            ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, bool, tuple[int, int], int, int, int, int, int, tuple[float, float, float, float]]:
+            ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, int, tuple[int, int], int, int, int, int, int, tuple[float, float, float, float]]:
 
         return (
             root.round(*self.box),
@@ -171,7 +171,7 @@ class PyWMView(Generic[PyWMT]):
                 is_mapped: bool, is_floating: bool, is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool,
                 size_constraints: list[int],
                 offset_x: int, offset_y: int,
-                ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int, tuple[float, float, float, float]]:
+                ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, int, tuple[int, int], int, int, int, int, int, tuple[float, float, float, float]]:
 
         if general is not None:
             if self.parent is None:
