@@ -12,14 +12,17 @@
 - [X] Generalized upstream hints (now size_contraints --> size_contraints and layer shell) as array of ints e.g.
 - [X] Separate init and on_map: Can this make floating_size_initial in newm superfluous? - No, not all views provide sufficient information (size constraints) on first commit
 - [X] Separate init and o_map: main call on_map
+- [X] Downstream floating state (current upstream logic only for initial setting - necessary for more complicated decisions like xwayland) --> set_tiled()
+  Things to consider:
+  - Logic relies on min / max size which might not be present on init, only after map --> upstream is_floating should have Nono possibility
+  - Some apps (like catapult) might not support being set to tiled (obviously it's not the way catapult is supposed to be used)
 - [ ] Upstream (possibly also downstream) fixed output on views
-- [ ] Downstream floating state (current upstream logic only for initial setting - necessary for more complicated decisions like xwayland) --> set_tiled()
 
 *** STRT Additionally to wm_content->fixed_output enable wm_content->workspace (x, y, w, h) with output scissoring and proper input handling + proper damage tracking
 - [X] Render only on workspace
 - [X] Accept input only on workspace
 - [ ] Add damage only on workspace (see TODO marks)
-- [ ] Should frame done only be sent to visible windows?
+- [ ] Should frame done only be sent to visible windows? (Test using youtube video off screen compared to sway)
 
 *** TODO Gestures like pinch-to-zoom in firefox not working -> wlr pointer gestures
 *** TODO Updatable config: See TODO marks

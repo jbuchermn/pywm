@@ -27,6 +27,7 @@ void wm_view_base_init(struct wm_view* view, struct wm_server* server){
     /* Abstract class */
     view->vtable = NULL;
 
+    view->floating = false;
     view->mapped = false;
     view->inhibiting_idle = false;
     view->accepts_input = true;

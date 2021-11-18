@@ -213,8 +213,8 @@ static void wm_view_layer_for_each_surface(struct wm_view* super, wlr_surface_it
     wlr_layer_surface_v1_for_each_surface(view->wlr_layer_surface, iterator, user_data);
 }
 
-static bool wm_view_layer_is_floating(struct wm_view* super){
-    return true;
+static void wm_view_layer_set_floating(struct wm_view* super, bool floating){
+    /* noop */
 }
 
 static struct wm_view* wm_view_layer_get_parent(struct wm_view* super){
@@ -252,7 +252,7 @@ struct wm_view_vtable wm_view_layer_vtable = {
     .set_activated = wm_view_layer_set_activated,
     .surface_at = wm_view_layer_surface_at,
     .for_each_surface = wm_view_layer_for_each_surface,
-    .is_floating = wm_view_layer_is_floating,
+    .set_floating = wm_view_layer_set_floating,
     .get_parent = wm_view_layer_get_parent,
     .structure_printf = wm_view_layer_structure_printf
 };

@@ -82,6 +82,7 @@ class PyWMViewDownstreamState:
                  opacity: float=1., corner_radius: float=0,
                  accepts_input: bool=False,
                  lock_enabled: bool=False,
+                 floating: Optional[bool]=None,
                  workspace: Optional[tuple[float, float, float, float]]=None,
                  up_state: Optional[PyWMViewUpstreamState]=None) -> None:
         """
@@ -94,6 +95,7 @@ class PyWMViewDownstreamState:
         self.corner_radius = corner_radius
         self.accepts_input = accepts_input
         self.lock_enabled = lock_enabled
+        self.floating = floating
         self.workspace = workspace
 
         """
@@ -112,7 +114,7 @@ class PyWMViewDownstreamState:
     def get(self, root: PyWM[ViewT],
             last_state: Optional[PyWMViewDownstreamState],
             focus: Optional[int], fullscreen: Optional[int], maximized: Optional[int], resizing: Optional[int], close: Optional[int]
-            ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int, tuple[float, float, float, float]]:
+            ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, bool, tuple[int, int], int, int, int, int, int, tuple[float, float, float, float]]:
 
         return (
             root.round(*self.box),
@@ -122,6 +124,7 @@ class PyWMViewDownstreamState:
             int(self.z_index),
             bool(self.accepts_input),
             bool(self.lock_enabled),
+            int(self.floating) if self.floating is not None else -1,
 
             self.size if last_state is None or self.size != last_state.size else (-1, -1),
 

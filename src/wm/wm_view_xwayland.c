@@ -65,7 +65,7 @@ Found:
     if(parent){
         if(!view->wlr_xwayland_surface->override_redirect){
             /* Child view */
-            view->floating = true;
+            view->super.floating = true;
             view->parent = parent;
         }else{
             wlr_log(WLR_DEBUG, "XWayland: Detected popup disguised as new view... allocating xwayland_child");
@@ -227,7 +227,7 @@ void wm_view_xwayland_init(struct wm_view_xwayland* view, struct wm_server* serv
     view->super.vtable = &wm_view_xwayland_vtable;
 
     view->parent = NULL;
-    view->floating = false;
+    view->super.floating = false;
     wl_list_init(&view->children);
 
     view->wlr_xwayland_surface = surface;
@@ -419,9 +419,8 @@ static void wm_view_xwayland_for_each_surface(struct wm_view* super, wlr_surface
     }
 }
 
-static bool wm_view_xwayland_is_floating(struct wm_view* super){
-    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
-    return view->floating;
+static void wm_view_xwayland_set_floating(struct wm_view* super, bool floating){
+    /* noop */
 }
 
 static struct wm_view* wm_view_xwayland_get_parent(struct wm_view* super){
@@ -451,7 +450,7 @@ struct wm_view_vtable wm_view_xwayland_vtable = {
     .set_activated = wm_view_xwayland_set_activated,
     .surface_at = wm_view_xwayland_surface_at,
     .for_each_surface = wm_view_xwayland_for_each_surface,
-    .is_floating = wm_view_xwayland_is_floating,
+    .set_floating = wm_view_xwayland_set_floating,
     .get_parent = wm_view_xwayland_get_parent,
     .structure_printf = wm_view_xwayland_structure_printf
 };

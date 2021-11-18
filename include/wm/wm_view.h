@@ -22,6 +22,7 @@ struct wm_view {
     bool accepts_input;
 
     /* Server-side determined states - stored from setter */
+    bool floating;
     bool focused;
     bool fullscreen;
     bool maximized;
@@ -47,10 +48,10 @@ struct wm_view_vtable {
     void (*get_size)(struct wm_view* view, int* width, int* height);
     void (*get_offset)(struct wm_view* view, int* offset_x, int* offset_y);
     void (*get_size_constraints)(struct wm_view* view, int** constraints, int* n_constraints);
-    bool (*is_floating)(struct wm_view* view);
     struct wm_view* (*get_parent)(struct wm_view* view);
 
     void (*request_size)(struct wm_view* view, int width, int height);
+    void (*set_floating)(struct wm_view* view, bool floating);
     void (*set_resizing)(struct wm_view* view, bool resizing);
     void (*set_fullscreen)(struct wm_view* view, bool fullscreen);
     void (*set_maximized)(struct wm_view* view, bool maximized);
@@ -88,6 +89,11 @@ static inline void wm_view_focus(struct wm_view* view, struct wm_seat* seat){
     (*view->vtable->focus)(view, seat);
 }
 
+static inline void wm_view_set_floating(struct wm_view* view, bool floating){
+    view->floating = floating;
+    (*view->vtable->set_floating)(view, floating);
+}
+
 static inline void wm_view_set_resizing(struct wm_view* view, bool resizing){
     view->resizing = resizing;
     (*view->vtable->set_resizing)(view, resizing);
@@ -106,6 +112,10 @@ static inline void wm_view_set_maximized(struct wm_view* view, bool maximized){
 static inline void wm_view_set_activated(struct wm_view* view, bool activated){
     view->focused = activated;
     (*view->vtable->set_activated)(view, activated);
+}
+
+static inline bool wm_view_is_floating(struct wm_view* view){
+    return view->floating;
 }
 
 static inline bool wm_view_is_focused(struct wm_view* view){
@@ -136,9 +146,6 @@ static inline void wm_view_for_each_surface(struct wm_view* view, wlr_surface_it
     (*view->vtable->for_each_surface)(view, iterator, user_data);
 }
 
-static inline bool wm_view_is_floating(struct wm_view* view){
-    return (*view->vtable->is_floating)(view);
-}
 
 static inline struct wm_view* wm_view_get_parent(struct wm_view* view){
     return (*view->vtable->get_parent)(view);

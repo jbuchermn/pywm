@@ -162,21 +162,6 @@ static void handle_surface_commit(struct wl_listener* listener, void* data){
 
     bool update = false;
     if(!view->initialized){
-        int* sc;
-        int _;
-        wm_view_get_size_constraints(&view->super, &sc, &_);
-
-        bool has_parent = view->wlr_xdg_surface->toplevel && view->wlr_xdg_surface->toplevel->parent;
-
-        /* Logic from sway */
-        if(has_parent || (sc[0] > 0 && (sc[0] == sc[1]) && sc[2] > 0 && (sc[2] == sc[3]))){
-            view->floating = true;
-            wlr_xdg_toplevel_set_tiled(view->wlr_xdg_surface, 0);
-        }else{
-            view->floating = false;
-            wlr_xdg_toplevel_set_tiled(view->wlr_xdg_surface, 15);
-        }
-
         wm_callback_init_view(&view->super);
         view->initialized = true;
         update = true;
@@ -381,6 +366,8 @@ void wm_popup_xdg_destroy(struct wm_popup_xdg* popup){
 void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct wlr_xdg_surface* surface){
     wm_view_base_init(&view->super, server);
     view->super.vtable = &wm_view_xdg_vtable;
+    view->super.floating = false;
+    view->floating_set = -1;
 
     view->wlr_xdg_surface = surface;
     view->wlr_deco = NULL;
@@ -425,8 +412,6 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
     wl_signal_add(&surface->toplevel->events.request_show_window_menu, &view->request_show_window_menu);
 
     view->initialized = false;
-
-    view->floating = false;
 
     view->constrain_popups_to_toplevel = server->wm_config->constrain_popups_to_toplevel;
 
@@ -530,6 +515,15 @@ static void wm_view_xdg_get_offset(struct wm_view* super, int* offset_x, int* of
     *offset_y = view->wlr_xdg_surface->current.geometry.y;
 }
 
+static void wm_view_xdg_set_floating(struct wm_view* super, bool floating){
+    struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
+    if(floating == view->floating_set) return;
+
+    wlr_log(WLR_DEBUG, "DDEBUGG %d", floating);
+    wlr_xdg_toplevel_set_tiled(view->wlr_xdg_surface, floating ? 0 : 15);
+    view->floating_set = floating;
+}
+
 static void wm_view_xdg_set_resizing(struct wm_view* super, bool resizing){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
     wlr_xdg_toplevel_set_resizing(view->wlr_xdg_surface, resizing);
@@ -579,10 +573,6 @@ static void wm_view_xdg_for_each_surface(struct wm_view* super, wlr_surface_iter
     wlr_xdg_surface_for_each_surface(view->wlr_xdg_surface, iterator, user_data);
 }
 
-static bool wm_view_xdg_is_floating(struct wm_view* super){
-    struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
-    return view->floating;
-}
 
 static struct wm_view* wm_view_xdg_get_parent(struct wm_view* super){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
@@ -678,7 +668,7 @@ struct wm_view_vtable wm_view_xdg_vtable = {
     .set_activated = wm_view_xdg_set_activated,
     .surface_at = wm_view_xdg_surface_at,
     .for_each_surface = wm_view_xdg_for_each_surface,
-    .is_floating = wm_view_xdg_is_floating,
+    .set_floating = wm_view_xdg_set_floating,
     .get_parent = wm_view_xdg_get_parent,
     .structure_printf = wm_view_xdg_structure_printf
 };

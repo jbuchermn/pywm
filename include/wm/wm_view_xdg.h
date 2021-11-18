@@ -60,7 +60,7 @@ struct wm_view_xdg {
 
     bool initialized;
 
-    bool floating;
+    int floating_set; /* -1: not at all, 0: false, 1: true */
     bool constrain_popups_to_toplevel; /* false = constrain to output */
 
     int width;
