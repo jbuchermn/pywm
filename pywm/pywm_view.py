@@ -226,8 +226,8 @@ class PyWMView(Generic[PyWMT]):
             if last_up_state is None or up_state.is_focused != last_up_state.is_focused:
                 self.on_focus_change()
 
-            if (last_up_state is None or up_state.size != last_up_state.size) and (self._last_down_state is None or up_state.size != self._last_down_state.size):
-                self.on_resized(*up_state.size)
+            if (last_up_state is None or up_state.size != last_up_state.size):
+                self.on_resized(*up_state.size, self._last_down_state is None or up_state.size != self._last_down_state.size)
 
             if up_state.is_mapped and (last_up_state is None or not last_up_state.is_mapped):
                 self.on_map()
@@ -259,6 +259,7 @@ class PyWMView(Generic[PyWMT]):
         self._down_action_maximized = None
         self._down_action_resizing = None
         self._down_action_close = None
+
         return res
 
 
@@ -316,5 +317,5 @@ class PyWMView(Generic[PyWMT]):
     def on_focus_change(self) -> None:
         pass
 
-    def on_resized(self, width: int, height: int) -> None:
+    def on_resized(self, width: int, height: int, client_leading: bool) -> None:
         pass

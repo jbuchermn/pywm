@@ -7,6 +7,9 @@
 - [ ] Fill in missing parts on wm_view_layer.c
 - [ ] Keyboard interactivity
 
+*** TODO Gestures like pinch-to-zoom in firefox not working -> wlr pointer gestures
+*** TODO Updatable config: See TODO marks
+
 *** DONE Rewrite state handling
 - [X] _pywm_view_update: Don't send general info like pid and parent all the time
 - [X] Generalized upstream hints (now size_contraints --> size_contraints and layer shell) as array of ints e.g.
@@ -24,8 +27,6 @@
 - [ ] Add damage only on workspace (see TODO marks)
 - [ ] Should frame done only be sent to visible windows? (Test using youtube video off screen compared to sway)
 
-*** TODO Gestures like pinch-to-zoom in firefox not working -> wlr pointer gestures
-*** TODO Updatable config: See TODO marks
 
 *** TODO Release
 - [ ] TODO comments
