@@ -5,6 +5,7 @@
 
 #include "wm/wm.h"
 #include "wm/wm_view.h"
+#include "wm/wm_output.h"
 #include "wm/wm_view_xwayland.h"
 #include "wm/wm_util.h"
 
@@ -77,6 +78,9 @@ void _pywm_view_update(struct _pywm_view* view){
 
     int is_inhibiting_idle = wm_view_is_inhibiting_idle(view->view);
 
+    struct wm_output* fixed_output = wm_content_get_output(&view->view->super);
+    int fixed_output_key = fixed_output ? fixed_output->key : -1;
+
     int* size_constraints;
     int n_constraints;
     wm_view_get_size_constraints(view->view, &size_constraints, &n_constraints);
@@ -91,7 +95,7 @@ void _pywm_view_update(struct _pywm_view* view){
 
 
     PyObject* args = Py_BuildValue(
-            "(lOiiOOOOOOOOii)",
+            "(lOiiOOOOOOOOiii)",
 
             view->handle,
             args_general,
@@ -110,7 +114,8 @@ void _pywm_view_update(struct _pywm_view* view){
             args_size_constraints,
 
             offset_x,
-            offset_y);
+            offset_y,
+            fixed_output_key);
 
 
 
@@ -129,10 +134,11 @@ void _pywm_view_update(struct _pywm_view* view){
         int width_pending, height_pending;
         int accepts_input, z_index;
         int lock_enabled;
+        int new_fixed_output_key;
         double workspace_x, workspace_y, workspace_w, workspace_h;
         
         if(!PyArg_ParseTuple(res, 
-                    "(dddd)(dddd)ddippi(ii)iiiii(dddd)",
+                    "(dddd)(dddd)ddippi(ii)iiiiii(dddd)",
                     &x, &y, &w, &h,
                     &mask_x, &mask_y, &mask_w, &mask_h,
                     &opacity,
@@ -149,6 +155,7 @@ void _pywm_view_update(struct _pywm_view* view){
                     &maximized_pending,
                     &resizing_pending,
                     &close_pending,
+                    &new_fixed_output_key,
                     &workspace_x, &workspace_y, &workspace_w, &workspace_h
         )){
             fprintf(stderr, "Error parsing update view return...\n");
@@ -178,6 +185,8 @@ void _pywm_view_update(struct _pywm_view* view){
             wm_content_set_lock_enabled(&view->view->super, lock_enabled);
 
             view->view->accepts_input = accepts_input;
+            if(new_fixed_output_key != fixed_output_key)
+                wm_content_set_output(&view->view->super, new_fixed_output_key, NULL);
             wm_content_set_workspace(&view->view->super, workspace_x, workspace_y, workspace_w, workspace_h);
         }
 

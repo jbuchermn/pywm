@@ -103,7 +103,7 @@ void wm_view_layer_init(struct wm_view_layer* view, struct wm_server* server, st
     view->surface_commit.notify = &handle_surface_commit;
     wl_signal_add(&surface->surface->events.commit, &view->surface_commit);
 
-    wm_content_set_output(&view->super.super, NULL, surface->output);
+    wm_content_set_output(&view->super.super, -1, surface->output);
 
     const char* title;
     const char* app_id;
@@ -224,7 +224,7 @@ static struct wm_view* wm_view_layer_get_parent(struct wm_view* super){
 static void wm_view_layer_structure_printf(FILE* file, struct wm_view* super){
     struct wm_view_layer* view = wm_cast(wm_view_layer, super);
 
-    fprintf(file, "  wm_view_layer for %p\n", view->wlr_layer_surface->surface);
+    fprintf(file, "  wm_view_layer for %p on output %p\n", view->wlr_layer_surface->surface, view->super.super.fixed_output);
     /* TODO */
     /* struct wm_popup_xdg* popup; */
     /* wl_list_for_each(popup, &view->popups, link){ */

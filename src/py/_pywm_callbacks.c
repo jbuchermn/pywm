@@ -53,8 +53,9 @@ static void call_layout_change(struct wm_layout* layout){
             wlr_output_transformed_resolution(output->wlr_output, &width, &height);
 
             PyList_SetItem(list, i, Py_BuildValue(
-                               "(sdiiii)",
+                               "(sidiiii)",
                                output->wlr_output->name,
+                               output->key,
                                output->wlr_output->scale,
                                (int)round(width / output->wlr_output->scale),
                                (int)round(height / output->wlr_output->scale),

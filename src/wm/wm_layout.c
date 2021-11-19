@@ -14,12 +14,16 @@
 /*
  * Callbacks
  */
+
+static int _wm_output_key = 0;
 static void handle_change(struct wl_listener* listener, void* data){
     struct wm_layout* layout = wl_container_of(listener, layout, change);
     layout->fastest_output_mHz = 1000;
 
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
+        output->key = _wm_output_key++;
+
         if(output->wlr_output->refresh > layout->fastest_output_mHz){
             layout->fastest_output_mHz = output->wlr_output->refresh;
         }

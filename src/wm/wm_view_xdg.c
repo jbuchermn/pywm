@@ -519,7 +519,6 @@ static void wm_view_xdg_set_floating(struct wm_view* super, bool floating){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
     if(floating == view->floating_set) return;
 
-    wlr_log(WLR_DEBUG, "DDEBUGG %d", floating);
     wlr_xdg_toplevel_set_tiled(view->wlr_xdg_surface, floating ? 0 : 15);
     view->floating_set = floating;
 }

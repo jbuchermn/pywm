@@ -39,12 +39,12 @@ void wm_content_base_destroy(struct wm_content* content) {
     wl_list_remove(&content->link);
 }
 
-void wm_content_set_output(struct wm_content* content, char* name, struct wlr_output* outp){
+void wm_content_set_output(struct wm_content* content, int key, struct wlr_output* outp){
     struct wm_output* res = NULL;
-    if((name && strcmp(name, "")) || outp){
+    if(key>=0 || outp){
         struct wm_output* output;
         wl_list_for_each(output, &content->wm_server->wm_layout->wm_outputs, link){
-            if((name && !strcmp(output->wlr_output->name, name)) || (outp && outp == output->wlr_output)){
+            if(key == output->key || (outp && outp == output->wlr_output)){
                 res = output;
                 break;
             }
@@ -56,6 +56,18 @@ void wm_content_set_output(struct wm_content* content, char* name, struct wlr_ou
         content->fixed_output = res;
         wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
     }
+}
+
+struct wm_output* wm_content_get_output(struct wm_content* content){
+    if(!content->fixed_output) return NULL;
+
+    struct wm_output* output;
+    wl_list_for_each(output, &content->wm_server->wm_layout->wm_outputs, link){
+        if(output == content->fixed_output) return output;
+    }
+
+    content->fixed_output = NULL;
+    return NULL;
 }
 
 void wm_content_set_workspace(struct wm_content* content, double x, double y, double width, double height){

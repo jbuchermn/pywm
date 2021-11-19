@@ -15,6 +15,8 @@ struct wm_output {
     int layout_x; // Duplicated from wlr_output_layout
     int layout_y; // Duplicated from wlr_output_layout
 
+    int key; // Unique key in a layout - update on layout change
+
     struct wlr_output* wlr_output;
     struct wlr_output_damage* wlr_output_damage;
 

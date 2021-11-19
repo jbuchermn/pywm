@@ -22,12 +22,12 @@ class PyWMWidgetDownstreamState:
     def copy(self) -> PyWMWidgetDownstreamState:
         return PyWMWidgetDownstreamState(self.z_index, self.box, self.mask)
 
-    def get(self, root: PyWM[ViewT], output: Optional[PyWMOutput]) -> tuple[bool, tuple[float, float, float, float], tuple[float, float, float, float], str, float, int]:
+    def get(self, root: PyWM[ViewT], output: Optional[PyWMOutput]) -> tuple[bool, tuple[float, float, float, float], tuple[float, float, float, float], int, float, int]:
         return (
             self.lock_enabled,
             root.round(*self.box, wh_logical=False),
             self.mask,
-            output.name if output is not None else "",
+            output._key if output is not None else -1,
             self.opacity,
             self.z_index
         )
@@ -47,7 +47,7 @@ class PyWMWidget(Generic[PyWMT]):
         """
         self._pending_pixels: Optional[tuple[int, int, int, bytes]] = None
 
-    def _update(self) -> tuple[bool, tuple[float, float, float, float], tuple[float, float, float, float], str, float, int]:
+    def _update(self) -> tuple[bool, tuple[float, float, float, float], tuple[float, float, float, float], int, float, int]:
         if self._damaged:
             self._damaged = False
             self._down_state = self.process()

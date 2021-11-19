@@ -7,7 +7,7 @@
 - [ ] Fill in missing parts on wm_view_layer.c
 - [ ] Keyboard interactivity
 
-*** STRT Rewrite state handling
+*** DONE Rewrite state handling
 - [X] _pywm_view_update: Don't send general info like pid and parent all the time
 - [X] Generalized upstream hints (now size_contraints --> size_contraints and layer shell) as array of ints e.g.
 - [X] Separate init and on_map: Can this make floating_size_initial in newm superfluous? - No, not all views provide sufficient information (size constraints) on first commit
@@ -16,7 +16,7 @@
   Things to consider:
   - Logic relies on min / max size which might not be present on init, only after map --> upstream is_floating should have Nono possibility
   - Some apps (like catapult) might not support being set to tiled (obviously it's not the way catapult is supposed to be used)
-- [ ] Upstream (possibly also downstream) fixed output on views
+- [X] Upstream (possibly also downstream) fixed output on views (+ setting of wlr_layer_surface->output)
 
 *** STRT Additionally to wm_content->fixed_output enable wm_content->workspace (x, y, w, h) with output scissoring and proper input handling + proper damage tracking
 - [X] Render only on workspace

@@ -20,7 +20,7 @@ class PyWMViewUpstreamState:
                  size_constraints: list[int],
                  offset_x: int, offset_y: int,
                  width: int, height: int,
-                 is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool) -> None:
+                 is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool, fixed_output: Optional[PyWMOutput]) -> None:
 
         """
         Called from C - just to be sure, wrap every attribute in type constrcutor
@@ -53,6 +53,8 @@ class PyWMViewUpstreamState:
         self.is_resizing = bool(is_resizing)
         self.is_inhibiting_idle = bool(is_inhibiting_idle)
 
+        self.fixed_output = fixed_output
+
     def is_update(self, other: PyWMViewUpstreamState) -> bool:
         if self.is_floating != other.is_floating:
             return True
@@ -72,6 +74,8 @@ class PyWMViewUpstreamState:
             return True
         if self.is_inhibiting_idle != other.is_inhibiting_idle:
             return True
+        if self.fixed_output != other.fixed_output:
+            return True
         return False
 
 
@@ -84,6 +88,7 @@ class PyWMViewDownstreamState:
                  lock_enabled: bool=False,
                  floating: Optional[bool]=None,
                  workspace: Optional[tuple[float, float, float, float]]=None,
+                 fixed_output: Optional[PyWMOutput]=None,
                  up_state: Optional[PyWMViewUpstreamState]=None) -> None:
         """
         Just to be sure - wrap in type constructors
@@ -96,6 +101,7 @@ class PyWMViewDownstreamState:
         self.accepts_input = accepts_input
         self.lock_enabled = lock_enabled
         self.floating = floating
+        self.fixed_output = fixed_output
         self.workspace = workspace
 
         """
@@ -114,7 +120,7 @@ class PyWMViewDownstreamState:
     def get(self, root: PyWM[ViewT],
             last_state: Optional[PyWMViewDownstreamState],
             focus: Optional[int], fullscreen: Optional[int], maximized: Optional[int], resizing: Optional[int], close: Optional[int]
-            ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, int, tuple[int, int], int, int, int, int, int, tuple[float, float, float, float]]:
+            ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, int, tuple[int, int], int, int, int, int, int, int, tuple[float, float, float, float]]:
 
         return (
             root.round(*self.box),
@@ -133,6 +139,7 @@ class PyWMViewDownstreamState:
             int(maximized) if maximized is not None else -1,
             int(resizing) if resizing is not None else -1,
             int(close) if close is not None else -1,
+            int(self.fixed_output._key) if self.fixed_output is not None else -1,
             root.round(*self.workspace) if self.workspace is not None else (0, 0, -1, -1)
         )
 
@@ -171,7 +178,8 @@ class PyWMView(Generic[PyWMT]):
                 is_mapped: bool, is_floating: bool, is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool,
                 size_constraints: list[int],
                 offset_x: int, offset_y: int,
-                ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, int, tuple[int, int], int, int, int, int, int, tuple[float, float, float, float]]:
+                fixed_output_key: int,
+                ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, int, tuple[int, int], int, int, int, int, int, int, tuple[float, float, float, float]]:
 
         if general is not None:
             if self.parent is None:
@@ -192,7 +200,9 @@ class PyWMView(Generic[PyWMT]):
             size_constraints,
             offset_x, offset_y,
             width, height,
-            is_focused, is_fullscreen, is_maximized, is_resizing, is_inhibiting_idle)
+            is_focused, is_fullscreen, is_maximized, is_resizing, is_inhibiting_idle,
+            self.wm.get_output_by_key(fixed_output_key) if fixed_output_key >= 0 else None
+        )
         last_up_state = self.up_state
         down_state: Optional[PyWMViewDownstreamState] = self._down_state
 

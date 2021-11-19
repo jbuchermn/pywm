@@ -95,20 +95,21 @@ class PyWMIdleThread(Thread, Generic[ViewT]):
         self._running = False
 
 class PyWMOutput:
-    def __init__(self, name: str, scale: float, width: int, height: int, pos: tuple[int, int]):
+    def __init__(self, name: str, key: int, scale: float, width: int, height: int, pos: tuple[int, int]):
         self.name = name
+        self._key = key
         self.scale = scale
         self.width = width
         self.height = height
         self.pos = pos
 
     def __str__(self) -> str:
-        return "Output(%s) with %dx%d, scale %f at %d, %d" % (self.name, self.width, self.height, self.scale, *self.pos)
+        return "Output(%s) key=%d with %dx%d, scale %f at %d, %d" % (self.name, self._key, self.width, self.height, self.scale, *self.pos)
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, PyWMOutput):
             return False
-        return self.name == other.name
+        return self._key == other._key
 
 class PyWM(Generic[ViewT]):
     def __init__(self, view_class: type=PyWMView, **kwargs: Any) -> None:
@@ -262,9 +263,9 @@ class PyWM(Generic[ViewT]):
         return self.on_modifiers(self.modifiers)
 
     @callback
-    def _layout_change(self, outputs: list[tuple[str, float, int, int, int, int]]) -> None:
+    def _layout_change(self, outputs: list[tuple[str, int, float, int, int, int, int]]) -> None:
         self._update_idle()
-        self.layout = [PyWMOutput(n, s, w, h, (px, py)) for n, s, w, h, px, py in outputs]
+        self.layout = [PyWMOutput(n, i, s, w, h, (px, py)) for n, i, s, w, h, px, py in outputs]
         logger.debug("PyWM layout change:")
         for o in self.layout:
             logger.debug("  %s", str(o))
@@ -456,6 +457,13 @@ class PyWM(Generic[ViewT]):
                 scale = o.scale
         return scale if scale is not None else 1.
 
+    def get_output_by_key(self, key: int) -> Optional[PyWMOutput]:
+        for o in self.layout:
+            if o._key == key:
+                return o
+
+        logger.warn("Could not find output for key %d in %s" % (key, self.layout))
+        return None
 
     def round(self, x: float, y: float, w: float, h: float, wh_logical: bool=True) -> tuple[float, float, float, float]:
         # Round positions to 1/scale logical pixels, width and height to logical pixels (if wh_logical)
