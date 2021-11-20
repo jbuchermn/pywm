@@ -167,10 +167,11 @@ void _pywm_view_update(struct _pywm_view* view){
             wm_content_set_corner_radius(&view->view->super, corner_radius);
             if(floating >= 0)
                 wm_view_set_floating(view->view, floating);
-            if(w >= 0.0 && h >= 0.0)
-                wm_content_set_box(&view->view->super, x, y, w, h);
+            wm_content_set_box(&view->view->super, x, y, w, h);
+
             if(width_pending > 0 && height_pending > 0)
                 wm_view_request_size(view->view, width_pending, height_pending);
+
             if(focus_pending != -1 && focus_pending)
                 wm_focus_view(view->view);
             if(resizing_pending != -1)

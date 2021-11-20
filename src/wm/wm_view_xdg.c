@@ -489,6 +489,7 @@ static void wm_view_xdg_get_size_constraints(struct wm_view* super, int** constr
         view->size_constraints[1] = view->wlr_xdg_surface->toplevel->current.max_width;
         view->size_constraints[2] = view->wlr_xdg_surface->toplevel->current.min_height;
         view->size_constraints[3] = view->wlr_xdg_surface->toplevel->current.max_height;
+
     }else{
         wlr_log(WLR_DEBUG, "Warning: Not toplevel");
         view->size_constraints[0] = -1;

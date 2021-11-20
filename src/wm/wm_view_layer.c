@@ -7,6 +7,7 @@
 
 #include "wm/wm_view_layer.h"
 #include "wm/wm_layout.h"
+#include "wm/wm_output.h"
 #include "wm/wm_server.h"
 #include "wm/wm_util.h"
 #include "wm/wm_seat.h"
@@ -69,6 +70,12 @@ static void handle_surface_commit(struct wl_listener* listener, void* data){
     }else{
         view->width = width;
         view->height = height;
+    }
+
+    /* A bit hacky: Take care of setting output here */
+    struct wm_output* output = wm_content_get_output(&view->super.super);
+    if(output){
+        view->wlr_layer_surface->output = output->wlr_output;
     }
 
     wm_layout_damage_from(
