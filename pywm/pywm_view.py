@@ -171,6 +171,10 @@ class PyWMView(Generic[PyWMT]):
         self._down_action_resizing: Optional[int] = None
         self._down_action_close: Optional[int] = None
 
+        # Debug flag
+        self._debug_scaling = False
+        self._last_update_potential_scaling_issue = False
+
 
     def _update(self,
                 general: Optional[tuple[int, bool, int, str, str, str]],
@@ -259,6 +263,19 @@ class PyWMView(Generic[PyWMT]):
         self._down_action_maximized = None
         self._down_action_resizing = None
         self._down_action_close = None
+
+        if self._debug_scaling:
+            check_wh = res[0][2], res[0][3]
+            check_size = down_state.size if down_state.size is not None and down_state.size[0] > 0 and down_state.size[1] > 0 else up_state.size
+            if (0.99 * check_wh[0] < check_size[0] < 1.01 * check_wh[0]) and \
+               (0.99 * check_wh[1] < check_size[1] < 1.01 * check_size[1]) and \
+               (abs(check_wh[0] - check_size[0]) > 0.001 or abs(check_wh[1] - check_size[1]) > 0.001):
+
+                logger.debug("Scaling WRONG: %dx%d placed in %fx%f" % (*check_size, *check_wh))
+                self._last_update_potential_scaling_issue = True
+            elif self._last_update_potential_scaling_issue:
+                logger.debug("Scaling OK:    %dx%d placed in %fx%f" % (*check_size, *check_wh))
+                self._last_update_potential_scaling_issue = False
 
         return res
 
