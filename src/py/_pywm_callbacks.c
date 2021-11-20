@@ -50,15 +50,15 @@ static void call_layout_change(struct wm_layout* layout){
 
         wl_list_for_each(output, &layout->wm_outputs, link){
             int width, height;
-            wlr_output_transformed_resolution(output->wlr_output, &width, &height);
+            wlr_output_effective_resolution(output->wlr_output, &width, &height);
 
             PyList_SetItem(list, i, Py_BuildValue(
                                "(sidiiii)",
                                output->wlr_output->name,
                                output->key,
                                output->wlr_output->scale,
-                               (int)round(width / output->wlr_output->scale),
-                               (int)round(height / output->wlr_output->scale),
+                               width,
+                               height,
                                output->layout_x,
                                output->layout_y));
             i++;
