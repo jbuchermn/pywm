@@ -15,6 +15,97 @@
 
 struct wm_view_vtable wm_view_layer_vtable;
 
+/*
+ * Callbacks
+ */
+static void subsurface_handle_map(struct wl_listener* listener, void* data){
+    struct wm_layer_subsurface* subsurface = wl_container_of(listener, subsurface, map);
+
+    wm_layout_damage_from(
+        subsurface->root->super.super.wm_server->wm_layout,
+        &subsurface->root->super.super,
+        subsurface->wlr_subsurface->surface);
+}
+
+static void subsurface_handle_unmap(struct wl_listener* listener, void* data){
+    struct wm_layer_subsurface* subsurface = wl_container_of(listener, subsurface, unmap);
+
+    wm_layout_damage_whole(subsurface->root->super.super.wm_server->wm_layout);
+}
+
+static void subsurface_handle_destroy(struct wl_listener* listener, void* data){
+    struct wm_layer_subsurface* subsurface = wl_container_of(listener, subsurface, destroy);
+    wm_layer_subsurface_destroy(subsurface);
+    free(subsurface);
+}
+
+static void subsurface_handle_new_subsurface(struct wl_listener* listener, void* data){
+    struct wm_layer_subsurface* subsurface = wl_container_of(listener, subsurface, new_subsurface);
+    struct wlr_subsurface* wlr_subsurface = data;
+
+    struct wm_layer_subsurface* new_subsurface = calloc(1, sizeof(struct wm_layer_subsurface));
+    wm_layer_subsurface_init(new_subsurface, subsurface->root, wlr_subsurface);
+    wl_list_insert(&subsurface->subsurfaces, &new_subsurface->link);
+}
+
+static void subsurface_handle_surface_commit(struct wl_listener* listener, void* data){
+    struct wm_layer_subsurface* subsurface = wl_container_of(listener, subsurface, surface_commit);
+
+    wm_layout_damage_from(
+            subsurface->root->super.super.wm_server->wm_layout,
+            &subsurface->root->super.super,
+            subsurface->wlr_subsurface->surface
+    );
+}
+static void popup_handle_map(struct wl_listener* listener, void* data){
+    struct wm_popup_layer* popup = wl_container_of(listener, popup, map);
+
+    wm_layout_damage_from(
+        popup->root->super.super.wm_server->wm_layout,
+        &popup->root->super.super,
+        popup->wlr_xdg_popup->base->surface);
+}
+
+static void popup_handle_unmap(struct wl_listener* listener, void* data){
+    struct wm_popup_layer* popup = wl_container_of(listener, popup, unmap);
+
+    wm_layout_damage_whole(popup->root->super.super.wm_server->wm_layout);
+}
+
+static void popup_handle_destroy(struct wl_listener* listener, void* data){
+    struct wm_popup_layer* popup = wl_container_of(listener, popup, destroy);
+    wm_popup_layer_destroy(popup);
+    free(popup);
+}
+
+static void popup_handle_new_popup(struct wl_listener* listener, void* data){
+    struct wm_popup_layer* popup = wl_container_of(listener, popup, new_popup);
+    struct wlr_xdg_popup* wlr_xdg_popup = data;
+
+    struct wm_popup_layer* new_popup = calloc(1, sizeof(struct wm_popup_layer));
+    wm_popup_layer_init(new_popup, popup->root, wlr_xdg_popup);
+    wl_list_insert(&popup->popups, &new_popup->link);
+}
+
+static void popup_handle_new_subsurface(struct wl_listener* listener, void* data){
+    struct wm_popup_layer* popup = wl_container_of(listener, popup, new_subsurface);
+    struct wlr_subsurface* wlr_subsurface = data;
+
+    struct wm_layer_subsurface* subsurface = calloc(1, sizeof(struct wm_layer_subsurface));
+    wm_layer_subsurface_init(subsurface, popup->root, wlr_subsurface);
+    wl_list_insert(&popup->subsurfaces, &subsurface->link);
+}
+
+static void popup_handle_surface_commit(struct wl_listener* listener, void* data){
+    struct wm_popup_layer* popup = wl_container_of(listener, popup, surface_commit);
+
+    wm_layout_damage_from(
+            popup->root->super.super.wm_server->wm_layout,
+            &popup->root->super.super,
+            popup->wlr_xdg_popup->base->surface
+    );
+}
+
 static void handle_map(struct wl_listener* listener, void* data){
     struct wm_view_layer* view = wl_container_of(listener, view, map);
 
@@ -45,16 +136,18 @@ static void handle_new_popup(struct wl_listener* listener, void* data){
     struct wm_view_layer* view = wl_container_of(listener, view, new_popup);
     struct wlr_xdg_popup* wlr_xdg_popup = data;
 
-    wlr_log(WLR_DEBUG, "TODO - new popup");
-    /* TODO */
+    struct wm_popup_layer* popup = calloc(1, sizeof(struct wm_popup_layer));
+    wm_popup_layer_init(popup, view, wlr_xdg_popup);
+    wl_list_insert(&view->popups, &popup->link);
 }
 
 static void handle_new_subsurface(struct wl_listener* listener, void* data){
     struct wm_view_layer* view = wl_container_of(listener, view, new_subsurface);
     struct wlr_subsurface* wlr_subsurface = data;
 
-    /* TODO */
-    wlr_log(WLR_DEBUG, "TODO - new subsurface");
+    struct wm_layer_subsurface* subsurface = calloc(1, sizeof(struct wm_layer_subsurface));
+    wm_layer_subsurface_init(subsurface, view, wlr_subsurface);
+    wl_list_insert(&view->subsurfaces, &subsurface->link);
 }
 
 static void handle_surface_commit(struct wl_listener* listener, void* data){
@@ -72,7 +165,9 @@ static void handle_surface_commit(struct wl_listener* listener, void* data){
         view->height = height;
     }
 
-    /* A bit hacky: Take care of setting output here */
+    /*
+     * A bit hacky: Take care of setting output here
+     */
     struct wm_output* output = wm_content_get_output(&view->super.super);
     if(output){
         view->wlr_layer_surface->output = output->wlr_output;
@@ -83,6 +178,119 @@ static void handle_surface_commit(struct wl_listener* listener, void* data){
             &view->super.super, view->wlr_layer_surface->surface);
 }
 
+/*
+ * Class implementation wm_layer_subsurface
+ */
+void wm_layer_subsurface_init(struct wm_layer_subsurface* subsurface, struct wm_view_layer* root, struct wlr_subsurface* wlr_subsurface){
+    subsurface->root = root;
+    subsurface->wlr_subsurface = wlr_subsurface;
+
+    wl_list_init(&subsurface->subsurfaces);
+
+    subsurface->map.notify = &subsurface_handle_map;
+    wl_signal_add(&wlr_subsurface->events.map, &subsurface->map);
+
+    subsurface->unmap.notify = &subsurface_handle_unmap;
+    wl_signal_add(&wlr_subsurface->events.unmap, &subsurface->unmap);
+
+    subsurface->destroy.notify = &subsurface_handle_destroy;
+    wl_signal_add(&wlr_subsurface->events.destroy, &subsurface->destroy);
+
+    subsurface->new_subsurface.notify = &subsurface_handle_new_subsurface;
+    wl_signal_add(&wlr_subsurface->surface->events.new_subsurface, &subsurface->new_subsurface);
+
+    subsurface->surface_commit.notify = &subsurface_handle_surface_commit;
+    wl_signal_add(&wlr_subsurface->surface->events.commit, &subsurface->surface_commit);
+
+    struct wlr_subsurface* ss;
+    wl_list_for_each(ss, &wlr_subsurface->surface->current.subsurfaces_below, current.link){
+        wlr_log(WLR_DEBUG, "Subsurface: Adding \"old\" subsurface (below)");
+        subsurface_handle_new_subsurface(&subsurface->new_subsurface, ss);
+    }
+    wl_list_for_each(ss, &wlr_subsurface->surface->current.subsurfaces_above, current.link){
+        wlr_log(WLR_DEBUG, "Subsurface: Adding \"old\" subsurface (above)");
+        subsurface_handle_new_subsurface(&subsurface->new_subsurface, ss);
+    }
+
+}
+
+void wm_layer_subsurface_destroy(struct wm_layer_subsurface* subsurface){
+    wl_list_remove(&subsurface->link);
+    wl_list_remove(&subsurface->subsurfaces);
+    wl_list_remove(&subsurface->map.link);
+    wl_list_remove(&subsurface->unmap.link);
+    wl_list_remove(&subsurface->destroy.link);
+    wl_list_remove(&subsurface->new_subsurface.link);
+    wl_list_remove(&subsurface->surface_commit.link);
+}
+
+/*
+ * Class implementation wm_popup_layer
+ */
+void wm_popup_layer_init(struct wm_popup_layer* popup, struct wm_view_layer* root, struct wlr_xdg_popup* wlr_xdg_popup){
+
+    popup->wlr_xdg_popup = wlr_xdg_popup;
+    popup->root = root;
+
+    wl_list_init(&popup->subsurfaces);
+    wl_list_init(&popup->popups);
+
+    popup->map.notify = &popup_handle_map;
+    wl_signal_add(&wlr_xdg_popup->base->events.map, &popup->map);
+
+    popup->unmap.notify = &popup_handle_unmap;
+    wl_signal_add(&wlr_xdg_popup->base->events.unmap, &popup->unmap);
+
+    popup->destroy.notify = &popup_handle_destroy;
+    wl_signal_add(&wlr_xdg_popup->base->events.destroy, &popup->destroy);
+
+    popup->new_popup.notify = &popup_handle_new_popup;
+    wl_signal_add(&wlr_xdg_popup->base->events.new_popup, &popup->new_popup);
+
+    popup->new_subsurface.notify = &popup_handle_new_subsurface;
+    wl_signal_add(&wlr_xdg_popup->base->surface->events.new_subsurface, &popup->new_subsurface);
+
+    popup->surface_commit.notify = &popup_handle_surface_commit;
+    wl_signal_add(&wlr_xdg_popup->base->surface->events.commit, &popup->surface_commit);
+
+    /* Unconstrain popup */
+    struct wlr_box* output_box = wlr_output_layout_get_box(
+            popup->root->super.super.wm_server->wm_layout->wlr_output_layout, popup->root->wlr_layer_surface->output);
+    struct wlr_box box = {
+        .x = -popup->root->super.super.display_x,
+        .y = -popup->root->super.super.display_y,
+        .width = output_box->width,
+        .height = output_box->height
+    };
+    wlr_xdg_popup_unconstrain_from_box(popup->wlr_xdg_popup, &box);
+
+    struct wlr_subsurface* ss;
+    wl_list_for_each(ss, &wlr_xdg_popup->base->surface->current.subsurfaces_below, current.link){
+        wlr_log(WLR_DEBUG, "Popup: Adding \"old\" subsurface (below)");
+        popup_handle_new_subsurface(&popup->new_subsurface, ss);
+    }
+    wl_list_for_each(ss, &wlr_xdg_popup->base->surface->current.subsurfaces_above, current.link){
+        wlr_log(WLR_DEBUG, "Popup: Adding \"old\" subsurface (above)");
+        popup_handle_new_subsurface(&popup->new_subsurface, ss);
+    }
+}
+
+void wm_popup_layer_destroy(struct wm_popup_layer* popup){
+    wl_list_remove(&popup->link);
+    wl_list_remove(&popup->popups);
+    wl_list_remove(&popup->subsurfaces);
+
+    wl_list_remove(&popup->map.link);
+    wl_list_remove(&popup->unmap.link);
+    wl_list_remove(&popup->destroy.link);
+    wl_list_remove(&popup->new_popup.link);
+    wl_list_remove(&popup->new_subsurface.link);
+    wl_list_remove(&popup->surface_commit.link);
+}
+
+/*
+ * Class implementation wm_view_layer
+ */
 void wm_view_layer_init(struct wm_view_layer* view, struct wm_server* server, struct wlr_layer_surface_v1* surface){
     wm_view_base_init(&view->super, server);
     view->super.vtable = &wm_view_layer_vtable;

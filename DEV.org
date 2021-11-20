@@ -4,7 +4,7 @@
 ** Current (v0.2)
 
 *** STRT Layer shell
-- [ ] Fill in missing parts on wm_view_layer.c
+- [X] Fill in missing parts on wm_view_layer.c
 - [ ] Keyboard interactivity
 
 *** TODO Gestures like pinch-to-zoom in firefox not working -> wlr pointer gestures
