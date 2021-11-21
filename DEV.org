@@ -3,7 +3,8 @@
 * Development
 ** Current (v0.2)
 
-*** TODO Gestures like pinch-to-zoom in firefox not working -> wlr pointer gestures
+*** STRT Gestures like pinch-to-zoom in firefox not working -> wlr pointer gestures
+- Make blocking python side possible
 *** TODO Updatable config: See TODO marks
 *** TODO Layer shell: Keyboard interactivity
 

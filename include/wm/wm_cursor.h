@@ -3,6 +3,7 @@
 
 #include <wayland-server.h>
 #include <wlr/types/wlr_cursor.h>
+#include <wlr/types/wlr_pointer_gestures_v1.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 
 struct wm_cursor;
@@ -23,6 +24,14 @@ struct wm_cursor {
     struct wl_listener axis;
     struct wl_listener frame;
     struct wl_listener surface_destroy;
+
+	struct wlr_pointer_gestures_v1 *pointer_gestures;
+	struct wl_listener pinch_begin;
+	struct wl_listener pinch_update;
+	struct wl_listener pinch_end;
+	struct wl_listener swipe_begin;
+	struct wl_listener swipe_update;
+	struct wl_listener swipe_end;
 
 
     uint32_t msec_delta;
