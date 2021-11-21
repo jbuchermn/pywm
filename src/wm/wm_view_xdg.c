@@ -640,6 +640,7 @@ bool wm_view_is_xdg(struct wm_view* view){
 
 static void deco_handle_request_mode(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, deco_request_mode);
+    wlr_log(WLR_DEBUG, "wm_view_xdg requests deco mode");
     wlr_xdg_toplevel_decoration_v1_set_mode(view->wlr_deco, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
 }
 

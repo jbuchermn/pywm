@@ -5,8 +5,10 @@
 
 *** TODO Updatable config: See TODO marks
 *** TODO Layer shell: Keyboard interactivity
+*** TODO Lost frames during app startup (play YT in one window, start second) due to compositor?
+*** TODO Possibly: Enable CSD for floating windows? (e.g. on DBeaver)
 
-*** STRT Additionally to wm_content->fixed_output enable wm_content->workspace (x, y, w, h) with output scissoring and proper input handling + proper damage tracking
+*** TODO Additionally to wm_content->fixed_output enable wm_content->workspace (x, y, w, h) with output scissoring and proper input handling + proper damage tracking
 - [X] Render only on workspace
 - [X] Accept input only on workspace
 - [ ] Add damage only on workspace (see TODO marks)
@@ -22,10 +24,10 @@
 
 ** Backlog / Ideas
 *** wlroots migration to gitlab.freedesktop.org
-*** Can c gestures make python gestures redundant? (Maybe enable switching)
 *** wlr_output_manager
 *** Complete libinput device config / support for external mouse
 *** Use libseat from python / patched python evdev
+*** Can c gestures make python gestures redundant? (Maybe enable switching)
 *** Configurable gestures (abstraction layer) + possibility to use external "gesture providers" (e.g. detection from webcam video)
 *** Support newm-sidecar (or similar, via ws://) as touchpad
 *** Touch input from yoga or similar
