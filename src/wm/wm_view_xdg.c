@@ -327,8 +327,8 @@ void wm_popup_xdg_init(struct wm_popup_xdg* popup, struct wm_view_xdg* toplevel,
         double x_scale = width / popup->toplevel->super.super.display_width;
         double y_scale = height / popup->toplevel->super.super.display_height;
         struct wlr_box box = {
-            .x = -popup->toplevel->super.super.display_x * x_scale,
-            .y = -popup->toplevel->super.super.display_y * y_scale,
+            .x = output_box->x -popup->toplevel->super.super.display_x * x_scale,
+            .y = output_box->y -popup->toplevel->super.super.display_y * y_scale,
             .width = output_box->width * x_scale,
             .height = output_box->height * y_scale
         };
