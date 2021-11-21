@@ -192,6 +192,63 @@ bool wm_callback_axis(struct wlr_event_pointer_axis *event) {
     return (*wm.callback_axis)(event);
 }
 
+bool wm_callback_gesture_swipe_begin(struct wlr_event_pointer_swipe_begin* event){
+    if(!wm.callback_gesture_swipe_begin){
+        return false;
+    }
+
+    return (*wm.callback_gesture_swipe_begin)(event);
+}
+bool wm_callback_gesture_swipe_update(struct wlr_event_pointer_swipe_update* event){
+    if(!wm.callback_gesture_swipe_update){
+        return false;
+    }
+
+    return (*wm.callback_gesture_swipe_update)(event);
+}
+bool wm_callback_gesture_swipe_end(struct wlr_event_pointer_swipe_end* event){
+    if(!wm.callback_gesture_swipe_end){
+        return false;
+    }
+
+    return (*wm.callback_gesture_swipe_end)(event);
+}
+bool wm_callback_gesture_pinch_begin(struct wlr_event_pointer_pinch_begin* event){
+    if(!wm.callback_gesture_pinch_begin){
+        return false;
+    }
+
+    return (*wm.callback_gesture_pinch_begin)(event);
+}
+bool wm_callback_gesture_pinch_update(struct wlr_event_pointer_pinch_update* event){
+    if(!wm.callback_gesture_pinch_update){
+        return false;
+    }
+
+    return (*wm.callback_gesture_pinch_update)(event);
+}
+bool wm_callback_gesture_pinch_end(struct wlr_event_pointer_pinch_end* event){
+    if(!wm.callback_gesture_pinch_end){
+        return false;
+    }
+
+    return (*wm.callback_gesture_pinch_end)(event);
+}
+bool wm_callback_gesture_hold_begin(struct wlr_event_pointer_hold_begin* event){
+    if(!wm.callback_gesture_hold_begin){
+        return false;
+    }
+
+    return (*wm.callback_gesture_hold_begin)(event);
+}
+bool wm_callback_gesture_hold_end(struct wlr_event_pointer_hold_end* event){
+    if(!wm.callback_gesture_hold_end){
+        return false;
+    }
+
+    return (*wm.callback_gesture_hold_end);
+}
+
 void wm_callback_init_view(struct wm_view *view) {
     if (!wm.callback_init_view) {
         return;

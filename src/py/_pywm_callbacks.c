@@ -131,6 +131,95 @@ static bool call_axis(struct wlr_event_pointer_axis* event){
     return false;
 }
 
+static bool call_pinch_begin(struct wlr_event_pointer_pinch_begin* event){
+    if(callbacks.gesture){
+        PyGILState_STATE gil = PyGILState_Ensure();
+        PyObject* args = Py_BuildValue("(sii)", "pinch", event->time_msec, event->fingers);
+        bool result = call_bool(callbacks.gesture, args);
+        PyGILState_Release(gil);
+        return result;
+    }
+
+    return false;
+}
+static bool call_pinch_update(struct wlr_event_pointer_pinch_update* event){
+    if(callbacks.gesture){
+        PyGILState_STATE gil = PyGILState_Ensure();
+        PyObject* args = Py_BuildValue("(siidddd)", "pinch", event->time_msec, event->fingers, event->dx, event->dy, event->rotation, event->scale);
+        bool result = call_bool(callbacks.gesture, args);
+        PyGILState_Release(gil);
+        return result;
+    }
+
+    return false;
+}
+static bool call_pinch_end(struct wlr_event_pointer_pinch_end* event){
+    if(callbacks.gesture){
+        PyGILState_STATE gil = PyGILState_Ensure();
+        PyObject* args = Py_BuildValue("(sii)", "pinch", event->time_msec, event->cancelled);
+        bool result = call_bool(callbacks.gesture, args);
+        PyGILState_Release(gil);
+        return result;
+    }
+
+    return false;
+}
+static bool call_swipe_begin(struct wlr_event_pointer_swipe_begin* event){
+    if(callbacks.gesture){
+        PyGILState_STATE gil = PyGILState_Ensure();
+        PyObject* args = Py_BuildValue("(sii)", "swipe", event->time_msec, event->fingers);
+        bool result = call_bool(callbacks.gesture, args);
+        PyGILState_Release(gil);
+        return result;
+    }
+
+    return false;
+}
+static bool call_swipe_update(struct wlr_event_pointer_swipe_update* event){
+    if(callbacks.gesture){
+        PyGILState_STATE gil = PyGILState_Ensure();
+        PyObject* args = Py_BuildValue("(siidd)", "swipe", event->time_msec, event->fingers, event->dx, event->dy);
+        bool result = call_bool(callbacks.gesture, args);
+        PyGILState_Release(gil);
+        return result;
+    }
+
+    return false;
+}
+static bool call_swipe_end(struct wlr_event_pointer_swipe_end* event){
+    if(callbacks.gesture){
+        PyGILState_STATE gil = PyGILState_Ensure();
+        PyObject* args = Py_BuildValue("(sii)", "swipe", event->time_msec, event->cancelled);
+        bool result = call_bool(callbacks.gesture, args);
+        PyGILState_Release(gil);
+        return result;
+    }
+
+    return false;
+}
+static bool call_hold_begin(struct wlr_event_pointer_hold_begin* event){
+    if(callbacks.gesture){
+        PyGILState_STATE gil = PyGILState_Ensure();
+        PyObject* args = Py_BuildValue("(sii)", "swipe", event->time_msec, event->fingers);
+        bool result = call_bool(callbacks.gesture, args);
+        PyGILState_Release(gil);
+        return result;
+    }
+
+    return false;
+}
+static bool call_hold_end(struct wlr_event_pointer_hold_end* event){
+    if(callbacks.gesture){
+        PyGILState_STATE gil = PyGILState_Ensure();
+        PyObject* args = Py_BuildValue("(sii)", "swipe", event->time_msec, event->cancelled);
+        bool result = call_bool(callbacks.gesture, args);
+        PyGILState_Release(gil);
+        return result;
+    }
+
+    return false;
+}
+
 static void call_init_view(struct wm_view* view){
     _pywm_views_add(view);
 }
@@ -176,6 +265,16 @@ void _pywm_callbacks_init(){
     get_wm()->callback_motion = &call_motion;
     get_wm()->callback_button = &call_button;
     get_wm()->callback_axis = &call_axis;
+
+    get_wm()->callback_gesture_pinch_begin = &call_pinch_begin;
+    get_wm()->callback_gesture_pinch_update = &call_pinch_update;
+    get_wm()->callback_gesture_pinch_end = &call_pinch_end;
+    get_wm()->callback_gesture_swipe_begin = &call_swipe_begin;
+    get_wm()->callback_gesture_swipe_update = &call_swipe_update;
+    get_wm()->callback_gesture_swipe_end = &call_swipe_end;
+    get_wm()->callback_gesture_hold_begin = &call_hold_begin;
+    get_wm()->callback_gesture_hold_end = &call_hold_end;
+
     get_wm()->callback_init_view = &call_init_view;
     get_wm()->callback_destroy_view = &call_destroy_view;
     get_wm()->callback_view_event = &call_view_event;
@@ -192,6 +291,8 @@ PyObject** _pywm_callbacks_get(const char* name){
         return &callbacks.key;
     }else if(!strcmp(name, "modifiers")){
         return &callbacks.modifiers;
+    }else if(!strcmp(name, "gesture")){
+        return &callbacks.gesture;
     }else if(!strcmp(name, "layout_change")){
         return &callbacks.layout_change;
     }else if(!strcmp(name, "ready")){

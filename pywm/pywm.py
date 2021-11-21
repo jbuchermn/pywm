@@ -122,6 +122,7 @@ class PyWM(Generic[ViewT]):
         register("axis", self._axis)
         register("key", self._key)
         register("modifiers", self._modifiers)
+        register("gesture", self._c_gesture)
 
         register("update_view", self._update_view)
         register("destroy_view", self._destroy_view)
@@ -261,6 +262,14 @@ class PyWM(Generic[ViewT]):
         self._update_idle()
         self.modifiers = depressed
         return self.on_modifiers(self.modifiers)
+
+    @callback
+    def _c_gesture(self, kind: str, *args: Any) -> bool:
+        self._update_idle()
+        if self._touchpad_captured:
+            return True
+
+        return False
 
     @callback
     def _layout_change(self, outputs: list[tuple[str, int, float, int, int, int, int]]) -> None:
@@ -535,4 +544,3 @@ class PyWM(Generic[ViewT]):
         idle_inhibited is True if there is at least one view with is_inhibiting_idle==True
         """
         pass
-

@@ -33,6 +33,9 @@ struct wm_cursor {
 	struct wl_listener swipe_update;
 	struct wl_listener swipe_end;
 
+    bool swipe_started;
+    bool pinch_started;
+
 
     uint32_t msec_delta;
 

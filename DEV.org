@@ -3,8 +3,6 @@
 * Development
 ** Current (v0.2)
 
-*** STRT Gestures like pinch-to-zoom in firefox not working -> wlr pointer gestures
-- Make blocking python side possible
 *** TODO Updatable config: See TODO marks
 *** TODO Layer shell: Keyboard interactivity
 
@@ -24,6 +22,7 @@
 
 ** Backlog / Ideas
 *** wlroots migration to gitlab.freedesktop.org
+*** Can c gestures make python gestures redundant? (Maybe enable switching)
 *** wlr_output_manager
 *** Complete libinput device config / support for external mouse
 *** Use libseat from python / patched python evdev

@@ -11,6 +11,7 @@ struct _pywm_callbacks {
     PyObject* axis;
     PyObject* key;
     PyObject* modifiers;
+    PyObject* gesture;
 
     PyObject* update_view;
     PyObject* destroy_view;
