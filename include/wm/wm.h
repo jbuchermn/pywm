@@ -39,6 +39,7 @@ struct wm {
     void (*callback_ready)(void);
 
     void (*callback_update_view)(struct wm_view*);
+
     /* Synchronous update once per frame */
     void (*callback_update)(void);
 };

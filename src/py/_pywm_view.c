@@ -247,12 +247,9 @@ long _pywm_views_get_handle(struct wm_view* view){
 }
 
 void _pywm_views_update(){
-    TIMER_START(views_update);
     for(struct _pywm_view* view=views.first_view; view; view=view->next_view){
         _pywm_view_update(view);
     }
-    TIMER_STOP(views_update);
-    TIMER_PRINT(views_update);
 }
 
 void _pywm_views_update_single(struct wm_view* view){

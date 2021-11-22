@@ -16,6 +16,7 @@
 #include "wm/wm_server.h"
 #include "wm/wm_view.h"
 #include "wm/wm_widget.h"
+#include "wm/wm_util.h"
 
 struct wm wm = {0};
 
@@ -144,155 +145,210 @@ struct wm *get_wm() {
  * Callbacks
  */
 void wm_callback_layout_change(struct wm_layout *layout) {
-    if (!wm.callback_layout_change) {
-        return;
+    TIMER_START(callback_layout_change);
+    if (wm.callback_layout_change) {
+        (*wm.callback_layout_change)(layout);
     }
-
-    return (*wm.callback_layout_change)(layout);
+    TIMER_STOP(callback_layout_change);
+    TIMER_PRINT(callback_layout_change);
 }
 
 bool wm_callback_key(struct wlr_event_keyboard_key *event,
                      const char *keysyms) {
-    if (!wm.callback_key) {
-        return false;
+    TIMER_START(callback_key);
+    bool res = false;
+    if (wm.callback_key) {
+        res = (*wm.callback_key)(event, keysyms);
     }
-
-    return (*wm.callback_key)(event, keysyms);
+    TIMER_STOP(callback_key);
+    TIMER_PRINT(callback_key);
+    return res;
 }
 
 bool wm_callback_modifiers(struct wlr_keyboard_modifiers *modifiers) {
-    if (!wm.callback_modifiers) {
-        return false;
+    TIMER_START(callback_modifiers);
+    bool res = false;
+    if (wm.callback_modifiers) {
+        res = (*wm.callback_modifiers)(modifiers);
     }
-
-    return (*wm.callback_modifiers)(modifiers);
+    TIMER_STOP(callback_modifiers);
+    TIMER_PRINT(callback_modifiers);
+    return res;
 }
 
 bool wm_callback_motion(double delta_x, double delta_y, double abs_x, double abs_y, uint32_t time_msec) {
-    if (!wm.callback_motion) {
-        return false;
+    TIMER_START(callback_motion);
+    bool res = false;
+    if (wm.callback_motion) {
+        res = (*wm.callback_motion)(delta_x, delta_y, abs_x, abs_y, time_msec);
     }
+    TIMER_STOP(callback_motion);
+    TIMER_PRINT(callback_motion);
 
-    return (*wm.callback_motion)(delta_x, delta_y, abs_x, abs_y, time_msec);
+    return res;
 }
 
 bool wm_callback_button(struct wlr_event_pointer_button *event) {
-    if (!wm.callback_button) {
-        return false;
+    TIMER_START(callback_button);
+    bool res = false;
+    if (wm.callback_button) {
+        res = (*wm.callback_button)(event);
     }
+    TIMER_STOP(callback_button);
+    TIMER_PRINT(callback_button);
 
-    return (*wm.callback_button)(event);
+    return res;
 }
 
 bool wm_callback_axis(struct wlr_event_pointer_axis *event) {
-    if (!wm.callback_axis) {
-        return false;
+    TIMER_START(callback_axis);
+    bool res = false;
+    if (wm.callback_axis) {
+        res = (*wm.callback_axis)(event);
     }
+    TIMER_STOP(callback_axis);
+    TIMER_PRINT(callback_axis);
 
-    return (*wm.callback_axis)(event);
+    return res;
 }
 
 bool wm_callback_gesture_swipe_begin(struct wlr_event_pointer_swipe_begin* event){
-    if(!wm.callback_gesture_swipe_begin){
-        return false;
+    TIMER_START(callback_gesture_swipe_begin);
+    bool res = false;
+    if(wm.callback_gesture_swipe_begin){
+        res = (*wm.callback_gesture_swipe_begin)(event);
     }
+    TIMER_STOP(callback_gesture_swipe_begin);
+    TIMER_PRINT(callback_gesture_swipe_begin);
 
-    return (*wm.callback_gesture_swipe_begin)(event);
+    return res;
 }
 bool wm_callback_gesture_swipe_update(struct wlr_event_pointer_swipe_update* event){
-    if(!wm.callback_gesture_swipe_update){
-        return false;
+    TIMER_START(callback_gesture_swipe_update);
+    bool res = false;
+    if(wm.callback_gesture_swipe_update){
+        res = (*wm.callback_gesture_swipe_update)(event);
     }
+    TIMER_STOP(callback_gesture_swipe_update);
+    TIMER_PRINT(callback_gesture_swipe_update);
 
-    return (*wm.callback_gesture_swipe_update)(event);
+    return res;
 }
 bool wm_callback_gesture_swipe_end(struct wlr_event_pointer_swipe_end* event){
-    if(!wm.callback_gesture_swipe_end){
-        return false;
+    TIMER_START(callback_gesture_swipe_end);
+    bool res = false;
+    if(wm.callback_gesture_swipe_end){
+        res = (*wm.callback_gesture_swipe_end)(event);
     }
+    TIMER_STOP(callback_gesture_swipe_end);
+    TIMER_PRINT(callback_gesture_swipe_end);
 
-    return (*wm.callback_gesture_swipe_end)(event);
+    return res;
 }
 bool wm_callback_gesture_pinch_begin(struct wlr_event_pointer_pinch_begin* event){
-    if(!wm.callback_gesture_pinch_begin){
-        return false;
+    TIMER_START(callback_gesture_pinch_begin);
+    bool res = false;
+    if(wm.callback_gesture_pinch_begin){
+        res = (*wm.callback_gesture_pinch_begin)(event);
     }
+    TIMER_STOP(callback_gesture_pinch_begin);
+    TIMER_PRINT(callback_gesture_pinch_begin);
 
-    return (*wm.callback_gesture_pinch_begin)(event);
+    return res;
 }
 bool wm_callback_gesture_pinch_update(struct wlr_event_pointer_pinch_update* event){
-    if(!wm.callback_gesture_pinch_update){
-        return false;
+    TIMER_START(callback_gesture_pinch_update);
+    bool res = false;
+    if(wm.callback_gesture_pinch_update){
+        res = (*wm.callback_gesture_pinch_update)(event);
     }
+    TIMER_STOP(callback_gesture_pinch_update);
+    TIMER_PRINT(callback_gesture_pinch_update);
 
-    return (*wm.callback_gesture_pinch_update)(event);
+    return res;
 }
 bool wm_callback_gesture_pinch_end(struct wlr_event_pointer_pinch_end* event){
-    if(!wm.callback_gesture_pinch_end){
-        return false;
+    TIMER_START(callback_gesture_pinch_end);
+    bool res = false;
+    if(wm.callback_gesture_pinch_end){
+        res = (*wm.callback_gesture_pinch_end)(event);
     }
+    TIMER_STOP(callback_gesture_pinch_end);
+    TIMER_PRINT(callback_gesture_pinch_end);
 
-    return (*wm.callback_gesture_pinch_end)(event);
+    return res;
 }
 bool wm_callback_gesture_hold_begin(struct wlr_event_pointer_hold_begin* event){
-    if(!wm.callback_gesture_hold_begin){
-        return false;
+    TIMER_START(callback_gesture_hold_begin);
+    bool res = false;
+    if(wm.callback_gesture_hold_begin){
+        res = (*wm.callback_gesture_hold_begin)(event);
     }
-
-    return (*wm.callback_gesture_hold_begin)(event);
+    TIMER_STOP(callback_gesture_hold_begin);
+    TIMER_PRINT(callback_gesture_hold_begin);
+    return res;
 }
 bool wm_callback_gesture_hold_end(struct wlr_event_pointer_hold_end* event){
-    if(!wm.callback_gesture_hold_end){
-        return false;
+    TIMER_START(callback_gesture_hold_end);
+    bool res = false;
+    if(wm.callback_gesture_hold_end){
+        res = (*wm.callback_gesture_hold_end);
     }
-
-    return (*wm.callback_gesture_hold_end);
+    TIMER_STOP(callback_gesture_hold_end);
+    TIMER_PRINT(callback_gesture_hold_end);
+    return res;
 }
 
 void wm_callback_init_view(struct wm_view *view) {
-    if (!wm.callback_init_view) {
-        return;
+    TIMER_START(callback_init_view);
+    if (wm.callback_init_view) {
+        (*wm.callback_init_view)(view);
     }
-
-    return (*wm.callback_init_view)(view);
+    TIMER_STOP(callback_init_view);
+    TIMER_PRINT(callback_init_view);
 }
 
 void wm_callback_destroy_view(struct wm_view *view) {
-    if (!wm.callback_destroy_view) {
-        return;
+    TIMER_START(callback_destroy_view);
+    if (wm.callback_destroy_view) {
+        (*wm.callback_destroy_view)(view);
     }
-
-    return (*wm.callback_destroy_view)(view);
+    TIMER_STOP(callback_destroy_view);
+    TIMER_PRINT(callback_destroy_view);
 }
 
 void wm_callback_view_event(struct wm_view *view, const char *event) {
-    if (!wm.callback_view_event) {
-        return;
+    TIMER_START(callback_view_event);
+    if (wm.callback_view_event) {
+        (*wm.callback_view_event)(view, event);
     }
-
-    return (*wm.callback_view_event)(view, event);
+    TIMER_STOP(callback_view_event);
+    TIMER_PRINT(callback_view_event);
 }
 
 void wm_callback_update_view(struct wm_view *view){
-    if (!wm.callback_update_view) {
-        return;
+    TIMER_START(callback_update_view);
+    if (wm.callback_update_view) {
+        (*wm.callback_update_view)(view);
     }
-
-    return (*wm.callback_update_view)(view);
+    TIMER_STOP(callback_update_view);
+    TIMER_PRINT(callback_update_view);
 }
 
 void wm_callback_update() {
-    if (!wm.callback_update) {
-        return;
+    TIMER_START(callback_update);
+    if (wm.callback_update) {
+        (*wm.callback_update)();
     }
-
-    return (*wm.callback_update)();
+    TIMER_STOP(callback_update);
+    TIMER_PRINT(callback_update);
 }
 
 void wm_callback_ready() {
-    if (!wm.callback_ready) {
-        return;
+    TIMER_START(callback_ready);
+    if (wm.callback_ready) {
+        (*wm.callback_ready)();
     }
-
-    return (*wm.callback_ready)();
+    TIMER_STOP(callback_ready);
+    TIMER_PRINT(callback_ready);
 }

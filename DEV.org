@@ -5,8 +5,6 @@
 
 *** TODO Updatable config: See TODO marks
 *** TODO Layer shell: Keyboard interactivity
-*** TODO Lost frames during app startup (play YT in one window, start second) due to compositor?
-*** TODO Possibly: Enable CSD for floating windows? (e.g. on DBeaver)
 
 *** TODO Additionally to wm_content->fixed_output enable wm_content->workspace (x, y, w, h) with output scissoring and proper input handling + proper damage tracking
 - [X] Render only on workspace

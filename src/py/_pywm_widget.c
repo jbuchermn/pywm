@@ -122,8 +122,6 @@ long _pywm_widgets_get_handle(struct wm_widget* widget){
 
 
 void _pywm_widgets_update(){
-    TIMER_START(widgets_update);
-
     /* Query for a widget to destroy */
     PyObject* args = Py_BuildValue("()");
     PyObject* res = PyObject_Call(_pywm_callbacks_get_all()->query_destroy_widget, args, NULL);
@@ -161,10 +159,7 @@ void _pywm_widgets_update(){
     }
 
 err:
-
-
-    TIMER_STOP(widgets_update);
-    TIMER_PRINT(widgets_update);
+    ;
 }
 
 
