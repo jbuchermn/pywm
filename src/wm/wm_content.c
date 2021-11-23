@@ -140,7 +140,7 @@ int wm_content_get_z_index(struct wm_content* content){
 }
 
 void wm_content_set_opacity(struct wm_content* content, double opacity){
-    if(fabs(content->opacity - opacity) < 0.01) return;
+    if(fabs(content->opacity - opacity) < 0.0000001) return;
 
     content->opacity = opacity;
     wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
