@@ -101,6 +101,22 @@ static void render_surface(struct wlr_surface *surface, int sx, int sy,
         mask.height = box.height;
         corner_radius = 0;
     }
+
+    if((box.x + box.width < 0) ||
+       (box.x > output->wlr_output->width) ||
+       (box.y + box.height < 0) ||
+       (box.y > output->wlr_output->height) ||
+       (mask.x + mask.width < 0) ||
+       (mask.x > output->wlr_output->width) ||
+       (mask.y + mask.height < 0) ||
+       (mask.y > output->wlr_output->height) ||
+       abs(box.width) < 0.1 ||
+       abs(box.height) < 0.1
+    ){
+        /* Surface is not visible */
+        return;
+    }
+
     wm_renderer_render_texture_at(output->wm_server->wm_renderer, rdata->damage, texture, &box,
                                   rdata->opacity,
                                   &mask,
