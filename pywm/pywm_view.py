@@ -110,10 +110,11 @@ class PyWMViewDownstreamState:
         self.size: tuple[int, int] = (-1, -1)
 
         if up_state is not None:
+            self.fixed_output = up_state.fixed_output
             self.size = up_state.size
 
     def copy(self) -> PyWMViewDownstreamState:
-        res = PyWMViewDownstreamState(self.z_index, self.box, self.mask, self.opacity, self.corner_radius, self.accepts_input, self.lock_enabled)
+        res = PyWMViewDownstreamState(self.z_index, self.box, self.mask, self.opacity, self.corner_radius, self.accepts_input, self.lock_enabled, self.floating, self.workspace, self.fixed_output)
         res.size = self.size
         return res
 

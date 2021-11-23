@@ -51,6 +51,10 @@ void wm_content_set_output(struct wm_content* content, int key, struct wlr_outpu
         }
     }
 
+    if(!res && (outp || key>=0)){
+        wlr_log(WLR_ERROR, "Invalid output given to wm_content_set_output");
+    }
+
     if(res == content->fixed_output){
         return;
     }
@@ -70,6 +74,7 @@ struct wm_output* wm_content_get_output(struct wm_content* content){
         if(output == content->fixed_output) return output;
     }
 
+    wlr_log(WLR_ERROR, "Removing invalid fixed output");
     content->fixed_output = NULL;
     return NULL;
 }
@@ -79,7 +84,6 @@ void wm_content_set_workspace(struct wm_content* content, double x, double y, do
             fabs(content->workspace_y - y) +
             fabs(content->workspace_width - width) +
             fabs(content->workspace_height - height) < 0.01) return;
-
 
     wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
     content->workspace_x = x;

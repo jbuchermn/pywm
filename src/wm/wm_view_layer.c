@@ -436,19 +436,40 @@ static struct wm_view* wm_view_layer_get_parent(struct wm_view* super){
     return NULL;
 }
 
+static void wm_layer_subsurface_printf(FILE* file, struct wm_layer_subsurface* subsurface, int indent){
+    fprintf(file, "%*swm_layer_subsurface for %p\n", indent, "", subsurface->wlr_subsurface->surface);
+
+    struct wm_layer_subsurface* nsubsurface;
+    wl_list_for_each(nsubsurface, &subsurface->subsurfaces, link){
+        wm_layer_subsurface_printf(file, nsubsurface, indent + 2);
+    }
+}
+
+static void wm_popup_layer_printf(FILE* file, struct wm_popup_layer* popup, int indent){
+    fprintf(file, "%*swm_popup_xdg for %p\n", indent, "", popup->wlr_xdg_popup->base->surface);
+
+    struct wm_popup_layer* npopup;
+    wl_list_for_each(npopup, &popup->popups, link){
+        wm_popup_layer_printf(file, npopup, indent + 2);
+    }
+    struct wm_layer_subsurface* subsurface;
+    wl_list_for_each(subsurface, &popup->subsurfaces, link){
+        wm_layer_subsurface_printf(file, subsurface, indent + 2);
+    }
+}
+
 static void wm_view_layer_structure_printf(FILE* file, struct wm_view* super){
     struct wm_view_layer* view = wm_cast(wm_view_layer, super);
 
     fprintf(file, "  wm_view_layer for %p on output %p\n", view->wlr_layer_surface->surface, view->super.super.fixed_output);
-    /* TODO */
-    /* struct wm_popup_xdg* popup; */
-    /* wl_list_for_each(popup, &view->popups, link){ */
-    /*     wm_popup_xdg_printf(file, popup, 4); */
-    /* } */
-    /* struct wm_xdg_subsurface* subsurface; */
-    /* wl_list_for_each(subsurface, &view->subsurfaces, link){ */
-    /*     wm_xdg_subsurface_printf(file, subsurface, 4); */
-    /* } */
+    struct wm_popup_layer* popup;
+    wl_list_for_each(popup, &view->popups, link){
+        wm_popup_layer_printf(file, popup, 4);
+    }
+    struct wm_layer_subsurface* subsurface;
+    wl_list_for_each(subsurface, &view->subsurfaces, link){
+        wm_layer_subsurface_printf(file, subsurface, 4);
+    }
 }
 
 struct wm_view_vtable wm_view_layer_vtable = {
