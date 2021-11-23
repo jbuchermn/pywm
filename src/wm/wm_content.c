@@ -51,11 +51,15 @@ void wm_content_set_output(struct wm_content* content, int key, struct wlr_outpu
         }
     }
 
-    if(res != content->fixed_output){
-        wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
-        content->fixed_output = res;
-        wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
+    if(res == content->fixed_output){
+        return;
     }
+
+    wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
+    content->fixed_output = res;
+    wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
+
+    wm_layout_update_content_outputs(content->wm_server->wm_layout, content);
 }
 
 struct wm_output* wm_content_get_output(struct wm_content* content){
@@ -76,7 +80,6 @@ void wm_content_set_workspace(struct wm_content* content, double x, double y, do
             fabs(content->workspace_width - width) +
             fabs(content->workspace_height - height) < 0.01) return;
 
-    wm_layout_update_content_outputs(content->wm_server->wm_layout, content);
 
     wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
     content->workspace_x = x;
@@ -84,6 +87,8 @@ void wm_content_set_workspace(struct wm_content* content, double x, double y, do
     content->workspace_width = width;
     content->workspace_height = height;
     wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
+
+    wm_layout_update_content_outputs(content->wm_server->wm_layout, content);
 }
 
 void wm_content_get_workspace(struct wm_content* content, double* workspace_x, double* workspace_y, double* workspace_width, double* workspace_height){
@@ -103,14 +108,14 @@ void wm_content_set_box(struct wm_content* content, double x, double y, double w
             fabs(content->display_width - width) +
             fabs(content->display_height - height) < 0.01) return;
 
-    wm_layout_update_content_outputs(content->wm_server->wm_layout, content);
-
     wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
     content->display_x = x;
     content->display_y = y;
     content->display_width = width;
     content->display_height = height;
     wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
+
+    wm_layout_update_content_outputs(content->wm_server->wm_layout, content);
 }
 
 void wm_content_get_box(struct wm_content* content, double* display_x, double* display_y, double* display_width, double* display_height){

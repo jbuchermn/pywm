@@ -155,7 +155,7 @@ void wm_layout_update_content_outputs(struct wm_layout* layout, struct wm_conten
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
         struct send_enter_leave_data data = {.enter = true, .output = output};
-        data.enter = wlr_output_layout_intersects(layout->wlr_output_layout, output->wlr_output, &box) && (view->super.fixed_output == NULL || view->super.fixed_output == output);
+        data.enter = view->super.fixed_output == output || (wlr_output_layout_intersects(layout->wlr_output_layout, output->wlr_output, &box) && view->super.fixed_output == NULL);
         wm_view_for_each_surface(view, send_enter_leave_it, &data);
     }
 }

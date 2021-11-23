@@ -153,8 +153,8 @@ static void handle_new_subsurface(struct wl_listener* listener, void* data){
 static void handle_surface_commit(struct wl_listener* listener, void* data){
     struct wm_view_layer* view = wl_container_of(listener, view, surface_commit);
 
-    int width = view->wlr_layer_surface->current.actual_width;
-    int height = view->wlr_layer_surface->current.actual_height;
+    int width = view->wlr_layer_surface->surface->current.width;
+    int height = view->wlr_layer_surface->surface->current.height;
 
     if(width != view->width || height != view->height){
         view->width = width;

@@ -48,7 +48,7 @@ void _pywm_view_update(struct _pywm_view* view){
         wm_view_get_info(view->view, &title, &app_id, &role);
 
         /* If title is not yet there - resend */
-        if(!title){
+        if(!title || !strcmp(title, "")){
             view->update_cnt--;
         }
 
