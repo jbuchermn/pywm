@@ -4,13 +4,9 @@
 ** Current (v0.2)
 *** STRT Verify rounding performance on different scales at very slow anim speed --> appears to be "jumpy"
 
-*** TODO Updatable config: See TODO marks
+*** TODO Updatable config: Keyboards
+*** TODO Updatable config: XCursor
 *** TODO Layer shell: Keyboard interactivity
-
-*** DONE Additionally to wm_content->fixed_output enable wm_content->workspace (x, y, w, h) with output scissoring and proper input handling + proper damage tracking
-- [X] Enable workspace python-side on widgets
-- [X] Add damage only on workspace (see TODO marks)
-- [X] frame done should only be sent to visible windows (see wayland spec)
 
 *** TODO Release
 - [ ] TODO comments
@@ -34,12 +30,8 @@
 * Notes
 - Keep an eye on Chromium bug: https://bugs.chromium.org/p/chromium/issues/detail?id=1246834 So long patch by undoing https://github.com/swaywm/wlroots/commit/d290b13871fa18dcad6cd90d9ee93e7205742124?diff=unified
 
-- Depending on the settings (see newm) XWayland apps are responsible for handling HiDPI themselves and will per default appear very small
-- GDK on XWayland: GDK_DPI_SCALE=2
-- Electron apps: --force-device-scale-factor=2
-
 - Screen record: wf-recorder
-- Screen shot: grim
+- Screen shot: grim -g "$(slurp)"
 - Firefox: MOZ_ENABLE_WAYLAND=1
 - Chromium: --enable-features=UseOzonePlatform --ozone-platform=wayland
 - Matplotlib / Qt5 on Wayland requires DISPLAY=":0" to be set
