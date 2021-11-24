@@ -2,19 +2,18 @@
 
 * Development
 ** Current (v0.2)
+*** STRT Verify rounding performance on different scales at very slow anim speed --> appears to be "jumpy"
 
 *** TODO Updatable config: See TODO marks
 *** TODO Layer shell: Keyboard interactivity
 
-*** TODO Additionally to wm_content->fixed_output enable wm_content->workspace (x, y, w, h) with output scissoring and proper input handling + proper damage tracking
-- [X] Render only on workspace
-- [X] Accept input only on workspace
-- [ ] Add damage only on workspace (see TODO marks)
-- [ ] Should frame done only be sent to visible windows? (Test using youtube video off screen compared to sway - at first glance, sway is not more performant in this case)
+*** DONE Additionally to wm_content->fixed_output enable wm_content->workspace (x, y, w, h) with output scissoring and proper input handling + proper damage tracking
+- [X] Enable workspace python-side on widgets
+- [X] Add damage only on workspace (see TODO marks)
+- [X] frame done should only be sent to visible windows (see wayland spec)
 
 *** TODO Release
 - [ ] TODO comments
-- [ ] TESTS: Move from pywm here + add layer shell
 - [ ] Documentation / Update config keys
 - [ ] Check valgrind for lost memory
 - [ ] Terminate newm without faults

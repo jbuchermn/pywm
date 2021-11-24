@@ -146,8 +146,6 @@ static void wm_drag_render(struct wm_content* super, struct wm_output* output, p
 static void wm_drag_damage_output(struct wm_content* super, struct wm_output* output, struct wlr_surface* origin){
     struct wm_drag* drag = wm_cast(wm_drag, super);
 
-    /* TODO: Handle workspace */
-
     double x = (drag->super.display_x - output->layout_x) * output->wlr_output->scale;
     double y = (drag->super.display_y - output->layout_y) * output->wlr_output->scale;
     double width = drag->super.display_width * output->wlr_output->scale;
@@ -163,6 +161,22 @@ static void wm_drag_damage_output(struct wm_content* super, struct wm_output* ou
 
     pixman_region32_union_rect(&region, &region,
             box.x, box.y, box.width, box.height);
+
+    if(wm_content_has_workspace(&drag->super)){
+        double workspace_x, workspace_y, workspace_w, workspace_h;
+        wm_content_get_workspace(&drag->super, &workspace_x, &workspace_y,
+                                 &workspace_w, &workspace_h);
+        workspace_x = (workspace_x - output->layout_x) * output->wlr_output->scale;
+        workspace_y = (workspace_y - output->layout_y) * output->wlr_output->scale;
+        workspace_w *= output->wlr_output->scale;
+        workspace_h *= output->wlr_output->scale;
+        pixman_region32_intersect_rect(
+            &region, &region,
+            floor(workspace_x),
+            floor(workspace_y),
+            ceil(workspace_x + workspace_w) - floor(workspace_x),
+            ceil(workspace_y + workspace_h) - floor(workspace_y));
+    }
 
     wlr_output_damage_add(output->wlr_output_damage, &region);
     pixman_region32_fini(&region);

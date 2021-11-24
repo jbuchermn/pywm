@@ -12,24 +12,26 @@ else:
 
 
 class PyWMWidgetDownstreamState:
-    def __init__(self, z_index: int=0, box: tuple[float, float, float, float]=(0, 0, 0, 0), mask: tuple[float, float, float, float]=(-1, -1, -1, -1), opacity: float=1., lock_enabled: bool=True) -> None:
+    def __init__(self, z_index: int=0, box: tuple[float, float, float, float]=(0, 0, 0, 0), mask: tuple[float, float, float, float]=(-1, -1, -1, -1), opacity: float=1., lock_enabled: bool=True, workspace: Optional[tuple[float, float, float, float]]=None) -> None:
         self.z_index = int(z_index)
         self.box = (float(box[0]), float(box[1]), float(box[2]), float(box[3]))
         self.mask = (float(mask[0]), float(mask[1]), float(mask[2]), float(mask[3]))
         self.opacity = opacity
         self.lock_enabled=lock_enabled
+        self.workspace = workspace
 
     def copy(self) -> PyWMWidgetDownstreamState:
-        return PyWMWidgetDownstreamState(self.z_index, self.box, self.mask)
+        return PyWMWidgetDownstreamState(self.z_index, self.box, self.mask, self.opacity, self.lock_enabled, self.workspace)
 
-    def get(self, root: PyWM[ViewT], output: Optional[PyWMOutput]) -> tuple[bool, tuple[float, float, float, float], tuple[float, float, float, float], int, float, int]:
+    def get(self, root: PyWM[ViewT], output: Optional[PyWMOutput]) -> tuple[bool, tuple[float, float, float, float], tuple[float, float, float, float], int, float, int, tuple[float, float, float, float]]:
         return (
             self.lock_enabled,
             root.round(*self.box, wh_logical=False),
             self.mask,
             output._key if output is not None else -1,
             self.opacity,
-            self.z_index
+            self.z_index,
+            root.round(*self.workspace, wh_logical=False) if self.workspace is not None else (0, 0, -1, -1)
         )
 
 class PyWMWidget(Generic[PyWMT]):
@@ -47,7 +49,7 @@ class PyWMWidget(Generic[PyWMT]):
         """
         self._pending_pixels: Optional[tuple[int, int, int, bytes]] = None
 
-    def _update(self) -> tuple[bool, tuple[float, float, float, float], tuple[float, float, float, float], int, float, int]:
+    def _update(self) -> tuple[bool, tuple[float, float, float, float], tuple[float, float, float, float], int, float, int, tuple[float, float, float, float]]:
         if self._damaged:
             self._damaged = False
             self._down_state = self.process()

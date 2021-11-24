@@ -177,6 +177,10 @@ struct damage_data {
     double y;
     double x_scale;
     double y_scale;
+    double ws_x;
+    double ws_y;
+    double ws_w;
+    double ws_h;
     struct wlr_surface* origin;
 };
 
@@ -192,6 +196,11 @@ static void damage_surface(struct wlr_surface *surface, int sx, int sy,
     double width = surface->current.width * ddata->x_scale * output->wlr_output->scale;
     double height = surface->current.height * ddata->y_scale * output->wlr_output->scale;
 
+    double ws_x = ddata->ws_x * output->wlr_output->scale;
+    double ws_y = ddata->ws_y * output->wlr_output->scale;
+    double ws_w = ddata->ws_w * output->wlr_output->scale;
+    double ws_h = ddata->ws_h * output->wlr_output->scale;
+
     struct wlr_box box = {
         .x = floor(x),
         .y = floor(y),
@@ -206,10 +215,19 @@ static void damage_surface(struct wlr_surface *surface, int sx, int sy,
         pixman_region32_union_rect(&region, &region,
                 box.x, box.y, box.width, box.height);
 
+        if(ws_w > 0.){
+            pixman_region32_intersect_rect(&region, &region,
+                                           floor(ws_x),
+                                           floor(ws_y),
+                                           ceil(ws_x + ws_w) - floor(ws_x),
+                                           ceil(ws_y + ws_h) - floor(ws_y));
+        }
+
         wlr_output_damage_add(output->wlr_output_damage, &region);
         pixman_region32_fini(&region);
-
     }
+
+
 
     /* effective damage might go beyond box, so do this even if origin == NULL */
     if (pixman_region32_not_empty(&surface->buffer_damage)) {
@@ -223,6 +241,14 @@ static void damage_surface(struct wlr_surface *surface, int sx, int sy,
                             ddata->y_scale * output->wlr_output->scale);
 
         pixman_region32_translate(&region, box.x, box.y);
+
+        if(ws_w > 0.){
+            pixman_region32_intersect_rect(&region, &region,
+                                           floor(ws_x),
+                                           floor(ws_y),
+                                           ceil(ws_x + ws_w) - floor(ws_x),
+                                           ceil(ws_y + ws_h) - floor(ws_y));
+        }
 
         wlr_output_damage_add(output->wlr_output_damage, &region);
         pixman_region32_fini(&region);
@@ -243,11 +269,14 @@ static void wm_view_damage_output(struct wm_content* super, struct wm_output* ou
         return;
     }
 
-    /* TODO: Handle workspace */
-
     double display_x, display_y, display_width, display_height;
     wm_content_get_box(&view->super, &display_x, &display_y, &display_width,
             &display_height);
+
+    double workspace_x = 0., workspace_y = 0., workspace_w = -1., workspace_h = -1.;
+    if(wm_content_has_workspace(&view->super)){
+        wm_content_get_workspace(&view->super, &workspace_x, &workspace_y, &workspace_w, &workspace_h);
+    }
 
     struct damage_data ddata = {
         .output = output,
@@ -255,7 +284,11 @@ static void wm_view_damage_output(struct wm_content* super, struct wm_output* ou
         .y = display_y - output->layout_y,
         .x_scale = display_width / width,
         .y_scale = display_height / height,
-        .origin = origin
+        .origin = origin,
+        .ws_x = workspace_x - output->layout_x,
+        .ws_y = workspace_y - output->layout_y,
+        .ws_w = workspace_w,
+        .ws_h = workspace_h
     };
 
     wm_view_for_each_surface(view, damage_surface, &ddata);
