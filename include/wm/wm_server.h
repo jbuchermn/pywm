@@ -92,4 +92,7 @@ bool wm_server_is_locked(struct wm_server* server);
 
 void wm_server_printf(FILE* file, struct wm_server* server);
 
+/* Update after new wm_config key-vals where suitable */
+void wm_server_reconfigure(struct wm_server* server);
+
 #endif

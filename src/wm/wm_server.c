@@ -266,9 +266,6 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     assert(server->wlr_layer_shell);
 
     server->wlr_server_decoration_manager = wlr_server_decoration_manager_create(server->wl_display);
-	wlr_server_decoration_manager_set_default_mode(
-            server->wlr_server_decoration_manager,
-            config->encourage_csd ? WLR_SERVER_DECORATION_MANAGER_MODE_CLIENT : WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
 
     server->wlr_xdg_decoration_manager = wlr_xdg_decoration_manager_v1_create(server->wl_display);
     assert(server->wlr_xdg_decoration_manager);
@@ -367,6 +364,8 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     clock_gettime(CLOCK_MONOTONIC, &server->last_callback);
 
     server->lock_perc = 0.0;
+
+    wm_server_reconfigure(server);
 }
 
 void wm_server_destroy(struct wm_server* server){
@@ -587,4 +586,12 @@ void wm_server_printf(FILE* file, struct wm_server* server){
 
     fprintf(file, "---- server end ------\n");
 
+}
+
+void wm_server_reconfigure(struct wm_server* server){
+    wlr_server_decoration_manager_set_default_mode(
+        server->wlr_server_decoration_manager,
+        server->wm_config->encourage_csd
+            ? WLR_SERVER_DECORATION_MANAGER_MODE_CLIENT
+            : WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
 }

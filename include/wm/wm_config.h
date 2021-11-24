@@ -32,7 +32,6 @@ struct wm_config_output {
 struct wm_config {
     /* Excluded from runtime update */
     bool enable_xwayland;
-
     int callback_frequency;
 
     /* TODO: Update - Requires updating config on wlr_keyboard */
@@ -48,10 +47,8 @@ struct wm_config {
 
     int focus_follows_mouse;
 
-    /* TODO: Update - Requires updating all wm_view_xdgs */
     int constrain_popups_to_toplevel;
 
-    /* TODO: Update - Requires updating wlr_server_decoration manager */
     int encourage_csd;
 
     bool tap_to_click;
