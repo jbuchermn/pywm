@@ -135,10 +135,26 @@ static void handle_new_xwayland_surface(struct wl_listener* listener, void* data
 }
 
 static void handle_new_server_decoration(struct wl_listener* listener, void* data){
-    /* struct wm_server* server = wl_container_of(listener, server, new_xdg_decoration); */
-    /* struct wlr_server_decoration* wlr_deco = data; */
+    struct wm_server* server = wl_container_of(listener, server, new_server_decoration);
+    struct wlr_server_decoration* wlr_deco = data;
 
-    wlr_log(WLR_DEBUG, "Server: New server decoration");
+    bool found=false;
+    struct wm_content* content;
+    wl_list_for_each(content, &server->wm_contents, link){
+        if(!wm_content_is_view(content)) continue;
+        struct wm_view* view = wm_cast(wm_view, content);
+        if(!wm_view_is_xdg(view)) continue;
+        struct wm_view_xdg* xdg_view = wm_cast(wm_view_xdg, view);
+        if(xdg_view->wlr_xdg_surface && xdg_view->wlr_xdg_surface->surface == wlr_deco->surface){
+            wm_view_xdg_register_server_decoration(xdg_view, wlr_deco);
+            found=true;
+            break;
+        }
+    }
+
+    if(!found){
+        wlr_log(WLR_INFO, "Could not find view for server decoration");
+    }
 }
 
 static void handle_new_xdg_decoration(struct wl_listener* listener, void* data){
@@ -160,11 +176,12 @@ static void handle_new_xdg_decoration(struct wl_listener* listener, void* data){
     }
 
     if(!found){
-        wlr_log(WLR_INFO, "Could not find view for XDG toplevel decoration");
+        wlr_log(WLR_INFO, "Could not find view for XDG toplevel decoration - setting default");
+        wlr_xdg_toplevel_decoration_v1_set_mode(
+                wlr_deco, server->wm_config->encourage_csd ?
+                WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE :
+                WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
     }
-
-    wlr_xdg_toplevel_decoration_v1_set_mode(
-            wlr_deco, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
 
 }
 
@@ -275,7 +292,6 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     wlr_data_control_manager_v1_create(server->wl_display);
     wlr_primary_selection_v1_device_manager_create(server->wl_display);
     wlr_gamma_control_manager_v1_create(server->wl_display);
-    /* wlr_viewporter_create(server->wl_display); */
 
     server->wlr_xwayland = NULL;
     if(config->enable_xwayland){

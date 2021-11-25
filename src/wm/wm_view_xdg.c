@@ -371,6 +371,7 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
 
     view->wlr_xdg_surface = surface;
     view->wlr_deco = NULL;
+    view->wlr_deco = NULL;
 
     wl_list_init(&view->popups);
     wl_list_init(&view->subsurfaces);
@@ -638,15 +639,32 @@ bool wm_view_is_xdg(struct wm_view* view){
     return view->vtable == &wm_view_xdg_vtable;
 }
 
+static bool wm_view_xdg_encourage_csd(struct wm_view_xdg* view){
+    if(wm_view_xdg_get_parent(&view->super)){
+        return true;
+    }else{
+        return view->super.super.wm_server->wm_config->encourage_csd;
+    }
+}
+
 static void deco_handle_request_mode(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, deco_request_mode);
-    wlr_log(WLR_DEBUG, "wm_view_xdg requests deco mode");
-    wlr_xdg_toplevel_decoration_v1_set_mode(view->wlr_deco, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+
+    wlr_xdg_toplevel_decoration_v1_set_mode(view->wlr_deco, wm_view_xdg_encourage_csd(view) ?
+            WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE :
+            WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+}
+
+void wm_view_xdg_register_server_decoration(struct wm_view_xdg* view, struct wlr_server_decoration* wlr_deco){
+    /* We can't really do anything with this as the KDE protocol is not very well thought-out (hence deprecated) */
 }
 
 void wm_view_xdg_register_decoration(struct wm_view_xdg* view, struct wlr_xdg_toplevel_decoration_v1* wlr_deco){
     view->wlr_deco = wlr_deco;
-    wlr_xdg_toplevel_decoration_v1_set_mode(wlr_deco, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+
+    wlr_xdg_toplevel_decoration_v1_set_mode(view->wlr_deco, wm_view_xdg_encourage_csd(view) ?
+            WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE :
+            WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
 
 
     view->deco_request_mode.notify = &deco_handle_request_mode;
