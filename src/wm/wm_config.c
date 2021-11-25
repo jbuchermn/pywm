@@ -41,6 +41,7 @@ void wm_config_reset_default(struct wm_config* config){
 
 void wm_config_reconfigure(struct wm_config* config, struct wm_server* server){
     wm_layout_reconfigure(server->wm_layout);
+    wm_server_reconfigure(server);
 }
 
 void wm_config_add_output(struct wm_config *config, const char *name,
