@@ -314,9 +314,12 @@ static void wm_view_printf(FILE* file, struct wm_content* super){
     wm_view_get_credentials(view, &pid, &uid, &gid);
     wm_view_get_size(view, &width, &height);
 
-    fprintf(file, "wm_view: %s, %s, %s, %d (%f, %f - %f, %f) of size %d, %d\n",
+    int ox, oy;
+    wm_view_get_offset(view, &ox, &oy);
+
+    fprintf(file, "wm_view: %s, %s, %s, %d (%f, %f - %f, %f) of size %d, %d (offset = %d, %d)\n",
             title, app_id, role, pid, view->super.display_x, view->super.display_y, view->super.display_width, view->super.display_height,
-            width, height);
+            width, height, ox, oy);
 
     wm_view_for_each_surface(view, print_surface, file);
 

@@ -6,7 +6,6 @@
 
 *** TODO Updatable config: Keyboards
 *** TODO Updatable config: XCursor
-*** TODO Layer shell: Keyboard interactivity
 
 *** TODO Release
 - [ ] TODO comments
@@ -17,6 +16,7 @@
 
 ** Backlog / Ideas
 *** wlroots migration to gitlab.freedesktop.org
+*** Layer shell: Keyboard interactivity
 *** wlr_output_manager
 *** Complete libinput device config / support for external mouse
 *** Use libseat from python / patched python evdev
