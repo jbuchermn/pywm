@@ -266,6 +266,9 @@ class PyWMView(Generic[PyWMT]):
         self._down_action_close = None
 
         if self._debug_scaling:
+            if res[8] != (-1, -1):
+                logger.debug("Scaling - Resize to %dx%d" % res[8])
+
             check_wh = res[0][2], res[0][3]
             check_size = down_state.size if down_state.size is not None and down_state.size[0] > 0 and down_state.size[1] > 0 else up_state.size
             if (0.99 * check_wh[0] < check_size[0] < 1.01 * check_wh[0]) and \
