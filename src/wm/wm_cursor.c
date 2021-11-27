@@ -58,6 +58,7 @@ static void handle_button(struct wl_listener* listener, void* data){
     struct wlr_event_pointer_button* event = data;
 
     if(wm_callback_button(event)){
+        wm_seat_kill_seatop(cursor->wm_seat);
         return;
     }
 

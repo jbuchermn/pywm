@@ -226,6 +226,7 @@ bool wm_seat_dispatch_motion(struct wm_seat* seat, double x, double y, uint32_t 
     if(seat->seatop_down.active){
         double sx = seat->seatop_down.x0 + x*seat->seatop_down.xm;
         double sy = seat->seatop_down.y0 + y*seat->seatop_down.ym;
+
         wlr_seat_pointer_notify_motion(seat->wlr_seat, time_msec, sx, sy);
 
         return true;
@@ -294,4 +295,8 @@ void wm_seat_dispatch_axis(struct wm_seat* seat, struct wlr_event_pointer_axis* 
 
     wlr_seat_pointer_notify_axis(seat->wlr_seat,
             event->time_msec, event->orientation, event->delta, event->delta_discrete, event->source);
+}
+
+void wm_seat_kill_seatop(struct wm_seat* seat){
+    seat->seatop_down.active = false;
 }

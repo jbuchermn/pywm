@@ -2,6 +2,8 @@
 
 * Development
 ** Current (v0.2)
+*** DONE Bug: seatop_down on move floating window
+
 *** STRT Verify rounding performance on different scales at very slow anim speed --> appears to be "jumpy"
 
 *** TODO Updatable config: Keyboards
