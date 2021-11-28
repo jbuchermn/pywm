@@ -300,3 +300,14 @@ void wm_seat_dispatch_axis(struct wm_seat* seat, struct wlr_event_pointer_axis* 
 void wm_seat_kill_seatop(struct wm_seat* seat){
     seat->seatop_down.active = false;
 }
+
+void wm_seat_reconfigure(struct wm_seat* seat){
+    struct wm_keyboard* keyboard;
+    wl_list_for_each(keyboard, &seat->wm_keyboards, link){
+        wm_keyboard_reconfigure(keyboard);
+    }
+    struct wm_pointer* pointer;
+    wl_list_for_each(pointer, &seat->wm_pointers, link){
+        wm_pointer_reconfigure(pointer);
+    }
+}

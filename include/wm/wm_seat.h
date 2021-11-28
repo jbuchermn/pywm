@@ -51,5 +51,6 @@ void wm_seat_dispatch_button(struct wm_seat* seat, struct wlr_event_pointer_butt
 void wm_seat_dispatch_axis(struct wm_seat* seat, struct wlr_event_pointer_axis* event);
 void wm_seat_kill_seatop(struct wm_seat* seat);
 
+void wm_seat_reconfigure(struct wm_seat* seat);
 
 #endif

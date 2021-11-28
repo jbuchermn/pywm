@@ -5,6 +5,7 @@
 
 #include "wm/wm_server.h"
 #include "wm/wm_layout.h"
+#include "wm/wm_seat.h"
 
 void wm_config_init_default(struct wm_config *config) {
     config->enable_xwayland = false;
@@ -41,6 +42,7 @@ void wm_config_reset_default(struct wm_config* config){
 
 void wm_config_reconfigure(struct wm_config* config, struct wm_server* server){
     wm_layout_reconfigure(server->wm_layout);
+    wm_seat_reconfigure(server->wm_seat);
     wm_server_reconfigure(server);
 }
 

@@ -34,7 +34,6 @@ struct wm_config {
     bool enable_xwayland;
     int callback_frequency;
 
-    /* TODO: Update - Requires updating config on wlr_keyboard */
     char xkb_model[WM_CONFIG_STRLEN];
     char xkb_layout[WM_CONFIG_STRLEN];
     char xkb_options[WM_CONFIG_STRLEN];

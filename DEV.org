@@ -6,8 +6,8 @@
 
 *** STRT Verify rounding performance on different scales at very slow anim speed --> appears to be "jumpy"
 
-*** TODO Updatable config: Keyboards
-*** TODO Updatable config: XCursor
+*** STRT Updatable config: Keyboards
+*** STRT Updatable config: XCursor
 
 *** TODO Release
 - [ ] TODO comments

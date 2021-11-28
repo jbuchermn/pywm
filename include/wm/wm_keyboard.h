@@ -19,6 +19,7 @@ struct wm_keyboard {
 
 void wm_keyboard_init(struct wm_keyboard* keyboard, struct wm_seat* seat, struct wlr_input_device* input_device);
 void wm_keyboard_destroy(struct wm_keyboard* keyboard);
+void wm_keyboard_reconfigure(struct wm_keyboard* keyboard);
 
 
 #endif

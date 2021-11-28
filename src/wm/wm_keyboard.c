@@ -89,27 +89,7 @@ void wm_keyboard_init(struct wm_keyboard* keyboard, struct wm_seat* seat, struct
     keyboard->wm_seat = seat;
     keyboard->wlr_input_device = input_device;
 
-	struct xkb_rule_names rules = { 0 };
-    rules.model = seat->wm_server->wm_config->xkb_model;
-	rules.layout = seat->wm_server->wm_config->xkb_layout;
-    rules.options = seat->wm_server->wm_config->xkb_options;
-
-
-	struct xkb_context* context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-    assert(context);
-
-    struct xkb_keymap* keymap = xkb_map_new_from_names(context, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
-    if(keymap){
-        wlr_keyboard_set_keymap(keyboard->wlr_input_device->keyboard, keymap);
-        wlr_keyboard_set_repeat_info(keyboard->wlr_input_device->keyboard, 25, 600);
-
-        xkb_keymap_unref(keymap);
-    }else{
-        wlr_log(WLR_ERROR, "Could not load keymap for %s / %s / %s", rules.model, rules.layout, rules.options);
-    }
-
-    xkb_context_unref(context);
-
+    wm_keyboard_reconfigure(keyboard);
 
     /* Handlers */
     keyboard->destroy.notify = handle_destroy;
@@ -127,4 +107,26 @@ void wm_keyboard_destroy(struct wm_keyboard* keyboard){
     wl_list_remove(&keyboard->key.link);
     wl_list_remove(&keyboard->modifiers.link);
     wl_list_remove(&keyboard->link);
+}
+
+void wm_keyboard_reconfigure(struct wm_keyboard* keyboard){
+    struct xkb_rule_names rules = {0};
+    rules.model = keyboard->wm_seat->wm_server->wm_config->xkb_model;
+    rules.layout = keyboard->wm_seat->wm_server->wm_config->xkb_layout;
+    rules.options = keyboard->wm_seat->wm_server->wm_config->xkb_options;
+
+    struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    assert(context);
+
+    struct xkb_keymap* keymap = xkb_map_new_from_names(context, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
+    if(keymap){
+        wlr_keyboard_set_keymap(keyboard->wlr_input_device->keyboard, keymap);
+        wlr_keyboard_set_repeat_info(keyboard->wlr_input_device->keyboard, 25, 600);
+
+        xkb_keymap_unref(keymap);
+    }else{
+        wlr_log(WLR_ERROR, "Could not load keymap for %s / %s / %s", rules.model, rules.layout, rules.options);
+    }
+
+    xkb_context_unref(context);
 }

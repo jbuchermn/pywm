@@ -88,92 +88,92 @@ static void handle_surface_destroy(struct wl_listener* listener, void* data){
 }
 
 static void handle_pointer_pinch_begin(struct wl_listener *listener, void *data) {
-	struct wm_cursor *cursor = wl_container_of(
-			listener, cursor, pinch_begin);
-	struct wlr_event_pointer_pinch_begin *event = data;
+    struct wm_cursor *cursor = wl_container_of(
+            listener, cursor, pinch_begin);
+    struct wlr_event_pointer_pinch_begin *event = data;
 
     if(wm_callback_gesture_pinch_begin(event)){
         return;
     }
 
     cursor->pinch_started = true;
-	wlr_pointer_gestures_v1_send_pinch_begin(
-			cursor->pointer_gestures, cursor->wm_seat->wlr_seat,
-			event->time_msec, event->fingers);
+    wlr_pointer_gestures_v1_send_pinch_begin(
+            cursor->pointer_gestures, cursor->wm_seat->wlr_seat,
+            event->time_msec, event->fingers);
 }
 
 static void handle_pointer_pinch_update(struct wl_listener *listener, void *data) {
-	struct wm_cursor *cursor = wl_container_of(
-			listener, cursor, pinch_update);
-	struct wlr_event_pointer_pinch_update *event = data;
+    struct wm_cursor *cursor = wl_container_of(
+            listener, cursor, pinch_update);
+    struct wlr_event_pointer_pinch_update *event = data;
 
     if(wm_callback_gesture_pinch_update(event)){
         return;
     }
 
-	wlr_pointer_gestures_v1_send_pinch_update(
-			cursor->pointer_gestures, cursor->wm_seat->wlr_seat,
-			event->time_msec, event->dx, event->dy,
-			event->scale, event->rotation);
+    wlr_pointer_gestures_v1_send_pinch_update(
+            cursor->pointer_gestures, cursor->wm_seat->wlr_seat,
+            event->time_msec, event->dx, event->dy,
+            event->scale, event->rotation);
 }
 
 static void handle_pointer_pinch_end(struct wl_listener *listener, void *data) {
-	struct wm_cursor *cursor = wl_container_of(
-			listener, cursor, pinch_end);
-	struct wlr_event_pointer_pinch_end *event = data;
+    struct wm_cursor *cursor = wl_container_of(
+            listener, cursor, pinch_end);
+    struct wlr_event_pointer_pinch_end *event = data;
 
     if(wm_callback_gesture_pinch_end(event) && !cursor->pinch_started){
         return;
     }
 
     cursor->pinch_started = false;
-	wlr_pointer_gestures_v1_send_pinch_end(
-			cursor->pointer_gestures, cursor->wm_seat->wlr_seat,
-			event->time_msec, event->cancelled);
+    wlr_pointer_gestures_v1_send_pinch_end(
+            cursor->pointer_gestures, cursor->wm_seat->wlr_seat,
+            event->time_msec, event->cancelled);
 }
 
 static void handle_pointer_swipe_begin(struct wl_listener *listener, void *data) {
-	struct wm_cursor *cursor = wl_container_of(
-			listener, cursor, swipe_begin);
-	struct wlr_event_pointer_swipe_begin *event = data;
+    struct wm_cursor *cursor = wl_container_of(
+            listener, cursor, swipe_begin);
+    struct wlr_event_pointer_swipe_begin *event = data;
 
     if(wm_callback_gesture_swipe_begin(event)){
         return;
     }
 
     cursor->swipe_started = true;
-	wlr_pointer_gestures_v1_send_swipe_begin(
-			cursor->pointer_gestures, cursor->wm_seat->wlr_seat,
-			event->time_msec, event->fingers);
+    wlr_pointer_gestures_v1_send_swipe_begin(
+            cursor->pointer_gestures, cursor->wm_seat->wlr_seat,
+            event->time_msec, event->fingers);
 }
 
 static void handle_pointer_swipe_update(struct wl_listener *listener, void *data) {
-	struct wm_cursor *cursor = wl_container_of(
-			listener, cursor, swipe_update);
-	struct wlr_event_pointer_swipe_update *event = data;
+    struct wm_cursor *cursor = wl_container_of(
+            listener, cursor, swipe_update);
+    struct wlr_event_pointer_swipe_update *event = data;
 
     if(wm_callback_gesture_swipe_update(event)){
         return;
     }
 
-	wlr_pointer_gestures_v1_send_swipe_update(
-			cursor->pointer_gestures, cursor->wm_seat->wlr_seat,
-			event->time_msec, event->dx, event->dy);
+    wlr_pointer_gestures_v1_send_swipe_update(
+            cursor->pointer_gestures, cursor->wm_seat->wlr_seat,
+            event->time_msec, event->dx, event->dy);
 }
 
 static void handle_pointer_swipe_end(struct wl_listener *listener, void *data) {
-	struct wm_cursor *cursor = wl_container_of(
-			listener, cursor, swipe_end);
-	struct wlr_event_pointer_swipe_end *event = data;
+    struct wm_cursor *cursor = wl_container_of(
+            listener, cursor, swipe_end);
+    struct wlr_event_pointer_swipe_end *event = data;
 
     if(wm_callback_gesture_swipe_end(event) && !cursor->swipe_started){
         return;
     }
 
     cursor->swipe_started = false;
-	wlr_pointer_gestures_v1_send_swipe_end(
-			cursor->pointer_gestures, cursor->wm_seat->wlr_seat,
-			event->time_msec, event->cancelled);
+    wlr_pointer_gestures_v1_send_swipe_end(
+            cursor->pointer_gestures, cursor->wm_seat->wlr_seat,
+            event->time_msec, event->cancelled);
 }
 /*
  * Class implementation
@@ -209,19 +209,19 @@ void wm_cursor_init(struct wm_cursor* cursor, struct wm_seat* seat, struct wm_la
     wl_list_init(&cursor->surface_destroy.link);
     cursor->surface_destroy.notify = handle_surface_destroy;
 
-	cursor->pointer_gestures = wlr_pointer_gestures_v1_create(cursor->wm_seat->wm_server->wl_display);
-	cursor->pinch_begin.notify = handle_pointer_pinch_begin;
-	wl_signal_add(&cursor->wlr_cursor->events.pinch_begin, &cursor->pinch_begin);
-	cursor->pinch_update.notify = handle_pointer_pinch_update;
-	wl_signal_add(&cursor->wlr_cursor->events.pinch_update, &cursor->pinch_update);
-	cursor->pinch_end.notify = handle_pointer_pinch_end;
-	wl_signal_add(&cursor->wlr_cursor->events.pinch_end, &cursor->pinch_end);
-	cursor->swipe_begin.notify = handle_pointer_swipe_begin;
-	wl_signal_add(&cursor->wlr_cursor->events.swipe_begin, &cursor->swipe_begin);
-	cursor->swipe_update.notify = handle_pointer_swipe_update;
-	wl_signal_add(&cursor->wlr_cursor->events.swipe_update, &cursor->swipe_update);
-	cursor->swipe_end.notify = handle_pointer_swipe_end;
-	wl_signal_add(&cursor->wlr_cursor->events.swipe_end, &cursor->swipe_end);
+    cursor->pointer_gestures = wlr_pointer_gestures_v1_create(cursor->wm_seat->wm_server->wl_display);
+    cursor->pinch_begin.notify = handle_pointer_pinch_begin;
+    wl_signal_add(&cursor->wlr_cursor->events.pinch_begin, &cursor->pinch_begin);
+    cursor->pinch_update.notify = handle_pointer_pinch_update;
+    wl_signal_add(&cursor->wlr_cursor->events.pinch_update, &cursor->pinch_update);
+    cursor->pinch_end.notify = handle_pointer_pinch_end;
+    wl_signal_add(&cursor->wlr_cursor->events.pinch_end, &cursor->pinch_end);
+    cursor->swipe_begin.notify = handle_pointer_swipe_begin;
+    wl_signal_add(&cursor->wlr_cursor->events.swipe_begin, &cursor->swipe_begin);
+    cursor->swipe_update.notify = handle_pointer_swipe_update;
+    wl_signal_add(&cursor->wlr_cursor->events.swipe_update, &cursor->swipe_update);
+    cursor->swipe_end.notify = handle_pointer_swipe_end;
+    wl_signal_add(&cursor->wlr_cursor->events.swipe_end, &cursor->swipe_end);
 
     cursor->swipe_started = false;
     cursor->pinch_started = false;
