@@ -299,16 +299,6 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
         assert(server->wlr_xwayland);
     }
 
-    server->wlr_xcursor_manager = wlr_xcursor_manager_create(server->wm_config->xcursor_theme, server->wm_config->xcursor_size);
-    assert(server->wlr_xcursor_manager);
-
-    struct wlr_xcursor* xcursor = wlr_xcursor_manager_get_xcursor(server->wlr_xcursor_manager, "left_ptr", 1);
-    if(config->enable_xwayland && xcursor){
-        struct wlr_xcursor_image* image = xcursor->images[0];
-        wlr_xwayland_set_cursor(server->wlr_xwayland,
-                image->buffer, image->width * 4, image->width, image->height, image->hotspot_x, image->hotspot_y);
-    }
-
     server->wlr_virtual_keyboard_manager = wlr_virtual_keyboard_manager_v1_create(server->wl_display);
     server->wlr_virtual_pointer_manager = wlr_virtual_pointer_manager_v1_create(server->wl_display);
 
@@ -381,6 +371,7 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
 
     server->lock_perc = 0.0;
 
+    server->wlr_xcursor_manager = NULL;
     wm_server_reconfigure(server);
 }
 
@@ -610,4 +601,19 @@ void wm_server_reconfigure(struct wm_server* server){
         server->wm_config->encourage_csd
             ? WLR_SERVER_DECORATION_MANAGER_MODE_CLIENT
             : WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
+
+    if(server->wlr_xcursor_manager){
+        wlr_xcursor_manager_destroy(server->wlr_xcursor_manager);
+    }
+    wlr_log(WLR_DEBUG, "Loading cursor theme %s", server->wm_config->xcursor_theme);
+    server->wlr_xcursor_manager = wlr_xcursor_manager_create(server->wm_config->xcursor_theme, server->wm_config->xcursor_size);
+    assert(server->wlr_xcursor_manager);
+
+    struct wlr_xcursor* xcursor = wlr_xcursor_manager_get_xcursor(server->wlr_xcursor_manager, "left_ptr", 1);
+    if(server->wm_config->enable_xwayland && xcursor){
+        struct wlr_xcursor_image* image = xcursor->images[0];
+        wlr_xwayland_set_cursor(server->wlr_xwayland,
+                image->buffer, image->width * 4, image->width, image->height, image->hotspot_x, image->hotspot_y);
+    }
+
 }

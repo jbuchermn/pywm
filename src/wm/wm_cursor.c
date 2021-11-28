@@ -175,6 +175,7 @@ static void handle_pointer_swipe_end(struct wl_listener *listener, void *data) {
             cursor->pointer_gestures, cursor->wm_seat->wlr_seat,
             event->time_msec, event->cancelled);
 }
+
 /*
  * Class implementation
  */
@@ -186,10 +187,8 @@ void wm_cursor_init(struct wm_cursor* cursor, struct wm_seat* seat, struct wm_la
 
     wlr_cursor_attach_output_layout(cursor->wlr_cursor, layout->wlr_output_layout);
 
-    cursor->wlr_xcursor_manager = wlr_xcursor_manager_create(
-            cursor->wm_seat->wm_server->wm_config->xcursor_theme,
-            cursor->wm_seat->wm_server->wm_config->xcursor_size);
-    wlr_xcursor_manager_load(cursor->wlr_xcursor_manager, 1.);
+    cursor->wlr_xcursor_manager = NULL;
+    wm_cursor_reconfigure(cursor);
 
     cursor->motion.notify = handle_motion;
     wl_signal_add(&cursor->wlr_cursor->events.motion, &cursor->motion);
@@ -317,4 +316,16 @@ void wm_cursor_set_image_surface(struct wm_cursor* cursor, struct wlr_surface* s
     }else{
         wlr_cursor_set_surface(cursor->wlr_cursor, surface, hotspot_x, hotspot_y);
     }
+}
+
+void wm_cursor_reconfigure(struct wm_cursor* cursor){
+    if(cursor->wlr_xcursor_manager){
+        wlr_xcursor_manager_destroy(cursor->wlr_xcursor_manager);
+    }
+
+    wlr_log(WLR_DEBUG, "Loading cursor theme %s", cursor->wm_seat->wm_server->wm_config->xcursor_theme);
+    cursor->wlr_xcursor_manager = wlr_xcursor_manager_create(
+            cursor->wm_seat->wm_server->wm_config->xcursor_theme,
+            cursor->wm_seat->wm_server->wm_config->xcursor_size);
+    wlr_xcursor_manager_load(cursor->wlr_xcursor_manager, 1.);
 }

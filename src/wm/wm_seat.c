@@ -310,4 +310,5 @@ void wm_seat_reconfigure(struct wm_seat* seat){
     wl_list_for_each(pointer, &seat->wm_pointers, link){
         wm_pointer_reconfigure(pointer);
     }
+    wm_cursor_reconfigure(seat->wm_cursor);
 }

@@ -60,5 +60,7 @@ void wm_cursor_destroy(struct wm_cursor* cursor);
 void wm_cursor_add_pointer(struct wm_cursor* cursor, struct wm_pointer* pointer);
 void wm_cursor_update(struct wm_cursor* cursor);
 
+void wm_cursor_reconfigure(struct wm_cursor* cursor);
+
 
 #endif
