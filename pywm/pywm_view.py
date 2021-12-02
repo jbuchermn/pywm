@@ -176,6 +176,11 @@ class PyWMView(Generic[PyWMT]):
         self._debug_scaling = False
         self._last_update_potential_scaling_issue = False
 
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, PyWMView):
+            return False
+        return self._handle == other._handle
+
 
     def _update(self,
                 general: Optional[tuple[int, bool, int, str, str, str]],
