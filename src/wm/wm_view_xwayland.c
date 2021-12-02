@@ -332,15 +332,6 @@ static void wm_view_xwayland_get_offset(struct wm_view* super, int* offset_x, in
 }
 
 
-static void wm_view_xwayland_focus(struct wm_view* super, struct wm_seat* seat){
-    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
-
-    if(!view->wlr_xwayland_surface->surface){
-        return;
-    }
-    wm_seat_focus_surface(seat, view->wlr_xwayland_surface->surface);
-}
-
 static void wm_view_xwayland_set_resizing(struct wm_view* super, bool resizing){
     struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
 
@@ -357,6 +348,19 @@ static void wm_view_xwayland_set_maximized(struct wm_view* super, bool maximized
 static void wm_view_xwayland_set_activated(struct wm_view* super, bool activated){
     struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
     wlr_xwayland_surface_activate(view->wlr_xwayland_surface, activated);
+    if(activated)
+        wlr_xwayland_surface_restack(view->wlr_xwayland_surface, NULL, XCB_STACK_MODE_ABOVE);
+}
+
+static void wm_view_xwayland_focus(struct wm_view* super, struct wm_seat* seat){
+    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
+
+    if(!view->wlr_xwayland_surface->surface){
+        return;
+    }
+
+    wm_seat_focus_surface(seat, view->wlr_xwayland_surface->surface);
+    wm_view_xwayland_set_activated(super, true);
 }
 
 static struct wlr_surface* wm_view_xwayland_surface_at(struct wm_view* super, double at_x, double at_y, double* sx, double* sy){

@@ -2,9 +2,8 @@
 
 * Development
 ** Current (v0.2)
-*** STRT Verify rounding performance on different scales at very slow anim speed --> appears to be "jumpy"
-*** DONE Bug: XWayland views don't receive mouse events if output isn't placed at 0, 0
-*** STRT Bug: XWayland popups (Firefox > Import bookmarks, Firefox > Save as) do not receive mouse events
+*** TODO Verify rounding performance on different scales at very slow anim speed --> appears to be "jumpy"
+*** TODO Export XCURSOR_THEME, XCURSOR_SIZE
 *** TODO Set cursor position from python
 
 *** TODO Release
