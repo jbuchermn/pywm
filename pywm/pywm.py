@@ -87,6 +87,7 @@ class PyWMIdleThread(Thread, Generic[ViewT]):
 
             # Detect if we wake up from suspend
             if t > 1.:
+                self.wm.on_wakeup()
                 self.wm._update_idle()
             else:
                 self.wm._update_idle(False)
@@ -542,5 +543,11 @@ class PyWM(Generic[ViewT]):
         elapsed == 0 means there has been an activity, possibly a wakeup from idle is necessary
         elapsed > 0 describes the amount of seconds which have passed since the last activity, possibly sleep is necessary
         idle_inhibited is True if there is at least one view with is_inhibiting_idle==True
+        """
+        pass
+
+    def on_wakeup(self) -> None:
+        """
+        Called if a wakeup from suspend (longer than 1min) is detected
         """
         pass
