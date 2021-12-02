@@ -127,7 +127,8 @@ static void handle_request_configure(struct wl_listener* listener, void* data){
     struct wm_view_xwayland* view = wl_container_of(listener, view, request_configure);
     struct wlr_xwayland_surface_configure_event* event = data;
 
-    wlr_xwayland_surface_configure(view->wlr_xwayland_surface, 0., 0., event->width, event->height);
+    struct wlr_box* box = wlr_output_layout_get_box(view->super.super.wm_server->wm_layout->wlr_output_layout, NULL);
+    wlr_xwayland_surface_configure(view->wlr_xwayland_surface, box->x, box->y, event->width, event->height);
 }
 
 static void handle_set_pid(struct wl_listener* listener, void* data){
@@ -284,7 +285,8 @@ static void wm_view_xwayland_get_info(struct wm_view* super, const char** title,
 static void wm_view_xwayland_request_size(struct wm_view* super, int width, int height){
     struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
 
-    wlr_xwayland_surface_configure(view->wlr_xwayland_surface, 0, 0, width, height);
+    struct wlr_box* box = wlr_output_layout_get_box(view->super.super.wm_server->wm_layout->wlr_output_layout, NULL);
+    wlr_xwayland_surface_configure(view->wlr_xwayland_surface, box->x, box->y, width, height);
 }
 
 static void wm_view_xwayland_request_close(struct wm_view* super){
@@ -364,8 +366,8 @@ static struct wlr_surface* wm_view_xwayland_surface_at(struct wm_view* super, do
     wl_list_for_each(child, &view->children, link){
         if(!child->wlr_xwayland_surface->surface) continue;
 
-        int child_x = child->wlr_xwayland_surface->x;
-        int child_y = child->wlr_xwayland_surface->y;
+        int child_x = child->wlr_xwayland_surface->x - view->wlr_xwayland_surface->x;
+        int child_y = child->wlr_xwayland_surface->y - view->wlr_xwayland_surface->y;
         struct wlr_surface* surface = wlr_surface_surface_at(child->wlr_xwayland_surface->surface, 
                 at_x - child_x, at_y - child_y, sx, sy);
 
@@ -392,8 +394,8 @@ struct child_iterator_data {
 static void child_iterator(struct wlr_surface* surface, int sx, int sy, void* _data){
     struct child_iterator_data* data = _data;
 
-    int child_x = data->child->wlr_xwayland_surface->x;
-    int child_y = data->child->wlr_xwayland_surface->y;
+    int child_x = data->child->wlr_xwayland_surface->x - data->child->parent->wlr_xwayland_surface->x;
+    int child_y = data->child->wlr_xwayland_surface->y - data->child->parent->wlr_xwayland_surface->y;
 
     data->iterator(surface, child_x + sx, child_y + sy, data->user_data); 
 }
