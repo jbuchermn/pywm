@@ -80,9 +80,11 @@ class PyWMIdleThread(Thread, Generic[ViewT]):
         self._running = True
 
     def run(self) -> None:
+        i = 0
         while self._running:
+            i += 1
             t = time.time()
-            time.sleep(.5)
+            time.sleep(.1)
             t = time.time() - t
 
             # Detect if we wake up from suspend
@@ -90,7 +92,8 @@ class PyWMIdleThread(Thread, Generic[ViewT]):
                 self.wm.on_wakeup()
                 self.wm._update_idle()
             else:
-                self.wm._update_idle(False)
+                if i % 5 == 0:
+                    self.wm._update_idle(False)
 
     def stop(self) -> None:
         self._running = False
@@ -548,6 +551,6 @@ class PyWM(Generic[ViewT]):
 
     def on_wakeup(self) -> None:
         """
-        Called if a wakeup from suspend (longer than 1min) is detected
+        Called if a wakeup from suspend (longer than 1sec) is detected
         """
         pass
