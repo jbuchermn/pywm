@@ -5,7 +5,6 @@
 *** TODO Verify rounding performance on different scales at very slow anim speed --> appears to be "jumpy"
 *** TODO Export XCURSOR_THEME, XCURSOR_SIZE
 *** TODO Set cursor position from python
-*** STRT Remove idle thread - no single frame before call to on_wakeup
 
 *** TODO Release
 - [ ] TODO comments
