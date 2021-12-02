@@ -3,9 +3,8 @@
 * Development
 ** Current (v0.2)
 *** STRT Verify rounding performance on different scales at very slow anim speed --> appears to be "jumpy"
-
-*** STRT Bug: XWayland views don't receive clicks
-*** TODO Bug: Cannot set xcursor_size on cursors other than default (happens on sway as well)
+*** STRT Bug: XWayland views don't receive mouse events if output isn't placed at 0, 0 --> Has sth to do with output_manager
+*** TODO Set cursor position from python
 
 *** TODO Release
 - [ ] TODO comments
