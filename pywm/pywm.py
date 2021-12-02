@@ -72,32 +72,6 @@ def callback(func: Callable[..., Optional[T]]) -> Callable[..., Optional[T]]:
 ViewT = TypeVar('ViewT', bound=PyWMView)
 WidgetT = TypeVar('WidgetT', bound=PyWMWidget)
 
-class PyWMIdleThread(Thread, Generic[ViewT]):
-    def __init__(self, wm: PyWM[ViewT]) -> None:
-        super().__init__()
-        self.wm = wm
-
-        self._running = True
-
-    def run(self) -> None:
-        i = 0
-        while self._running:
-            i += 1
-            t = time.time()
-            time.sleep(.1)
-            t = time.time() - t
-
-            # Detect if we wake up from suspend
-            if t > 1.:
-                self.wm.on_wakeup()
-                self.wm._update_idle()
-            else:
-                if i % 5 == 0:
-                    self.wm._update_idle(False)
-
-    def stop(self) -> None:
-        self._running = False
-
 class PyWMOutput:
     def __init__(self, name: str, key: int, scale: float, width: int, height: int, pos: tuple[int, int]):
         self.name = name
@@ -173,7 +147,7 @@ class PyWM(Generic[ViewT]):
         self.modifiers = 0
         self.cursor_pos: tuple[float, float] = (0, 0)
 
-        self._idle_thread: PyWMIdleThread[ViewT] = PyWMIdleThread(self)
+        self._last_update: float = 0.
         self._idle_last_activity: float = time.time()
         self._idle_last_update_active: float = time.time()
         self._idle_last_update_inactive: float = time.time()
@@ -182,9 +156,15 @@ class PyWM(Generic[ViewT]):
 
 
     def _update_idle(self, activity: bool=True) -> None:
+        t = time.time()
+        # This is called once per frame
+        if not activity and t - self._idle_last_update_inactive < 0.5:
+            return
+
         # Is called from touchpad thread as well as regular thread
         if self._lock.acquire(blocking=False):
             try:
+
                 inhibited = False
                 for _, v in self._views.items():
                     if (up_state := v.up_state) is not None and up_state.is_inhibiting_idle:
@@ -192,22 +172,22 @@ class PyWM(Generic[ViewT]):
                         break
 
                 if activity:
-                    self._idle_last_activity = time.time()
+                    self._idle_last_activity = t
 
-                    if time.time() - self._idle_last_update_active > 1:
+                    if t - self._idle_last_update_active > 1:
                         try:
                             self.on_idle(0.0, inhibited)
                         except Exception:
                             logger.exception("on_idle active")
-                        self._idle_last_update_active = time.time()
+                        self._idle_last_update_active = t
                 else:
-                    inactive_time = time.time() - self._idle_last_activity
-                    if time.time() - self._idle_last_update_inactive > 5 and inactive_time > 5:
+                    inactive_time = t - self._idle_last_activity
+                    if t - self._idle_last_update_inactive > 5 and inactive_time > 5:
                         try:
                             self.on_idle(inactive_time, inhibited)
                         except Exception:
                             logger.exception("on_idle inactive")
-                        self._idle_last_update_inactive = time.time()
+                        self._idle_last_update_inactive = t
 
             finally:
                 self._lock.release()
@@ -219,8 +199,6 @@ class PyWM(Generic[ViewT]):
             logger.debug("Starting Touchpad daemon")
             self._touchpad_daemon.start()
 
-        logger.debug("Starting idle thread")
-        self._idle_thread.start()
         logger.debug("Executing main")
         self.main()
 
@@ -364,6 +342,18 @@ class PyWM(Generic[ViewT]):
 
     @callback
     def _update(self) -> tuple[int, float, str, str, bool, Optional[dict[str, Any]]]:
+        t = time.time()
+
+        if self._last_update != 0.:
+            dt = t - self._last_update
+            if dt > 0.5:
+                self.on_wakeup()
+                self._update_idle()
+            else:
+                self._update_idle(False)
+        self._last_update = t
+
+
         if self._damaged:
             self._damaged = False
             self._down_state = self.process()
@@ -439,7 +429,6 @@ class PyWM(Generic[ViewT]):
         logger.debug("PyWM terminating")
         if self._touchpad_daemon is not None:
             self._touchpad_daemon.stop()
-        self._idle_thread.stop()
         self._pending_terminate = True
 
     def open_virtual_output(self, name: str) -> None:
@@ -482,8 +471,13 @@ class PyWM(Generic[ViewT]):
         # Round positions to 1/scale logical pixels, width and height to logical pixels (if wh_logical)
         # where scale is the smallest hidpi scale intersected by (x, y, w, h)
 
+
         scale = self._get_round_scale(x, y, w, h)
 
+        # BEGIN DEBUG
+        # scale = 1.
+        # wh_logical = True
+        # END DEBUG
 
         wh_scale = 1 if wh_logical else scale
         cx = x + .5*w
