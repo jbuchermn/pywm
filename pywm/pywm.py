@@ -349,7 +349,8 @@ class PyWM(Generic[ViewT]):
 
         if self._last_update != 0.:
             dt = t - self._last_update
-            if dt > 0.5:
+            if dt > 5.:
+                logger.debug("Triggering wakeup on dt=%f", dt)
                 self.on_wakeup()
                 self._update_idle()
             else:

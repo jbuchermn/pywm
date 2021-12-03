@@ -7,7 +7,6 @@
 
 *** TODO Release
 - [X] TODO comments
-- [X] Change loglevel to INFO default
 - [X] Documentation / Update config keys
 - [ ] Check valgrind for lost memory
 - [ ] Terminate newm without faults
