@@ -40,7 +40,6 @@ struct wm_config {
 
     struct wl_list outputs;
 
-    /* TODO: Update - Requires updating / reallocating wlr_xcursor_managers */
     const char *xcursor_theme;
     int xcursor_size;
 
@@ -53,7 +52,7 @@ struct wm_config {
     bool tap_to_click;
     bool natural_scroll;
 
-    bool debug_f1;
+    bool debug;
 };
 
 void wm_config_init_default(struct wm_config *config);

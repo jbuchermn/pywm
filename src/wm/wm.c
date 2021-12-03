@@ -17,6 +17,7 @@
 #include "wm/wm_view.h"
 #include "wm/wm_widget.h"
 #include "wm/wm_util.h"
+#include "wm/wm_config.h"
 
 struct wm wm = {0};
 
@@ -24,7 +25,7 @@ void wm_init(struct wm_config *config) {
     if (wm.server)
         return;
 
-    wlr_log_init(WLR_DEBUG, NULL);
+    wlr_log_init(config->debug ? WLR_DEBUG : WLR_INFO, NULL);
     wm.server = calloc(1, sizeof(struct wm_server));
     wm_server_init(wm.server, config);
 }

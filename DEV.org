@@ -2,16 +2,18 @@
 
 * Development
 ** Current (v0.2)
+*** STRT Export XCURSOR_THEME, XCURSOR_SIZE
+*** STRT Set cursor position from python
+*** STRT Update documentation
 *** TODO Verify rounding performance on different scales at very slow anim speed --> appears to be "jumpy"
-*** TODO Export XCURSOR_THEME, XCURSOR_SIZE
-*** TODO Set cursor position from python
+*** TODO Try some optimizations of update loop if no state (view nor layout nor widget) changes (most common case)
 
 *** TODO Release
-- [ ] TODO comments
+- [X] TODO comments
+- [X] Change loglevel to INFO default
 - [ ] Documentation / Update config keys
 - [ ] Check valgrind for lost memory
 - [ ] Terminate newm without faults
-- [ ] Change loglevel to INFO default
 
 ** Backlog / Ideas
 *** wlroots migration to gitlab.freedesktop.org

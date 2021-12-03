@@ -28,7 +28,7 @@ void wm_config_init_default(struct wm_config *config) {
     config->constrain_popups_to_toplevel = false;
 
     config->encourage_csd = true;
-    config->debug_f1 = false;
+    config->debug = false;
 }
 
 void wm_config_reset_default(struct wm_config* config){

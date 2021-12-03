@@ -69,7 +69,7 @@ static void set_config(struct wm_config* conf, PyObject* dict, int reconfigure){
     o = PyDict_GetItemString(dict, "natural_scroll"); if(o){ conf->natural_scroll = o == Py_True; }
 
     o = PyDict_GetItemString(dict, "enable_xwayland"); if(o){ conf->enable_xwayland = o == Py_True; }
-    o = PyDict_GetItemString(dict, "debug_f1"); if(o){ conf->debug_f1 = o == Py_True; }
+    o = PyDict_GetItemString(dict, "debug"); if(o){ conf->debug = o == Py_True; }
 
     if(reconfigure){
         wlr_log(WLR_DEBUG, "Reconfiguring PyWM...");
