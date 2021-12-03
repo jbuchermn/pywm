@@ -48,7 +48,7 @@ static inline long msec_diff(struct timespec t1, struct timespec t2){
 #define TIMER_PRINT(TNAME) \
     clock_gettime(CLOCK_REALTIME, &TIMER_ ## TNAME ## _print); \
     if(msec_diff(TIMER_ ## TNAME ## _print, TIMER_ ## TNAME ## _last_print) > 1000. / 0.1){ \
-        fprintf(stderr, "TIMER[%-30s] %s: %7.2fms (%7.2fms max), %5.2fHz\n", #TNAME, \
+        wlr_log(WLR_DEBUG, "\nTIMER[%-30s] %s: %7.2fms (%7.2fms max), %5.2fHz", #TNAME, \
                 ((double)TIMER_ ## TNAME ## _max / 1000000.) > 10. ? "X" : \
                 ((double)TIMER_ ## TNAME ## _max / 1000000.) > 5. ? "o" : \
                 ((double)TIMER_ ## TNAME ## _max / 1000000.) > 1. ? "." : " ", \
