@@ -12,6 +12,8 @@ struct wm_server;
 struct wm_layout;
 struct wm_widget;
 
+#define WM_CURSOR_MIN -1000000
+
 struct wm {
     struct wm_server* server;
 
@@ -50,7 +52,7 @@ int wm_run();
 void wm_terminate();
 
 void wm_focus_view(struct wm_view* view);
-void wm_update_cursor(int cursor_visible);
+void wm_update_cursor(int cursor_visible, int pos_x, int pos_y);
 
 void wm_set_locked(double locked);
 

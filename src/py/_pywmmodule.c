@@ -93,14 +93,18 @@ static void handle_update(){
     Py_XDECREF(args);
 
     int update_cursor;
+    int update_cursor_x;
+    int update_cursor_y;
     double lock_perc;
     int terminate;
     const char* open_virtual_output, *close_virtual_output;
     PyObject* config;
 
     if(!PyArg_ParseTuple(res,
-                "idsspO",
+                "iiidsspO",
                 &update_cursor,
+                &update_cursor_x,
+                &update_cursor_y,
                 &lock_perc,
                 &open_virtual_output,
                 &close_virtual_output,
@@ -109,7 +113,7 @@ static void handle_update(){
         PyErr_SetString(PyExc_TypeError, "Cannot parse query return");
     }else{
         if(update_cursor >= 0){
-            wm_update_cursor(update_cursor);
+            wm_update_cursor(update_cursor, update_cursor_x, update_cursor_y);
         }
         wm_set_locked(lock_perc);
         if(terminate){

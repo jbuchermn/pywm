@@ -573,7 +573,7 @@ void wm_server_set_locked(struct wm_server* server, double lock_perc){
     if(wm_server_is_locked(server)){
         wm_seat_clear_focus(server->wm_seat);
     }else{
-        wm_update_cursor(1);
+        wm_update_cursor(1, WM_CURSOR_MIN, WM_CURSOR_MIN);
     }
 }
 

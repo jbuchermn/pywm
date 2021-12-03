@@ -282,6 +282,11 @@ void wm_cursor_set_visible(struct wm_cursor* cursor, int visible){
     }
 }
 
+void wm_cursor_set_position(struct wm_cursor* cursor, int pos_x, int pos_y){
+    wlr_cursor_move(cursor->wlr_cursor, NULL, pos_x - cursor->wlr_cursor->x, pos_y - cursor->wlr_cursor->y);
+    wm_cursor_update(cursor);
+}
+
 void wm_cursor_set_image(struct wm_cursor* cursor, const char* image){
     wl_list_remove(&cursor->surface_destroy.link);
     wl_list_init(&cursor->surface_destroy.link);

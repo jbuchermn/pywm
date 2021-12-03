@@ -46,9 +46,11 @@ class PyWMDownstreamState:
     def copy(self) -> PyWMDownstreamState:
         return PyWMDownstreamState(self.lock_perc)
 
-    def get(self, update_cursor: int, open_virtual_output: Optional[str], close_virtual_output: Optional[str], terminate: int, config: Optional[dict[str, Any]]) -> tuple[int, float, str, str, bool, Optional[dict[str, Any]]]:
+    def get(self, update_cursor: int, cursor_pos: Optional[tuple[int, int]], open_virtual_output: Optional[str], close_virtual_output: Optional[str], terminate: int, config: Optional[dict[str, Any]]) -> tuple[int, int, int, float, str, str, bool, Optional[dict[str, Any]]]:
         return (
             int(update_cursor),
+            -10000000 if cursor_pos is None else cursor_pos[0],
+            -10000000 if cursor_pos is None else cursor_pos[1],
             self.lock_perc,
             open_virtual_output if open_virtual_output is not None else "",
             close_virtual_output if close_virtual_output is not None else "",
@@ -135,6 +137,7 @@ class PyWM(Generic[ViewT]):
         1: Enable cursor
         """
         self._pending_update_cursor = -1
+        self._pending_cursor_pos: Optional[tuple[int, int]] = None
         self._pending_open_virtual_output: Optional[str] = None
         self._pending_close_virtual_output: Optional[str] = None
         self._pending_terminate = False
@@ -341,7 +344,7 @@ class PyWM(Generic[ViewT]):
         return None
 
     @callback
-    def _update(self) -> tuple[int, float, str, str, bool, Optional[dict[str, Any]]]:
+    def _update(self) -> tuple[int, int, int, float, str, str, bool, Optional[dict[str, Any]]]:
         t = time.time()
 
         if self._last_update != 0.:
@@ -360,6 +363,7 @@ class PyWM(Generic[ViewT]):
 
         res = self._down_state.get(
             self._pending_update_cursor,
+            self._pending_cursor_pos,
             self._pending_open_virtual_output,
             self._pending_close_virtual_output,
             self._pending_terminate,
@@ -367,6 +371,7 @@ class PyWM(Generic[ViewT]):
         )
 
         self._pending_update_cursor = -1
+        self._pending_cursor_pos = None
         self._pending_open_virtual_output = None
         self._pending_close_virtual_output = None
         self._pending_terminate = False
@@ -442,8 +447,9 @@ class PyWM(Generic[ViewT]):
         self._pending_widgets += [widget]
         return widget
 
-    def update_cursor(self, enabled: bool=True) -> None:
+    def update_cursor(self, enabled: bool=True, pos: Optional[tuple[int, int]]=None) -> None:
         self._pending_update_cursor = 0 if not enabled else 1
+        self._pending_cursor_pos = pos
 
     def is_locked(self) -> bool:
         return self._down_state.lock_perc != 0.0

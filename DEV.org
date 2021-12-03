@@ -2,11 +2,13 @@
 
 * Development
 ** Current (v0.2)
-*** STRT Export XCURSOR_THEME, XCURSOR_SIZE
-*** STRT Set cursor position from python
+*** Bugs
+**** TODO Verify rounding performance on different scales at very slow anim speed --> appears to be "jumpy"
+
 *** STRT Update documentation
-*** TODO Verify rounding performance on different scales at very slow anim speed --> appears to be "jumpy"
-*** TODO Try some optimizations of update loop if no state (view nor layout nor widget) changes (most common case)
+*** STRT Export XCURSOR_THEME, XCURSOR_SIZE
+*** DONE Set cursor position from python
+*** STRT Try some optimizations of update loop if no state (view nor layout nor widget) changes (most common case)
 
 *** TODO Release
 - [X] TODO comments

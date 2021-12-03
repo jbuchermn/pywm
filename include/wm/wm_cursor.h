@@ -55,6 +55,7 @@ void wm_cursor_ensure_loaded_for_scale(struct wm_cursor* cursor, double scale);
 void wm_cursor_set_visible(struct wm_cursor* cursor, int visible);
 void wm_cursor_set_image(struct wm_cursor* cursor, const char* image);
 void wm_cursor_set_image_surface(struct wm_cursor* cursor, struct wlr_surface* surface, int32_t hotspot_x, int32_t hotspot_y);
+void wm_cursor_set_position(struct wm_cursor* cursor, int pos_x, int pos_y);
 
 void wm_cursor_destroy(struct wm_cursor* cursor);
 void wm_cursor_add_pointer(struct wm_cursor* cursor, struct wm_pointer* pointer);
