@@ -6,9 +6,6 @@
 **** TODO Verify rounding performance on different scales at very slow anim speed --> appears to be "jumpy"
 
 *** STRT Update documentation
-*** DONE Export XCURSOR_THEME, XCURSOR_SIZE
-*** DONE Set cursor position from python
-*** STRT Try some optimizations of update loop if no state (view nor layout nor widget) changes (most common case)
 
 *** TODO Release
 - [X] TODO comments
@@ -18,6 +15,7 @@
 - [ ] Terminate newm without faults
 
 ** Backlog / Ideas
+*** Try some optimizations of update loop if no state (view nor layout nor widget) changes (most common case) --> bring down idle CPU
 *** wlroots migration to gitlab.freedesktop.org
 *** Layer shell: Keyboard interactivity
 *** wlr_output_manager
