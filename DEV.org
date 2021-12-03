@@ -5,12 +5,10 @@
 *** Bugs
 **** TODO Verify rounding performance on different scales at very slow anim speed --> appears to be "jumpy"
 
-*** STRT Update documentation
-
 *** TODO Release
 - [X] TODO comments
 - [X] Change loglevel to INFO default
-- [ ] Documentation / Update config keys
+- [X] Documentation / Update config keys
 - [ ] Check valgrind for lost memory
 - [ ] Terminate newm without faults
 
