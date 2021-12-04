@@ -257,8 +257,8 @@ void wm_popup_layer_init(struct wm_popup_layer* popup, struct wm_view_layer* roo
     struct wlr_box* output_box = wlr_output_layout_get_box(
             popup->root->super.super.wm_server->wm_layout->wlr_output_layout, popup->root->wlr_layer_surface->output);
     struct wlr_box box = {
-        .x = -popup->root->super.super.display_x,
-        .y = -popup->root->super.super.display_y,
+        .x = output_box->x -popup->root->super.super.display_x,
+        .y = output_box->y -popup->root->super.super.display_y,
         .width = output_box->width,
         .height = output_box->height
     };
