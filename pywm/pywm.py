@@ -481,6 +481,8 @@ class PyWM(Generic[ViewT]):
 
         scale = self._get_round_scale(x, y, w, h)
 
+        DUMMY
+
         # BEGIN DEBUG
         # scale = 1.
         # wh_logical = True
