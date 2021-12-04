@@ -475,9 +475,8 @@ class PyWM(Generic[ViewT]):
         return None
 
     def round(self, x: float, y: float, w: float, h: float, wh_logical: bool=True) -> tuple[float, float, float, float]:
-        # Round positions to 1/scale logical pixels, width and height to logical pixels (if wh_logical)
+        # Round positions to 1/scale logical pixels (or not at all - GL_NEAREST does it), width and height to logical pixels (if wh_logical)
         # where scale is the smallest hidpi scale intersected by (x, y, w, h)
-
 
         scale = self._get_round_scale(x, y, w, h)
 
@@ -493,8 +492,10 @@ class PyWM(Generic[ViewT]):
         h = round(h * wh_scale) / wh_scale
 
         return (
-            round((cx - .5*w) * scale) / scale,
-            round((cy - .5*h) * scale) / scale,
+            # round((cx - .5*w) * scale) / scale,
+            # round((cy - .5*h) * scale) / scale,
+            (cx - .5*w),
+            (cy - .5*h),
             w,
             h)
 
