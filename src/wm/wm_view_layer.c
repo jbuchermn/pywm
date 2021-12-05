@@ -415,7 +415,15 @@ static void wm_view_layer_set_maximized(struct wm_view* super, bool maximized){
 }
 
 static void wm_view_layer_set_activated(struct wm_view* super, bool activated){
-    /* noop */
+    struct wm_view_layer* view = wm_cast(wm_view_layer, super);
+
+    /* Close popups on deactivate */
+    if(!activated){
+        struct wlr_xdg_popup* popup, *tmp;
+        wl_list_for_each_safe(popup, tmp, &view->wlr_layer_surface->popups, link){
+            wlr_xdg_popup_destroy(popup->base);
+        }
+    }
 }
 
 static struct wlr_surface* wm_view_layer_surface_at(struct wm_view* super, double at_x, double at_y, double* sx, double* sy){

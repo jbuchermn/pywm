@@ -6,6 +6,7 @@
 #include <wlr/types/wlr_primary_selection.h>
 #include <wlr/util/log.h>
 #include "wm/wm.h"
+#include "wm/wm_util.h"
 #include "wm/wm_seat.h"
 #include "wm/wm_view.h"
 #include "wm/wm_server.h"
@@ -192,6 +193,14 @@ void wm_seat_focus_surface(struct wm_seat* seat, struct wlr_surface* surface){
     wlr_log(WLR_DEBUG, "Updating focus");
 
     if(prev_view) wm_view_set_activated(prev_view, false);
+
+    /* Safety net: Possibly prev detection does not work (surfaces destroyed, ...). Be sure to not broadcast two focused views to python */
+    struct wm_content* content;
+    wl_list_for_each(content, &seat->wm_server->wm_contents, link){
+        if(!wm_content_is_view(content)) continue;
+        struct wm_view* view = wm_cast(wm_view, content);
+        view->focused = false;
+    }
 
     if(view){
         /* Guard keyboard focus */
