@@ -2,15 +2,8 @@
 
 * Development
 ** Current (v0.2)
-
-*** Bugs
-**** DONE Size updates before map (without surface commit) are not propagated
-
-*** TODO Release
-- [X] TODO comments
-- [X] Documentation / Update config keys
-- [ ] Check valgrind for lost memory
-- [ ] Terminate newm without faults
+*** TODO Change requirements.txt to only inclued stubs
+*** TODO Release v0.2
 
 ** Backlog / Ideas
 *** Try some optimizations of update loop if no state (view nor layout nor widget) changes (most common case) --> bring down idle CPU
