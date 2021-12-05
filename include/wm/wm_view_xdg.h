@@ -75,6 +75,7 @@ struct wm_view_xdg {
     struct wl_listener new_popup;
     struct wl_listener new_subsurface;
 
+    struct wl_listener surface_configure;
     struct wl_listener surface_commit;
 
     struct wl_listener deco_request_mode;

@@ -2,7 +2,9 @@
 
 * Development
 ** Current (v0.2)
+
 *** Bugs
+**** DONE Size updates before map (without surface commit) are not propagated
 
 *** TODO Release
 - [X] TODO comments

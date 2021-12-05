@@ -120,6 +120,7 @@ class PyWMViewDownstreamState:
 
     def get(self, root: PyWM[ViewT],
             last_state: Optional[PyWMViewDownstreamState],
+            force_size: bool,
             focus: Optional[int], fullscreen: Optional[int], maximized: Optional[int], resizing: Optional[int], close: Optional[int]
             ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, int, tuple[int, int], int, int, int, int, int, int, tuple[float, float, float, float]]:
 
@@ -133,7 +134,7 @@ class PyWMViewDownstreamState:
             bool(self.lock_enabled),
             int(self.floating) if self.floating is not None else -1,
 
-            self.size if last_state is None or self.size != last_state.size else (-1, -1),
+            self.size if last_state is None or self.size != last_state.size or force_size else (-1, -1),
 
             int(focus) if focus is not None else -1,
             int(fullscreen) if fullscreen is not None else -1,
@@ -166,6 +167,7 @@ class PyWMView(Generic[PyWMT]):
         self._down_state: Optional[PyWMViewDownstreamState] = None
         self._last_down_state: Optional[PyWMViewDownstreamState] = None
 
+        self._down_force_size: bool = False
         self._down_action_focus: Optional[int] = None
         self._down_action_fullscreen: Optional[int] = None
         self._down_action_maximized: Optional[int] = None
@@ -258,12 +260,14 @@ class PyWMView(Generic[PyWMT]):
         res = down_state.get(
             self.wm,
             self._last_down_state,
+            self._down_force_size,
             self._down_action_focus,
             self._down_action_fullscreen,
             self._down_action_maximized,
             self._down_action_resizing,
             self._down_action_close
         )
+        self._down_force_size = False
         self._down_action_focus = None
         self._down_action_fullscreen = None
         self._down_action_maximized = None
@@ -300,6 +304,9 @@ class PyWMView(Generic[PyWMT]):
 
     def set_maximized(self, val: bool) -> None:
         self._down_action_maximized = bool(val)
+
+    def force_size(self) -> None:
+        self._down_force_size = True
 
     def close(self) -> None:
         self._down_action_close = True

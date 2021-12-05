@@ -157,6 +157,23 @@ static void handle_new_subsurface(struct wl_listener* listener, void* data){
     wl_list_insert(&view->subsurfaces, &subsurface->link);
 }
 
+static void handle_surface_configure(struct wl_listener* listener, void* data){
+    struct wm_view_xdg* view = wl_container_of(listener, view, surface_configure);
+
+    int width = view->wlr_xdg_surface->pending.geometry.width;
+    int height = view->wlr_xdg_surface->pending.geometry.height;
+
+    if (!width || !height){
+        width = view->wlr_xdg_surface->surface->current.width;
+        height = view->wlr_xdg_surface->surface->current.height;
+    }
+
+    if(width != view->width || height != view->height){
+        view->width = width;
+        view->height = height;
+    }
+}
+
 static void handle_surface_commit(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, surface_commit);
 
@@ -394,6 +411,9 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
     view->surface_commit.notify = &handle_surface_commit;
     wl_signal_add(&surface->surface->events.commit, &view->surface_commit);
 
+    view->surface_configure.notify = &handle_surface_configure;
+    wl_signal_add(&surface->events.configure, &view->surface_configure);
+
     view->request_fullscreen.notify = &handle_fullscreen;
     wl_signal_add(&surface->toplevel->events.request_fullscreen, &view->request_fullscreen);
 
@@ -446,6 +466,7 @@ static void wm_view_xdg_destroy(struct wm_view* super){
     wl_list_remove(&view->new_subsurface.link);
 
     wl_list_remove(&view->surface_commit.link);
+    wl_list_remove(&view->surface_configure.link);
 
     wl_list_remove(&view->request_fullscreen.link);
     wl_list_remove(&view->request_move.link);
@@ -476,6 +497,7 @@ static void wm_view_xdg_request_size(struct wm_view* super, int width, int heigh
     }
 
     if(view->wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL){
+        wlr_log(WLR_DEBUG, "DDEBUGG - size request: %dx%d", width, height);
         wlr_xdg_toplevel_set_size(view->wlr_xdg_surface, width, height);
     }else{
         wlr_log(WLR_DEBUG, "Warning: Not toplevel");

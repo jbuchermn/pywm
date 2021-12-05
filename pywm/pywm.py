@@ -282,7 +282,7 @@ class PyWM(Generic[ViewT]):
             self._views[handle] = view
 
             view._update(*args)
-            return view.init().get(self, None, None, None, None, None, None)
+            return view.init().get(self, None, True, None, None, None, None, None)
 
     @callback
     def _update_widget(self, handle: int, *args): # type: ignore
