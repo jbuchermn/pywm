@@ -3,7 +3,6 @@
 * Development
 ** Current (v0.2)
 *** TODO Change requirements.txt to only inclued stubs
-*** TODO Release v0.2
 
 ** Backlog / Ideas
 *** Try some optimizations of update loop if no state (view nor layout nor widget) changes (most common case) --> bring down idle CPU
