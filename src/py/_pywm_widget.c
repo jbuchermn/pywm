@@ -26,20 +26,24 @@ void _pywm_widget_update(struct _pywm_widget* widget){
     if(res && res != Py_None){
         double x, y, w, h;
         double mask_x, mask_y, mask_w, mask_h;
+        int output_key;
         double opacity;
         int z_index;
         int lock_enabled;
+        double workspace_x, workspace_y, workspace_w, workspace_h;
         if(!PyArg_ParseTuple(res, 
-                    "p(dddd)(dddd)di",
+                    "p(dddd)(dddd)idi(dddd)",
                     &lock_enabled,
                     &x, &y, &w, &h,
                     &mask_x, &mask_y, &mask_w, &mask_h,
+                    &output_key,
                     &opacity,
-                    &z_index)){
+                    &z_index,
+                    &workspace_x, &workspace_y, &workspace_w, &workspace_h
+           )){
             PyErr_SetString(PyExc_TypeError, "Cannot parse update_widget return");
             return;
         }
-
 
         wm_content_set_opacity(&widget->widget->super, opacity);
         if(w >= 0.0 && h >= 0.0)
@@ -48,6 +52,8 @@ void _pywm_widget_update(struct _pywm_widget* widget){
         wm_content_set_z_index(&widget->widget->super, z_index);
         wm_content_set_lock_enabled(&widget->widget->super, lock_enabled);
 
+        wm_content_set_output(&widget->widget->super, output_key, NULL);
+        wm_content_set_workspace(&widget->widget->super, workspace_x, workspace_y, workspace_w, workspace_h);
     }
     Py_XDECREF(res);
 
@@ -120,8 +126,6 @@ long _pywm_widgets_get_handle(struct wm_widget* widget){
 
 
 void _pywm_widgets_update(){
-    TIMER_START(widgets_update);
-
     /* Query for a widget to destroy */
     PyObject* args = Py_BuildValue("()");
     PyObject* res = PyObject_Call(_pywm_callbacks_get_all()->query_destroy_widget, args, NULL);
@@ -159,10 +163,7 @@ void _pywm_widgets_update(){
     }
 
 err:
-
-
-    TIMER_STOP(widgets_update);
-    TIMER_PRINT(widgets_update);
+    ;
 }
 
 

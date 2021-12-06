@@ -1,0 +1,4 @@
+evdev
+imageio
+pycairo
+numpy

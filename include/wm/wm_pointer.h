@@ -17,6 +17,7 @@ struct wm_pointer {
 
 void wm_pointer_init(struct wm_pointer* pointer, struct wm_seat* seat, struct wlr_input_device* input_device);
 void wm_pointer_destroy(struct wm_pointer* pointer);
+void wm_pointer_reconfigure(struct wm_pointer* pointer);
 
 
 #endif

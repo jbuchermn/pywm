@@ -6,7 +6,7 @@ from abc import abstractmethod
 
 # Python imports are great
 if TYPE_CHECKING:
-    from .pywm import PyWM, ViewT
+    from .pywm import PyWM, PyWMOutput, ViewT
     PyWMT = TypeVar('PyWMT', bound=PyWM)
 else:
     PyWMT = TypeVar('PyWMT')
@@ -15,22 +15,25 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 class PyWMViewUpstreamState:
     def __init__(self,
-                 floating: bool, title: str,
-                 sc_min_w: int, sc_max_w: int, sc_min_h: int, sc_max_h: int,
+                 mapped: bool,
+                 floating: bool,
+                 size_constraints: list[int],
                  offset_x: int, offset_y: int,
                  width: int, height: int,
-                 is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool) -> None:
+                 is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool, fixed_output: Optional[PyWMOutput]) -> None:
 
         """
         Called from C - just to be sure, wrap every attribute in type constrcutor
         """
+
+        self.is_mapped = bool(mapped)
         self.is_floating = bool(floating)
-        self.title = str(title)
 
         """
-        min_w, max_w, min_h, max_h
+        min_w, max_w, min_h, max_h for regular views
+        anchor, desired_width, desired_height, exclusive_zone, layer, margin - left, top, right, bottom for layer shell
         """
-        self.size_constraints = (int(sc_min_w), int(sc_max_w), int(sc_min_h), int(sc_max_h))        
+        self.size_constraints = [int(i) for i in size_constraints]
         """
         describe the offset of actual content within the view
         (in case of CSD)
@@ -50,10 +53,10 @@ class PyWMViewUpstreamState:
         self.is_resizing = bool(is_resizing)
         self.is_inhibiting_idle = bool(is_inhibiting_idle)
 
+        self.fixed_output = fixed_output
+
     def is_update(self, other: PyWMViewUpstreamState) -> bool:
         if self.is_floating != other.is_floating:
-            return True
-        if self.title != other.title:
             return True
         if self.size_constraints != other.size_constraints:
             return True
@@ -71,6 +74,8 @@ class PyWMViewUpstreamState:
             return True
         if self.is_inhibiting_idle != other.is_inhibiting_idle:
             return True
+        if self.fixed_output != other.fixed_output:
+            return True
         return False
 
 
@@ -79,7 +84,12 @@ class PyWMViewDownstreamState:
                  z_index: int=0, box: tuple[float, float, float, float]=(0, 0, 0, 0),
                  mask: tuple[float, float, float, float]=(-1, -1, -1, -1),
                  opacity: float=1., corner_radius: float=0,
-                 accepts_input: bool=False, lock_enabled: bool=False, up_state: Optional[PyWMViewUpstreamState]=None) -> None:
+                 accepts_input: bool=False,
+                 lock_enabled: bool=False,
+                 floating: Optional[bool]=None,
+                 workspace: Optional[tuple[float, float, float, float]]=None,
+                 fixed_output: Optional[PyWMOutput]=None,
+                 up_state: Optional[PyWMViewUpstreamState]=None) -> None:
         """
         Just to be sure - wrap in type constructors
         """
@@ -90,6 +100,9 @@ class PyWMViewDownstreamState:
         self.corner_radius = corner_radius
         self.accepts_input = accepts_input
         self.lock_enabled = lock_enabled
+        self.floating = floating
+        self.fixed_output = fixed_output
+        self.workspace = workspace
 
         """
         Request size
@@ -97,17 +110,20 @@ class PyWMViewDownstreamState:
         self.size: tuple[int, int] = (-1, -1)
 
         if up_state is not None:
+            self.fixed_output = up_state.fixed_output
             self.size = up_state.size
 
     def copy(self) -> PyWMViewDownstreamState:
-        res = PyWMViewDownstreamState(self.z_index, self.box, self.mask, self.opacity, self.corner_radius, self.accepts_input, self.lock_enabled)
+        res = PyWMViewDownstreamState(self.z_index, self.box, self.mask, self.opacity, self.corner_radius, self.accepts_input, self.lock_enabled, self.floating, self.workspace, self.fixed_output)
         res.size = self.size
         return res
 
     def get(self, root: PyWM[ViewT],
             last_state: Optional[PyWMViewDownstreamState],
+            force_size: bool,
             focus: Optional[int], fullscreen: Optional[int], maximized: Optional[int], resizing: Optional[int], close: Optional[int]
-            ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int]:
+            ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, int, tuple[int, int], int, int, int, int, int, int, tuple[float, float, float, float]]:
+
         return (
             root.round(*self.box),
             self.mask,
@@ -116,14 +132,17 @@ class PyWMViewDownstreamState:
             int(self.z_index),
             bool(self.accepts_input),
             bool(self.lock_enabled),
+            int(self.floating) if self.floating is not None else -1,
 
-            self.size if last_state is None or self.size != last_state.size else (-1, -1),
+            self.size if last_state is None or self.size != last_state.size or force_size else (-1, -1),
 
             int(focus) if focus is not None else -1,
             int(fullscreen) if fullscreen is not None else -1,
             int(maximized) if maximized is not None else -1,
             int(resizing) if resizing is not None else -1,
-            int(close) if close is not None else -1
+            int(close) if close is not None else -1,
+            int(self.fixed_output._key) if self.fixed_output is not None else -1,
+            root.round(*self.workspace) if self.workspace is not None else (0, 0, -1, -1)
         )
 
     def __str__(self) -> str:
@@ -148,38 +167,54 @@ class PyWMView(Generic[PyWMT]):
         self._down_state: Optional[PyWMViewDownstreamState] = None
         self._last_down_state: Optional[PyWMViewDownstreamState] = None
 
+        self._down_force_size: bool = False
         self._down_action_focus: Optional[int] = None
         self._down_action_fullscreen: Optional[int] = None
         self._down_action_maximized: Optional[int] = None
         self._down_action_resizing: Optional[int] = None
         self._down_action_close: Optional[int] = None
 
+        # Debug flag
+        self._debug_scaling = False
+        self._last_update_potential_scaling_issue = False
 
-    def _update(self, parent_handle: int, is_xwayland: bool, pid: int, app_id: str, role: str,
-                floating: bool, title: str,
-                sc_min_w: int, sc_max_w: int, sc_min_h: int, sc_max_h: int,
-                offset_x: int, offset_y: int,
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, PyWMView):
+            return False
+        return self._handle == other._handle
+
+
+    def _update(self,
+                general: Optional[tuple[int, bool, int, str, str, str]],
                 width: int, height: int,
-                is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool
-                ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, tuple[int, int], int, int, int, int, int]:
+                is_mapped: bool, is_floating: bool, is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool,
+                size_constraints: list[int],
+                offset_x: int, offset_y: int,
+                fixed_output_key: int,
+                ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, int, tuple[int, int], int, int, int, int, int, int, tuple[float, float, float, float]]:
 
-        if self.parent is None and parent_handle is not None:
-            try:
-                self.parent = self.wm._views[parent_handle]
-            except Exception:
-                pass
+        if general is not None:
+            if self.parent is None:
+                try:
+                    self.parent = self.wm._views[general[0]]
+                except Exception:
+                    pass
 
-        self.is_xwayland = is_xwayland
-        self.pid = pid
-        self.app_id = app_id
-        self.role = role
+            self.is_xwayland = general[1]
+            self.pid = general[2]
+            self.app_id = general[3]
+            self.role = general[4]
+            self.title = general[5]
 
         up_state = PyWMViewUpstreamState(
-                floating, title,
-                sc_min_w, sc_max_w, sc_min_h, sc_max_h,
-                offset_x, offset_y,
-                width, height,
-                is_focused, is_fullscreen, is_maximized, is_resizing, is_inhibiting_idle)
+            is_mapped,
+            is_floating,
+            size_constraints,
+            offset_x, offset_y,
+            width, height,
+            is_focused, is_fullscreen, is_maximized, is_resizing, is_inhibiting_idle,
+            self.wm.get_output_by_key(fixed_output_key) if fixed_output_key >= 0 else None
+        )
         last_up_state = self.up_state
         down_state: Optional[PyWMViewDownstreamState] = self._down_state
 
@@ -192,28 +227,28 @@ class PyWMView(Generic[PyWMT]):
             """
             down_state = PyWMViewDownstreamState(up_state=up_state)
 
+            if up_state.is_mapped:
+                self.on_map()
+
         elif self._damaged or last_up_state is None or up_state.is_update(last_up_state):
-            self._damaged = False
             """
             Update
             """
+            self._damaged = False
             if last_up_state is None or up_state.is_focused != last_up_state.is_focused:
                 self.on_focus_change()
 
-            if last_up_state is None or up_state.size != last_up_state.size or \
-                    up_state.size_constraints != last_up_state.size_constraints:
-                self.on_size_or_constraints_change()
+            if (last_up_state is None or up_state.size != last_up_state.size):
+                self.on_resized(*up_state.size, self._last_down_state is None or up_state.size != self._last_down_state.size)
+
+            if up_state.is_mapped and (last_up_state is None or not last_up_state.is_mapped):
+                self.on_map()
 
             try:
                 down_state = self.process(up_state)
             except Exception as e:
                 logger.exception("Exception during view.process")
                 down_state = self._last_down_state
-
-            # BEGIN DEBUG
-            if down_state is not None and down_state.size != up_state.size:
-                logger.debug("Size (%d %s) %s -> %s", self._handle, self.app_id, up_state.size, down_state.size)
-            # END DEBUG
 
         self._last_down_state = self._down_state
         self._down_state = down_state
@@ -225,17 +260,36 @@ class PyWMView(Generic[PyWMT]):
         res = down_state.get(
             self.wm,
             self._last_down_state,
+            self._down_force_size,
             self._down_action_focus,
             self._down_action_fullscreen,
             self._down_action_maximized,
             self._down_action_resizing,
             self._down_action_close
         )
+        self._down_force_size = False
         self._down_action_focus = None
         self._down_action_fullscreen = None
         self._down_action_maximized = None
         self._down_action_resizing = None
         self._down_action_close = None
+
+        if self._debug_scaling:
+            if res[8] != (-1, -1):
+                logger.debug("Scaling - Resize to %dx%d" % res[8])
+
+            check_wh = res[0][2], res[0][3]
+            check_size = down_state.size if down_state.size is not None and down_state.size[0] > 0 and down_state.size[1] > 0 else up_state.size
+            if (0.99 * check_wh[0] < check_size[0] < 1.01 * check_wh[0]) and \
+               (0.99 * check_wh[1] < check_size[1] < 1.01 * check_size[1]) and \
+               (abs(check_wh[0] - check_size[0]) > 0.001 or abs(check_wh[1] - check_size[1]) > 0.001):
+
+                logger.debug("Scaling WRONG: %dx%d placed in %fx%f" % (*check_size, *check_wh))
+                self._last_update_potential_scaling_issue = True
+            elif self._last_update_potential_scaling_issue:
+                logger.debug("Scaling OK:    %dx%d placed in %fx%f" % (*check_size, *check_wh))
+                self._last_update_potential_scaling_issue = False
+
         return res
 
 
@@ -251,6 +305,9 @@ class PyWMView(Generic[PyWMT]):
     def set_maximized(self, val: bool) -> None:
         self._down_action_maximized = bool(val)
 
+    def force_size(self) -> None:
+        self._down_force_size = True
+
     def close(self) -> None:
         self._down_action_close = True
 
@@ -261,6 +318,11 @@ class PyWMView(Generic[PyWMT]):
     """
     Virtual methods
     """
+
+    @abstractmethod
+    def init(self) -> PyWMViewDownstreamState:
+        pass
+
     def on_event(self, event: str) -> None:
         pass
 
@@ -282,10 +344,11 @@ class PyWMView(Generic[PyWMT]):
     Callbacks on various specific updates
     Notice, that these will always be called together with (before) process
     """
+    def on_map(self) -> None:
+        pass
+
     def on_focus_change(self) -> None:
         pass
 
-    def on_size_or_constraints_change(self) -> None:
+    def on_resized(self, width: int, height: int, client_leading: bool) -> None:
         pass
-
-

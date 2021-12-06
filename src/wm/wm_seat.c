@@ -6,6 +6,7 @@
 #include <wlr/types/wlr_primary_selection.h>
 #include <wlr/util/log.h>
 #include "wm/wm.h"
+#include "wm/wm_util.h"
 #include "wm/wm_seat.h"
 #include "wm/wm_view.h"
 #include "wm/wm_server.h"
@@ -193,6 +194,14 @@ void wm_seat_focus_surface(struct wm_seat* seat, struct wlr_surface* surface){
 
     if(prev_view) wm_view_set_activated(prev_view, false);
 
+    /* Safety net: Possibly prev detection does not work (surfaces destroyed, ...). Be sure to not broadcast two focused views to python */
+    struct wm_content* content;
+    wl_list_for_each(content, &seat->wm_server->wm_contents, link){
+        if(!wm_content_is_view(content)) continue;
+        struct wm_view* view = wm_cast(wm_view, content);
+        view->focused = false;
+    }
+
     if(view){
         /* Guard keyboard focus */
         if(wm_server_is_locked(seat->wm_server)){
@@ -226,6 +235,7 @@ bool wm_seat_dispatch_motion(struct wm_seat* seat, double x, double y, uint32_t 
     if(seat->seatop_down.active){
         double sx = seat->seatop_down.x0 + x*seat->seatop_down.xm;
         double sy = seat->seatop_down.y0 + y*seat->seatop_down.ym;
+
         wlr_seat_pointer_notify_motion(seat->wlr_seat, time_msec, sx, sy);
 
         return true;
@@ -294,4 +304,20 @@ void wm_seat_dispatch_axis(struct wm_seat* seat, struct wlr_event_pointer_axis* 
 
     wlr_seat_pointer_notify_axis(seat->wlr_seat,
             event->time_msec, event->orientation, event->delta, event->delta_discrete, event->source);
+}
+
+void wm_seat_kill_seatop(struct wm_seat* seat){
+    seat->seatop_down.active = false;
+}
+
+void wm_seat_reconfigure(struct wm_seat* seat){
+    struct wm_keyboard* keyboard;
+    wl_list_for_each(keyboard, &seat->wm_keyboards, link){
+        wm_keyboard_reconfigure(keyboard);
+    }
+    struct wm_pointer* pointer;
+    wl_list_for_each(pointer, &seat->wm_pointers, link){
+        wm_pointer_reconfigure(pointer);
+    }
+    wm_cursor_reconfigure(seat->wm_cursor);
 }

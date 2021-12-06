@@ -19,6 +19,7 @@ struct wm_renderer_shader {
     GLint alpha;
     GLint pos_attrib;
     GLint tex_attrib;
+
     GLint width;
     GLint height;
 
@@ -42,9 +43,11 @@ struct wm_renderer {
     /* Custom shaders */
     struct wm_renderer_shader shader_rgba;
     struct wm_renderer_shader shader_rgbx;
+    struct wm_renderer_shader shader_ext;
 
     struct wm_renderer_shader shader_blurred_rgba;
     struct wm_renderer_shader shader_blurred_rgbx;
+    struct wm_renderer_shader shader_blurred_ext;
 #endif
 };
 
@@ -58,7 +61,7 @@ void wm_renderer_render_texture_at(struct wm_renderer *renderer,
                                    pixman_region32_t *damage,
                                    struct wlr_texture *texture,
                                    struct wlr_box *box, double opacity,
-                                   double padding_l, double padding_t, double padding_r, double padding_b,
+                                   struct wlr_box *mask,
                                    double corner_radius, double lock_perc);
 
 

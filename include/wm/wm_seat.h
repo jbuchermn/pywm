@@ -49,6 +49,8 @@ void wm_seat_dispatch_modifiers(struct wm_seat* seat, struct wlr_input_device* i
 bool wm_seat_dispatch_motion(struct wm_seat* seat, double x, double y, uint32_t time_msec);
 void wm_seat_dispatch_button(struct wm_seat* seat, struct wlr_event_pointer_button* event);
 void wm_seat_dispatch_axis(struct wm_seat* seat, struct wlr_event_pointer_axis* event);
+void wm_seat_kill_seatop(struct wm_seat* seat);
 
+void wm_seat_reconfigure(struct wm_seat* seat);
 
 #endif

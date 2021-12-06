@@ -35,8 +35,9 @@ struct wm_view_xwayland {
 
     struct wl_list children;
 
-    bool floating;
     struct wm_view_xwayland* parent;
+
+    int size_constraints[4];
 
     struct wl_listener request_configure;
     struct wl_listener set_parent;

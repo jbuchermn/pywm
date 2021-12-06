@@ -7,11 +7,11 @@ struct _pywm_callbacks {
     PyObject* ready;
     PyObject* layout_change;
     PyObject* motion;
-    PyObject* motion_absolute;
     PyObject* button;
     PyObject* axis;
     PyObject* key;
     PyObject* modifiers;
+    PyObject* gesture;
 
     PyObject* update_view;
     PyObject* destroy_view;

@@ -2,37 +2,67 @@
 #define WM_CONFIG_H
 
 #include <stdbool.h>
+#include <wayland-server.h>
+
+#define WM_CONFIG_POS_MIN -1000000
+#define WM_CONFIG_STRLEN 100
+
+struct wm_server;
+
+struct wm_config_output {
+    struct wl_list link; // wm_config::outputs
+
+    char name[WM_CONFIG_STRLEN];
+    double scale;
+
+    /* Unit: pixels */
+    int width;
+    int height;
+
+    /* Refresh rate in mHz */
+    int mHz;
+
+    /* Unit: Logical pixels, > WM_CONFIG_POS_MIN */
+    int pos_x;
+    int pos_y;
+
+    enum wl_output_transform transform;
+};
 
 struct wm_config {
-    double output_scale;
-    bool enable_output_manager;
+    /* Excluded from runtime update */
     bool enable_xwayland;
-
     int callback_frequency;
 
-    const char *xkb_model;
-    const char *xkb_layout;
-    const char *xkb_options;
+    char xkb_model[WM_CONFIG_STRLEN];
+    char xkb_layout[WM_CONFIG_STRLEN];
+    char xkb_options[WM_CONFIG_STRLEN];
 
-    const char *output_name;
-    int output_width;
-    int output_height;
-    int output_mHz;
+    struct wl_list outputs;
 
-    const char* xcursor_theme;
+    const char *xcursor_theme;
     int xcursor_size;
+
+    int focus_follows_mouse;
+
+    int constrain_popups_to_toplevel;
+
+    int encourage_csd;
 
     bool tap_to_click;
     bool natural_scroll;
 
-    bool focus_follows_mouse;
-    bool constrain_popups_to_toplevel;
-
-    bool encourage_csd;
-
-    bool debug_f1;
+    bool debug;
 };
 
-void wm_config_init_default(struct wm_config* config);
+void wm_config_init_default(struct wm_config *config);
+void wm_config_reset_default(struct wm_config* config);
+void wm_config_reconfigure(struct wm_config* config, struct wm_server* server);
+void wm_config_add_output(struct wm_config *config, const char *name,
+                          double scale, int width, int height, int mHz,
+                          int pos_x, int pos_y, enum wl_output_transform transform);
+struct wm_config_output *wm_config_find_output(struct wm_config *config,
+                                               const char *name);
+void wm_config_destroy(struct wm_config *config);
 
 #endif

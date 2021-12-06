@@ -27,6 +27,15 @@ PYWM_MOD_MOD5 = 128
 PYWM_RELEASED = 0
 PYWM_PRESSED = 1
 
+PYWM_TRANSFORM_NORMAL = 0
+PYWM_TRANSFORM_90 = 1
+PYWM_TRANSFORM_180 = 2
+PYWM_TRANSFORM_270 = 3
+PYWM_TRANSFORM_FLIPPED = 4
+PYWM_TRANSFORM_FLIPPED_90 = 5
+PYWM_TRANSFORM_FLIPPED_180 = 6
+PYWM_TRANSFORM_FLIPPED_270 = 7
+
 logger: logging.Logger = logging.getLogger(__name__)
 
 
@@ -37,11 +46,16 @@ class PyWMDownstreamState:
     def copy(self) -> PyWMDownstreamState:
         return PyWMDownstreamState(self.lock_perc)
 
-    def get(self, update_cursor: int, terminate: int) -> tuple[int, float, bool]:
+    def get(self, update_cursor: int, cursor_pos: Optional[tuple[int, int]], open_virtual_output: Optional[str], close_virtual_output: Optional[str], terminate: int, config: Optional[dict[str, Any]]) -> tuple[int, int, int, float, str, str, bool, Optional[dict[str, Any]]]:
         return (
             int(update_cursor),
+            -10000000 if cursor_pos is None else cursor_pos[0],
+            -10000000 if cursor_pos is None else cursor_pos[1],
             self.lock_perc,
-            bool(terminate)
+            open_virtual_output if open_virtual_output is not None else "",
+            close_virtual_output if close_virtual_output is not None else "",
+            bool(terminate),
+            config
         )
 
 
@@ -60,29 +74,22 @@ def callback(func: Callable[..., Optional[T]]) -> Callable[..., Optional[T]]:
 ViewT = TypeVar('ViewT', bound=PyWMView)
 WidgetT = TypeVar('WidgetT', bound=PyWMWidget)
 
-class PyWMIdleThread(Thread, Generic[ViewT]):
-    def __init__(self, wm: PyWM[ViewT]) -> None:
-        super().__init__()
-        self.wm = wm
+class PyWMOutput:
+    def __init__(self, name: str, key: int, scale: float, width: int, height: int, pos: tuple[int, int]):
+        self.name = name
+        self._key = key
+        self.scale = scale
+        self.width = width
+        self.height = height
+        self.pos = pos
 
-        self._running = True
+    def __str__(self) -> str:
+        return "Output(%s) key=%d with %dx%d, scale %f at %d, %d" % (self.name, self._key, self.width, self.height, self.scale, *self.pos)
 
-    def run(self) -> None:
-        while self._running:
-            t = time.time()
-            time.sleep(.5)
-            t = time.time() - t
-
-            # Detect if we wake up from suspend
-            if t > 1.:
-                self.wm._update_idle()
-            else:
-                self.wm._update_idle(False)
-
-    def stop(self) -> None:
-        self._running = False
-
-
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, PyWMOutput):
+            return False
+        return self._key == other._key
 
 class PyWM(Generic[ViewT]):
     def __init__(self, view_class: type=PyWMView, **kwargs: Any) -> None:
@@ -91,11 +98,11 @@ class PyWM(Generic[ViewT]):
         register("ready", self._ready)
         register("layout_change", self._layout_change)
         register("motion", self._motion)
-        register("motion_absolute", self._motion_absolute)
         register("button", self._button)
         register("axis", self._axis)
         register("key", self._key)
         register("modifiers", self._modifiers)
+        register("gesture", self._c_gesture)
 
         register("update_view", self._update_view)
         register("destroy_view", self._destroy_view)
@@ -108,9 +115,6 @@ class PyWM(Generic[ViewT]):
 
         register("update", self._update)
 
-        self.output_scale: float = kwargs['output_scale'] if 'output_scale' in kwargs else 1.0
-        self.round_scale: float = kwargs['round_scale'] if 'round_scale' in kwargs else 1.0
-
         self._view_class = view_class
 
         self._views: dict[int, ViewT] = {}
@@ -119,8 +123,7 @@ class PyWM(Generic[ViewT]):
         self._pending_widgets: list[PyWMWidget] = []
         self._pending_destroy_widgets: list[PyWMWidget] = []
 
-        self._last_absolute_x: float = 0.
-        self._last_absolute_y: float = 0.
+        self._pending_config: Optional[dict[str, Any]] = None
 
         self._touchpad_daemon = TouchpadDaemon(self._gesture)
         self._touchpad_captured = False
@@ -134,17 +137,20 @@ class PyWM(Generic[ViewT]):
         1: Enable cursor
         """
         self._pending_update_cursor = -1
+        self._pending_cursor_pos: Optional[tuple[int, int]] = None
+        self._pending_open_virtual_output: Optional[str] = None
+        self._pending_close_virtual_output: Optional[str] = None
         self._pending_terminate = False
 
         """
         Consider these read-only
         """
         self.config: dict[str, Any] = kwargs
-        self.width = 0
-        self.height = 0
+        self.layout: list[PyWMOutput] = []
         self.modifiers = 0
+        self.cursor_pos: tuple[float, float] = (0, 0)
 
-        self._idle_thread: PyWMIdleThread[ViewT] = PyWMIdleThread(self)
+        self._last_update: float = 0.
         self._idle_last_activity: float = time.time()
         self._idle_last_update_active: float = time.time()
         self._idle_last_update_inactive: float = time.time()
@@ -153,9 +159,15 @@ class PyWM(Generic[ViewT]):
 
 
     def _update_idle(self, activity: bool=True) -> None:
+        t = time.time()
+        # This is called once per frame
+        if not activity and t - self._idle_last_update_inactive < 0.5:
+            return
+
         # Is called from touchpad thread as well as regular thread
         if self._lock.acquire(blocking=False):
             try:
+
                 inhibited = False
                 for _, v in self._views.items():
                     if (up_state := v.up_state) is not None and up_state.is_inhibiting_idle:
@@ -163,22 +175,22 @@ class PyWM(Generic[ViewT]):
                         break
 
                 if activity:
-                    self._idle_last_activity = time.time()
+                    self._idle_last_activity = t
 
-                    if time.time() - self._idle_last_update_active > 1:
+                    if t - self._idle_last_update_active > 1:
                         try:
                             self.on_idle(0.0, inhibited)
                         except Exception:
                             logger.exception("on_idle active")
-                        self._idle_last_update_active = time.time()
+                        self._idle_last_update_active = t
                 else:
-                    inactive_time = time.time() - self._idle_last_activity
-                    if time.time() - self._idle_last_update_inactive > 5 and inactive_time > 5:
+                    inactive_time = t - self._idle_last_activity
+                    if t - self._idle_last_update_inactive > 5 and inactive_time > 5:
                         try:
                             self.on_idle(inactive_time, inhibited)
                         except Exception:
                             logger.exception("on_idle inactive")
-                        self._idle_last_update_inactive = time.time()
+                        self._idle_last_update_inactive = t
 
             finally:
                 self._lock.release()
@@ -190,8 +202,6 @@ class PyWM(Generic[ViewT]):
             logger.debug("Starting Touchpad daemon")
             self._touchpad_daemon.start()
 
-        logger.debug("Starting idle thread")
-        self._idle_thread.start()
         logger.debug("Executing main")
         self.main()
 
@@ -201,28 +211,13 @@ class PyWM(Generic[ViewT]):
         Thread(target=self._exec_main).start()
 
     @callback
-    def _motion(self, time_msec: int, delta_x: float, delta_y: float) -> bool:
+    def _motion(self, time_msec: int, delta_x: float, delta_y: float, abs_x: float, abs_y: float) -> bool:
         self._update_idle()
         if self._touchpad_captured:
             return True
 
-        if self.width > 0:
-            delta_x /= self.width
-        if self.height > 0:
-            delta_y /= self.height
+        self.cursor_pos = (abs_x, abs_y)
         return self.on_motion(time_msec, delta_x, delta_y)
-
-    @callback
-    def _motion_absolute(self, time_msec: int, x: float, y: float) -> bool:
-        self._update_idle()
-        if self._touchpad_captured:
-            return True
-
-        x -= self._last_absolute_x
-        y -= self._last_absolute_y
-        self._last_absolute_x += x
-        self._last_absolute_y += y
-        return self.on_motion(time_msec, x, y)
 
     @callback
     def _button(self, time_msec: int, button: int, state: int) -> bool:
@@ -254,13 +249,23 @@ class PyWM(Generic[ViewT]):
         return self.on_modifiers(self.modifiers)
 
     @callback
-    def _layout_change(self, width: int, height: int) -> None:
-        logger.debug("PyWM layout change: %dx%d" % (width, height))
+    def _c_gesture(self, kind: str, *args: Any) -> bool:
         self._update_idle()
-        self.width = width
-        self.height = height
+        if self._touchpad_captured:
+            return True
+
+        return False
+
+    @callback
+    def _layout_change(self, outputs: list[tuple[str, int, float, int, int, int, int]]) -> None:
+        self._update_idle()
+        self.layout = [PyWMOutput(n, i, s, w, h, (px, py)) for n, i, s, w, h, px, py in outputs]
+        logger.debug("PyWM layout change:")
+        for o in self.layout:
+            logger.debug("  %s", str(o))
+
         self.on_layout_change()
-        
+
 
     @callback
     def _update_view(self, handle: int, *args): # type: ignore
@@ -277,10 +282,7 @@ class PyWM(Generic[ViewT]):
             self._views[handle] = view
 
             view._update(*args)
-            self._execute_view_main(view)
-
-            res = view._update(*args)
-            return res
+            return view.init().get(self, None, True, None, None, None, None, None)
 
     @callback
     def _update_widget(self, handle: int, *args): # type: ignore
@@ -342,18 +344,39 @@ class PyWM(Generic[ViewT]):
         return None
 
     @callback
-    def _update(self) -> tuple[int, float, bool]:
+    def _update(self) -> tuple[int, int, int, float, str, str, bool, Optional[dict[str, Any]]]:
+        t = time.time()
+
+        if self._last_update != 0.:
+            dt = t - self._last_update
+            if dt > 5.:
+                logger.debug("Triggering wakeup on dt=%f", dt)
+                self.on_wakeup()
+                self._update_idle()
+            else:
+                self._update_idle(False)
+        self._last_update = t
+
+
         if self._damaged:
             self._damaged = False
             self._down_state = self.process()
 
         res = self._down_state.get(
             self._pending_update_cursor,
-            self._pending_terminate
+            self._pending_cursor_pos,
+            self._pending_open_virtual_output,
+            self._pending_close_virtual_output,
+            self._pending_terminate,
+            self._encode(self._pending_config)
         )
 
         self._pending_update_cursor = -1
+        self._pending_cursor_pos = None
+        self._pending_open_virtual_output = None
+        self._pending_close_virtual_output = None
         self._pending_terminate = False
+        self._pending_config = None
 
         return res
     
@@ -362,7 +385,10 @@ class PyWM(Generic[ViewT]):
 
     def widget_destroy(self, widget: PyWMWidget) -> None:
         self._widgets.pop(widget._handle, None)
-        self._pending_destroy_widgets += [widget]
+        if widget._handle >= 0:
+            self._pending_destroy_widgets += [widget]
+        else:
+            self._pending_widgets = [w for w in self._pending_widgets if id(w) != id(widget)]
 
     def _gesture(self, gesture: Gesture) -> None:
         self._update_idle()
@@ -382,39 +408,96 @@ class PyWM(Generic[ViewT]):
     def configure_gestures(self, *args: float) -> None:
         self._touchpad_daemon.update_config(*args)
 
+
+    def _encode(self, v: Any) -> Any:
+        if isinstance(v, str):
+            return v.encode("ascii", "ignore")
+        elif isinstance(v, dict):
+            return {k:self._encode(v[k]) for k in v}
+        elif isinstance(v, list):
+            return [self._encode(k) for k in v]
+        else:
+            return v
     """
     Public API
     """
 
     def run(self) -> None:
         logger.debug("PyWM run")
-        run(**{k:v if not isinstance(v, str) else v.encode("ascii", "ignore") for k, v in self.config.items()})
+        run(**self._encode(self.config))
         logger.debug("PyWM finished")
+
+    def reconfigure(self, config: dict[str, Any]) -> None:
+        self._pending_config = config
+        self.config = config
 
     def terminate(self) -> None:
         logger.debug("PyWM terminating")
         if self._touchpad_daemon is not None:
             self._touchpad_daemon.stop()
-        self._idle_thread.stop()
         self._pending_terminate = True
 
-    def create_widget(self, widget_class: Callable[..., WidgetT], *args: Any, **kwargs: Any) -> WidgetT:
-        widget = widget_class(self, *args, **kwargs)
+    def open_virtual_output(self, name: str) -> None:
+        self._pending_open_virtual_output = name
+
+    def close_virtual_output(self, name: str) -> None:
+        self._pending_close_virtual_output = name
+
+    def create_widget(self, widget_class: Callable[..., WidgetT], output: Optional[PyWMOutput], *args: Any, **kwargs: Any) -> WidgetT:
+        widget = widget_class(self, output, *args, **kwargs)
         self._pending_widgets += [widget]
         return widget
 
-    def update_cursor(self, enabled: bool=True) -> None:
+    def update_cursor(self, enabled: bool=True, pos: Optional[tuple[int, int]]=None) -> None:
         self._pending_update_cursor = 0 if not enabled else 1
+        self._pending_cursor_pos = pos
 
     def is_locked(self) -> bool:
         return self._down_state.lock_perc != 0.0
 
-    def round(self, x: float, y: float, w: float, h: float) -> tuple[float, float, float, float]:
+    def _get_round_scale(self, x: float, y: float, w: float, h: float) -> float:
+        scale: Optional[float] = None
+        for o in self.layout:
+            if o.pos[0] + o.width < x or x + w < o.pos[0]:
+                continue
+            if o.pos[1] + o.height < y or y + h < o.pos[1]:
+                continue
+            if scale is None or o.scale < scale:
+                scale = o.scale
+        return scale if scale is not None else 1.
+
+    def get_output_by_key(self, key: int) -> Optional[PyWMOutput]:
+        for o in self.layout:
+            if o._key == key:
+                return o
+
+        logger.warn("Could not find output for key %d in %s" % (key, self.layout))
+        return None
+
+    def round(self, x: float, y: float, w: float, h: float, wh_logical: bool=True) -> tuple[float, float, float, float]:
+        # Round positions to 1/scale logical pixels (or not at all - GL_NEAREST does it), width and height to logical pixels (if wh_logical)
+        # where scale is the smallest hidpi scale intersected by (x, y, w, h)
+
+        scale = self._get_round_scale(x, y, w, h)
+
+        # BEGIN DEBUG
+        # scale = 1.
+        # wh_logical = True
+        # END DEBUG
+
+        wh_scale = 1 if wh_logical else scale
+        cx = x + .5*w
+        cy = y + .5*h
+        w = round(w * wh_scale) / wh_scale
+        h = round(h * wh_scale) / wh_scale
+
         return (
-            round(x * self.round_scale) / self.round_scale,
-            round(y * self.round_scale) / self.round_scale,
-            round((x+w) * self.round_scale) / self.round_scale - round(x * self.round_scale) / self.round_scale,
-            round((y+h) * self.round_scale) / self.round_scale - round(y * self.round_scale) / self.round_scale)
+            # round((cx - .5*w) * scale) / scale,
+            # round((cy - .5*h) * scale) / scale,
+            (cx - .5*w),
+            (cy - .5*h),
+            w,
+            h)
 
 
     """
@@ -468,3 +551,8 @@ class PyWM(Generic[ViewT]):
         """
         pass
 
+    def on_wakeup(self) -> None:
+        """
+        Called if a wakeup from suspend (longer than 1sec) is detected
+        """
+        pass

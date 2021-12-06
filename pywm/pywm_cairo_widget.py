@@ -8,12 +8,12 @@ from abc import abstractmethod
 from .pywm_widget import PyWMWidget
 
 if TYPE_CHECKING:
-    from .pywm import PyWM, ViewT
+    from .pywm import PyWM, PyWMOutput, ViewT
 
 
 class PyWMCairoWidget(PyWMWidget):
-    def __init__(self, wm: PyWM[ViewT], width: int, height: int) -> None:
-        super().__init__(wm)
+    def __init__(self, wm: PyWM[ViewT], output: PyWMOutput, width: int, height: int) -> None:
+        super().__init__(wm, output)
 
         self.width = max(1, width)
         self.height = max(1, height)
@@ -23,9 +23,9 @@ class PyWMCairoWidget(PyWMWidget):
                                      self.width, self.height)
         self._render(surface)
         buf = surface.get_data()
-        data = np.ndarray(shape=(self.width, self.height, 4),
-                          dtype=np.uint8,
-                          buffer=buf)
+        data: np.ndarray = np.ndarray(shape=(self.width, self.height, 4),
+                                      dtype=np.uint8,
+                                      buffer=buf)
         data = data.reshape((self.width * self.height * 4), order='C')
         self.set_pixels(4*self.width,
                         self.width, self.height, data.tobytes())

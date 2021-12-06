@@ -92,10 +92,11 @@ void wm_drag_init(struct wm_drag* drag, struct wm_seat* seat, struct wlr_drag* w
 
 void wm_drag_update_position(struct wm_drag* drag){
     wm_layout_damage_from(drag->wm_seat->wm_server->wm_layout, &drag->super, NULL);
-    /* Surface width / height are not set correctly - hacky way via default_output */
+    /* Surface width / height are not set correctly - hacky way via output scale */
     if(!drag->wlr_drag_icon || !drag->wlr_drag_icon->surface) return;
-    double width = drag->wlr_drag_icon->surface->current.buffer_width / (double)drag->wm_seat->wm_server->wm_layout->default_output->wlr_output->scale;
-    double height = drag->wlr_drag_icon->surface->current.buffer_height / (double)drag->wm_seat->wm_server->wm_layout->default_output->wlr_output->scale;;
+
+    double width = drag->wlr_drag_icon->surface->current.buffer_width;
+    double height = drag->wlr_drag_icon->surface->current.buffer_height;
     wm_content_set_box(&drag->super,
                        drag->wm_seat->wm_cursor->wlr_cursor->x - .5*width,
                        drag->wm_seat->wm_cursor->wlr_cursor->y - .5*height,
@@ -115,11 +116,21 @@ static void wm_drag_render(struct wm_content* super, struct wm_output* output, p
     struct wm_drag* drag = wm_cast(wm_drag, super);
     if(!drag->wlr_drag_icon) return;
 
-    struct wlr_box box = {
-        .x = round(drag->super.display_x * output->wlr_output->scale),
-        .y = round(drag->super.display_y * output->wlr_output->scale),
+    if(super->fixed_output && super->fixed_output != output) return;
+
+    struct wlr_box unscaled = {
+        .x = round((drag->super.display_x - output->layout_x) * output->wlr_output->scale),
+        .y = round((drag->super.display_y - output->layout_y) * output->wlr_output->scale),
         .width = round(drag->super.display_width * output->wlr_output->scale),
         .height = round(drag->super.display_height * output->wlr_output->scale)};
+
+    /* drag icons do not seem to properly handle scaling - therefore simply crop by output_scale */
+    struct wlr_box box = {
+        .x = unscaled.x + .5 * unscaled.width * (1. - 1. / output->wlr_output->scale),
+        .y = unscaled.y + .5 * unscaled.height * (1. - 1. / output->wlr_output->scale),
+        .width = unscaled.width / output->wlr_output->scale,
+        .height = unscaled.height / output->wlr_output->scale
+    };
 
     struct wlr_texture *texture = wlr_surface_get_texture(drag->wlr_drag_icon->surface);
     if (!texture) {
@@ -128,15 +139,15 @@ static void wm_drag_render(struct wm_content* super, struct wm_output* output, p
     wm_renderer_render_texture_at(
             output->wm_server->wm_renderer, output_damage,
             texture, &box,
-            wm_content_get_opacity(super), 0, 0, 0, 0, 0,
+            wm_content_get_opacity(super), &box, 0,
             super->lock_enabled ? 0.0 : super->wm_server->lock_perc);
 }
 
 static void wm_drag_damage_output(struct wm_content* super, struct wm_output* output, struct wlr_surface* origin){
     struct wm_drag* drag = wm_cast(wm_drag, super);
 
-    double x = drag->super.display_x * output->wlr_output->scale;
-    double y = drag->super.display_y * output->wlr_output->scale;
+    double x = (drag->super.display_x - output->layout_x) * output->wlr_output->scale;
+    double y = (drag->super.display_y - output->layout_y) * output->wlr_output->scale;
     double width = drag->super.display_width * output->wlr_output->scale;
     double height = drag->super.display_height * output->wlr_output->scale;
     struct wlr_box box = {
@@ -150,6 +161,22 @@ static void wm_drag_damage_output(struct wm_content* super, struct wm_output* ou
 
     pixman_region32_union_rect(&region, &region,
             box.x, box.y, box.width, box.height);
+
+    if(wm_content_has_workspace(&drag->super)){
+        double workspace_x, workspace_y, workspace_w, workspace_h;
+        wm_content_get_workspace(&drag->super, &workspace_x, &workspace_y,
+                                 &workspace_w, &workspace_h);
+        workspace_x = (workspace_x - output->layout_x) * output->wlr_output->scale;
+        workspace_y = (workspace_y - output->layout_y) * output->wlr_output->scale;
+        workspace_w *= output->wlr_output->scale;
+        workspace_h *= output->wlr_output->scale;
+        pixman_region32_intersect_rect(
+            &region, &region,
+            floor(workspace_x),
+            floor(workspace_y),
+            ceil(workspace_x + workspace_w) - floor(workspace_x),
+            ceil(workspace_y + workspace_h) - floor(workspace_y));
+    }
 
     wlr_output_damage_add(output->wlr_output_damage, &region);
     pixman_region32_fini(&region);

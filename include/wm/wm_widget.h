@@ -12,6 +12,11 @@ struct wm_server;
 struct wm_widget {
     struct wm_content super;
 
+    /*
+     * Widgets are fixed to one output - only for comparison; don't dereference
+     */
+    struct wm_output* wm_output;
+
     struct wlr_texture* wlr_texture;
 };
 

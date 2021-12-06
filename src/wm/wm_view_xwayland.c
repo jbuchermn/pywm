@@ -65,7 +65,7 @@ Found:
     if(parent){
         if(!view->wlr_xwayland_surface->override_redirect){
             /* Child view */
-            view->floating = true;
+            view->super.floating = true;
             view->parent = parent;
         }else{
             wlr_log(WLR_DEBUG, "XWayland: Detected popup disguised as new view... allocating xwayland_child");
@@ -127,7 +127,8 @@ static void handle_request_configure(struct wl_listener* listener, void* data){
     struct wm_view_xwayland* view = wl_container_of(listener, view, request_configure);
     struct wlr_xwayland_surface_configure_event* event = data;
 
-    wlr_xwayland_surface_configure(view->wlr_xwayland_surface, 0., 0., event->width, event->height);
+    struct wlr_box* box = wlr_output_layout_get_box(view->super.super.wm_server->wm_layout->wlr_output_layout, NULL);
+    wlr_xwayland_surface_configure(view->wlr_xwayland_surface, box->x, box->y, event->width, event->height);
 }
 
 static void handle_set_pid(struct wl_listener* listener, void* data){
@@ -165,7 +166,6 @@ static void handle_map(struct wl_listener* listener, void* data){
 static void handle_unmap(struct wl_listener* listener, void* data){
     struct wm_view_xwayland* view = wl_container_of(listener, view, unmap);
     view->super.mapped = false;
-    wm_callback_destroy_view(&view->super);
 
     wm_layout_damage_whole(view->super.super.wm_server->wm_layout);
 }
@@ -173,8 +173,8 @@ static void handle_unmap(struct wl_listener* listener, void* data){
 
 static void handle_destroy(struct wl_listener* listener, void* data){
     struct wm_view_xwayland* view = wl_container_of(listener, view, destroy);
+    wm_callback_destroy_view(&view->super);
     wm_content_destroy(&view->super.super);
-
     free(view);
 }
 
@@ -228,7 +228,7 @@ void wm_view_xwayland_init(struct wm_view_xwayland* view, struct wm_server* serv
     view->super.vtable = &wm_view_xwayland_vtable;
 
     view->parent = NULL;
-    view->floating = false;
+    view->super.floating = false;
     wl_list_init(&view->children);
 
     view->wlr_xwayland_surface = surface;
@@ -285,7 +285,8 @@ static void wm_view_xwayland_get_info(struct wm_view* super, const char** title,
 static void wm_view_xwayland_request_size(struct wm_view* super, int width, int height){
     struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
 
-    wlr_xwayland_surface_configure(view->wlr_xwayland_surface, 0, 0, width, height);
+    struct wlr_box* box = wlr_output_layout_get_box(view->super.super.wm_server->wm_layout->wlr_output_layout, NULL);
+    wlr_xwayland_surface_configure(view->wlr_xwayland_surface, box->x, box->y, width, height);
 }
 
 static void wm_view_xwayland_request_close(struct wm_view* super){
@@ -294,19 +295,22 @@ static void wm_view_xwayland_request_close(struct wm_view* super){
     wlr_xwayland_surface_close(view->wlr_xwayland_surface);
 }
 
-static void wm_view_xwayland_get_size_constraints(struct wm_view* super, int* min_width, int* max_width, int* min_height, int* max_height){
+static void wm_view_xwayland_get_size_constraints(struct wm_view* super, int** constraints, int* n_constraints){
     struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
     if(view->wlr_xwayland_surface->size_hints){
-        *min_width = view->wlr_xwayland_surface->size_hints->min_width;
-        *max_width = view->wlr_xwayland_surface->size_hints->max_width;
-        *min_height = view->wlr_xwayland_surface->size_hints->min_height;
-        *max_height = view->wlr_xwayland_surface->size_hints->max_height;
+        view->size_constraints[0] = view->wlr_xwayland_surface->size_hints->min_width;
+        view->size_constraints[1] = view->wlr_xwayland_surface->size_hints->max_width;
+        view->size_constraints[2] = view->wlr_xwayland_surface->size_hints->min_height;
+        view->size_constraints[3] = view->wlr_xwayland_surface->size_hints->max_height;
     }else{
-        *min_width = -1;
-        *max_width = -1;
-        *min_height = -1;
-        *max_height = -1;
+        view->size_constraints[0] = -1;
+        view->size_constraints[1] = -1;
+        view->size_constraints[2] = -1;
+        view->size_constraints[3] = -1;
     }
+
+    *constraints = view->size_constraints;
+    *n_constraints = 4;
 }
 
 static void wm_view_xwayland_get_size(struct wm_view* super, int* width, int* height){
@@ -328,15 +332,6 @@ static void wm_view_xwayland_get_offset(struct wm_view* super, int* offset_x, in
 }
 
 
-static void wm_view_xwayland_focus(struct wm_view* super, struct wm_seat* seat){
-    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
-
-    if(!view->wlr_xwayland_surface->surface){
-        return;
-    }
-    wm_seat_focus_surface(seat, view->wlr_xwayland_surface->surface);
-}
-
 static void wm_view_xwayland_set_resizing(struct wm_view* super, bool resizing){
     struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
 
@@ -353,6 +348,19 @@ static void wm_view_xwayland_set_maximized(struct wm_view* super, bool maximized
 static void wm_view_xwayland_set_activated(struct wm_view* super, bool activated){
     struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
     wlr_xwayland_surface_activate(view->wlr_xwayland_surface, activated);
+    if(activated)
+        wlr_xwayland_surface_restack(view->wlr_xwayland_surface, NULL, XCB_STACK_MODE_ABOVE);
+}
+
+static void wm_view_xwayland_focus(struct wm_view* super, struct wm_seat* seat){
+    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
+
+    if(!view->wlr_xwayland_surface->surface){
+        return;
+    }
+
+    wm_seat_focus_surface(seat, view->wlr_xwayland_surface->surface);
+    wm_view_xwayland_set_activated(super, true);
 }
 
 static struct wlr_surface* wm_view_xwayland_surface_at(struct wm_view* super, double at_x, double at_y, double* sx, double* sy){
@@ -362,8 +370,8 @@ static struct wlr_surface* wm_view_xwayland_surface_at(struct wm_view* super, do
     wl_list_for_each(child, &view->children, link){
         if(!child->wlr_xwayland_surface->surface) continue;
 
-        int child_x = child->wlr_xwayland_surface->x;
-        int child_y = child->wlr_xwayland_surface->y;
+        int child_x = child->wlr_xwayland_surface->x - view->wlr_xwayland_surface->x;
+        int child_y = child->wlr_xwayland_surface->y - view->wlr_xwayland_surface->y;
         struct wlr_surface* surface = wlr_surface_surface_at(child->wlr_xwayland_surface->surface, 
                 at_x - child_x, at_y - child_y, sx, sy);
 
@@ -390,8 +398,8 @@ struct child_iterator_data {
 static void child_iterator(struct wlr_surface* surface, int sx, int sy, void* _data){
     struct child_iterator_data* data = _data;
 
-    int child_x = data->child->wlr_xwayland_surface->x;
-    int child_y = data->child->wlr_xwayland_surface->y;
+    int child_x = data->child->wlr_xwayland_surface->x - data->child->parent->wlr_xwayland_surface->x;
+    int child_y = data->child->wlr_xwayland_surface->y - data->child->parent->wlr_xwayland_surface->y;
 
     data->iterator(surface, child_x + sx, child_y + sy, data->user_data); 
 }
@@ -417,9 +425,8 @@ static void wm_view_xwayland_for_each_surface(struct wm_view* super, wlr_surface
     }
 }
 
-static bool wm_view_xwayland_is_floating(struct wm_view* super){
-    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
-    return view->floating;
+static void wm_view_xwayland_set_floating(struct wm_view* super, bool floating){
+    /* noop */
 }
 
 static struct wm_view* wm_view_xwayland_get_parent(struct wm_view* super){
@@ -449,7 +456,7 @@ struct wm_view_vtable wm_view_xwayland_vtable = {
     .set_activated = wm_view_xwayland_set_activated,
     .surface_at = wm_view_xwayland_surface_at,
     .for_each_surface = wm_view_xwayland_for_each_surface,
-    .is_floating = wm_view_xwayland_is_floating,
+    .set_floating = wm_view_xwayland_set_floating,
     .get_parent = wm_view_xwayland_get_parent,
     .structure_printf = wm_view_xwayland_structure_printf
 };

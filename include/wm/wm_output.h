@@ -12,6 +12,11 @@ struct wm_output {
     struct wm_layout* wm_layout;
     struct wl_list link; // wm_layout::wm_outputs
 
+    int layout_x; // Duplicated from wlr_output_layout
+    int layout_y; // Duplicated from wlr_output_layout
+
+    int key; // Unique key in a layout - update on layout change
+
     struct wlr_output* wlr_output;
     struct wlr_output_damage* wlr_output_damage;
 
@@ -25,6 +30,16 @@ struct wm_output {
 
 void wm_output_init(struct wm_output* output, struct wm_server* server, struct wm_layout* layout, struct wlr_output* out);
 void wm_output_destroy(struct wm_output* output);
+
+void wm_output_reconfigure(struct wm_output* output);
+
+
+/*
+ * Override name of next output to be initialised
+ * Necessary, as wlroots provides no way of naming
+ * headless outputs
+ */
+void wm_output_override_name(const char* name);
 
 
 #endif
