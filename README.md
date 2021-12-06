@@ -105,11 +105,3 @@ RestartSec=1
 [Install]
 WantedBy=multi-user.target
 ```
-
-
-
-## Status
-
-See [TESTS.org](TESTS.org) for known issues and software with which pywm and newm have been tested. The goal here is to have (apart from XWayland) all software working on [sway](https://github.com/swaywm/sway) also working on pywm in a comparable manner - a lot of code dealing with special client-behaviour therefore is simply taken form sway.
-
-
