@@ -1,21 +1,28 @@
 #+TITLE: pywm developer information
 
 * Development
-** Current (v0.2)
+** Current (v0.3)
 *** TODO Change requirements.txt to only inclued stubs
+*** TODO wlroots migration to gitlab.freedesktop.org
+
+*** Optimization / Improvements
+**** TODO Try some optimizations of update loop if no state (view nor layout nor widget) changes (most common case) --> bring down idle CPU
+**** TODO Layer shell: Keyboard interactivity
+
+*** Decorations
+**** TODO Pass decoration per view to python
+**** TODO Provide a range of widgets to be used as decoration / highlight / ...
+
+*** Gestures
+**** TODO Can c gestures make python gestures redundant? (Maybe enable switching) - would cure libseat+pyevdev issues
+**** TODO Configurable gestures (abstraction layer) + possibility to use external "gesture providers" (e.g. detection from webcam video)
 
 ** Backlog / Ideas
-*** Try some optimizations of update loop if no state (view nor layout nor widget) changes (most common case) --> bring down idle CPU
-*** wlroots migration to gitlab.freedesktop.org
-*** Layer shell: Keyboard interactivity
 *** wlr_output_manager
 *** Complete libinput device config / support for external mouse
 *** Use libseat from python / patched python evdev
-*** Can c gestures make python gestures redundant? (Maybe enable switching)
-*** Configurable gestures (abstraction layer) + possibility to use external "gesture providers" (e.g. detection from webcam video)
 *** Support newm-sidecar (or similar, via ws://) as touchpad
 *** Touch input from yoga or similar
-*** Decorations for floating windows (dialogs) or more general borders
 
 
 * Notes
