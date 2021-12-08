@@ -38,6 +38,7 @@ math           = meson.get_compiler('c').find_library('m')
 
 
 subdir('protocols')
+subdir('src/wm/shaders')
 
 
 deps = [
@@ -71,6 +72,8 @@ sources = [
     'src/wm/wm_config.c',
     'src/wm/wm_idle_inhibit.c',
     'src/wm/wm_drag.c',
+    texture_shaders_c,
+    primitive_shaders_c
 ]
 
 py_sources = [
@@ -87,7 +90,7 @@ executable(
 	'pywm',
 	sources + ['src/main.c'],
     include_directories: incs,
-	dependencies: deps
+	dependencies: deps,
 )
 
 python = import('python').find_installation('python3')
@@ -96,5 +99,5 @@ python.extension_module(
     '_pywm',
     sources + py_sources,
     include_directories: incs,
-    dependencies: deps + [python.dependency()]
+    dependencies: deps + [python.dependency()],
 )

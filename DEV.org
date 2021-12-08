@@ -2,7 +2,7 @@
 
 * Development
 ** Current (v0.3)
-*** TODO Change requirements.txt to only inclued stubs
+*** TODO Change requirements.txt to only include stubs
 *** TODO wlroots migration to gitlab.freedesktop.org
 
 *** Optimization / Improvements
@@ -12,6 +12,11 @@
 *** Decorations
 **** TODO Pass decoration per view to python
 **** TODO Provide a range of widgets to be used as decoration / highlight / ...
+- [X] Enable custom shaders to draw primitives (without textures) in wm_renderer
+- [X] Possible to also simplify existing shader handling?
+- [ ] Shaders for rounded corner rectangle
+- [ ] Map wm_widget render to primitives
+- [ ] Reenable flag WM_CUSTOM_RENDERER
 
 *** Gestures
 **** TODO Can c gestures make python gestures redundant? (Maybe enable switching) - would cure libseat+pyevdev issues
