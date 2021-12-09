@@ -38,6 +38,8 @@ struct wm_config {
     char xkb_layout[WM_CONFIG_STRLEN];
     char xkb_options[WM_CONFIG_STRLEN];
 
+    char texture_shaders[WM_CONFIG_STRLEN];
+
     struct wl_list outputs;
 
     const char *xcursor_theme;

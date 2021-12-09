@@ -416,8 +416,6 @@ void wm_renderer_init(struct wm_renderer *renderer, struct wm_server *server) {
     wlr_egl_unset_current(r->egl);
 #endif
 
-    /* TODO - Read from config */
-    wm_renderer_select_texture_shaders(renderer, "basic");
 }
 
 void wm_renderer_destroy(struct wm_renderer *renderer) {

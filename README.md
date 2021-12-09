@@ -67,6 +67,7 @@ Configuration is handled via key-value pairs given to the `PyWM` contructor:
 | `contstrain_popups_to_toplevel` | `False` | Boolean: Try to keep popups contrained within their window                                       |
 | `encourage_csd`                 | `True`  | Boolean: Encourage clients to show client-side-decorations (see `wlr_server_decoration_manager`) |
 | `debug`                         | `False` | Boolean: Loglevel debug plus output debug information to stdout on every F1 press                |
+| `texture_shaders`               | `basic` | String: Shaders to use for texture rendering (see `src/wm/shaders/texture`)                      |
 
 
 ### Troubleshooting

@@ -8,6 +8,7 @@
 #include "wm/wm_server.h"
 #include "wm/wm_layout.h"
 #include "wm/wm_seat.h"
+#include "wm/wm_renderer.h"
 
 void wm_config_init_default(struct wm_config *config) {
     config->enable_xwayland = false;
@@ -17,6 +18,7 @@ void wm_config_init_default(struct wm_config *config) {
     strcpy(config->xkb_model, "");
     strcpy(config->xkb_layout, "");
     strcpy(config->xkb_options, "");
+    strcpy(config->texture_shaders, "basic");
 
     wl_list_init(&config->outputs);
 
@@ -59,13 +61,14 @@ void wm_config_reconfigure(struct wm_config* config, struct wm_server* server){
     wm_layout_reconfigure(server->wm_layout);
     wm_server_reconfigure(server);
 
-
     char cursor_size_fmt[16];
     snprintf(cursor_size_fmt, sizeof(cursor_size_fmt), "%u", config->xcursor_size);
     setenv("XCURSOR_SIZE", cursor_size_fmt, 1);
     if (config->xcursor_theme != NULL) {
         setenv("XCURSOR_THEME", config->xcursor_theme, 1);
     }
+
+    wm_renderer_select_texture_shaders(server->wm_renderer, config->texture_shaders);
 }
 
 void wm_config_add_output(struct wm_config *config, const char *name,
