@@ -31,15 +31,17 @@ void _pywm_widget_update(struct _pywm_widget* widget){
         int z_index;
         int lock_enabled;
         double workspace_x, workspace_y, workspace_w, workspace_h;
+        PyObject* pixels;
+        PyObject* primitive;
         if(!PyArg_ParseTuple(res, 
-                    "p(dddd)(dddd)idi(dddd)",
+                    "p(dddd)(dddd)idi(dddd)OO",
                     &lock_enabled,
                     &x, &y, &w, &h,
                     &mask_x, &mask_y, &mask_w, &mask_h,
                     &output_key,
                     &opacity,
                     &z_index,
-                    &workspace_x, &workspace_y, &workspace_w, &workspace_h
+                    &workspace_x, &workspace_y, &workspace_w, &workspace_h, &pixels, &primitive
            )){
             PyErr_SetString(PyExc_TypeError, "Cannot parse update_widget return");
             return;
@@ -54,27 +56,51 @@ void _pywm_widget_update(struct _pywm_widget* widget){
 
         wm_content_set_output(&widget->widget->super, output_key, NULL);
         wm_content_set_workspace(&widget->widget->super, workspace_x, workspace_y, workspace_w, workspace_h);
-    }
-    Py_XDECREF(res);
 
-    args = Py_BuildValue("(l)", widget->handle);
-    res = PyObject_Call(_pywm_callbacks_get_all()->update_widget_pixels, args, NULL);
-    Py_XDECREF(args);
-    if(res && res != Py_None){
-        /* Handle update_pixels */
-        int stride, width, height;
-        PyObject* data;
-        if(!PyArg_ParseTuple(res, "iiiS", &stride, &width, &height, &data)){
-            PyErr_SetString(PyExc_TypeError, "Cannot parse update_widget_pixels return");
-            return;
+        if(pixels && pixels != Py_None){
+            int stride, width, height;
+            PyObject* data;
+            if(!PyArg_ParseTuple(pixels, "iiiS", &stride, &width, &height, &data)){
+                PyErr_SetString(PyExc_TypeError, "Cannot parse pixels");
+                return;
+            }
+
+            wm_widget_set_pixels(widget->widget,
+                    DRM_FORMAT_ARGB8888,
+                    stride,
+                    width,
+                    height,
+                    PyBytes_AsString(data));
         }
 
-        wm_widget_set_pixels(widget->widget,
-                DRM_FORMAT_ARGB8888,
-                stride,
-                width,
-                height,
-                PyBytes_AsString(data));
+        if(primitive && primitive != Py_None){
+            char* name;
+            PyObject* params_int;
+            PyObject* params_float;
+            if(!PyArg_ParseTuple(primitive, "sOO", &name, &params_int, &params_float)){
+                PyErr_SetString(PyExc_TypeError, "Cannot parse primitive");
+                return;
+            }
+
+            if(!params_int || !params_float || !PyList_Check(params_int) || !PyList_Check(params_float)){
+                PyErr_SetString(PyExc_TypeError, "Cannot parse primitive lists");
+                return;
+            }
+
+            int* p_int = malloc(PyList_Size(params_int) * sizeof(int));
+            float* p_float = malloc(PyList_Size(params_float) * sizeof(int));
+
+            for(int i=0; i<PyList_Size(params_int); i++){
+                p_int[i] = PyLong_AsLong(PyList_GetItem(params_int, i));
+            }
+            for(int i=0; i<PyList_Size(params_float); i++){
+                p_float[i] = PyFloat_AsDouble(PyList_GetItem(params_float, i));
+            }
+
+            wm_widget_set_primitive(widget->widget, strdup(name), PyList_Size(params_int), p_int, PyList_Size(params_float), p_float);
+
+        }
+
     }
 
     Py_XDECREF(res);

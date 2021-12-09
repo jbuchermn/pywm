@@ -262,11 +262,11 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
     output->layout_x = 0;
     output->layout_y = 0;
 
-	if (!wlr_output_init_render(output->wlr_output, server->wlr_allocator,
-			server->wm_renderer->wlr_renderer)) {
-		wlr_log(WLR_ERROR, "Failed to init output render");
-		return;
-	}
+    if (!wlr_output_init_render(output->wlr_output, server->wlr_allocator,
+                                server->wm_renderer->wlr_renderer)) {
+        wlr_log(WLR_ERROR, "Failed to init output render");
+        return;
+    }
 
     output->wlr_output_damage = wlr_output_damage_create(output->wlr_output);
 

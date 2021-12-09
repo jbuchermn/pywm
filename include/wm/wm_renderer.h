@@ -6,9 +6,6 @@
 #include <pixman.h>
 
 
-// TODO: Enable
-/* #define WM_CUSTOM_RENDERER */
-
 #ifdef WM_CUSTOM_RENDERER
 
 // TODO: Generate

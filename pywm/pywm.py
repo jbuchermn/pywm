@@ -110,7 +110,6 @@ class PyWM(Generic[ViewT]):
 
         register("query_new_widget", self._query_new_widget)
         register("update_widget", self._update_widget)
-        register("update_widget_pixels", self._update_widget_pixels)
         register("query_destroy_widget", self._query_destroy_widget)
 
         register("update", self._update)
@@ -289,14 +288,6 @@ class PyWM(Generic[ViewT]):
         try:
             res = self._widgets[handle]._update(*args)
             return res
-        except Exception:
-            return None
-
-
-    @callback
-    def _update_widget_pixels(self, handle: int, *args): # type: ignore
-        try:
-            return self._widgets[handle]._update_pixels(*args)
         except Exception:
             return None
 

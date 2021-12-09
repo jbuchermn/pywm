@@ -19,7 +19,6 @@ struct _pywm_callbacks {
 
     PyObject* query_new_widget;
     PyObject* update_widget;
-    PyObject* update_widget_pixels;
     PyObject* query_destroy_widget;
 
     PyObject* update;

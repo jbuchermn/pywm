@@ -305,8 +305,6 @@ PyObject** _pywm_callbacks_get(const char* name){
         return &callbacks.query_new_widget;
     }else if(!strcmp(name, "update_widget")){
         return &callbacks.update_widget;
-    }else if(!strcmp(name, "update_widget_pixels")){
-        return &callbacks.update_widget_pixels;
     }else if(!strcmp(name, "query_destroy_widget")){
         return &callbacks.query_destroy_widget;
     }else if(!strcmp(name, "update")){
