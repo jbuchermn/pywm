@@ -27,6 +27,8 @@ struct wm_server{
     struct wlr_backend* wlr_backend;
     struct wlr_backend* wlr_headless_backend;
 
+    struct wlr_allocator* wlr_allocator;
+
     struct wlr_compositor* wlr_compositor;
     struct wlr_data_device_manager* wlr_data_device_manager;
     struct wlr_xdg_shell* wlr_xdg_shell;

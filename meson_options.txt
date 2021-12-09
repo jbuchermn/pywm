@@ -1,0 +1,1 @@
+option('custom_renderer', type : 'boolean', value : true)

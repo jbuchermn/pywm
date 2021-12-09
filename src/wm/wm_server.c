@@ -10,6 +10,7 @@
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_output.h>
+#include <wlr/render/allocator.h>
 #include <wlr/config.h>
 #include <wlr/types/wlr_data_control_v1.h>
 #include <wlr/types/wlr_export_dmabuf_v1.h>
@@ -262,6 +263,10 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wm_renderer = calloc(1, sizeof(struct wm_renderer));
     wm_renderer_init(server->wm_renderer, server);
 
+    /* Allocator */
+	server->wlr_allocator = wlr_allocator_autocreate(server->wlr_backend,
+		server->wm_renderer->wlr_renderer);
+
     /* Event loop */
     server->wl_event_loop = 
         wl_display_get_event_loop(server->wl_display);
@@ -321,7 +326,7 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
 
 
     /* Additional headless backend for vnc */
-    server->wlr_headless_backend = wlr_headless_backend_create_with_renderer(server->wl_display, server->wm_renderer->wlr_renderer);
+    server->wlr_headless_backend = wlr_headless_backend_create(server->wl_display);
     wlr_multi_backend_add(server->wlr_backend, server->wlr_headless_backend);
 
     /* Handlers */

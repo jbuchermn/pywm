@@ -3,7 +3,7 @@
 * Development
 ** Current (v0.3)
 *** TODO Change requirements.txt to only include stubs
-*** TODO wlroots migration to gitlab.freedesktop.org
+*** DONE wlroots migration to gitlab.freedesktop.org
 
 *** Optimization / Improvements
 **** TODO Try some optimizations of update loop if no state (view nor layout nor widget) changes (most common case) --> bring down idle CPU / Maybe store callable view._update directly in _pywm_view (remove look-ups) / Investigate scaling of idle cpu with number of views
@@ -16,8 +16,8 @@
 - [X] Possible to also simplify existing shader handling?
 - [X] Shaders for rect and rounded corner rect
 - [X] Replace shader.c by shader.glsl
+- [X] Reenable flag WM_CUSTOM_RENDERER
 - [ ] Are separate lock-shaders necessary? (It's only a performance thing)
-- [ ] Reenable flag WM_CUSTOM_RENDERER
 - [ ] wm_config for shader to be used for views
 - [ ] Configure (down_state) wm_widgets to represent certain primitives
 

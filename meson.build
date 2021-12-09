@@ -20,6 +20,13 @@ add_project_arguments(
 	language: 'c',
 )
 
+if get_option('custom_renderer')
+    add_project_arguments(
+        '-DWM_CUSTOM_RENDERER',
+        language: 'c',
+    )
+endif
+
 
 # Dependencies
 
@@ -38,7 +45,10 @@ math           = meson.get_compiler('c').find_library('m')
 
 
 subdir('protocols')
-subdir('src/wm/shaders')
+
+if get_option('custom_renderer')
+    subdir('src/wm/shaders')
+endif
 
 
 deps = [
@@ -72,9 +82,14 @@ sources = [
     'src/wm/wm_config.c',
     'src/wm/wm_idle_inhibit.c',
     'src/wm/wm_drag.c',
-    texture_shaders_c,
-    primitive_shaders_c
 ]
+
+if get_option('custom_renderer')
+    sources += [
+        texture_shaders_c,
+        primitive_shaders_c
+    ]
+endif
 
 py_sources = [
     'src/py/_pywmmodule.c',

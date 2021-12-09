@@ -7,7 +7,9 @@
 
 
 // TODO: Enable
-#define WM_CUSTOM_RENDERER
+/* #define WM_CUSTOM_RENDERER */
+
+#ifdef WM_CUSTOM_RENDERER
 
 // TODO: Generate
 #define WM_CUSTOM_RENDERER_N_TEXTURE_SHADERS 10
@@ -21,7 +23,6 @@ struct wm_renderer_texture_shader {
 
     /* Basic parameters */
     GLint proj;
-    GLint invert_y;
     GLint tex;
     GLint alpha;
     GLint pos_attrib;
@@ -71,12 +72,16 @@ struct wm_renderer_primitive_shader {
     GLint params_int;
 };
 
+#endif
+
 struct wm_renderer {
     struct wm_server* wm_server;
     struct wlr_renderer* wlr_renderer;
 
+#ifdef WM_CUSTOM_RENDERER
     struct wm_renderer_texture_shaders texture_shaders[WM_CUSTOM_RENDERER_N_TEXTURE_SHADERS];
     struct wm_renderer_primitive_shader primitive_shaders[WM_CUSTOM_RENDERER_N_PRIMITIVE_SHADERS];
+#endif
 
     struct wm_renderer_texture_shaders* texture_shaders_selected;
     struct wm_renderer_primitive_shader* primitive_shader_selected;
@@ -87,6 +92,8 @@ struct wm_renderer {
 void wm_renderer_init(struct wm_renderer *renderer, struct wm_server *server);
 void wm_renderer_destroy(struct wm_renderer *renderer);
 
+#ifdef WM_CUSTOM_RENDERER
+
 void wm_renderer_add_texture_shaders(struct wm_renderer* renderer, const char* name,
         const GLchar* vert_src,
         const GLchar* frag_src_rgba,
@@ -95,12 +102,14 @@ void wm_renderer_add_texture_shaders(struct wm_renderer* renderer, const char* n
         const GLchar* frag_src_lock_rgba,
         const GLchar* frag_src_lock_rgbx,
         const GLchar* frag_src_lock_ext);
-void wm_renderer_select_texture_shaders(struct wm_renderer* renderer, const char* name);
 
 
 void wm_renderer_add_primitive_shader(struct wm_renderer* renderer, const char* name,
         const GLchar* vert_src, const GLchar* frag_src, int n_params_int, int n_params_float);
 
+#endif
+
+void wm_renderer_select_texture_shaders(struct wm_renderer* renderer, const char* name);
 void wm_renderer_select_primitive_shader(struct wm_renderer* renderer, const char* name);
 
 void wm_renderer_begin(struct wm_renderer *renderer, struct wm_output *output);

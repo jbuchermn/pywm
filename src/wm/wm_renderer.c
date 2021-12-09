@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <math.h>
-#include <render/gles2.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wayland-server.h>
@@ -12,6 +11,10 @@
 #include "wm/wm_output.h"
 #include "wm/wm_renderer.h"
 #include "wm/wm_server.h"
+
+#ifdef WM_CUSTOM_RENDERER
+
+#include <render/gles2.h>
 #include "wm/shaders/wm_shaders.h"
 
 static const GLfloat verts[] = {
@@ -96,7 +99,6 @@ static void wm_renderer_link_texture_shader(struct wm_renderer *renderer,
     assert(shader->shader);
 
     shader->proj = glGetUniformLocation(shader->shader, "proj");
-    shader->invert_y = glGetUniformLocation(shader->shader, "invert_y");
     shader->tex = glGetUniformLocation(shader->shader, "tex");
     shader->alpha = glGetUniformLocation(shader->shader, "alpha");
     shader->width = glGetUniformLocation(shader->shader, "width");
@@ -185,8 +187,11 @@ void wm_renderer_add_primitive_shader(struct wm_renderer *renderer,
     }
 }
 
+#endif
+
 void wm_renderer_select_texture_shaders(struct wm_renderer *renderer,
                                         const char *name) {
+#ifdef WM_CUSTOM_RENDERER
     int i = 0;
     for (; i < WM_CUSTOM_RENDERER_N_TEXTURE_SHADERS; i++) {
         if (renderer->texture_shaders[i].name && !strcmp(renderer->texture_shaders[i].name, name))
@@ -199,10 +204,14 @@ void wm_renderer_select_texture_shaders(struct wm_renderer *renderer,
         wlr_log(WLR_INFO, "Could not find texture shaders '%s' - defaulting", name);
         renderer->texture_shaders_selected = renderer->texture_shaders;
     }
+#else
+    // noop
+#endif
 }
 
 void wm_renderer_select_primitive_shader(struct wm_renderer *renderer,
                                          const char *name) {
+#ifdef WM_CUSTOM_RENDERER
     int i = 0;
     for (; i < WM_CUSTOM_RENDERER_N_PRIMITIVE_SHADERS; i++) {
         if (renderer->primitive_shaders[i].name && !strcmp(renderer->primitive_shaders[i].name, name))
@@ -214,7 +223,12 @@ void wm_renderer_select_primitive_shader(struct wm_renderer *renderer,
         wlr_log(WLR_INFO, "Could not find primitive shader '%s' - defaulting", name);
         renderer->primitive_shader_selected = renderer->primitive_shaders;
     }
+#else
+    // noop
+#endif
 }
+
+#ifdef WM_CUSTOM_RENDERER
 
 static bool render_subtexture_with_matrix(
     struct wm_renderer *renderer, struct wlr_texture *wlr_texture,
@@ -277,7 +291,6 @@ static bool render_subtexture_with_matrix(
     glUseProgram(shader->shader);
 
     glUniformMatrix3fv(shader->proj, 1, GL_FALSE, gl_matrix);
-    glUniform1i(shader->invert_y, texture->inverted_y);
     glUniform1i(shader->tex, 0);
     glUniform1f(shader->alpha, alpha);
     glUniform1f(shader->width, display_box->width);
@@ -373,18 +386,22 @@ static void render_primitive_with_matrix(
     pop_gles2_debug(gles2_renderer);
 }
 
+#endif
+
 
 void wm_renderer_init(struct wm_renderer *renderer, struct wm_server *server) {
     renderer->wm_server = server;
 
-    renderer->wlr_renderer = wlr_backend_get_renderer(server->wlr_backend);
+    renderer->wlr_renderer = wlr_renderer_autocreate(server->wlr_backend);
     assert(renderer->wlr_renderer);
 
     wlr_renderer_init_wl_display(renderer->wlr_renderer, server->wl_display);
 
     renderer->current = NULL;
 
+#ifdef WM_CUSTOM_RENDERER
     struct wlr_gles2_renderer *r = gles2_get_renderer(renderer->wlr_renderer);
+    assert(r);
 
     for (int i = 0; i < WM_CUSTOM_RENDERER_N_TEXTURE_SHADERS; i++)
         renderer->texture_shaders[i].name = 0;
@@ -397,6 +414,7 @@ void wm_renderer_init(struct wm_renderer *renderer, struct wm_server *server) {
     wm_texture_shaders_init(renderer);
     wm_primitive_shaders_init(renderer);
     wlr_egl_unset_current(r->egl);
+#endif
 
     /* TODO - Read from config */
     wm_renderer_select_texture_shaders(renderer, "basic");
@@ -460,11 +478,17 @@ void wm_renderer_render_texture_at(struct wm_renderer *renderer,
         wlr_box_transform(&inters, &inters, transform, ow, oh);
         wlr_renderer_scissor(renderer->wlr_renderer, &inters);
 
+#ifdef WM_CUSTOM_RENDERER
         render_subtexture_with_matrix(
             renderer, texture, &fbox, matrix, opacity, box, mask->x - box->x,
             mask->y - box->y, box->x + box->width - mask->x - mask->width,
             box->y + box->height - mask->y - mask->height, corner_radius,
             lock_perc);
+#else
+
+        wlr_render_subtexture_with_matrix(renderer->wlr_renderer, texture,
+                                          &fbox, matrix, opacity);
+#endif
     }
 }
 
@@ -479,6 +503,7 @@ void wm_renderer_render_primitive(struct wm_renderer* renderer,
     enum wl_output_transform transform =
         wlr_output_transform_invert(renderer->current->wlr_output->transform);
 
+#ifdef WM_CUSTOM_RENDERER
     float matrix[9];
     wlr_matrix_project_box(matrix, box, WL_OUTPUT_TRANSFORM_NORMAL, 0,
                            renderer->current->wlr_output->transform_matrix);
@@ -489,6 +514,7 @@ void wm_renderer_render_primitive(struct wm_renderer* renderer,
         .width = box->width,
         .height = box->height,
     };
+#endif
 
     int nrects;
     pixman_box32_t *rects = pixman_region32_rectangles(damage, &nrects);
@@ -505,7 +531,11 @@ void wm_renderer_render_primitive(struct wm_renderer* renderer,
         wlr_box_transform(&inters, &inters, transform, ow, oh);
         wlr_renderer_scissor(renderer->wlr_renderer, &inters);
 
+#ifdef WM_CUSTOM_RENDERER
         render_primitive_with_matrix(
             renderer, &fbox, matrix, opacity, params_int, params_float);
+#else
+        wlr_render_rect(renderer->wlr_renderer, box, (float[]){1.0, 1.0, 0.0, 1.0}, renderer->current->wlr_output->transform_matrix);
+#endif
     }
 }
