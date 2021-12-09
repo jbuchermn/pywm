@@ -5,13 +5,13 @@ base = os.path.dirname(os.path.realpath(__file__))
 base_textures = os.path.join(base, 'texture')
 
 texture_files = [
-    'vertex.c',
-    'fragment_rgba.c',
-    'fragment_rgbx.c',
-    'fragment_ext.c',
-    'fragment_lock_rgba.c',
-    'fragment_lock_rgbx.c',
-    'fragment_lock_ext.c',
+    'vertex.glsl',
+    'fragment_rgba.glsl',
+    'fragment_rgbx.glsl',
+    'fragment_ext.glsl',
+    'fragment_lock_rgba.glsl',
+    'fragment_lock_rgbx.glsl',
+    'fragment_lock_ext.glsl',
 ]
 
 with open(sys.argv[1], "w") as out:

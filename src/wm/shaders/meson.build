@@ -7,27 +7,28 @@ texture_shaders = [
 ]
 
 primitive_shaders = [
-  'rounded_corners_rect'
+  'rounded_corners_rect',
+  'rounded_corners_border'
 ]
 
 texture_shader_files = []
 foreach s : texture_shaders
   texture_shader_files += [
-    './texture/' + s + '/vertex.c',
-    './texture/' + s + '/fragment_rgba.c',
-    './texture/' + s + '/fragment_rgbx.c',
-    './texture/' + s + '/fragment_ext.c',
-    './texture/' + s + '/fragment_lock_rgba.c',
-    './texture/' + s + '/fragment_lock_rgbx.c',
-    './texture/' + s + '/fragment_lock_ext.c',
+    './texture/' + s + '/vertex.glsl',
+    './texture/' + s + '/fragment_rgba.glsl',
+    './texture/' + s + '/fragment_rgbx.glsl',
+    './texture/' + s + '/fragment_ext.glsl',
+    './texture/' + s + '/fragment_lock_rgba.glsl',
+    './texture/' + s + '/fragment_lock_rgbx.glsl',
+    './texture/' + s + '/fragment_lock_ext.glsl',
   ]
 endforeach
 
 primitive_shader_files = []
 foreach s : primitive_shaders
   primitive_shader_files += [
-    './primitive/' + s + '/vertex.c',
-    './primitive/' + s + '/fragment.c',
+    './primitive/' + s + '/vertex.glsl',
+    './primitive/' + s + '/fragment.glsl',
   ]
 endforeach
 

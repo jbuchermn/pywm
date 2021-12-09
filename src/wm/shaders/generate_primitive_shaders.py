@@ -6,8 +6,8 @@ base = os.path.dirname(os.path.realpath(__file__))
 base_textures = os.path.join(base, 'primitive')
 
 texture_files = [
-    'vertex.c',
-    'fragment.c',
+    'vertex.glsl',
+    'fragment.glsl',
 ]
 
 regexp_int = re.compile(r'.*int params_int\[(\d*)\]');

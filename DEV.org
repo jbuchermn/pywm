@@ -6,7 +6,7 @@
 *** TODO wlroots migration to gitlab.freedesktop.org
 
 *** Optimization / Improvements
-**** TODO Try some optimizations of update loop if no state (view nor layout nor widget) changes (most common case) --> bring down idle CPU
+**** TODO Try some optimizations of update loop if no state (view nor layout nor widget) changes (most common case) --> bring down idle CPU / Maybe store callable view._update directly in _pywm_view (remove look-ups) / Investigate scaling of idle cpu with number of views
 **** TODO Layer shell: Keyboard interactivity
 
 *** Decorations
@@ -14,9 +14,12 @@
 **** TODO Provide a range of widgets to be used as decoration / highlight / ...
 - [X] Enable custom shaders to draw primitives (without textures) in wm_renderer
 - [X] Possible to also simplify existing shader handling?
-- [ ] Shaders for rounded corner rectangle
-- [ ] Map wm_widget render to primitives
+- [X] Shaders for rect and rounded corner rect
+- [X] Replace shader.c by shader.glsl
+- [ ] Are separate lock-shaders necessary? (It's only a performance thing)
 - [ ] Reenable flag WM_CUSTOM_RENDERER
+- [ ] wm_config for shader to be used for views
+- [ ] Configure (down_state) wm_widgets to represent certain primitives
 
 *** Gestures
 **** TODO Can c gestures make python gestures redundant? (Maybe enable switching) - would cure libseat+pyevdev issues
