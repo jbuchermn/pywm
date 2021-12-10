@@ -497,7 +497,6 @@ static void wm_view_xdg_request_size(struct wm_view* super, int width, int heigh
     }
 
     if(view->wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL){
-        wlr_log(WLR_DEBUG, "DDEBUGG - size request: %dx%d", width, height);
         wlr_xdg_toplevel_set_size(view->wlr_xdg_surface, width, height);
     }else{
         wlr_log(WLR_DEBUG, "Warning: Not toplevel");
