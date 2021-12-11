@@ -3,6 +3,7 @@
 * Development
 ** Current (v0.2)
 *** TODO Change requirements.txt to only inclued stubs
+*** TODO Pass information if view wants SSD to Python (e.g. to enable / disable corner radius according to this / in v0.3 to draw SSD using widgets)
 
 ** Backlog / Ideas
 *** Try some optimizations of update loop if no state (view nor layout nor widget) changes (most common case) --> bring down idle CPU
