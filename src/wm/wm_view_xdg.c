@@ -446,7 +446,7 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
 
     view->wlr_xdg_surface = surface;
     view->wlr_deco = NULL;
-    view->wlr_deco = NULL;
+    view->wlr_server_deco = NULL;
 
     wl_list_init(&view->popups);
     wl_list_init(&view->subsurfaces);
@@ -783,7 +783,7 @@ static void deco_handle_request_mode(struct wl_listener* listener, void* data){
 }
 
 void wm_view_xdg_register_server_decoration(struct wm_view_xdg* view, struct wlr_server_decoration* wlr_deco){
-    /* We can't really do anything with this as the KDE protocol is not very well thought-out (hence deprecated) */
+    view->wlr_server_deco = wlr_deco;
 }
 
 void wm_view_xdg_register_decoration(struct wm_view_xdg* view, struct wlr_xdg_toplevel_decoration_v1* wlr_deco){

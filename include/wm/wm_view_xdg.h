@@ -55,6 +55,7 @@ struct wm_view_xdg {
 
     struct wlr_xdg_surface* wlr_xdg_surface;
     struct wlr_xdg_toplevel_decoration_v1* wlr_deco;
+    struct wlr_server_decoration* wlr_server_deco;
 
     struct wl_list popups;
     struct wl_list subsurfaces;
