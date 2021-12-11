@@ -130,7 +130,7 @@ struct send_enter_leave_data {
     struct wm_output* output;
 };
 
-static void send_enter_leave_it(struct wlr_surface *surface, int sx, int sy, void *data){
+static void send_enter_leave_it(struct wlr_surface *surface, int sx, int sy, bool constrained, void *data){
     struct send_enter_leave_data* edata = data;
     if(edata->enter){
         wlr_surface_send_enter(surface, edata->output->wlr_output);

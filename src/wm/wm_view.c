@@ -70,7 +70,7 @@ struct render_data {
 
 
 static void render_surface(struct wlr_surface *surface, int sx, int sy,
-        void *data) {
+        bool constrained, void *data) {
     struct render_data *rdata = data;
     struct wm_output *output = rdata->output;
 
@@ -93,8 +93,7 @@ static void render_surface(struct wlr_surface *surface, int sx, int sy,
         .height = round(rdata->mask_h * output->wlr_output->scale)};
 
     double corner_radius = rdata->corner_radius * output->wlr_output->scale;
-    if (sx || sy) {
-        /* Only for surfaces which extend fully */
+    if(!constrained){
         mask.x = box.x;
         mask.y = box.y;
         mask.width = box.width;
@@ -147,6 +146,7 @@ static void wm_view_render(struct wm_content* super, struct wm_output* output, p
 
     double x_scale = width > 1 ? display_width / width : 0;
     double y_scale = width > 1 ? display_height / height : 0;
+
     // Firefox starts off as a 1x1 view which causes subsurfaces to be scaled up,
     // that's why we require at least size 2x2 for the root surface
     struct render_data rdata = {
@@ -185,7 +185,7 @@ struct damage_data {
 };
 
 static void damage_surface(struct wlr_surface *surface, int sx, int sy,
-        void *data) {
+        bool constrained, void *data) {
     struct damage_data *ddata = data;
     struct wm_output *output = ddata->output;
 
@@ -294,10 +294,10 @@ static void wm_view_damage_output(struct wm_content* super, struct wm_output* ou
     wm_view_for_each_surface(view, damage_surface, &ddata);
 }
 
-static void print_surface(struct wlr_surface *surface, int sx, int sy,
+static void print_surface(struct wlr_surface *surface, int sx, int sy, bool constrained,
         void *data) {
     FILE* file = data;
-    fprintf(file, "  surface (%d, %d) of size %d, %d: %p\n", sx, sy, surface->current.width, surface->current.height, surface);
+    fprintf(file, "  surface (%d, %d%s) of size %d, %d: %p\n", sx, sy, constrained ? " constrained" : "", surface->current.width, surface->current.height, surface);
 }
 
 static void wm_view_printf(FILE* file, struct wm_content* super){
