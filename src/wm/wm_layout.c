@@ -103,19 +103,9 @@ void wm_layout_damage_whole(struct wm_layout* layout){
 
 
 void wm_layout_damage_from(struct wm_layout* layout, struct wm_content* content, struct wlr_surface* origin){
-    double display_x, display_y, display_width, display_height;
-    wm_content_get_box(content, &display_x, &display_y, &display_width, &display_height);
-    struct wlr_box box = {
-        .x = display_x,
-        .y = display_y,
-        .width = display_width,
-        .height = display_height
-    };
-
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
-        if(content->fixed_output && content->fixed_output != output) continue;
-        if(!wlr_output_layout_intersects(layout->wlr_output_layout, output->wlr_output, &box)) continue;
+        if(!wm_content_is_on_output(content, output)) continue;
 
         if(!content->lock_enabled && wm_server_is_locked(layout->wm_server)){
             wm_content_damage_output(content, output, NULL);
@@ -130,7 +120,7 @@ struct send_enter_leave_data {
     struct wm_output* output;
 };
 
-static void send_enter_leave_it(struct wlr_surface *surface, int sx, int sy, void *data){
+static void send_enter_leave_it(struct wlr_surface *surface, int sx, int sy, bool constrained, void *data){
     struct send_enter_leave_data* edata = data;
     if(edata->enter){
         wlr_surface_send_enter(surface, edata->output->wlr_output);
@@ -143,19 +133,11 @@ void wm_layout_update_content_outputs(struct wm_layout* layout, struct wm_conten
     if(!wm_content_is_view(content)) return;
     struct wm_view* view = wm_cast(wm_view, content);
 
-    double display_x, display_y, display_width, display_height;
-    wm_content_get_box(content, &display_x, &display_y, &display_width, &display_height);
-    struct wlr_box box = {
-        .x = display_x,
-        .y = display_y,
-        .width = display_width,
-        .height = display_height
-    };
-
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
-        struct send_enter_leave_data data = {.enter = true, .output = output};
-        data.enter = view->super.fixed_output == output || (wlr_output_layout_intersects(layout->wlr_output_layout, output->wlr_output, &box) && view->super.fixed_output == NULL);
+        struct send_enter_leave_data data = {
+            .enter = wm_content_is_on_output(&view->super, output),
+            .output = output};
         wm_view_for_each_surface(view, send_enter_leave_it, &data);
     }
 }

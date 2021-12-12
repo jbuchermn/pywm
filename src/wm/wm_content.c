@@ -106,6 +106,19 @@ bool wm_content_has_workspace(struct wm_content* content){
     return !(content->workspace_width < 0 || content->workspace_height < 0);
 }
 
+bool wm_content_is_on_output(struct wm_content* content, struct wm_output* output){
+    double display_x, display_y, display_width, display_height;
+    wm_content_get_box(content, &display_x, &display_y, &display_width, &display_height);
+    struct wlr_box box = {
+        .x = display_x,
+        .y = display_y,
+        .width = display_width,
+        .height = display_height
+    };
+
+    return content->fixed_output == output || (wlr_output_layout_intersects(output->wm_layout->wlr_output_layout, output->wlr_output, &box) && content->fixed_output == NULL);
+}
+
 void wm_content_set_box(struct wm_content* content, double x, double y, double width, double height) {
     if(fabs(content->display_x - x) +
             fabs(content->display_y - y) + 
@@ -192,6 +205,8 @@ double wm_content_get_corner_radius(struct wm_content* content){
 }
 
 void wm_content_render(struct wm_content* content, struct wm_output* output, pixman_region32_t* output_damage, struct timespec now){
+    if(!wm_content_is_on_output(content, output)) return;
+
     pixman_region32_t damage_on_workspace;
     pixman_region32_init(&damage_on_workspace);
     pixman_region32_copy(&damage_on_workspace, output_damage);

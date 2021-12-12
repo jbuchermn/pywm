@@ -392,7 +392,7 @@ static struct wlr_surface* wm_view_xwayland_surface_at(struct wm_view* super, do
 struct child_iterator_data {
     void* user_data;
     struct wm_view_xwayland_child* child;
-    wlr_surface_iterator_func_t iterator;
+    wm_surface_iterator_func_t iterator;
 };
 
 static void child_iterator(struct wlr_surface* surface, int sx, int sy, void* _data){
@@ -401,15 +401,23 @@ static void child_iterator(struct wlr_surface* surface, int sx, int sy, void* _d
     int child_x = data->child->wlr_xwayland_surface->x - data->child->parent->wlr_xwayland_surface->x;
     int child_y = data->child->wlr_xwayland_surface->y - data->child->parent->wlr_xwayland_surface->y;
 
-    data->iterator(surface, child_x + sx, child_y + sy, data->user_data); 
+    data->iterator(surface, child_x + sx, child_y + sy, false, data->user_data);
 }
 
-static void wm_view_xwayland_for_each_surface(struct wm_view* super, wlr_surface_iterator_func_t iterator, void* user_data){
+
+static wm_surface_iterator_func_t __iterator;
+static void call_surface_iterator(struct wlr_surface* surface, int sx, int sy, void* data){
+    __iterator(surface, sx, sy, false, data);
+}
+
+static void wm_view_xwayland_for_each_surface(struct wm_view* super, wm_surface_iterator_func_t iterator, void* user_data){
     struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
     if(!view->wlr_xwayland_surface->surface){
         return;
     }
-    wlr_surface_for_each_surface(view->wlr_xwayland_surface->surface, iterator, user_data);
+
+    __iterator = iterator;
+    wlr_surface_for_each_surface(view->wlr_xwayland_surface->surface, call_surface_iterator, user_data);
 
     struct wm_view_xwayland_child* child;
     wl_list_for_each_reverse(child, &view->children, link){

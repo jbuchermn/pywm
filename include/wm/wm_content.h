@@ -53,6 +53,7 @@ struct wm_output* wm_content_get_output(struct wm_content* content);
 void wm_content_set_workspace(struct wm_content* content, double x, double y, double width, double height);
 void wm_content_get_workspace(struct wm_content* content, double* workspace_x, double* workspace_y, double* workspace_width, double* workspace_height);
 bool wm_content_has_workspace(struct wm_content* content);
+bool wm_content_is_on_output(struct wm_content* content, struct wm_output* output);
 
 void wm_content_set_box(struct wm_content* content, double x, double y, double width, double height);
 void wm_content_get_box(struct wm_content* content, double* display_x, double* display_y, double* display_width, double* display_height);

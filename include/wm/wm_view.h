@@ -12,6 +12,9 @@
 struct wm_seat;
 struct wm_view_vtable;
 
+typedef void (*wm_surface_iterator_func_t)(struct wlr_surface *surface,
+	int sx, int sy, bool constrained, void *data);
+
 struct wm_view {
     struct wm_content super;
 
@@ -40,7 +43,7 @@ struct wm_view_vtable {
     void (*destroy)(struct wm_view* view);
 
     struct wlr_surface* (*surface_at)(struct wm_view* view, double at_x, double at_y, double* sx, double* sy);
-    void (*for_each_surface)(struct wm_view* view, wlr_surface_iterator_func_t iterator, void* user_data);
+    void (*for_each_surface)(struct wm_view* view, wm_surface_iterator_func_t iterator, void* user_data);
     void (*set_activated)(struct wm_view* view, bool activated);
 
     void (*get_credentials)(struct wm_view* view, pid_t* pid, uid_t* uid, gid_t* gid);
@@ -142,7 +145,7 @@ static inline struct wlr_surface* wm_view_surface_at(struct wm_view* view, doubl
     return (*view->vtable->surface_at)(view, at_x, at_y, sx, sy);
 }
 
-static inline void wm_view_for_each_surface(struct wm_view* view, wlr_surface_iterator_func_t iterator, void* user_data){
+static inline void wm_view_for_each_surface(struct wm_view* view, wm_surface_iterator_func_t iterator, void* user_data){
     (*view->vtable->for_each_surface)(view, iterator, user_data);
 }
 

@@ -73,7 +73,6 @@ void wm_widget_set_primitive(struct wm_widget* widget, char* name, int n_params_
 
 static void wm_widget_render(struct wm_content* super, struct wm_output* output, pixman_region32_t* output_damage, struct timespec now){
     struct wm_widget* widget = wm_cast(wm_widget, super);
-    if(widget->super.fixed_output && output != widget->super.fixed_output) return;
 
     double display_x, display_y, display_w, display_h;
     wm_content_get_box(&widget->super, &display_x, &display_y, &display_w, &display_h);

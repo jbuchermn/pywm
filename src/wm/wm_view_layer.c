@@ -431,9 +431,15 @@ static struct wlr_surface* wm_view_layer_surface_at(struct wm_view* super, doubl
     return wlr_layer_surface_v1_surface_at(view->wlr_layer_surface, at_x, at_y, sx, sy);
 }
 
-static void wm_view_layer_for_each_surface(struct wm_view* super, wlr_surface_iterator_func_t iterator, void* user_data){
+static wm_surface_iterator_func_t __iterator;
+static void call_surface_iterator(struct wlr_surface* surface, int sx, int sy, void* data){
+    __iterator(surface, sx, sy, false, data);
+}
+
+static void wm_view_layer_for_each_surface(struct wm_view* super, wm_surface_iterator_func_t iterator, void* user_data){
     struct wm_view_layer* view = wm_cast(wm_view_layer, super);
-    wlr_layer_surface_v1_for_each_surface(view->wlr_layer_surface, iterator, user_data);
+    __iterator = iterator;
+    wlr_layer_surface_v1_for_each_surface(view->wlr_layer_surface, call_surface_iterator, user_data);
 }
 
 static void wm_view_layer_set_floating(struct wm_view* super, bool floating){

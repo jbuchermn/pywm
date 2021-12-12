@@ -21,6 +21,15 @@
 struct wm_view_vtable wm_view_xdg_vtable;
 
 /*
+ * Debug all relevant size / resize information for given app_id
+ */
+/* #define DEBUG_SIZE "catapult" */
+/* #define DEBUG_SIZE "obs" */
+/* #define DEBUG_SIZE "libreoffice-startcenter" */
+/* #define DEBUG_SIZE "soffice" */
+
+
+/*
  * Callbacks
  */
 static void subsurface_handle_map(struct wl_listener* listener, void* data){
@@ -157,21 +166,75 @@ static void handle_new_subsurface(struct wl_listener* listener, void* data){
     wl_list_insert(&view->subsurfaces, &subsurface->link);
 }
 
-static void handle_surface_configure(struct wl_listener* listener, void* data){
-    struct wm_view_xdg* view = wl_container_of(listener, view, surface_configure);
+static bool possibly_update_size(struct wm_view_xdg* view){
+    /* Possible sizes to use */
+    int xdg_surface_width = view->wlr_xdg_surface->current.geometry.width;
+    int xdg_surface_height = view->wlr_xdg_surface->current.geometry.height;
 
-    int width = view->wlr_xdg_surface->pending.geometry.width;
-    int height = view->wlr_xdg_surface->pending.geometry.height;
+    int toplevel_width = view->wlr_xdg_surface->toplevel->current.width;
+    int toplevel_height = view->wlr_xdg_surface->toplevel->current.height;
 
-    if (!width || !height){
-        width = view->wlr_xdg_surface->surface->current.width;
-        height = view->wlr_xdg_surface->surface->current.height;
+    int surface_width = view->wlr_xdg_surface->surface->current.width;
+    int surface_height = view->wlr_xdg_surface->surface->current.height;
+
+    /* Decide on size */
+    int width = toplevel_width;
+    int height = toplevel_height;
+
+    if(!width || !height){
+        width = xdg_surface_width;
+        height = xdg_surface_height;
     }
 
+    if(!width || !height){
+        width = surface_width;
+        height = surface_height;
+    }
+
+#ifdef DEBUG_SIZE
+    const char *title, *app_id, *role;
+    wm_view_get_info(&view->super, &title, &app_id, &role);
+    if(app_id && !strcmp(app_id, DEBUG_SIZE)){
+        wlr_log(WLR_DEBUG, "DEBUG_SIZE: update        %dx%d (toplevel=%dx%d, xdg_surface=%dx%d, surface=%dx%d)",
+                width, height, toplevel_width, toplevel_height, xdg_surface_width, xdg_surface_height, surface_width, surface_height);
+    }
+#endif
+
+    /* Update size */
     if(width != view->width || height != view->height){
         view->width = width;
         view->height = height;
+        return true;
     }
+
+    return false;
+}
+
+static void handle_surface_configure(struct wl_listener* listener, void* data){
+    struct wm_view_xdg* view = wl_container_of(listener, view, surface_configure);
+
+#ifdef DEBUG_SIZE
+    const char *title, *app_id, *role;
+    wm_view_get_info(&view->super, &title, &app_id, &role);
+    if(app_id && !strcmp(app_id, DEBUG_SIZE)){
+        wlr_log(WLR_DEBUG, "DEBUG_SIZE: configure");
+    }
+#endif
+}
+
+
+static void handle_surface_ack_configure(struct wl_listener* listener, void* data){
+    struct wm_view_xdg* view = wl_container_of(listener, view, surface_ack_configure);
+
+#ifdef DEBUG_SIZE
+    const char *title, *app_id, *role;
+    wm_view_get_info(&view->super, &title, &app_id, &role);
+    if(app_id && !strcmp(app_id, DEBUG_SIZE)){
+        wlr_log(WLR_DEBUG, "DEBUG_SIZE: ack_configure");
+    }
+#endif
+
+    possibly_update_size(view);
 }
 
 static void handle_surface_commit(struct wl_listener* listener, void* data){
@@ -184,20 +247,15 @@ static void handle_surface_commit(struct wl_listener* listener, void* data){
         update = true;
     }
 
-
-    int width = view->wlr_xdg_surface->current.geometry.width;
-    int height = view->wlr_xdg_surface->current.geometry.height;
-
-    if(!width || !height){
-        width = view->wlr_xdg_surface->surface->current.width;
-        height = view->wlr_xdg_surface->surface->current.height;
+#ifdef DEBUG_SIZE
+    const char *title, *app_id, *role;
+    wm_view_get_info(&view->super, &title, &app_id, &role);
+    if(app_id && !strcmp(app_id, DEBUG_SIZE)){
+        wlr_log(WLR_DEBUG, "DEBUG_SIZE: commit");
     }
+#endif
 
-    if(width != view->width || height != view->height){
-        view->width = width;
-        view->height = height;
-        update = true;
-    }
+    update |= possibly_update_size(view);
 
     if(update){
         wm_callback_update_view(&view->super);
@@ -388,7 +446,7 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
 
     view->wlr_xdg_surface = surface;
     view->wlr_deco = NULL;
-    view->wlr_deco = NULL;
+    view->wlr_server_deco = NULL;
 
     wl_list_init(&view->popups);
     wl_list_init(&view->subsurfaces);
@@ -413,6 +471,9 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
 
     view->surface_configure.notify = &handle_surface_configure;
     wl_signal_add(&surface->events.configure, &view->surface_configure);
+
+    view->surface_ack_configure.notify = &handle_surface_ack_configure;
+    wl_signal_add(&surface->events.ack_configure, &view->surface_ack_configure);
 
     view->request_fullscreen.notify = &handle_fullscreen;
     wl_signal_add(&surface->toplevel->events.request_fullscreen, &view->request_fullscreen);
@@ -467,6 +528,7 @@ static void wm_view_xdg_destroy(struct wm_view* super){
 
     wl_list_remove(&view->surface_commit.link);
     wl_list_remove(&view->surface_configure.link);
+    wl_list_remove(&view->surface_ack_configure.link);
 
     wl_list_remove(&view->request_fullscreen.link);
     wl_list_remove(&view->request_move.link);
@@ -497,6 +559,13 @@ static void wm_view_xdg_request_size(struct wm_view* super, int width, int heigh
     }
 
     if(view->wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL){
+#ifdef DEBUG_SIZE
+        const char *title, *app_id, *role;
+        wm_view_get_info(super, &title, &app_id, &role);
+        if(app_id && !strcmp(app_id, DEBUG_SIZE)){
+            wlr_log(WLR_DEBUG, "DEBUG_SIZE: Request %dx%d", width, height);
+        }
+#endif
         wlr_xdg_toplevel_set_size(view->wlr_xdg_surface, width, height);
     }else{
         wlr_log(WLR_DEBUG, "Warning: Not toplevel");
@@ -526,6 +595,24 @@ static void wm_view_xdg_get_size_constraints(struct wm_view* super, int** constr
 
 static void wm_view_xdg_get_size(struct wm_view* super, int* width, int* height){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
+
+#ifdef DEBUG_SIZE
+        int w = view->wlr_xdg_surface->toplevel->current.width;
+        int h = view->wlr_xdg_surface->toplevel->current.height;
+
+        if(!w || !h){
+            w = view->wlr_xdg_surface->surface->current.width;
+            h = view->wlr_xdg_surface->surface->current.height;
+        }
+
+        if(w != view->width || h != view->height){
+            const char *title, *app_id, *role;
+            wm_view_get_info(super, &title, &app_id, &role);
+            if(app_id && !strcmp(app_id, DEBUG_SIZE)){
+                wlr_log(WLR_DEBUG, "DEBUG_SIZE: get %dx%d", w, h);
+            }
+        }
+#endif
 
     *width = view->width;
     *height = view->height;
@@ -590,11 +677,30 @@ static struct wlr_surface* wm_view_xdg_surface_at(struct wm_view* super, double 
     return wlr_xdg_surface_surface_at(view->wlr_xdg_surface, at_x, at_y, sx, sy);
 }
 
-static void wm_view_xdg_for_each_surface(struct wm_view* super, wlr_surface_iterator_func_t iterator, void* user_data){
-    struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
-    wlr_xdg_surface_for_each_surface(view->wlr_xdg_surface, iterator, user_data);
+struct for_each_surface_data {
+    wm_surface_iterator_func_t iterator;
+    void* user_data;
+    struct wlr_surface* constrained_root;
+};
+
+static void call_surface_iterator(struct wlr_surface* surface, int sx, int sy, void* data){
+    struct for_each_surface_data* fedata = data;
+    struct wlr_surface* root = surface;
+    while(root && wlr_surface_is_subsurface(root)){
+        root = wlr_subsurface_from_wlr_surface(root)->parent;
+    }
+    fedata->iterator(surface, sx, sy, root == fedata->constrained_root, fedata->user_data);
 }
 
+static void wm_view_xdg_for_each_surface(struct wm_view* super, wm_surface_iterator_func_t iterator, void* user_data){
+    struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
+    struct for_each_surface_data data = {
+        .iterator = iterator,
+        .user_data = user_data,
+        .constrained_root = view->wlr_xdg_surface->surface
+    };
+    wlr_xdg_surface_for_each_surface(view->wlr_xdg_surface, call_surface_iterator, &data);
+}
 
 static struct wm_view* wm_view_xdg_get_parent(struct wm_view* super){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
@@ -677,7 +783,7 @@ static void deco_handle_request_mode(struct wl_listener* listener, void* data){
 }
 
 void wm_view_xdg_register_server_decoration(struct wm_view_xdg* view, struct wlr_server_decoration* wlr_deco){
-    /* We can't really do anything with this as the KDE protocol is not very well thought-out (hence deprecated) */
+    view->wlr_server_deco = wlr_deco;
 }
 
 void wm_view_xdg_register_decoration(struct wm_view_xdg* view, struct wlr_xdg_toplevel_decoration_v1* wlr_deco){

@@ -453,7 +453,7 @@ struct _view_for_surface_data {
     bool result;
 };
 
-static void _view_for_surface(struct wlr_surface* surface, int sx, int sy, void* _data){
+static void _view_for_surface(struct wlr_surface* surface, int sx, int sy, bool constrained, void* _data){
     struct _view_for_surface_data* data = _data;
     if(surface == data->surface){
         data->result = true;
