@@ -2,8 +2,6 @@
 
 * Development
 ** Current (v0.2)
-*** KILL Change requirements.txt to only inclued stubs
-*** DONE Synchronize wl_surface enter and wm_output.render (e.g. wm_content_is_on_output)
 
 ** Backlog / Ideas
 *** Try some optimizations of update loop if no state (view nor layout nor widget) changes (most common case) --> bring down idle CPU
