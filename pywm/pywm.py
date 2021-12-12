@@ -485,7 +485,7 @@ class PyWM(Generic[ViewT]):
         # wh_logical = True
         # END DEBUG
 
-        wh_scale = 1 if wh_logical else scale
+        wh_scale = scale if (not wh_logical and scale > 1.) else 1.
         cx = x + .5*w
         cy = y + .5*h
         w = round(w * wh_scale) / wh_scale
