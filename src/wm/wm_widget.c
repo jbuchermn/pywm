@@ -35,7 +35,6 @@ void wm_widget_set_pixels(struct wm_widget* widget, uint32_t format, uint32_t st
 
 static void wm_widget_render(struct wm_content* super, struct wm_output* output, pixman_region32_t* output_damage, struct timespec now){
     struct wm_widget* widget = wm_cast(wm_widget, super);
-    if(widget->super.fixed_output && output != widget->super.fixed_output) return;
 
     if (!widget->wlr_texture)
         return;
