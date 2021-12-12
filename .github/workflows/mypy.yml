@@ -15,7 +15,7 @@ jobs:
     - name: Install Dependencies
       run: |
         pip install mypy
-        pip install -r requirements.txt
+        pip install -r requirements_mypy.txt
     - name: mypy
       run: |
         mypy pywm
