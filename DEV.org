@@ -2,7 +2,7 @@
 
 * Development
 ** Current (v0.2)
-*** TODO Change requirements.txt to only inclued stubs
+*** KILL Change requirements.txt to only inclued stubs
 *** DONE Synchronize wl_surface enter and wm_output.render (e.g. wm_content_is_on_output)
 
 ** Backlog / Ideas
