@@ -89,7 +89,7 @@ Therefore, we're stuck with the less secure (and a lot easier) way of using the 
 
 #### seatd
 
-Be aware that current wlroots requires `seatd` under certain circumstances. Example systemd service (replace `<YourUser>` or handle via groups, see `man seatd`):
+Be aware that current wlroots requires `seatd` under certain circumstances. Example systemd service (be sure to place your user in group `_seatd`):
 
 ```
 [Unit]
