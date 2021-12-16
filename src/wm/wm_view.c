@@ -32,7 +32,7 @@ void wm_view_base_init(struct wm_view* view, struct wm_server* server){
     view->inhibiting_idle = false;
     view->accepts_input = true;
 
-    view->shows_csd = true;
+    view->shows_csd = false;
 }
 
 static void wm_view_base_destroy(struct wm_content* super){

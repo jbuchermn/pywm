@@ -767,7 +767,7 @@ bool wm_view_is_xdg(struct wm_view* view){
 }
 
 static bool wm_view_xdg_encourage_csd(struct wm_view_xdg* view){
-    if(wm_view_xdg_get_parent(&view->super)){
+    if(wm_view_is_floating(&view->super)){
         return true;
     }else{
         return view->super.super.wm_server->wm_config->encourage_csd;
@@ -800,6 +800,8 @@ void wm_view_xdg_register_server_decoration(struct wm_view_xdg* view, struct wlr
 
     view->server_deco_destroy.notify = &server_deco_handle_destroy;
     wl_signal_add(&wlr_deco->events.destroy, &view->server_deco_destroy);
+
+    view->super.shows_csd = wlr_deco->mode == WLR_SERVER_DECORATION_MANAGER_MODE_CLIENT;
 }
 
 static void deco_handle_request_mode(struct wl_listener* listener, void* data){
