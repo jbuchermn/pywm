@@ -93,9 +93,10 @@ void _pywm_view_update(struct _pywm_view* view){
     int offset_x, offset_y;
     wm_view_get_offset(view->view, &offset_x, &offset_y);
 
+    bool shows_csd = wm_view_shows_csd(view->view);
 
     PyObject* args = Py_BuildValue(
-            "(lOiiOOOOOOOOiii)",
+            "(lOiiOOOOOOOOiiOi)",
 
             view->handle,
             args_general,
@@ -115,6 +116,7 @@ void _pywm_view_update(struct _pywm_view* view){
 
             offset_x,
             offset_y,
+            shows_csd ? Py_True : Py_False,
             fixed_output_key);
 
 

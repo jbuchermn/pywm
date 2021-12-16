@@ -774,20 +774,59 @@ static bool wm_view_xdg_encourage_csd(struct wm_view_xdg* view){
     }
 }
 
-static void deco_handle_request_mode(struct wl_listener* listener, void* data){
-    struct wm_view_xdg* view = wl_container_of(listener, view, deco_request_mode);
+static void server_deco_handle_mode(struct wl_listener* listener, void* data){
+    struct wm_view_xdg* view = wl_container_of(listener, view, server_deco_mode);
 
-    wlr_xdg_toplevel_decoration_v1_set_mode(view->wlr_deco, wm_view_xdg_encourage_csd(view) ?
-            WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE :
-            WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+    wlr_log(WLR_DEBUG, "server decoration mode: %s", view->wlr_server_deco->mode == WLR_SERVER_DECORATION_MANAGER_MODE_SERVER ? "SSD" :
+            (view->wlr_server_deco->mode == WLR_SERVER_DECORATION_MANAGER_MODE_CLIENT ? "CSD" : ""));
+
+    view->super.shows_csd = view->wlr_server_deco->mode == WLR_SERVER_DECORATION_MANAGER_MODE_CLIENT;
+}
+
+static void server_deco_handle_destroy(struct wl_listener* listener, void* data){
+    struct wm_view_xdg* view = wl_container_of(listener, view, server_deco_destroy);
+    wl_list_remove(&view->server_deco_mode.link);
+    wl_list_remove(&view->server_deco_destroy.link);
+    view->wlr_server_deco = NULL;
 }
 
 void wm_view_xdg_register_server_decoration(struct wm_view_xdg* view, struct wlr_server_decoration* wlr_deco){
     view->wlr_server_deco = wlr_deco;
+    wlr_log(WLR_DEBUG, "new server decoration: %s", wlr_deco->mode == WLR_SERVER_DECORATION_MANAGER_MODE_SERVER ? "SSD" :
+            (wlr_deco->mode == WLR_SERVER_DECORATION_MANAGER_MODE_CLIENT ? "CSD" : ""));
+
+    view->server_deco_mode.notify = &server_deco_handle_mode;
+    wl_signal_add(&wlr_deco->events.mode, &view->server_deco_mode);
+
+    view->server_deco_destroy.notify = &server_deco_handle_destroy;
+    wl_signal_add(&wlr_deco->events.destroy, &view->server_deco_destroy);
+}
+
+static void deco_handle_request_mode(struct wl_listener* listener, void* data){
+    struct wm_view_xdg* view = wl_container_of(listener, view, deco_request_mode);
+
+    wlr_log(WLR_DEBUG, "xdg decoration request: %s (setting default)", view->wlr_deco->requested_mode == WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE ? "SSD" :
+            (view->wlr_deco->requested_mode == WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE ? "CSD" : ""));
+
+    wlr_xdg_toplevel_decoration_v1_set_mode(view->wlr_deco, wm_view_xdg_encourage_csd(view) ?
+            WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE :
+            WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+
+    view->super.shows_csd = wm_view_xdg_encourage_csd(view);
+}
+
+static void deco_handle_destroy(struct wl_listener* listener, void* data){
+    struct wm_view_xdg* view = wl_container_of(listener, view, deco_destroy);
+    wl_list_remove(&view->deco_request_mode.link);
+    wl_list_remove(&view->deco_destroy.link);
+    view->wlr_deco = NULL;
 }
 
 void wm_view_xdg_register_decoration(struct wm_view_xdg* view, struct wlr_xdg_toplevel_decoration_v1* wlr_deco){
     view->wlr_deco = wlr_deco;
+
+    wlr_log(WLR_DEBUG, "new xdg decoration: %s (setting default)", wlr_deco->current.mode == WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE ? "SSD" :
+            (wlr_deco->current.mode == WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE ? "CSD" : ""));
 
     wlr_xdg_toplevel_decoration_v1_set_mode(view->wlr_deco, wm_view_xdg_encourage_csd(view) ?
             WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE :
@@ -796,6 +835,9 @@ void wm_view_xdg_register_decoration(struct wm_view_xdg* view, struct wlr_xdg_to
 
     view->deco_request_mode.notify = &deco_handle_request_mode;
     wl_signal_add(&wlr_deco->events.request_mode, &view->deco_request_mode);
+
+    view->deco_destroy.notify = &deco_handle_destroy;
+    wl_signal_add(&wlr_deco->events.destroy, &view->deco_destroy);
 }
 
 struct wm_view_vtable wm_view_xdg_vtable = {

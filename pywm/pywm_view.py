@@ -20,7 +20,7 @@ class PyWMViewUpstreamState:
                  size_constraints: list[int],
                  offset_x: int, offset_y: int,
                  width: int, height: int,
-                 is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool, fixed_output: Optional[PyWMOutput]) -> None:
+                 is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool, shows_csd: bool, fixed_output: Optional[PyWMOutput]) -> None:
 
         """
         Called from C - just to be sure, wrap every attribute in type constrcutor
@@ -52,6 +52,8 @@ class PyWMViewUpstreamState:
         self.is_maximized = bool(is_maximized)
         self.is_resizing = bool(is_resizing)
         self.is_inhibiting_idle = bool(is_inhibiting_idle)
+
+        self.shows_csd = shows_csd
 
         self.fixed_output = fixed_output
 
@@ -190,6 +192,7 @@ class PyWMView(Generic[PyWMT]):
                 is_mapped: bool, is_floating: bool, is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool,
                 size_constraints: list[int],
                 offset_x: int, offset_y: int,
+                shows_csd: bool,
                 fixed_output_key: int,
                 ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, int, tuple[int, int], int, int, int, int, int, int, tuple[float, float, float, float]]:
 
@@ -213,6 +216,7 @@ class PyWMView(Generic[PyWMT]):
             offset_x, offset_y,
             width, height,
             is_focused, is_fullscreen, is_maximized, is_resizing, is_inhibiting_idle,
+            shows_csd,
             self.wm.get_output_by_key(fixed_output_key) if fixed_output_key >= 0 else None
         )
         last_up_state = self.up_state

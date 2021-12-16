@@ -24,6 +24,9 @@ struct wm_view {
 
     bool accepts_input;
 
+    /* defaults to false; if by means of wlr_server_decoration or wlr_toplevel_decoration we know the view is decorated: true */
+    bool shows_csd;
+
     /* Server-side determined states - stored from setter */
     bool floating;
     bool focused;
@@ -38,6 +41,7 @@ void wm_view_set_inhibiting_idle(struct wm_view* view, bool inhibiting_idle);
 bool wm_view_is_inhibiting_idle(struct wm_view* view);
 
 bool wm_content_is_view(struct wm_content* content);
+bool wm_view_shows_csd(struct wm_view* view);
 
 struct wm_view_vtable {
     void (*destroy)(struct wm_view* view);

@@ -81,6 +81,9 @@ struct wm_view_xdg {
     struct wl_listener surface_commit;
 
     struct wl_listener deco_request_mode;
+    struct wl_listener deco_destroy;
+    struct wl_listener server_deco_mode;
+    struct wl_listener server_deco_destroy;
 
     struct wl_listener request_fullscreen;
     struct wl_listener request_move;
