@@ -333,7 +333,7 @@ static void wm_view_xwayland_get_offset(struct wm_view* super, int* offset_x, in
 
 
 static void wm_view_xwayland_set_resizing(struct wm_view* super, bool resizing){
-    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
+    /* struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super); */
 
     /* No op */
 }
@@ -407,7 +407,7 @@ static void child_iterator(struct wlr_surface* surface, int sx, int sy, void* _d
 
 static wm_surface_iterator_func_t __iterator;
 static void call_surface_iterator(struct wlr_surface* surface, int sx, int sy, void* data){
-    __iterator(surface, sx, sy, false, data);
+    __iterator(surface, sx, sy, !wlr_surface_is_subsurface(surface), data);
 }
 
 static void wm_view_xwayland_for_each_surface(struct wm_view* super, wm_surface_iterator_func_t iterator, void* user_data){
@@ -443,7 +443,7 @@ static struct wm_view* wm_view_xwayland_get_parent(struct wm_view* super){
 }
 
 static void wm_view_xwayland_structure_printf(FILE* file, struct wm_view* super){
-    struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
+    /* struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super); */
 
     fprintf(file, "  wm_view_xwayland\n");
 }
