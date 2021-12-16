@@ -10,8 +10,8 @@
 **** TODO Layer shell: Keyboard interactivity
 
 *** Decorations
-**** TODO Pass decoration per view to python
-**** TODO Provide a range of widgets to be used as decoration / highlight / ...
+**** DONE Pass decoration per view to python
+**** STRT Provide a range of widgets to be used as decoration / highlight / ...
 - [X] Enable custom shaders to draw primitives (without textures) in wm_renderer
 - [X] Possible to also simplify existing shader handling?
 - [X] Shaders for rect and rounded corner rect
