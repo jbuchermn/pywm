@@ -11,6 +11,7 @@
 #include "wm/wm_output.h"
 #include "wm/wm_renderer.h"
 #include "wm/wm_server.h"
+#include "wm/wm_config.h"
 
 #ifdef WM_CUSTOM_RENDERER
 
@@ -414,6 +415,8 @@ void wm_renderer_init(struct wm_renderer *renderer, struct wm_server *server) {
     wm_texture_shaders_init(renderer);
     wm_primitive_shaders_init(renderer);
     wlr_egl_unset_current(r->egl);
+
+    wm_renderer_select_texture_shaders(renderer, server->wm_config->texture_shaders);
 #endif
 
 }
