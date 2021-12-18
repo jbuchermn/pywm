@@ -84,6 +84,8 @@ static void set_config(struct wm_config* conf, PyObject* dict, int reconfigure){
 static void handle_update_view(struct wm_view* view){
     PyGILState_STATE gil = PyGILState_Ensure();
     _pywm_views_update_single(view);
+    /* Decoration widgets might depend on the view state */
+    _pywm_widgets_update();
     PyGILState_Release(gil);
 }
 
@@ -135,9 +137,10 @@ static void handle_update(){
     Py_XDECREF(res);
 
 
-    _pywm_widgets_update();
-
     _pywm_views_update();
+
+    /* State of widgets (e.g. decorations) might depend on views - other way round not possible, as widgets have no upstream state */
+    _pywm_widgets_update();
 
 
     PyGILState_Release(gil);
