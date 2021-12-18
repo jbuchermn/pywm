@@ -169,6 +169,10 @@ void _pywm_view_update(struct _pywm_view* view){
                 wm_view_set_floating(view->view, floating);
             wm_content_set_box(&view->view->super, x, y, w, h);
 
+            /* Set output before triggering configure in request_size */
+            if(new_fixed_output_key != fixed_output_key)
+                wm_content_set_output(&view->view->super, new_fixed_output_key, NULL);
+
             if(width_pending > 0 && height_pending > 0)
                 wm_view_request_size(view->view, width_pending, height_pending);
 
@@ -186,8 +190,6 @@ void _pywm_view_update(struct _pywm_view* view){
             wm_content_set_lock_enabled(&view->view->super, lock_enabled);
 
             view->view->accepts_input = accepts_input;
-            if(new_fixed_output_key != fixed_output_key)
-                wm_content_set_output(&view->view->super, new_fixed_output_key, NULL);
             wm_content_set_workspace(&view->view->super, workspace_x, workspace_y, workspace_w, workspace_h);
         }
 
