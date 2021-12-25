@@ -10,7 +10,7 @@
 *** Decorations
 **** STRT Provide a range of widgets to be used as decoration / highlight / ...
 - [ ] Generate number of shaders / move to malloc
-**** STRT float z-index
+**** DONE float z-index
 
 *** Gestures
 **** TODO Can c gestures make python gestures redundant? (Maybe enable switching) - would cure libseat+pyevdev issues

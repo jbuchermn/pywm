@@ -63,7 +63,7 @@ void wm_drag_init(struct wm_drag* drag, struct wm_seat* seat, struct wlr_drag* w
     wm_content_init(&drag->super, seat->wm_server);
     drag->super.vtable = &wm_drag_vtable;
     wm_content_set_opacity(&drag->super, 0.5);
-    wm_content_set_z_index(&drag->super, 50);
+    wm_content_set_z_index(&drag->super, WM_DRAG_Z_INDEX);
     wm_content_set_box(&drag->super, 0, 0, 0, 0);
 
     drag->wm_seat = seat;

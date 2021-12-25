@@ -142,18 +142,19 @@ void wm_content_get_box(struct wm_content* content, double* display_x, double* d
     *display_height = content->display_height;
 }
 
-void wm_content_set_z_index(struct wm_content* content, int z_index){
-    if(z_index == content->z_index) return;
+void wm_content_set_z_index(struct wm_content* content, double z_index){
+    if(fabs(z_index - content->z_index) < 0.0001) return;
 
     content->z_index = z_index;
     wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
 }
-int wm_content_get_z_index(struct wm_content* content){
+
+double wm_content_get_z_index(struct wm_content* content){
     return content->z_index;
 }
 
 void wm_content_set_opacity(struct wm_content* content, double opacity){
-    if(fabs(content->opacity - opacity) < 0.0000001) return;
+    if(fabs(content->opacity - opacity) < 0.0001) return;
 
     content->opacity = opacity;
     wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
@@ -167,7 +168,7 @@ void wm_content_set_mask(struct wm_content* content, double mask_x, double mask_
     if(fabs(content->mask_x - mask_x) +
             fabs(content->mask_y - mask_y) + 
             fabs(content->mask_w - mask_w) +
-            fabs(content->mask_h - mask_h) < 0.01) return;
+            fabs(content->mask_h - mask_h) < 0.0001) return;
 
     content->mask_x = mask_x;
     content->mask_y = mask_y;

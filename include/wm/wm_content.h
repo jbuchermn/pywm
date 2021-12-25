@@ -38,7 +38,7 @@ struct wm_content {
     double mask_h;
     double corner_radius;
 
-    int z_index;
+    double z_index;
     double opacity;
 
     /* Accepts input and is displayed clearly during lock - careful */
@@ -63,8 +63,8 @@ void wm_content_get_mask(struct wm_content* content, double* mask_x, double* mas
 void wm_content_set_corner_radius(struct wm_content* content, double corner_radius);
 double wm_content_get_corner_radius(struct wm_content* content);
 
-void wm_content_set_z_index(struct wm_content* content, int z_index);
-int wm_content_get_z_index(struct wm_content* content);
+void wm_content_set_z_index(struct wm_content* content, double z_index);
+double wm_content_get_z_index(struct wm_content* content);
 
 void wm_content_set_opacity(struct wm_content* content, double opacity);
 double wm_content_get_opacity(struct wm_content* content);

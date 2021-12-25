@@ -28,13 +28,13 @@ void _pywm_widget_update(struct _pywm_widget* widget){
         double mask_x, mask_y, mask_w, mask_h;
         int output_key;
         double opacity;
-        int z_index;
+        double z_index;
         int lock_enabled;
         double workspace_x, workspace_y, workspace_w, workspace_h;
         PyObject* pixels;
         PyObject* primitive;
         if(!PyArg_ParseTuple(res, 
-                    "p(dddd)(dddd)idi(dddd)OO",
+                    "p(dddd)(dddd)idd(dddd)OO",
                     &lock_enabled,
                     &x, &y, &w, &h,
                     &mask_x, &mask_y, &mask_w, &mask_h,

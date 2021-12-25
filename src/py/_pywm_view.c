@@ -134,13 +134,14 @@ void _pywm_view_update(struct _pywm_view* view){
         double corner_radius;
         int floating, focus_pending, resizing_pending, fullscreen_pending, maximized_pending, close_pending;
         int width_pending, height_pending;
-        int accepts_input, z_index;
+        int accepts_input;
+        double z_index;
         int lock_enabled;
         int new_fixed_output_key;
         double workspace_x, workspace_y, workspace_w, workspace_h;
         
         if(!PyArg_ParseTuple(res, 
-                    "(dddd)(dddd)ddippi(ii)iiiiii(dddd)",
+                    "(dddd)(dddd)dddppi(ii)iiiiii(dddd)",
                     &x, &y, &w, &h,
                     &mask_x, &mask_y, &mask_w, &mask_h,
                     &opacity,

@@ -83,7 +83,7 @@ class PyWMViewUpstreamState:
 
 class PyWMViewDownstreamState:
     def __init__(self,
-                 z_index: int=0, box: tuple[float, float, float, float]=(0, 0, 0, 0),
+                 z_index: float=0, box: tuple[float, float, float, float]=(0, 0, 0, 0),
                  mask: tuple[float, float, float, float]=(-1, -1, -1, -1),
                  opacity: float=1., corner_radius: float=0,
                  accepts_input: bool=False,
@@ -95,7 +95,7 @@ class PyWMViewDownstreamState:
         """
         Just to be sure - wrap in type constructors
         """
-        self.z_index = int(z_index)
+        self.z_index = float(z_index)
         self.box = (float(box[0]), float(box[1]), float(box[2]), float(box[3]))
         self.mask = (float(mask[0]), float(mask[1]), float(mask[2]), float(mask[3]))
         self.opacity = opacity
@@ -124,14 +124,14 @@ class PyWMViewDownstreamState:
             last_state: Optional[PyWMViewDownstreamState],
             force_size: bool,
             focus: Optional[int], fullscreen: Optional[int], maximized: Optional[int], resizing: Optional[int], close: Optional[int]
-            ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, int, tuple[int, int], int, int, int, int, int, int, tuple[float, float, float, float]]:
+            ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, float, bool, bool, int, tuple[int, int], int, int, int, int, int, int, tuple[float, float, float, float]]:
 
         return (
             root.round(*self.box),
             self.mask,
             self.opacity,
             self.corner_radius,
-            int(self.z_index),
+            float(self.z_index),
             bool(self.accepts_input),
             bool(self.lock_enabled),
             int(self.floating) if self.floating is not None else -1,
@@ -194,7 +194,7 @@ class PyWMView(Generic[PyWMT]):
                 offset_x: int, offset_y: int,
                 shows_csd: bool,
                 fixed_output_key: int,
-                ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, int, tuple[int, int], int, int, int, int, int, int, tuple[float, float, float, float]]:
+                ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, float, bool, bool, int, tuple[int, int], int, int, int, int, int, int, tuple[float, float, float, float]]:
 
         if general is not None:
             if self.parent is None:
