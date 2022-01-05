@@ -43,6 +43,15 @@
             '';
 
             preConfigure = ''
+              echo "--- Pre-configure ------"
+              echo "  wlrootsDir=$wlrootsDir"
+              echo "  sourceRoot=$sourceRoot"
+              echo "--- ls -----------------"
+              ls -al
+              echo "--- ls ../wlrootsDir ---"
+              ls -al ../$wlrootsDir
+              echo "------------------------"
+
               cp -r ../$wlrootsDir ./subprojects/wlroots
               rm -rf ./build
             '';
