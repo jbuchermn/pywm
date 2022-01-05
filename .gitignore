@@ -1,4 +1,5 @@
 .ccls-cache
+result
 build/*
 compile_commands.json
 **/__pycache__/*
