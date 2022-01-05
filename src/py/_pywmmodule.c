@@ -58,8 +58,8 @@ static void set_config(struct wm_config* conf, PyObject* dict, int reconfigure){
     o = PyDict_GetItemString(dict, "xkb_layout"); if(o){ strncpy(conf->xkb_layout, PyBytes_AsString(o), WM_CONFIG_STRLEN-1); }
     o = PyDict_GetItemString(dict, "xkb_options"); if(o){ strncpy(conf->xkb_options, PyBytes_AsString(o), WM_CONFIG_STRLEN-1); }
 
-    o = PyDict_GetItemString(dict, "xcursor_theme"); if(o){ conf->xcursor_theme = PyBytes_AsString(o); }
-    o = PyDict_GetItemString(dict, "xcursor_size"); if(o){ conf->xcursor_size = PyLong_AsLong(o); }
+    o = PyDict_GetItemString(dict, "xcursor_theme"); if(o){ wm_config_set_xcursor_theme(conf, PyBytes_AsString(o)); }
+    o = PyDict_GetItemString(dict, "xcursor_size"); if(o){ wm_config_set_xcursor_size(conf, PyLong_AsLong(o)); }
 
     o = PyDict_GetItemString(dict, "focus_follows_mouse"); if(o){ conf->focus_follows_mouse = o == Py_True; }
     o = PyDict_GetItemString(dict, "constrain_popups_to_toplevel"); if(o){ conf->constrain_popups_to_toplevel = o == Py_True; }

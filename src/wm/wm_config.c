@@ -44,8 +44,6 @@ void wm_config_init_default(struct wm_config *config) {
     config->xcursor_theme = cursor_theme;
     config->xcursor_size = cursor_size;
 
-    xcursor_setenv(config);
-
     config->natural_scroll = true;
     config->tap_to_click = true;
 
@@ -70,6 +68,16 @@ void wm_config_reconfigure(struct wm_config* config, struct wm_server* server){
     wm_layout_reconfigure(server->wm_layout);
     wm_server_reconfigure(server);
 
+    xcursor_setenv(config);
+}
+
+void wm_config_set_xcursor_theme(struct wm_config* config, const char* xcursor_theme){
+    config->xcursor_theme = xcursor_theme;
+    xcursor_setenv(config);
+}
+
+void wm_config_set_xcursor_size(struct wm_config* config, int xcursor_size){
+    config->xcursor_size = xcursor_size;
     xcursor_setenv(config);
 }
 
