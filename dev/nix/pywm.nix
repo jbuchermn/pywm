@@ -1,13 +1,21 @@
-with import <nixpkgs> {};
-with python39Packages;
-
-buildPythonPackage rec {
+{ pkgs }:
+let
+  my-python = pkgs.python3;
+  python-with-my-packages = my-python.withPackages (p: with p; [
+    imageio
+    numpy
+    pycairo
+    evdev
+    matplotlib
+  ]);
+in
+pkgs.python3.pkgs.buildPythonPackage rec {
   pname = "pywm";
   version = "0.2";
 
   src = ../..;
 
-  nativeBuildInputs = [
+  nativeBuildInputs = with pkgs; [
     meson_0_60
     ninja
     pkg-config
@@ -17,7 +25,7 @@ buildPythonPackage rec {
 
   preBuild = "cd ..";
 
-  buildInputs = [
+  buildInputs = with pkgs; [
     libGL
     wayland
     wayland-protocols
@@ -37,15 +45,7 @@ buildPythonPackage rec {
     libpng
     ffmpeg
     libcap
-  ];
 
-  propagatedBuildInputs = [
-    imageio
-    numpy
-    pycairo
-    evdev
-    matplotlib
+    python-with-my-packages
   ];
-
-  LC_ALL = "en_US.UTF-8";
 }
