@@ -18,14 +18,14 @@
         in (
           pkgs.python3.pkgs.buildPythonPackage rec {
             pname = "pywm";
-            version = "0.2";
+            version = "0.3alpha";
 
             # BEGIN Fucking suubprojects bug workaround for 'src = ./.'
             srcs = [
               ./.
               (builtins.fetchGit {
-                url = "https://github.com/swaywm/wlroots";
-                rev = "3d6ca9942db43ca182d91b115597a4ca7f367eef";
+                url = "https://gitlab.freedesktop.org/wlroots/wlroots";
+                rev = "1fbd13ec799c472558aef37436367f0e947f7d89";
                 submodules = true;
               })
             ];
