@@ -1,5 +1,6 @@
 .projectile
 .ccls-cache
+result
 build/*
 compile_commands.json
 **/__pycache__/*
@@ -8,3 +9,4 @@ pywm/touchpad/tmp.png
 subprojects
 .mypy_cache
 pywm.egg-info
+flake.lock

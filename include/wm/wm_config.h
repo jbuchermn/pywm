@@ -60,6 +60,8 @@ struct wm_config {
 void wm_config_init_default(struct wm_config *config);
 void wm_config_reset_default(struct wm_config* config);
 void wm_config_reconfigure(struct wm_config* config, struct wm_server* server);
+void wm_config_set_xcursor_theme(struct wm_config* config, const char* xcursor_theme);
+void wm_config_set_xcursor_size(struct wm_config* config, int xcursor_size);
 void wm_config_add_output(struct wm_config *config, const char *name,
                           double scale, int width, int height, int mHz,
                           int pos_x, int pos_y, enum wl_output_transform transform);

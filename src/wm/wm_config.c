@@ -10,6 +10,15 @@
 #include "wm/wm_seat.h"
 #include "wm/wm_renderer.h"
 
+static void xcursor_setenv(struct wm_config* config){
+    char cursor_size_fmt[16];
+    snprintf(cursor_size_fmt, sizeof(cursor_size_fmt), "%u", config->xcursor_size);
+    setenv("XCURSOR_SIZE", cursor_size_fmt, 1);
+    if (config->xcursor_theme != NULL) {
+        setenv("XCURSOR_THEME", config->xcursor_theme, 1);
+    }
+}
+
 void wm_config_init_default(struct wm_config *config) {
     config->enable_xwayland = false;
 
@@ -61,14 +70,18 @@ void wm_config_reconfigure(struct wm_config* config, struct wm_server* server){
     wm_layout_reconfigure(server->wm_layout);
     wm_server_reconfigure(server);
 
-    char cursor_size_fmt[16];
-    snprintf(cursor_size_fmt, sizeof(cursor_size_fmt), "%u", config->xcursor_size);
-    setenv("XCURSOR_SIZE", cursor_size_fmt, 1);
-    if (config->xcursor_theme != NULL) {
-        setenv("XCURSOR_THEME", config->xcursor_theme, 1);
-    }
-
     wm_renderer_select_texture_shaders(server->wm_renderer, config->texture_shaders);
+    xcursor_setenv(config);
+}
+
+void wm_config_set_xcursor_theme(struct wm_config* config, const char* xcursor_theme){
+    config->xcursor_theme = xcursor_theme;
+    xcursor_setenv(config);
+}
+
+void wm_config_set_xcursor_size(struct wm_config* config, int xcursor_size){
+    config->xcursor_size = xcursor_size;
+    xcursor_setenv(config);
 }
 
 void wm_config_add_output(struct wm_config *config, const char *name,
