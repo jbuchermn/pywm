@@ -34,10 +34,12 @@ mkShell {
     seatd
     xwayland
     vulkan-loader
-    pkgs.mesa # Prevent clash with python module mesa
+    mesa
 
     libpng
     ffmpeg
     libcap
+
+    python-with-my-packages
   ];
 }
