@@ -19,7 +19,10 @@ for f in glob.glob('build/_pywm.*.so'):
     so = f
 
 if so is not None:
-    shutil.copy(so, 'pywm/_pywm.so')
+    try:
+        shutil.copy(so, 'pywm/_pywm.so')
+    except shutil.SameFileError:
+        pass
 else:
     raise Exception("Fatal: Could not find shared library")
 

@@ -8,3 +8,4 @@ pywm/touchpad/tmp.png
 subprojects
 .mypy_cache
 pywm.egg-info
+flake.lock

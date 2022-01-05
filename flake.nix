@@ -14,14 +14,7 @@
     {
       packages.pywm = (
         let
-          my-python = pkgs.python3;
-          python-with-my-packages = my-python.withPackages (p: with p; [
-            imageio
-            numpy
-            pycairo
-            evdev
-            matplotlib
-          ]);
+          a = 1;
         in (
           pkgs.python3.pkgs.buildPythonPackage rec {
             pname = "pywm";
@@ -50,8 +43,7 @@
 
             preConfigure = ''
               cp -r ../$wlrootsDir ./subprojects/wlroots
-              ls -al ../$wlrootsDir
-              ls -al ./subprojects/wlroots
+              rm -rf ./build
             '';
             # END Fucking suubprojects bug workaround
 
@@ -85,8 +77,14 @@
               libpng
               ffmpeg
               libcap
+            ];
 
-              python-with-my-packages
+            propagatedBuildInputs = with pkgs.python3Packages; [
+              imageio
+              numpy
+              pycairo
+              evdev
+              matplotlib
             ];
           }
         )
