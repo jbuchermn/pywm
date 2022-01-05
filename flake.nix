@@ -43,8 +43,21 @@
             '';
 
             preConfigure = ''
+              echo "--- Pre-configure --------------"
+              echo "  wlrootsDir=$wlrootsDir"
+              echo "  sourceRoot=$sourceRoot"
+              echo "--- ls -------------------------"
+              ls -al
+              echo "--- ls ../wlrootsDir -----------"
+              ls -al ../$wlrootsDir
+
+              rm -rf ./subprojects/wlroots 2> /dev/null
               cp -r ../$wlrootsDir ./subprojects/wlroots
               rm -rf ./build
+
+              echo "--- ls ./subprojects/wlroots ---"
+              ls -al ./subprojects/wlroots/
+              echo "--------------------------------"
             '';
             # END Fucking suubprojects bug workaround
 
