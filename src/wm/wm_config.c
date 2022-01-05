@@ -9,6 +9,15 @@
 #include "wm/wm_layout.h"
 #include "wm/wm_seat.h"
 
+static void xcursor_setenv(struct wm_config* config){
+    char cursor_size_fmt[16];
+    snprintf(cursor_size_fmt, sizeof(cursor_size_fmt), "%u", config->xcursor_size);
+    setenv("XCURSOR_SIZE", cursor_size_fmt, 1);
+    if (config->xcursor_theme != NULL) {
+        setenv("XCURSOR_THEME", config->xcursor_theme, 1);
+    }
+}
+
 void wm_config_init_default(struct wm_config *config) {
     config->enable_xwayland = false;
 
@@ -35,6 +44,8 @@ void wm_config_init_default(struct wm_config *config) {
     config->xcursor_theme = cursor_theme;
     config->xcursor_size = cursor_size;
 
+    xcursor_setenv(config);
+
     config->natural_scroll = true;
     config->tap_to_click = true;
 
@@ -59,13 +70,7 @@ void wm_config_reconfigure(struct wm_config* config, struct wm_server* server){
     wm_layout_reconfigure(server->wm_layout);
     wm_server_reconfigure(server);
 
-
-    char cursor_size_fmt[16];
-    snprintf(cursor_size_fmt, sizeof(cursor_size_fmt), "%u", config->xcursor_size);
-    setenv("XCURSOR_SIZE", cursor_size_fmt, 1);
-    if (config->xcursor_theme != NULL) {
-        setenv("XCURSOR_THEME", config->xcursor_theme, 1);
-    }
+    xcursor_setenv(config);
 }
 
 void wm_config_add_output(struct wm_config *config, const char *name,
