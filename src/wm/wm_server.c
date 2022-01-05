@@ -5,7 +5,6 @@
 #include <wayland-server.h>
 #include <wlr/backend.h>
 #include <wlr/backend/headless.h>
-#include <wlr/backend/noop.h>
 #include <wlr/backend/multi.h>
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_data_device.h>
