@@ -25,8 +25,6 @@
 
 
 * Notes
-- Keep an eye on Chromium bug: https://bugs.chromium.org/p/chromium/issues/detail?id=1246834 So long patch by undoing https://github.com/swaywm/wlroots/commit/d290b13871fa18dcad6cd90d9ee93e7205742124?diff=unified
-
 - Screen record: wf-recorder
 - Screen shot: grim -g "$(slurp)"
 - Firefox: MOZ_ENABLE_WAYLAND=1

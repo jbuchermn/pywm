@@ -31,7 +31,7 @@ void main() {
             params_float[0],
             params_float[1],
             params_float[2],
-            params_float[3]
-    ) * alpha;
+            1.
+    ) * params_float[3] * alpha;
 }
 
