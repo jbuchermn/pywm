@@ -7,11 +7,6 @@
 **** TODO Layer shell: Keyboard interactivity
 **** TODO Are separate lock shaders necessary? (It's only a performance thing)
 
-*** Decorations
-**** DONE Provide a range of widgets to be used as decoration / highlight / ...
-- [X] Generate number of shaders / move to malloc
-**** DONE float z-index
-
 *** Gestures
 **** TODO Can c gestures make python gestures redundant? (Maybe enable switching) - would cure libseat+pyevdev issues
 **** TODO Configurable gestures (abstraction layer) + possibility to use external "gesture providers" (e.g. detection from webcam video)

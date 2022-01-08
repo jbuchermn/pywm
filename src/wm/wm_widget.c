@@ -112,7 +112,7 @@ static void wm_widget_render(struct wm_content* super, struct wm_output* output,
             return;
         }
         wm_renderer_select_primitive_shader(output->wm_server->wm_renderer, widget->primitive.name);
-        wm_renderer_render_primitive(output->wm_server->wm_renderer, output_damage, &box, wm_content_get_opacity(super),
+        wm_renderer_render_primitive(output->wm_server->wm_renderer, output_damage, &box, wm_content_get_opacity(super) * (1. - (super->lock_enabled ? 0.0 : super->wm_server->lock_perc)),
                                      widget->primitive.params_int, widget->primitive.params_float);
     }
 }
