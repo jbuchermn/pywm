@@ -21,7 +21,7 @@
             pname = "pywm";
             version = "0.3alpha";
 
-            # BEGIN Fucking suubprojects bug workaround for 'src = ./.'
+            # BEGIN Fucking subprojects bug workaround for 'src = ./.'
             srcs = [
               ./.
               (builtins.fetchGit {
@@ -59,7 +59,7 @@
               ls -al ./subprojects/wlroots/
               echo "--------------------------------"
             '';
-            # END Fucking suubprojects bug workaround
+            # END Fucking subprojects bug workaround
 
             nativeBuildInputs = with pkgs; [
               meson_0_60
@@ -103,6 +103,53 @@
           }
         )
       );
+
+      devShell = let
+        my-python = pkgs.python3;
+        python-with-my-packages = my-python.withPackages (ps: with ps; [
+          imageio
+          numpy
+          pycairo
+          evdev
+          matplotlib
+
+          python-lsp-server
+          pylsp-mypy
+          mypy
+        ]);
+      in
+        pkgs.mkShell {
+          nativeBuildInputs = with pkgs; [ 
+            meson_0_60
+            ninja
+            pkg-config
+            wayland-scanner
+            glslang
+          ];
+
+          buildInputs = with pkgs; [ 
+            libGL
+            wayland
+            wayland-protocols
+            libinput
+            libxkbcommon
+            pixman
+            xorg.xcbutilwm
+            xorg.xcbutilrenderutil
+            xorg.xcbutilerrors
+            xorg.xcbutilimage
+            xorg.libX11
+            seatd
+            xwayland
+            vulkan-loader
+            mesa
+
+            libpng
+            ffmpeg
+            libcap
+            python-with-my-packages 
+          ];
+        };
     }
   );
 }

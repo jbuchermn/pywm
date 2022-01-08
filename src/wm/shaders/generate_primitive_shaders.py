@@ -23,6 +23,7 @@ void wm_primitive_shaders_init(struct wm_renderer* renderer){
     """)
 
     skip = True
+    shaders: list[str] = []
     for subdir, _, files in os.walk(base_textures):
         if skip:
             skip = False
@@ -53,10 +54,17 @@ void wm_primitive_shaders_init(struct wm_renderer* renderer){
             n_params_float = int(match_float.groups()[0])
 
         print("[DEBUG] Texture has %d, %d parameters" % (n_params_int, n_params_float))
-        
-        out.write(f"""
+
+        shaders += [f"""
     wm_renderer_add_primitive_shader(renderer, "{os.path.split(subdir)[1]}", {",".join(strs)}, {n_params_int}, {n_params_float});
-        """)
+        """]
+
+    out.write(f"""
+    wm_renderer_init_primitive_shaders(renderer, {len(shaders)});
+    """)
+
+    for s in shaders:
+        out.write(s)
 
     out.write("}");
 

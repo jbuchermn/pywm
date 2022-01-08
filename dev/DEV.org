@@ -8,8 +8,8 @@
 **** TODO Are separate lock shaders necessary? (It's only a performance thing)
 
 *** Decorations
-**** STRT Provide a range of widgets to be used as decoration / highlight / ...
-- [ ] Generate number of shaders / move to malloc
+**** DONE Provide a range of widgets to be used as decoration / highlight / ...
+- [X] Generate number of shaders / move to malloc
 **** DONE float z-index
 
 *** Gestures

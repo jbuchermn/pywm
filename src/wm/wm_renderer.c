@@ -115,6 +115,11 @@ static void wm_renderer_link_texture_shader(struct wm_renderer *renderer,
     shader->tex_attrib = glGetAttribLocation(shader->shader, "texcoord");
 }
 
+void wm_renderer_init_texture_shaders(struct wm_renderer* renderer, int n_shaders){
+    renderer->texture_shaders = calloc(n_shaders, sizeof(struct wm_renderer_texture_shaders));
+    renderer->n_texture_shaders = n_shaders;
+}
+
 void wm_renderer_add_texture_shaders(
     struct wm_renderer *renderer, const char *name, const GLchar *vert_src,
     const GLchar *frag_src_rgba, const GLchar *frag_src_rgbx,
@@ -125,11 +130,11 @@ void wm_renderer_add_texture_shaders(
         gles2_get_renderer(renderer->wlr_renderer);
 
     int i = 0;
-    for (; i < WM_CUSTOM_RENDERER_N_TEXTURE_SHADERS; i++) {
+    for (; i < renderer->n_texture_shaders; i++) {
         if (!renderer->texture_shaders[i].name)
             break;
     }
-    assert(i < WM_CUSTOM_RENDERER_N_TEXTURE_SHADERS);
+    assert(i < renderer->n_texture_shaders);
 
     renderer->texture_shaders[i].name = strdup(name);
 
@@ -155,16 +160,21 @@ void wm_renderer_add_texture_shaders(
     }
 }
 
+void wm_renderer_init_primitive_shaders(struct wm_renderer* renderer, int n_shaders){
+    renderer->primitive_shaders = calloc(n_shaders, sizeof(struct wm_renderer_primitive_shader));
+    renderer->n_primitive_shaders = n_shaders;
+}
+
 void wm_renderer_add_primitive_shader(struct wm_renderer *renderer,
                                       const char *name, const GLchar *vert_src,
                                       const GLchar *frag_src, int n_params_int, int n_params_float) {
 
     int i = 0;
-    for (; i < WM_CUSTOM_RENDERER_N_PRIMITIVE_SHADERS; i++) {
+    for (; i < renderer->n_primitive_shaders; i++) {
         if (!renderer->primitive_shaders[i].name)
             break;
     }
-    assert(i < WM_CUSTOM_RENDERER_N_PRIMITIVE_SHADERS);
+    assert(i < renderer->n_primitive_shaders);
 
     renderer->primitive_shaders[i].name = strdup(name);
     renderer->primitive_shaders[i].n_params_float = n_params_float;
@@ -180,12 +190,13 @@ void wm_renderer_add_primitive_shader(struct wm_renderer *renderer,
     renderer->primitive_shaders[i].pos_attrib = glGetAttribLocation(renderer->primitive_shaders[i].shader, "pos");
     renderer->primitive_shaders[i].tex_attrib = glGetAttribLocation(renderer->primitive_shaders[i].shader, "texcoord");
 
-    if(renderer->primitive_shader_selected->n_params_float){
+    if(n_params_float){
         renderer->primitive_shaders[i].params_float = glGetUniformLocation(renderer->primitive_shaders[i].shader, "params_float");
     }
-    if(renderer->primitive_shader_selected->n_params_int){
+    if(n_params_int){
         renderer->primitive_shaders[i].params_int = glGetUniformLocation(renderer->primitive_shaders[i].shader, "params_int");
     }
+
 }
 
 #endif
@@ -194,12 +205,12 @@ void wm_renderer_select_texture_shaders(struct wm_renderer *renderer,
                                         const char *name) {
 #ifdef WM_CUSTOM_RENDERER
     int i = 0;
-    for (; i < WM_CUSTOM_RENDERER_N_TEXTURE_SHADERS; i++) {
+    for (; i < renderer->n_texture_shaders; i++) {
         if (renderer->texture_shaders[i].name && !strcmp(renderer->texture_shaders[i].name, name))
             break;
     }
 
-    if (i < WM_CUSTOM_RENDERER_N_TEXTURE_SHADERS){
+    if (i < renderer->n_texture_shaders){
         renderer->texture_shaders_selected = renderer->texture_shaders + i;
     }else{
         wlr_log(WLR_INFO, "Could not find texture shaders '%s' - defaulting", name);
@@ -214,11 +225,11 @@ void wm_renderer_select_primitive_shader(struct wm_renderer *renderer,
                                          const char *name) {
 #ifdef WM_CUSTOM_RENDERER
     int i = 0;
-    for (; i < WM_CUSTOM_RENDERER_N_PRIMITIVE_SHADERS; i++) {
+    for (; i < renderer->n_primitive_shaders; i++) {
         if (renderer->primitive_shaders[i].name && !strcmp(renderer->primitive_shaders[i].name, name))
             break;
     }
-    if (i < WM_CUSTOM_RENDERER_N_PRIMITIVE_SHADERS){
+    if (i < renderer->n_primitive_shaders){
         renderer->primitive_shader_selected = renderer->primitive_shaders + i;
     }else{
         wlr_log(WLR_INFO, "Could not find primitive shader '%s' - defaulting", name);
@@ -404,12 +415,10 @@ void wm_renderer_init(struct wm_renderer *renderer, struct wm_server *server) {
     struct wlr_gles2_renderer *r = gles2_get_renderer(renderer->wlr_renderer);
     assert(r);
 
-    for (int i = 0; i < WM_CUSTOM_RENDERER_N_TEXTURE_SHADERS; i++)
-        renderer->texture_shaders[i].name = 0;
-    for (int i = 0; i < WM_CUSTOM_RENDERER_N_PRIMITIVE_SHADERS; i++)
-        renderer->primitive_shaders[i].name = 0;
-    renderer->texture_shaders_selected = renderer->texture_shaders;
-    renderer->primitive_shader_selected = renderer->primitive_shaders;
+    renderer->n_primitive_shaders = 0;
+    renderer->n_texture_shaders = 0;
+    renderer->texture_shaders_selected = NULL;
+    renderer->primitive_shader_selected = NULL;
 
     assert(wlr_egl_make_current(r->egl));
     wm_texture_shaders_init(renderer);
@@ -417,6 +426,7 @@ void wm_renderer_init(struct wm_renderer *renderer, struct wm_server *server) {
     wlr_egl_unset_current(r->egl);
 
     wm_renderer_select_texture_shaders(renderer, server->wm_config->texture_shaders);
+    renderer->primitive_shader_selected = renderer->primitive_shaders;
 #endif
 
 }

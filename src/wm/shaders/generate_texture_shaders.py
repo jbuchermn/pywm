@@ -24,6 +24,7 @@ void wm_texture_shaders_init(struct wm_renderer* renderer){
     """)
 
     skip = True
+    shaders: list[str] = []
     for subdir, _, files in os.walk(base_textures):
         if skip:
             skip = False
@@ -42,10 +43,17 @@ void wm_texture_shaders_init(struct wm_renderer* renderer){
 
         if not successful:
             continue
-        
-        out.write(f"""
+
+        shaders += [f"""
     wm_renderer_add_texture_shaders(renderer, "{os.path.split(subdir)[1]}", {",".join(strs)});
-        """)
+        """]
+
+    out.write(f"""
+    wm_renderer_init_texture_shaders(renderer, {len(shaders)});
+    """)
+
+    for s in shaders:
+        out.write(s)
 
     out.write("}");
 

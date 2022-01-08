@@ -8,10 +8,6 @@
 
 #ifdef WM_CUSTOM_RENDERER
 
-// TODO: Generate
-#define WM_CUSTOM_RENDERER_N_TEXTURE_SHADERS 10
-#define WM_CUSTOM_RENDERER_N_PRIMITIVE_SHADERS 10
-
 struct wm_output;
 
 #include <GLES2/gl2.h>
@@ -76,8 +72,10 @@ struct wm_renderer {
     struct wlr_renderer* wlr_renderer;
 
 #ifdef WM_CUSTOM_RENDERER
-    struct wm_renderer_texture_shaders texture_shaders[WM_CUSTOM_RENDERER_N_TEXTURE_SHADERS];
-    struct wm_renderer_primitive_shader primitive_shaders[WM_CUSTOM_RENDERER_N_PRIMITIVE_SHADERS];
+    int n_texture_shaders;
+    struct wm_renderer_texture_shaders* texture_shaders;
+    int n_primitive_shaders;
+    struct wm_renderer_primitive_shader* primitive_shaders;
 #endif
 
     struct wm_renderer_texture_shaders* texture_shaders_selected;
@@ -91,6 +89,7 @@ void wm_renderer_destroy(struct wm_renderer *renderer);
 
 #ifdef WM_CUSTOM_RENDERER
 
+void wm_renderer_init_texture_shaders(struct wm_renderer* renderer, int n_shaders);
 void wm_renderer_add_texture_shaders(struct wm_renderer* renderer, const char* name,
         const GLchar* vert_src,
         const GLchar* frag_src_rgba,
@@ -101,6 +100,7 @@ void wm_renderer_add_texture_shaders(struct wm_renderer* renderer, const char* n
         const GLchar* frag_src_lock_ext);
 
 
+void wm_renderer_init_primitive_shaders(struct wm_renderer* renderer, int n_shaders);
 void wm_renderer_add_primitive_shader(struct wm_renderer* renderer, const char* name,
         const GLchar* vert_src, const GLchar* frag_src, int n_params_int, int n_params_float);
 
