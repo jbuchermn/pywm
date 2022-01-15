@@ -370,9 +370,10 @@ static void wm_view_layer_get_size_constraints(struct wm_view* super, int** size
     view->size_constraints[6] = view->wlr_layer_surface->current.margin.top;
     view->size_constraints[7] = view->wlr_layer_surface->current.margin.right;
     view->size_constraints[8] = view->wlr_layer_surface->current.margin.bottom;
+    view->size_constraints[9] = view->wlr_layer_surface->current.keyboard_interactive;
 
     *size_constraints = view->size_constraints;
-    *n_constraints = 9;
+    *n_constraints = 10;
 
 }
 

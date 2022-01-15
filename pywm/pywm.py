@@ -348,7 +348,6 @@ class PyWM(Generic[ViewT]):
                 self._update_idle(False)
         self._last_update = t
 
-
         if self._damaged:
             self._damaged = False
             self._down_state = self.process()
@@ -503,9 +502,6 @@ class PyWM(Generic[ViewT]):
         pass
 
     def main(self) -> None:
-        pass
-
-    def _execute_view_main(self, view: ViewT) -> None:
         pass
 
     def on_layout_change(self) -> None:

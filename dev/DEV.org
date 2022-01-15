@@ -12,7 +12,7 @@
 **** TODO Configurable gestures (abstraction layer) + possibility to use external "gesture providers" (e.g. detection from webcam video)
 
 ** Backlog / Ideas
-*** wlr_output_manager
+*** wlr-output-management-unstable-v1 -> wdisplays
 *** Complete libinput device config / support for external mouse
 *** Use libseat from python / patched python evdev
 *** Support newm-sidecar (or similar, via ws://) as touchpad
