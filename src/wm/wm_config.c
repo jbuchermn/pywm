@@ -43,7 +43,7 @@ void wm_config_init_default(struct wm_config *config) {
         }
     }
 
-    config->xcursor_theme = cursor_theme;
+    config->xcursor_theme = cursor_theme ? strdup(cursor_theme) : "";
     config->xcursor_size = cursor_size;
 
     config->natural_scroll = true;

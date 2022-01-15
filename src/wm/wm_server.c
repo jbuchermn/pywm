@@ -208,12 +208,7 @@ static int callback_timer_handler(void* data){
         TIMER_STOP(between_callback_update);
         TIMER_PRINT(between_callback_update);
 
-        TIMER_START(callback_update);
-
         wm_callback_update();
-
-        TIMER_STOP(callback_update);
-        TIMER_PRINT(callback_update);
 
         TIMER_STARTONLY(between_callback_update);
     }
