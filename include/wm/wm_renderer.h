@@ -2,6 +2,7 @@
 #define WM_RENDERER_H
 
 #include <stdbool.h>
+#include <wlr/types/wlr_surface.h>
 #include <wlr/render/wlr_renderer.h>
 #include <pixman.h>
 
@@ -21,6 +22,8 @@ struct wm_renderer_texture_shader {
     GLint pos_attrib;
     GLint tex_attrib;
 
+    GLint offset_x;
+    GLint offset_y;
     GLint width;
     GLint height;
 
@@ -114,6 +117,7 @@ void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
                      struct wm_output *output);
 void wm_renderer_render_texture_at(struct wm_renderer *renderer,
                                    pixman_region32_t *damage,
+                                   struct wlr_surface* surface,
                                    struct wlr_texture *texture,
                                    struct wlr_box *box, double opacity,
                                    struct wlr_box *mask,

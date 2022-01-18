@@ -136,7 +136,7 @@ static void wm_drag_render(struct wm_content* super, struct wm_output* output, p
     }
     wm_renderer_render_texture_at(
             output->wm_server->wm_renderer, output_damage,
-            texture, &box,
+            drag->wlr_drag_icon->surface, texture, &box,
             wm_content_get_opacity(super), &box, 0,
             super->lock_enabled ? 0.0 : super->wm_server->lock_perc);
 }

@@ -5,6 +5,8 @@ varying vec2 v_texcoord;
 uniform samplerExternalOES texture0;
 uniform float alpha;
 
+uniform float offset_x;
+uniform float offset_y;
 uniform float width;
 uniform float height;
 

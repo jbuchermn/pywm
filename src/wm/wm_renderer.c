@@ -102,6 +102,8 @@ static void wm_renderer_link_texture_shader(struct wm_renderer *renderer,
     shader->proj = glGetUniformLocation(shader->shader, "proj");
     shader->tex = glGetUniformLocation(shader->shader, "tex");
     shader->alpha = glGetUniformLocation(shader->shader, "alpha");
+    shader->offset_x = glGetUniformLocation(shader->shader, "offset_x");
+    shader->offset_y = glGetUniformLocation(shader->shader, "offset_y");
     shader->width = glGetUniformLocation(shader->shader, "width");
     shader->height = glGetUniformLocation(shader->shader, "height");
     shader->padding_l = glGetUniformLocation(shader->shader, "padding_l");
@@ -305,6 +307,8 @@ static bool render_subtexture_with_matrix(
     glUniformMatrix3fv(shader->proj, 1, GL_FALSE, gl_matrix);
     glUniform1i(shader->tex, 0);
     glUniform1f(shader->alpha, alpha);
+    glUniform1f(shader->offset_x, display_box->x);
+    glUniform1f(shader->offset_y, display_box->y);
     glUniform1f(shader->width, display_box->width);
     glUniform1f(shader->height, display_box->height);
     glUniform1f(shader->padding_l, padding_l);
@@ -452,6 +456,7 @@ void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
 
 void wm_renderer_render_texture_at(struct wm_renderer *renderer,
                                    pixman_region32_t *damage,
+                                   struct wlr_surface* surface,
                                    struct wlr_texture *texture,
                                    struct wlr_box *box, double opacity,
                                    struct wlr_box *mask, double corner_radius,
@@ -467,12 +472,15 @@ void wm_renderer_render_texture_at(struct wm_renderer *renderer,
     wlr_matrix_project_box(matrix, box, WL_OUTPUT_TRANSFORM_NORMAL, 0,
                            renderer->current->wlr_output->transform_matrix);
 
-    struct wlr_fbox fbox = {
-        .x = 0,
-        .y = 0,
-        .width = texture->width,
-        .height = texture->height,
-    };
+    struct wlr_fbox fbox;
+    if(surface){
+        wlr_surface_get_buffer_source_box(surface, &fbox);
+    }else{
+        fbox.x = 0;
+        fbox.y = 0;
+        fbox.width = texture->width;
+        fbox.height = texture->height;
+    }
 
     int nrects;
     pixman_box32_t *rects = pixman_region32_rectangles(damage, &nrects);

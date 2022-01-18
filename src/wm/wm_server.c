@@ -291,6 +291,7 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     wlr_data_control_manager_v1_create(server->wl_display);
     wlr_primary_selection_v1_device_manager_create(server->wl_display);
     wlr_gamma_control_manager_v1_create(server->wl_display);
+    wlr_viewporter_create(server->wl_display);
 
     server->wlr_xwayland = NULL;
     if(config->enable_xwayland){

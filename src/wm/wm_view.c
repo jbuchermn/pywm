@@ -122,7 +122,7 @@ static void render_surface(struct wlr_surface *surface, int sx, int sy,
         return;
     }
 
-    wm_renderer_render_texture_at(output->wm_server->wm_renderer, rdata->damage, texture, &box,
+    wm_renderer_render_texture_at(output->wm_server->wm_renderer, rdata->damage, surface, texture, &box,
                                   rdata->opacity,
                                   &mask,
                                   corner_radius, rdata->lock_perc);

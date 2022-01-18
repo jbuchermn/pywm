@@ -99,10 +99,11 @@ static void wm_widget_render(struct wm_content* super, struct wm_output* output,
 
         wm_renderer_render_texture_at(
                 output->wm_server->wm_renderer, output_damage,
-                widget->wlr_texture, &box,
+                NULL, widget->wlr_texture, &box,
                 wm_content_get_opacity(super), &mask, corner_radius,
                 super->lock_enabled ? 0.0 : super->wm_server->lock_perc);
     }else if(widget->primitive.name){
+#ifdef WM_CUSTOM_RENDERER
         if(widget->primitive.n_params_int < output->wm_server->wm_renderer->primitive_shader_selected->n_params_int){
             wlr_log(WLR_ERROR, "Not enough int parameters (%d) for shader %s", widget->primitive.n_params_int, widget->primitive.name);
             return;
@@ -114,6 +115,7 @@ static void wm_widget_render(struct wm_content* super, struct wm_output* output,
         wm_renderer_select_primitive_shader(output->wm_server->wm_renderer, widget->primitive.name);
         wm_renderer_render_primitive(output->wm_server->wm_renderer, output_damage, &box, wm_content_get_opacity(super) * (1. - (super->lock_enabled ? 0.0 : super->wm_server->lock_perc)),
                                      widget->primitive.params_int, widget->primitive.params_float);
+#endif
     }
 }
 
