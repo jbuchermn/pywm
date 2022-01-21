@@ -6,15 +6,16 @@
 **** TODO Bring down idle cpu: Try some optimizations of update loop if no state (view nor layout nor widget) changes (most common case) --> bring down idle CPU / Maybe store callable view._update directly in _pywm_view (remove look-ups)
 **** TODO Are separate lock shaders necessary? (It's only a performance thing)
 
-*** TODO Build Wayland compositor fullscreen just showing one app (to validate CPU usage)
+*** TODO Build Wayland compositor pywm-fullscreen just showing one app (to validate CPU usage)
 *** TODO wlr-output-management-unstable-v1 (in order to use wdisplays)
 
 *** Gestures
-**** TODO Configurable gestures (abstraction layer) + possibility to use external "gesture providers" (e.g. detection from webcam video)
-**** TODO Can c gestures make python gestures redundant? (Maybe enable switching) - would cure libseat+pyevdev issues
+**** TODO Move lowpass stuff from newm to pywm and make gesture interface simpler
+**** TODO Abstraction layer for gesture provider (possibility to use external "gesture providers" - e.g. detection from webcam video)
+**** TODO Can c gestures make python gestures redundant? (would cure libseat+pyevdev issues)
 
 ** Backlog / Ideas
-*** Enable keyboard-excludive client (e.g. layer shell keyboard_interactivity / use in lock screen)
+*** Enable keyboard-exclusive client (e.g. layer shell keyboard_interactivity / use in lock screen)
 *** Complete libinput device config / support for external mouse
 *** Use libseat from python / patched python evdev
 *** Support newm-sidecar (or similar, via ws://) as touchpad
