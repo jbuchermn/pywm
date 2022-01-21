@@ -2,15 +2,16 @@
 
 * Development
 ** Current (v0.3)
-*** Optimization
+*** Optimization / Improvements
 **** TODO Try some optimizations of update loop if no state (view nor layout nor widget) changes (most common case) --> bring down idle CPU / Maybe store callable view._update directly in _pywm_view (remove look-ups) / Investigate scaling of idle cpu with number of views
 **** TODO Are separate lock shaders necessary? (It's only a performance thing)
 
-*** wlr-output-management-unstable-v1 (in order to use wdisplays)
+*** STRT Build Wayland compositor fullscreen just showing one app (to validate CPU usage)
+*** TODO wlr-output-management-unstable-v1 (in order to use wdisplays)
 
 *** Gestures
-**** TODO Can c gestures make python gestures redundant? (Maybe enable switching) - would cure libseat+pyevdev issues
 **** TODO Configurable gestures (abstraction layer) + possibility to use external "gesture providers" (e.g. detection from webcam video)
+**** TODO Can c gestures make python gestures redundant? (Maybe enable switching) - would cure libseat+pyevdev issues
 
 ** Backlog / Ideas
 *** Enable keyboard-excludive client (e.g. layer shell keyboard_interactivity / use in lock screen)
@@ -21,13 +22,12 @@
 
 
 * Notes
-- Screen record: wf-recorder
-- Screen shot: grim -g "$(slurp)"
-- Firefox: MOZ_ENABLE_WAYLAND=1
-- Chromium: --enable-features=UseOzonePlatform --ozone-platform=wayland
-- Matplotlib / Qt5 on Wayland requires DISPLAY=":0" to be set
-- Apple Trackpad
-        https://medium.com/macoclock/how-to-pair-apple-magic-keyboard-a1314-on-ubuntu-18-04-and-act-as-numpad-42fe4402454c
-        https://wiki.archlinux.org/index.php/Bluetooth
-
-- Screensharing using `xdg-desktop-portal-wlr -r`
+** Screen record: wf-recorder
+** Screen shot: grim -g "$(slurp)"
+** Firefox: MOZ_ENABLE_WAYLAND=1
+** Chromium: --enable-features=UseOzonePlatform --ozone-platform=wayland
+** Matplotlib / Qt5 on Wayland requires DISPLAY=":0" to be set
+** Apple Trackpad
+    - See https://medium.com/macoclock/how-to-pair-apple-magic-keyboard-a1314-on-ubuntu-18-04-and-act-as-numpad-42fe4402454c
+    - See https://wiki.archlinux.org/index.php/Bluetooth
+** Screensharing using xdg-desktop-portal-wlr -r

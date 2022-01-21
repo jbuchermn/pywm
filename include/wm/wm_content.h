@@ -81,9 +81,7 @@ struct wm_content_vtable {
     void (*printf)(FILE* file, struct wm_content* content);
 };
 
-static inline void wm_content_destroy(struct wm_content* content){
-    (*content->vtable->destroy)(content);
-}
+void wm_content_destroy(struct wm_content* content);
 
 void wm_content_render(struct wm_content* content, struct wm_output* output, pixman_region32_t* output_damage, struct timespec now);
 

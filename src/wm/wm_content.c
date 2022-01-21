@@ -205,6 +205,11 @@ double wm_content_get_corner_radius(struct wm_content* content){
     return content->corner_radius;
 }
 
+void wm_content_destroy(struct wm_content* content){
+    wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
+    (*content->vtable->destroy)(content);
+}
+
 void wm_content_render(struct wm_content* content, struct wm_output* output, pixman_region32_t* output_damage, struct timespec now){
     if(!wm_content_is_on_output(content, output)) return;
 
