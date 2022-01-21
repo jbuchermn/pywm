@@ -8,7 +8,8 @@ texture_shaders = [
 
 primitive_shaders = [
   'rounded_corners_rect',
-  'rounded_corners_border'
+  'rounded_corners_border',
+  'corner'
 ]
 
 texture_shader_files = []

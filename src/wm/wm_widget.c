@@ -104,15 +104,15 @@ static void wm_widget_render(struct wm_content* super, struct wm_output* output,
                 super->lock_enabled ? 0.0 : super->wm_server->lock_perc);
     }else if(widget->primitive.name){
 #ifdef WM_CUSTOM_RENDERER
+        wm_renderer_select_primitive_shader(output->wm_server->wm_renderer, widget->primitive.name);
         if(widget->primitive.n_params_int < output->wm_server->wm_renderer->primitive_shader_selected->n_params_int){
-            wlr_log(WLR_ERROR, "Not enough int parameters (%d) for shader %s", widget->primitive.n_params_int, widget->primitive.name);
+            wlr_log(WLR_ERROR, "Not enough int parameters (%d) for shader %s (%d)", widget->primitive.n_params_int, widget->primitive.name, output->wm_server->wm_renderer->primitive_shader_selected->n_params_int);
             return;
         }
         if(widget->primitive.n_params_float < output->wm_server->wm_renderer->primitive_shader_selected->n_params_float){
-            wlr_log(WLR_ERROR, "Not enough float parameters (%d) for shader %s", widget->primitive.n_params_float, widget->primitive.name);
+            wlr_log(WLR_ERROR, "Not enough float parameters (%d) for shader %s (%d)", widget->primitive.n_params_float, widget->primitive.name, output->wm_server->wm_renderer->primitive_shader_selected->n_params_float);
             return;
         }
-        wm_renderer_select_primitive_shader(output->wm_server->wm_renderer, widget->primitive.name);
         wm_renderer_render_primitive(output->wm_server->wm_renderer, output_damage, &box, wm_content_get_opacity(super) * (1. - (super->lock_enabled ? 0.0 : super->wm_server->lock_perc)),
                                      widget->primitive.params_int, widget->primitive.params_float);
 #endif
