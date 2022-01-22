@@ -1,10 +1,10 @@
 from __future__ import annotations
+from typing import Callable, Optional, Any, TypeVar, Generic, Union, cast
 
 from abc import abstractmethod
 import logging
 import time
 from threading import Thread, Lock
-from typing import Callable, Optional, Any, TypeVar, Generic, Union
 
 from .pywm_widget import PyWMWidget
 from .pywm_view import PyWMView
@@ -232,7 +232,7 @@ class PyWM(Generic[ViewT]):
     @callback
     def _gesture(self, kind: str, time_msec: int, *args: Any) -> bool:
         self._update_idle()
-        return self.on_gesture(kind, time_msec, args)
+        return self.on_gesture(kind, time_msec, cast(list[Union[float, int]], args))
 
     @callback
     def _layout_change(self, outputs: list[tuple[str, int, float, int, int, int, int]]) -> None:
