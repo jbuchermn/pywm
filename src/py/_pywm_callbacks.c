@@ -200,7 +200,7 @@ static bool call_swipe_end(struct wlr_event_pointer_swipe_end* event){
 static bool call_hold_begin(struct wlr_event_pointer_hold_begin* event){
     if(callbacks.gesture){
         PyGILState_STATE gil = PyGILState_Ensure();
-        PyObject* args = Py_BuildValue("(sii)", "swipe", event->time_msec, event->fingers);
+        PyObject* args = Py_BuildValue("(sii)", "hold", event->time_msec, event->fingers);
         bool result = call_bool(callbacks.gesture, args);
         PyGILState_Release(gil);
         return result;
@@ -211,7 +211,7 @@ static bool call_hold_begin(struct wlr_event_pointer_hold_begin* event){
 static bool call_hold_end(struct wlr_event_pointer_hold_end* event){
     if(callbacks.gesture){
         PyGILState_STATE gil = PyGILState_Ensure();
-        PyObject* args = Py_BuildValue("(sii)", "swipe", event->time_msec, event->cancelled);
+        PyObject* args = Py_BuildValue("(sii)", "hold", event->time_msec, event->cancelled);
         bool result = call_bool(callbacks.gesture, args);
         PyGILState_Release(gil);
         return result;

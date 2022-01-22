@@ -4,9 +4,8 @@ from abc import abstractmethod
 import logging
 import time
 from threading import Thread, Lock
-from typing import Callable, Optional, Any, Type, TypeVar, Generic
+from typing import Callable, Optional, Any, TypeVar, Generic, Union
 
-from .touchpad import TouchpadDaemon, GestureListener, Gesture
 from .pywm_widget import PyWMWidget
 from .pywm_view import PyWMView
 
@@ -102,7 +101,7 @@ class PyWM(Generic[ViewT]):
         register("axis", self._axis)
         register("key", self._key)
         register("modifiers", self._modifiers)
-        register("gesture", self._c_gesture)
+        register("gesture", self._gesture)
 
         register("update_view", self._update_view)
         register("destroy_view", self._destroy_view)
@@ -123,9 +122,6 @@ class PyWM(Generic[ViewT]):
         self._pending_destroy_widgets: list[PyWMWidget] = []
 
         self._pending_config: Optional[dict[str, Any]] = None
-
-        self._touchpad_daemon = TouchpadDaemon(self._gesture)
-        self._touchpad_captured = False
 
         self._down_state = PyWMDownstreamState()
         self._damaged = False
@@ -197,10 +193,6 @@ class PyWM(Generic[ViewT]):
 
 
     def _exec_main(self) -> None:
-        if self._touchpad_daemon is not None:
-            logger.debug("Starting Touchpad daemon")
-            self._touchpad_daemon.start()
-
         logger.debug("Executing main")
         self.main()
 
@@ -212,34 +204,24 @@ class PyWM(Generic[ViewT]):
     @callback
     def _motion(self, time_msec: int, delta_x: float, delta_y: float, abs_x: float, abs_y: float) -> bool:
         self._update_idle()
-        if self._touchpad_captured:
-            return True
-
         self.cursor_pos = (abs_x, abs_y)
         return self.on_motion(time_msec, delta_x, delta_y)
 
     @callback
     def _button(self, time_msec: int, button: int, state: int) -> bool:
         self._update_idle()
-        if self._touchpad_captured:
-            return True
-
         return self.on_button(time_msec, button, state)
 
     @callback
     def _axis(self, time_msec: int, source: int, orientation: int, delta: float, delta_discrete: int) -> bool:
         self._update_idle()
-        if self._touchpad_captured:
-            return True
-
         return self.on_axis(time_msec, source, orientation, delta,
                             delta_discrete)
 
     @callback
     def _key(self, time_msec: int, keycode: int, state: int, keysyms: str) -> bool:
         self._update_idle()
-        result = self.on_key(time_msec, keycode, state, keysyms)
-        return result
+        return self.on_key(time_msec, keycode, state, keysyms)
 
     @callback
     def _modifiers(self, depressed: int, latched: int, locked: int, group: int) -> bool:
@@ -248,12 +230,9 @@ class PyWM(Generic[ViewT]):
         return self.on_modifiers(self.modifiers)
 
     @callback
-    def _c_gesture(self, kind: str, *args: Any) -> bool:
+    def _gesture(self, kind: str, time_msec: int, *args: Any) -> bool:
         self._update_idle()
-        if self._touchpad_captured:
-            return True
-
-        return False
+        return self.on_gesture(kind, time_msec, args)
 
     @callback
     def _layout_change(self, outputs: list[tuple[str, int, float, int, int, int, int]]) -> None:
@@ -380,25 +359,6 @@ class PyWM(Generic[ViewT]):
         else:
             self._pending_widgets = [w for w in self._pending_widgets if id(w) != id(widget)]
 
-    def _gesture(self, gesture: Gesture) -> None:
-        self._update_idle()
-        self._touchpad_captured = self.on_gesture(gesture)
-        gesture.listener(GestureListener(None, self._gesture_finished))
-
-    def _gesture_finished(self) -> None:
-        self._touchpad_captured = False
-
-    def reallow_gesture(self) -> None:
-        if self._touchpad_captured:
-            return
-
-        if self._touchpad_daemon is not None:
-            self._touchpad_daemon.reset_gestures()
-
-    def configure_gestures(self, *args: float) -> None:
-        self._touchpad_daemon.update_config(*args)
-
-
     def _encode(self, v: Any) -> Any:
         if isinstance(v, str):
             return v.encode("ascii", "ignore")
@@ -423,8 +383,6 @@ class PyWM(Generic[ViewT]):
 
     def terminate(self) -> None:
         logger.debug("PyWM terminating")
-        if self._touchpad_daemon is not None:
-            self._touchpad_daemon.stop()
         self._pending_terminate = True
 
     def open_virtual_output(self, name: str) -> None:
@@ -516,7 +474,7 @@ class PyWM(Generic[ViewT]):
     def on_axis(self, time_msec: int, source: int, orientation: int, delta: float, delta_discrete: int) -> bool:
         return False
 
-    def on_gesture(self, gesture: Gesture) -> bool:
+    def on_gesture(self, kind: str, time_msec: int, args: list[Union[float, int]]) -> bool:
         return False
 
     def on_key(self, time_msec: int, keycode: int, state: int, keysyms: str) -> bool:
