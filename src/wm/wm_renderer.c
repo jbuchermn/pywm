@@ -142,6 +142,71 @@ void wm_renderer_init_texture_shaders(struct wm_renderer* renderer, int n_shader
     "}\n";
 
     wm_renderer_link_texture_shader(renderer, &renderer->quad_shader, quad_vertex_src, quad_fragment_src);
+
+    const GLchar downsample_vertex_src[] =
+    "attribute vec2 pos;\n"
+    "attribute vec2 texcoord;\n"
+    "varying vec2 v_texcoord;\n"
+    "\n"
+    "void main() {\n"
+    "	gl_Position = vec4(pos, 1.0, 1.0);\n"
+    "	v_texcoord = texcoord;\n"
+    "}\n";
+
+    const GLchar downsample_fragment_src[] =
+    "precision mediump float;\n"
+    "varying vec2 v_texcoord;\n"
+    "uniform sampler2D tex;\n"
+    "uniform float width;\n"
+    "uniform float height;\n"
+    "uniform float alpha;\n"
+    "\n"
+    "void main() {\n"
+    "   float offset = alpha;\n"
+    "   vec2 halfpixel = vec2(width, height);\n"
+    "   vec4 sum = texture2D(tex, v_texcoord) * 4.0;\n"
+    "   sum += texture2D(tex, v_texcoord - halfpixel.xy * offset);\n"
+    "   sum += texture2D(tex, v_texcoord + halfpixel.xy * offset);\n"
+    "   sum += texture2D(tex, v_texcoord + vec2(halfpixel.x, -halfpixel.y) * offset);\n"
+    "   sum += texture2D(tex, v_texcoord - vec2(halfpixel.x, -halfpixel.y) * offset);\n"
+    "	gl_FragColor = sum / 8.;\n"
+    "}\n";
+
+    wm_renderer_link_texture_shader(renderer, &renderer->downsample_shader, downsample_vertex_src, downsample_fragment_src);
+
+    const GLchar upsample_vertex_src[] =
+    "attribute vec2 pos;\n"
+    "attribute vec2 texcoord;\n"
+    "varying vec2 v_texcoord;\n"
+    "\n"
+    "void main() {\n"
+    "	gl_Position = vec4(pos, 1.0, 1.0);\n"
+    "	v_texcoord = texcoord;\n"
+    "}\n";
+
+    const GLchar upsample_fragment_src[] =
+    "precision mediump float;\n"
+    "varying vec2 v_texcoord;\n"
+    "uniform sampler2D tex;\n"
+    "uniform float width;\n"
+    "uniform float height;\n"
+    "uniform float alpha;\n"
+    "\n"
+    "void main() {\n"
+    "   float offset = alpha;\n"
+    "   vec2 halfpixel = vec2(width, height);\n"
+    "   vec4 sum = texture2D(tex, v_texcoord + vec2(-halfpixel.x * 2.0, 0.0) * offset);\n"
+    "   sum += texture2D(tex, v_texcoord + vec2(-halfpixel.x, halfpixel.y) * offset) * 2.0;\n"
+    "   sum += texture2D(tex, v_texcoord + vec2(0.0, halfpixel.y * 2.0) * offset);\n"
+    "   sum += texture2D(tex, v_texcoord + vec2(halfpixel.x, halfpixel.y) * offset) * 2.0;\n"
+    "   sum += texture2D(tex, v_texcoord + vec2(halfpixel.x * 2.0, 0.0) * offset);\n"
+    "   sum += texture2D(tex, v_texcoord + vec2(halfpixel.x, -halfpixel.y) * offset) * 2.0;\n"
+    "   sum += texture2D(tex, v_texcoord + vec2(0.0, -halfpixel.y * 2.0) * offset);\n"
+    "   sum += texture2D(tex, v_texcoord + vec2(-halfpixel.x, -halfpixel.y) * offset) * 2.0;\n"
+    "	gl_FragColor = sum / 8.;\n"
+    "}\n";
+
+    wm_renderer_link_texture_shader(renderer, &renderer->upsample_shader, upsample_vertex_src, upsample_fragment_src);
 }
 
 void wm_renderer_add_texture_shaders(
@@ -592,6 +657,15 @@ void wm_renderer_begin(struct wm_renderer *renderer, struct wm_output *output) {
 void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
                      struct wm_output *output) {
 
+    // DEBUG
+    struct wlr_box debug_box = {
+        .x = 100,
+        .y = 100,
+        .width = 250,
+        .height = 200
+    };
+    wm_renderer_apply_blur(renderer, damage, &debug_box);
+
 #ifdef WM_CUSTOM_RENDERER
     struct wlr_gles2_renderer *gles2_renderer = gles2_get_renderer(renderer->wlr_renderer);
     push_gles2_debug(gles2_renderer);
@@ -759,4 +833,99 @@ void wm_renderer_render_primitive(struct wm_renderer* renderer,
         wlr_render_rect(renderer->wlr_renderer, box, (float[]){1.0, 1.0, 0.0, 1.0}, renderer->current->wlr_output->transform_matrix);
 #endif
     }
+}
+
+void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_box* box){
+#ifdef WM_CUSTOM_RENDERER
+    struct wlr_gles2_renderer *gles2_renderer = gles2_get_renderer(renderer->wlr_renderer);
+    push_gles2_debug(gles2_renderer);
+
+    wm_renderer_scissor(renderer, box);
+
+    /*
+     * Downsample
+     */
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, renderer->current->renderer_buffers->frame_buffer);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderer->current->renderer_buffers->downsample_buffers[0]);
+    struct wm_renderer_texture_shader* shader = &renderer->downsample_shader;
+
+    const GLfloat texcoord[] = {
+        1, 0, // top right
+        0, 0, // top left
+        1, 1, // bottom right
+        0, 1, // bottom left
+    };
+
+    const GLfloat verts[] = {
+        1, -1, // top right
+        -1, -1, // top left
+        1, 1, // bottom right
+        -1, 1, // bottom left
+    };
+
+    glUseProgram(shader->shader);
+
+    glDisable(GL_BLEND);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, renderer->current->renderer_buffers->frame_buffer_tex);
+    glUniform1i(shader->tex, 0);
+
+    // Misuse attributes
+    glUniform1f(shader->width, 0.5 / (0.5 * renderer->current->renderer_buffers->width));
+    glUniform1f(shader->height, 0.5 / (0.5 * renderer->current->renderer_buffers->height));
+    glUniform1f(shader->alpha, 2);
+
+    glVertexAttribPointer(shader->pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, verts);
+    glVertexAttribPointer(shader->tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, texcoord);
+
+    glEnableVertexAttribArray(shader->pos_attrib);
+    glEnableVertexAttribArray(shader->tex_attrib);
+
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    glDisableVertexAttribArray(shader->pos_attrib);
+    glDisableVertexAttribArray(shader->tex_attrib);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    /*
+     * Upsample
+     */
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, renderer->current->renderer_buffers->downsample_buffers[0]);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderer->current->renderer_buffers->frame_buffer);
+    shader = &renderer->upsample_shader;
+
+    glUseProgram(shader->shader);
+
+    glDisable(GL_BLEND);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, renderer->current->renderer_buffers->downsample_buffers_tex[0]);
+    glUniform1i(shader->tex, 0);
+
+    glVertexAttribPointer(shader->pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, verts);
+    glVertexAttribPointer(shader->tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, texcoord);
+
+    // Misuse attributes
+    glUniform1f(shader->width, 0.5 / renderer->current->renderer_buffers->width);
+    glUniform1f(shader->height, 0.5 / renderer->current->renderer_buffers->height);
+    glUniform1f(shader->alpha, 2);
+
+    glEnableVertexAttribArray(shader->pos_attrib);
+    glEnableVertexAttribArray(shader->tex_attrib);
+
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    glDisableVertexAttribArray(shader->pos_attrib);
+    glDisableVertexAttribArray(shader->tex_attrib);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    wm_renderer_scissor(renderer, NULL);
+
+    pop_gles2_debug(gles2_renderer);
+#else
+    // noop
+#endif
 }

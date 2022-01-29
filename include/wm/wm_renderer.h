@@ -69,7 +69,7 @@ struct wm_renderer_primitive_shader {
     GLint params_int;
 };
 
-#define WM_RENDERER_DOWNSAMPLE_BUFFERS 2
+#define WM_RENDERER_DOWNSAMPLE_BUFFERS 1
 
 struct wm_renderer_buffers {
     int width;
@@ -102,6 +102,8 @@ struct wm_renderer {
     struct wm_renderer_texture_shaders* texture_shaders;
 
     struct wm_renderer_texture_shader quad_shader;
+    struct wm_renderer_texture_shader downsample_shader;
+    struct wm_renderer_texture_shader upsample_shader;
 
     int n_primitive_shaders;
     struct wm_renderer_primitive_shader* primitive_shaders;
@@ -153,6 +155,8 @@ void wm_renderer_render_primitive(struct wm_renderer* renderer,
                                   pixman_region32_t* damage,
                                   struct wlr_box* box,
                                   double opacity, int* params_int, float* params_float);
+
+void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_box* box);
 
 
 #endif
