@@ -298,6 +298,8 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
 
     /* Let the cursor know we possibly have a new scale */
     wm_cursor_ensure_loaded_for_scale(server->wm_seat->wm_cursor, scale);
+
+    output->renderer_buffers = NULL;
 }
 
 void wm_output_reconfigure(struct wm_output* output){
@@ -312,4 +314,8 @@ void wm_output_destroy(struct wm_output *output) {
     wl_list_remove(&output->present.link);
     wl_list_remove(&output->link);
     wm_layout_remove_output(output->wm_layout, output);
+
+#if WM_CUSTOM_RENDERER
+    wm_renderer_buffers_destroy(output->renderer_buffers);
+#endif
 }

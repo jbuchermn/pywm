@@ -10,8 +10,9 @@
 #ifdef WM_CUSTOM_RENDERER
 
 struct wm_output;
+struct wm_renderer;
 
-#include <GLES2/gl2.h>
+#include <GLES3/gl32.h>
 struct wm_renderer_texture_shader {
     GLuint shader;
 
@@ -68,6 +69,26 @@ struct wm_renderer_primitive_shader {
     GLint params_int;
 };
 
+#define WM_RENDERER_DOWNSAMPLE_BUFFERS 2
+
+struct wm_renderer_buffers {
+    int width;
+    int height;
+    struct wm_renderer* parent;
+
+    GLuint frame_buffer;
+    GLuint frame_buffer_rbo;
+    GLuint frame_buffer_tex;
+
+    GLuint downsample_buffers[WM_RENDERER_DOWNSAMPLE_BUFFERS];
+    GLuint downsample_buffers_rbo[WM_RENDERER_DOWNSAMPLE_BUFFERS];
+    GLuint downsample_buffers_tex[WM_RENDERER_DOWNSAMPLE_BUFFERS];
+};
+
+void wm_renderer_buffers_init(struct wm_renderer_buffers* buffers, struct wm_renderer* renderer, int width, int height);
+void wm_renderer_buffers_destroy(struct wm_renderer_buffers* buffers);
+void wm_renderer_buffers_ensure(struct wm_renderer* renderer, struct wm_output* output);
+
 #endif
 
 struct wm_renderer {
@@ -88,9 +109,6 @@ struct wm_renderer {
     struct wm_renderer_texture_shaders* texture_shaders_selected;
     struct wm_renderer_primitive_shader* primitive_shader_selected;
 
-    /* TODO: only works for one screen */
-    GLuint frame_buffer;
-    GLuint frame_buffer_tex;
 #endif
 };
 
