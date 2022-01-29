@@ -828,25 +828,27 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
 
     wm_renderer_scissor(renderer, box);
 
-    int offset = 1;
+    int offset = 4;
+
+    const GLfloat texcoord[] = {
+        1, 0, // top right
+        0, 0, // top left
+        1, 1, // bottom right
+        0, 1, // bottom left
+    };
+
+    const GLfloat verts[] = {
+        1, -1, // top right
+        -1, -1, // top left
+        1, 1, // bottom right
+        -1, 1, // bottom left
+    };
 
     /*
      * Downsample
      */
     {
-        const GLfloat texcoord[] = {
-            1, 0, // top right
-            0, 0, // top left
-            1, 1, // bottom right
-            0, 1, // bottom left
-        };
-
-        const GLfloat verts[] = {
-            0, -1, // top right
-            -1, -1, // top left
-            0, 0, // bottom right
-            -1, 0, // bottom left
-        };
+        glViewport(0, 0, renderer->current->renderer_buffers->downsample_buffers_width[0], renderer->current->renderer_buffers->downsample_buffers_height[0]);
 
         glBindFramebuffer(GL_FRAMEBUFFER, renderer->current->renderer_buffers->downsample_buffers[0]);
         struct wm_renderer_texture_shader* shader = &renderer->downsample_shader;
@@ -879,19 +881,8 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
     }
 
     {
-        const GLfloat texcoord[] = {
-            1, 0, // top right
-            0, 0, // top left
-            1, 1, // bottom right
-            0, 1, // bottom left
-        };
+        glViewport(0, 0, renderer->current->renderer_buffers->downsample_buffers_width[1], renderer->current->renderer_buffers->downsample_buffers_height[1]);
 
-        const GLfloat verts[] = {
-            -0.75, -1, // top right
-            -1, -1, // top left
-            -0.75, -0.75, // bottom right
-            -1, -0.75, // bottom left
-        };
         glBindFramebuffer(GL_FRAMEBUFFER, renderer->current->renderer_buffers->downsample_buffers[1]);
         struct wm_renderer_texture_shader* shader = &renderer->downsample_shader;
 
@@ -926,19 +917,7 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
      * Upsample
      */
     {
-        const GLfloat texcoord[] = {
-            1, 0, // top right
-            0, 0, // top left
-            1, 1, // bottom right
-            0, 1, // bottom left
-        };
-
-        const GLfloat verts[] = {
-            1, -1, // top right
-            -1, -1, // top left
-            1, 1, // bottom right
-            -1, 1, // bottom left
-        };
+        glViewport(0, 0, renderer->current->renderer_buffers->downsample_buffers_width[0], renderer->current->renderer_buffers->downsample_buffers_height[0]);
 
         glBindFramebuffer(GL_FRAMEBUFFER, renderer->current->renderer_buffers->downsample_buffers[0]);
         struct wm_renderer_texture_shader* shader = &renderer->upsample_shader;
@@ -970,19 +949,7 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
         glBindTexture(GL_TEXTURE_2D, 0);
     }
     {
-        const GLfloat texcoord[] = {
-            1, 0, // top right
-            0, 0, // top left
-            1, 1, // bottom right
-            0, 1, // bottom left
-        };
-
-        const GLfloat verts[] = {
-            1, -1, // top right
-            -1, -1, // top left
-            1, 1, // bottom right
-            -1, 1, // bottom left
-        };
+        glViewport(0, 0, renderer->current->renderer_buffers->width, renderer->current->renderer_buffers->height);
 
         glBindFramebuffer(GL_FRAMEBUFFER, renderer->current->renderer_buffers->frame_buffer);
         struct wm_renderer_texture_shader* shader = &renderer->upsample_shader;
