@@ -69,7 +69,7 @@ struct wm_renderer_primitive_shader {
     GLint params_int;
 };
 
-#define WM_RENDERER_DOWNSAMPLE_BUFFERS 1
+#define WM_RENDERER_DOWNSAMPLE_BUFFERS 2
 
 struct wm_renderer_buffers {
     int width;
@@ -83,6 +83,9 @@ struct wm_renderer_buffers {
     GLuint downsample_buffers[WM_RENDERER_DOWNSAMPLE_BUFFERS];
     GLuint downsample_buffers_rbo[WM_RENDERER_DOWNSAMPLE_BUFFERS];
     GLuint downsample_buffers_tex[WM_RENDERER_DOWNSAMPLE_BUFFERS];
+
+    int downsample_buffers_width[WM_RENDERER_DOWNSAMPLE_BUFFERS];
+    int downsample_buffers_height[WM_RENDERER_DOWNSAMPLE_BUFFERS];
 };
 
 void wm_renderer_buffers_init(struct wm_renderer_buffers* buffers, struct wm_renderer* renderer, int width, int height);
