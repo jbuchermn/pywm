@@ -74,21 +74,29 @@ struct wm_renderer {
     struct wm_server* wm_server;
     struct wlr_renderer* wlr_renderer;
 
+    struct wm_output* current;
+
 #ifdef WM_CUSTOM_RENDERER
     int n_texture_shaders;
     struct wm_renderer_texture_shaders* texture_shaders;
+
+    struct wm_renderer_texture_shader quad_shader;
+
     int n_primitive_shaders;
     struct wm_renderer_primitive_shader* primitive_shaders;
-#endif
 
     struct wm_renderer_texture_shaders* texture_shaders_selected;
     struct wm_renderer_primitive_shader* primitive_shader_selected;
 
-    struct wm_output* current;
+    /* TODO: only works for one screen */
+    GLuint frame_buffer;
+    GLuint frame_buffer_tex;
+#endif
 };
 
 void wm_renderer_init(struct wm_renderer *renderer, struct wm_server *server);
 void wm_renderer_destroy(struct wm_renderer *renderer);
+int wm_renderer_init_output(struct wm_renderer* renderer, struct wm_output* output);
 
 #ifdef WM_CUSTOM_RENDERER
 

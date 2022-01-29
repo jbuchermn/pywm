@@ -22,7 +22,7 @@ static void xcursor_setenv(struct wm_config* config){
 void wm_config_init_default(struct wm_config *config) {
     config->enable_xwayland = false;
 
-    config->callback_frequency = 20;
+    config->callback_frequency = 10;
 
     strcpy(config->xkb_model, "");
     strcpy(config->xkb_layout, "");

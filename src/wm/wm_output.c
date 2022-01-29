@@ -62,6 +62,11 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
 
     bool needs_clear = false;
     struct wm_content *r;
+    /* 
+     * This does not catch all cases, where clearing is necessary - specifically, if only the texture contains transparency,
+     * but compositor opacaity is set to 1, needs_clear will be true.
+     *
+     * In the end the assumption is there's always a background */
     wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
         if(wm_content_get_opacity(r) < 1. - 0.0001){
             needs_clear=true;
@@ -262,8 +267,7 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
     output->layout_x = 0;
     output->layout_y = 0;
 
-    if (!wlr_output_init_render(output->wlr_output, server->wlr_allocator,
-                                server->wm_renderer->wlr_renderer)) {
+    if (!wm_renderer_init_output(server->wm_renderer, output)) {
         wlr_log(WLR_ERROR, "Failed to init output render");
         return;
     }

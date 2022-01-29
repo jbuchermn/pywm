@@ -16,6 +16,7 @@
 #ifdef WM_CUSTOM_RENDERER
 
 #include <render/gles2.h>
+#include <GLES3/gl32.h>
 #include "wm/shaders/wm_shaders.h"
 
 static const GLfloat verts[] = {
@@ -120,6 +121,32 @@ static void wm_renderer_link_texture_shader(struct wm_renderer *renderer,
 void wm_renderer_init_texture_shaders(struct wm_renderer* renderer, int n_shaders){
     renderer->texture_shaders = calloc(n_shaders, sizeof(struct wm_renderer_texture_shaders));
     renderer->n_texture_shaders = n_shaders;
+
+    const GLchar quad_vertex_src[] =
+    "uniform mat3 proj;\n"
+    "attribute vec2 pos;\n"
+    "attribute vec2 texcoord;\n"
+    "varying vec2 v_texcoord;\n"
+    "\n"
+    "void main() {\n"
+    "	gl_Position = vec4(vec3(pos, 1.0), 1.0);\n"
+    "	v_texcoord = texcoord;\n"
+    "}\n";
+
+    const GLchar quad_fragment_src[] =
+    "precision mediump float;\n"
+    "varying vec2 v_texcoord;\n"
+    "uniform sampler2D tex;\n"
+    "uniform float alpha;\n"
+    "\n"
+    "void main() {\n"
+    "   float dummy = 1.0;\n"
+    "   float x = gl_FragCoord.x;\n"
+    "   if(x > 900.) dummy = 0.5;\n"
+    "	gl_FragColor = texture2D(tex, v_texcoord) * alpha * dummy;\n"
+    "}\n";
+
+    wm_renderer_link_texture_shader(renderer, &renderer->quad_shader, quad_vertex_src, quad_fragment_src);
 }
 
 void wm_renderer_add_texture_shaders(
@@ -336,7 +363,9 @@ static bool render_subtexture_with_matrix(
     glEnableVertexAttribArray(shader->pos_attrib);
     glEnableVertexAttribArray(shader->tex_attrib);
 
+    glBindFramebuffer(GL_FRAMEBUFFER, renderer->frame_buffer);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glDisableVertexAttribArray(shader->pos_attrib);
     glDisableVertexAttribArray(shader->tex_attrib);
@@ -427,26 +456,108 @@ void wm_renderer_init(struct wm_renderer *renderer, struct wm_server *server) {
     assert(wlr_egl_make_current(r->egl));
     wm_texture_shaders_init(renderer);
     wm_primitive_shaders_init(renderer);
-    wlr_egl_unset_current(r->egl);
 
     wm_renderer_select_texture_shaders(renderer, server->wm_config->texture_shaders);
     renderer->primitive_shader_selected = renderer->primitive_shaders;
+
+    glGenFramebuffers(1, &renderer->frame_buffer);
+    glGenTextures(1, &renderer->frame_buffer_tex);
+
+    glBindTexture(GL_TEXTURE_2D, renderer->frame_buffer_tex);
+    /* TODO: Hardcoded */
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1264, 784, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, renderer->frame_buffer);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderer->frame_buffer_tex, 0);
+
+    unsigned int rbo;
+    glGenRenderbuffers(1, &rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo); 
+    /* TODO: Hardcoded */
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 1264, 784);  
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+
+    GLuint res = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if(res != GL_FRAMEBUFFER_COMPLETE)
+        wlr_log(WLR_ERROR, "Incomplete framebuffer: %d", res);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    wlr_egl_unset_current(r->egl);
 #endif
 
+}
+
+int wm_renderer_init_output(struct wm_renderer* renderer, struct wm_output* output){
+    return wlr_output_init_render(output->wlr_output, renderer->wm_server->wlr_allocator,
+            renderer->wlr_renderer);
 }
 
 void wm_renderer_destroy(struct wm_renderer *renderer) {
     wlr_renderer_destroy(renderer->wlr_renderer);
 }
 
+static void wm_renderer_scissor(struct wm_renderer* renderer, struct wlr_box* box){
+    /* TODO */
+}
+
 void wm_renderer_begin(struct wm_renderer *renderer, struct wm_output *output) {
-    wlr_renderer_begin(renderer->wlr_renderer, output->wlr_output->width,
-                       output->wlr_output->height);
     renderer->current = output;
 }
 
 void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
                      struct wm_output *output) {
+
+    wlr_renderer_begin(renderer->wlr_renderer, output->wlr_output->width, output->wlr_output->height);
+
+    struct wlr_gles2_renderer *gles2_renderer =
+        gles2_get_renderer(renderer->wlr_renderer);
+    push_gles2_debug(gles2_renderer);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, gles2_renderer->current_buffer->fbo);
+
+    struct wm_renderer_texture_shader* shader = &renderer->quad_shader;
+
+    const GLfloat texcoord[] = {
+        1, 0, // top right
+        0, 0, // top left
+        1, 1, // bottom right
+        0, 1, // bottom left
+    };
+
+    /* TODO For each damage --> wlr_scissor */
+    wlr_renderer_scissor(renderer->wlr_renderer, NULL);
+
+    glUseProgram(shader->shader);
+
+    glDisable(GL_BLEND);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, renderer->frame_buffer_tex);
+    glUniform1i(shader->tex, 0);
+
+    glUniform1f(shader->alpha, 1.);
+
+    glVertexAttribPointer(shader->pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, verts);
+    glVertexAttribPointer(shader->tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, texcoord);
+
+    glEnableVertexAttribArray(shader->pos_attrib);
+    glEnableVertexAttribArray(shader->tex_attrib);
+
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    glDisableVertexAttribArray(shader->pos_attrib);
+    glDisableVertexAttribArray(shader->tex_attrib);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    pop_gles2_debug(gles2_renderer);
+
     wlr_renderer_scissor(renderer->wlr_renderer, NULL);
     wlr_output_render_software_cursors(output->wlr_output, damage);
     wlr_renderer_end(renderer->wlr_renderer);
@@ -495,7 +606,7 @@ void wm_renderer_render_texture_at(struct wm_renderer *renderer,
             continue;
 
         wlr_box_transform(&inters, &inters, transform, ow, oh);
-        wlr_renderer_scissor(renderer->wlr_renderer, &inters);
+        wm_renderer_scissor(renderer, &inters);
 
 #ifdef WM_CUSTOM_RENDERER
         render_subtexture_with_matrix(
@@ -548,7 +659,7 @@ void wm_renderer_render_primitive(struct wm_renderer* renderer,
             continue;
 
         wlr_box_transform(&inters, &inters, transform, ow, oh);
-        wlr_renderer_scissor(renderer->wlr_renderer, &inters);
+        wm_renderer_scissor(renderer, &inters);
 
 #ifdef WM_CUSTOM_RENDERER
         render_primitive_with_matrix(
