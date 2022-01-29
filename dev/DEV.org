@@ -2,12 +2,14 @@
 
 * Development
 ** Current (v0.3)
+*** TODO config option to not assume background (i.e. always clear)
 *** TODO wlr-output-management-unstable-v1 (in order to use wdisplays)
 *** TODO Documentation
     - Gestures removed
     - pywm-fullscreen
 
 ** Backlog / Ideas
+*** Kawase blur (blur the background where windows are - plus blur windows on lock)
 *** Enable keyboard-exclusive client (e.g. layer shell keyboard_interactivity / use in lock screen)
 *** Complete libinput device config / support for external mouse
 *** Use libseat from python / patched python evdev
