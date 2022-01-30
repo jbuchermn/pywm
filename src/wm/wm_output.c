@@ -78,21 +78,28 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
         if(wm_content_get_opacity(r) < 0.0001) continue;
         /* BEGIN DEBUG */
-        if(wm_content_is_view(r)){
-            struct wlr_fbox debug_box;
-            wm_content_get_box(r, &debug_box.x, &debug_box.y, &debug_box.width, &debug_box.height);
-            struct wlr_box debug_box1 = {
-                .x = debug_box.x*2,
-                .y = debug_box.y*2,
-                .width = debug_box.width*2,
-                .height = debug_box.height*2
-            };
-            wm_renderer_apply_blur(renderer, damage, &debug_box1, 5, r->corner_radius*2);
-        }
+        /* if(wm_content_is_view(r)){ */
+        /*     struct wlr_fbox debug_box; */
+        /*     wm_content_get_box(r, &debug_box.x, &debug_box.y, &debug_box.width, &debug_box.height); */
+        /*     struct wlr_box debug_box1 = { */
+        /*         .x = debug_box.x*2, */
+        /*         .y = debug_box.y*2, */
+        /*         .width = debug_box.width*2, */
+        /*         .height = debug_box.height*2 */
+        /*     }; */
+        /*     wm_renderer_apply_blur(renderer, damage, &debug_box1, 5, r->corner_radius*2); */
+        /* } */
         /* END DEBUG */
         wm_content_render(r, output, damage, now);
     }
 
+    struct wlr_box debug_box1 = {
+        .x = 50,
+        .y = 50,
+        .width = 800,
+        .height = 600
+    };
+    wm_renderer_apply_blur(renderer, damage, &debug_box1, 1, 50);
 
     /* End render */
     wm_renderer_end(renderer, damage, output,
@@ -117,8 +124,7 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
                          width, height);
 
 #ifdef DEBUG_DAMAGE_HIGHLIGHT
-    pixman_region32_union_rect(&frame_damage, &frame_damage,
-        0, 0, output->wlr_output->width, output->wlr_output->height);
+    pixman_region32_union_rect(&frame_damage, &frame_damage, 0, 0, width, height);
 #endif
 
     wlr_output_set_damage(output->wlr_output, &frame_damage);
@@ -138,7 +144,9 @@ static void handle_damage_frame(struct wl_listener *listener, void *data) {
     if (wlr_output_damage_attach_render(
                 output->wlr_output_damage, &needs_frame, &damage)) {
 #ifdef DEBUG_DAMAGE_RERENDER
-        pixman_region32_union_rect(&damage, &damage, 0, 0, output->wlr_output->width, output->wlr_output->height);
+        int width, height;
+        wlr_output_transformed_resolution(output->wlr_output, &width, &height);
+        pixman_region32_union_rect(&damage, &damage, 0, 0, width, height);
         needs_frame = true;
 #endif
 

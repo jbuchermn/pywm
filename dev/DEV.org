@@ -2,13 +2,14 @@
 
 * Development
 ** Current (v0.3)
+*** Bugs
+**** TODO Damaging issues on blurred regions (e.g. animated FocusBorder)
+**** TODO Shader padding does not work together with transforms
+
 *** STRT Kawase blurring
-**** DONE Initial Kawase blur and test without WM_CUSTOM_RENDERER 
-**** STRT Current buffer setup does not match swapchain logic (frame vs. buffer damage isn't respected)
-**** STRT Test with transforms
-**** STRT Are separate FBOs necessary - or should we use wlr ones instead? Bind a texture to them?
-**** TODO Properly align Kawase shaders
-**** TODO Use frame instead of buffer damage while rendering to FBO
+**** STRT Use frame damage instead of buffer damage while rendering to FBO - slight optimization
+**** STRT Properly align Kawase shaders - results are quite poor at the moment
+**** KILL Are separate FBOs necessary - or should we use wlr ones instead? wlr uses render buffers - would probably require patching
 
 *** TODO Profiling, optimize CPU usage (Focus: pywm-fullscreen vs sway)
 *** TODO wlr-output-management-unstable-v1 (in order to use wdisplays)

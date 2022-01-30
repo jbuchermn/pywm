@@ -747,8 +747,7 @@ void wm_renderer_render_texture_at(struct wm_renderer *renderer,
             continue;
 
         wlr_box_transform(&inters, &inters, transform, ow, oh);
-        /* wm_renderer_scissor(renderer, &inters); */
-        wm_renderer_scissor(renderer, NULL);
+        wm_renderer_scissor(renderer, &inters);
 
 #ifdef WM_CUSTOM_RENDERER
         render_subtexture_with_matrix(
