@@ -621,7 +621,7 @@ void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
     struct wlr_box debug_box = {
         .x = 50,
         .y = 50,
-        .width = 400,
+        .width = 800,
         .height = 500
     };
     wm_renderer_apply_blur(renderer, damage, &debug_box, 1, 40.);
@@ -857,7 +857,7 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glUniform1i(renderer->downsample_shader.tex, 0);
 
-            glUniform2f(renderer->upsample_shader.halfpixel,
+            glUniform2f(renderer->downsample_shader.halfpixel,
                     0.5 / renderer->current->renderer_buffers->downsample_buffers_width[i],
                     0.5 / renderer->current->renderer_buffers->downsample_buffers_height[i]);
             glUniform1f(renderer->downsample_shader.offset, radius);
@@ -930,7 +930,7 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glUniform1i(renderer->upsample_shader.tex, 0);
 
-            glUniform2f(renderer->downsample_shader.halfpixel,
+            glUniform2f(renderer->upsample_shader.halfpixel,
                     0.5 / (i==0 ? renderer->current->renderer_buffers->width : renderer->current->renderer_buffers->downsample_buffers_width[i-1]),
                     0.5 / (i==0 ? renderer->current->renderer_buffers->height : renderer->current->renderer_buffers->downsample_buffers_height[i-1]));
             glUniform1f(renderer->upsample_shader.offset, radius);
