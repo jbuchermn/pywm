@@ -2,7 +2,7 @@
 
 * Development
 ** Current (v0.3)
-*** STRT Kawase blur + cleanup of renderer and shaders
+*** STRT Kawase blur + cleanup of renderer and shaders and test without WM_CUSTOM_RENDERER
 *** TODO wlr-output-management-unstable-v1 (in order to use wdisplays)
 *** TODO Documentation
     - Gestures removed

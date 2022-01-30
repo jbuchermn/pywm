@@ -57,6 +57,7 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     wm_renderer_begin(renderer, output);
 
 #ifdef DEBUG_DAMAGE_HIGHLIGHT
+    // TODO --> wlr buffer
     wlr_renderer_clear(renderer->wlr_renderer, (float[]){1, 1, 0, 1});
 #endif
 
@@ -64,9 +65,9 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     struct wm_content *r;
     /* 
      * This does not catch all cases, where clearing is necessary - specifically, if only the texture contains transparency,
-     * but compositor opacaity is set to 1, needs_clear will be true.
+     * but compositor opacaity is set to 1, needs_clear will be false.
      *
-     * In the end the assumption is there's always a background */
+     * In the end the assumption is there's always a background and this catches a fading out background */
     wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
         if(wm_content_get_opacity(r) < 1. - 0.0001){
             needs_clear=true;
@@ -89,6 +90,7 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
             wlr_matrix_project_box(matrix, &damage_box,
                     WL_OUTPUT_TRANSFORM_NORMAL, 0,
                     renderer->current->wlr_output->transform_matrix);
+            // TODO --> Framebuffer
             wlr_render_rect(
                     renderer->wlr_renderer,
                     &damage_box, (float[]){0., 0., 0., 1.}, renderer->current->wlr_output->transform_matrix);

@@ -498,8 +498,6 @@ void wm_renderer_buffers_init(struct wm_renderer_buffers* buffers, struct wm_ren
 
     glBindTexture(GL_TEXTURE_2D, buffers->frame_buffer_tex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     glBindFramebuffer(GL_FRAMEBUFFER, buffers->frame_buffer);
@@ -527,8 +525,6 @@ void wm_renderer_buffers_init(struct wm_renderer_buffers* buffers, struct wm_ren
 
         glBindTexture(GL_TEXTURE_2D, buffers->downsample_buffers_tex[i]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, ds_width, ds_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, 0);
 
         glBindFramebuffer(GL_FRAMEBUFFER, buffers->downsample_buffers[i]);
@@ -625,10 +621,10 @@ void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
     struct wlr_box debug_box = {
         .x = 50,
         .y = 50,
-        .width = 200,
+        .width = 400,
         .height = 500
     };
-    wm_renderer_apply_blur(renderer, damage, &debug_box);
+    wm_renderer_apply_blur(renderer, damage, &debug_box, 1, 40.);
 
 #ifdef WM_CUSTOM_RENDERER
     struct wlr_gles2_renderer *gles2_renderer = gles2_get_renderer(renderer->wlr_renderer);
@@ -797,12 +793,10 @@ void wm_renderer_render_primitive(struct wm_renderer* renderer,
     }
 }
 
-void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_box* box){
+void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_box* box, int radius, double cornerradius){
 #ifdef WM_CUSTOM_RENDERER
     struct wlr_gles2_renderer *gles2_renderer = gles2_get_renderer(renderer->wlr_renderer);
     push_gles2_debug(gles2_renderer);
-
-    int offset = 4; // TODO: Parameter
 
     int ow, oh;
     wlr_output_transformed_resolution(renderer->current->wlr_output, &ow, &oh);
@@ -820,16 +814,13 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
                                      .y = rects[i].y1,
                                      .width = rects[i].x2 - rects[i].x1,
                                      .height = rects[i].y2 - rects[i].y1};
-        if (wlr_box_empty(&damage_box))
-            continue;
-
         wlr_box_transform(&damage_box, &damage_box, transform, ow, oh);
 
         struct wlr_box inters;
         wlr_box_intersection(&inters, &damage_box, &transformed_box);
-        /* TODO downsampled scissoring */
-        /* wm_renderer_scissor(renderer, &inters); */
-        wm_renderer_scissor(renderer, NULL);
+        if (wlr_box_empty(&inters))
+            continue;
+
 
         /*
          * Downsample
@@ -846,16 +837,30 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
         for(int i=0; i<WM_RENDERER_DOWNSAMPLE_BUFFERS; i++){
             glViewport(0, 0, renderer->current->renderer_buffers->downsample_buffers_width[i], renderer->current->renderer_buffers->downsample_buffers_height[i]);
 
+            struct wlr_box scissor = {
+                .x = inters.x * renderer->current->renderer_buffers->downsample_buffers_width[i] / renderer->current->renderer_buffers->width,
+                .y = inters.y * renderer->current->renderer_buffers->downsample_buffers_height[i] / renderer->current->renderer_buffers->height,
+                .width = inters.width * renderer->current->renderer_buffers->downsample_buffers_width[i] / renderer->current->renderer_buffers->width,
+                .height = inters.height * renderer->current->renderer_buffers->downsample_buffers_height[i] / renderer->current->renderer_buffers->height,
+            };
+            scissor.x -= 2*radius;
+            scissor.y -= 2*radius;
+            scissor.width += 4*radius;
+            scissor.height += 4*radius;
+            wm_renderer_scissor(renderer, &scissor);
+
             glBindFramebuffer(GL_FRAMEBUFFER, renderer->current->renderer_buffers->downsample_buffers[i]);
 
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, i==0 ? renderer->current->renderer_buffers->frame_buffer_tex : renderer->current->renderer_buffers->downsample_buffers_tex[i-1]);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glUniform1i(renderer->downsample_shader.tex, 0);
 
-            glUniform2f(renderer->downsample_shader.halfpixel,
-                    0.5 / (i==0 ? renderer->current->renderer_buffers->width : renderer->current->renderer_buffers->downsample_buffers_width[i-1]),
-                    0.5 / (i==0 ? renderer->current->renderer_buffers->height : renderer->current->renderer_buffers->downsample_buffers_height[i-1]));
-            glUniform1f(renderer->downsample_shader.offset, offset);
+            glUniform2f(renderer->upsample_shader.halfpixel,
+                    0.5 / renderer->current->renderer_buffers->downsample_buffers_width[i],
+                    0.5 / renderer->current->renderer_buffers->downsample_buffers_height[i]);
+            glUniform1f(renderer->downsample_shader.offset, radius);
 
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
@@ -883,9 +888,24 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
             int height = i==0 ? renderer->current->renderer_buffers->height : renderer->current->renderer_buffers->downsample_buffers_height[i-1];
             glViewport(0, 0, width, height);
 
+            if(i > 0){
+                struct wlr_box scissor = {
+                    .x = inters.x * width / renderer->current->renderer_buffers->width,
+                    .y = inters.y * height / renderer->current->renderer_buffers->height,
+                    .width = inters.width * width / renderer->current->renderer_buffers->width,
+                    .height = inters.height * height / renderer->current->renderer_buffers->height,
+                };
+                scissor.x -= 4*radius;
+                scissor.y -= 4*radius;
+                scissor.width += 8*radius;
+                scissor.height += 8*radius;
+                wm_renderer_scissor(renderer, &scissor);
+            }else{
+                wm_renderer_scissor(renderer, &inters);
+            }
+
             glBindFramebuffer(GL_FRAMEBUFFER, i==0 ? renderer->current->renderer_buffers->frame_buffer : renderer->current->renderer_buffers->downsample_buffers[i-1]);
 
-            /* TODO: Set these properly */
             if(i == 0){
                 glUniform1f(renderer->upsample_shader.width, width);
                 glUniform1f(renderer->upsample_shader.height, height);
@@ -893,7 +913,7 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
                 glUniform1f(renderer->upsample_shader.padding_t, transformed_box.y);
                 glUniform1f(renderer->upsample_shader.padding_r, width - transformed_box.x - transformed_box.width);
                 glUniform1f(renderer->upsample_shader.padding_b, height - transformed_box.y - transformed_box.height);
-                glUniform1f(renderer->upsample_shader.cornerradius, 20.); // TODO: Parameter
+                glUniform1f(renderer->upsample_shader.cornerradius, cornerradius);
             }else{
                 glUniform1f(renderer->upsample_shader.width, width);
                 glUniform1f(renderer->upsample_shader.height, height);
@@ -906,12 +926,14 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
 
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, renderer->current->renderer_buffers->downsample_buffers_tex[i]);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glUniform1i(renderer->upsample_shader.tex, 0);
 
-            glUniform2f(renderer->upsample_shader.halfpixel,
-                    0.5 / renderer->current->renderer_buffers->downsample_buffers_width[i],
-                    0.5 / renderer->current->renderer_buffers->downsample_buffers_height[i]);
-            glUniform1f(renderer->upsample_shader.offset, offset);
+            glUniform2f(renderer->downsample_shader.halfpixel,
+                    0.5 / (i==0 ? renderer->current->renderer_buffers->width : renderer->current->renderer_buffers->downsample_buffers_width[i-1]),
+                    0.5 / (i==0 ? renderer->current->renderer_buffers->height : renderer->current->renderer_buffers->downsample_buffers_height[i-1]));
+            glUniform1f(renderer->upsample_shader.offset, radius);
 
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 

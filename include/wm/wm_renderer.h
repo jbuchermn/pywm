@@ -187,7 +187,7 @@ void wm_renderer_render_primitive(struct wm_renderer* renderer,
                                   struct wlr_box* box,
                                   double opacity, int* params_int, float* params_float);
 
-void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_box* box);
+void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_box* box, int radius, double cornerradius);
 
 
 #endif
