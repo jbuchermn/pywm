@@ -511,7 +511,6 @@ void wm_renderer_buffers_init(struct wm_renderer_buffers* buffers, struct wm_ren
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, buffers->frame_buffer_rbo);
 
-    wlr_log(WLR_ERROR, "%d", glCheckFramebufferStatus(GL_FRAMEBUFFER));
     assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -640,6 +639,8 @@ void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, renderer->current->renderer_buffers->frame_buffer_tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glUniform1i(renderer->quad_shader.tex, 0);
 
     glVertexAttribPointer(renderer->quad_shader.pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, quad_verts);
@@ -672,20 +673,17 @@ void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
     glDisableVertexAttribArray(renderer->quad_shader.tex_attrib);
 
     glBindTexture(GL_TEXTURE_2D, 0);
-
-    wlr_renderer_scissor(renderer->wlr_renderer, NULL);
-    wlr_output_render_software_cursors(output->wlr_output, damage);
-    wlr_renderer_end(renderer->wlr_renderer);
-
-    pop_gles2_debug(gles2_renderer);
-
-#else
-    wlr_renderer_scissor(renderer->wlr_renderer, NULL);
-    wlr_output_render_software_cursors(output->wlr_output, damage);
-    wlr_renderer_end(renderer->wlr_renderer);
 #endif
 
+    wlr_renderer_scissor(renderer->wlr_renderer, NULL);
+    wlr_output_render_software_cursors(output->wlr_output, damage);
+    wlr_renderer_end(renderer->wlr_renderer);
+
     renderer->current = NULL;
+
+#ifdef WM_CUSTOM_RENDERER
+    pop_gles2_debug(gles2_renderer);
+#endif
 }
 
 void wm_renderer_render_texture_at(struct wm_renderer *renderer,
@@ -820,7 +818,6 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
         wlr_box_intersection(&inters, &damage_box, &transformed_box);
         if (wlr_box_empty(&inters))
             continue;
-
 
         /*
          * Downsample

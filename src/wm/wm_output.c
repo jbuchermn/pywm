@@ -16,8 +16,8 @@
 #include <wlr/util/region.h>
 #include <wlr/types/wlr_matrix.h>
 
-#define DEBUG_DAMAGE_HIGHLIGHT
-#define DEBUG_DAMAGE_RERENDER
+/* #define DEBUG_DAMAGE_HIGHLIGHT */
+/* #define DEBUG_DAMAGE_RERENDER */
 
 /*
  * Callbacks
@@ -77,17 +77,22 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     /* Do render */
     wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
         if(wm_content_get_opacity(r) < 0.0001) continue;
+        /* BEGIN DEBUG */
+        if(wm_content_is_view(r)){
+            struct wlr_fbox debug_box;
+            wm_content_get_box(r, &debug_box.x, &debug_box.y, &debug_box.width, &debug_box.height);
+            struct wlr_box debug_box1 = {
+                .x = debug_box.x*2,
+                .y = debug_box.y*2,
+                .width = debug_box.width*2,
+                .height = debug_box.height*2
+            };
+            wm_renderer_apply_blur(renderer, damage, &debug_box1, 5, r->corner_radius*2);
+        }
+        /* END DEBUG */
         wm_content_render(r, output, damage, now);
     }
 
-    // DEBUG
-    struct wlr_box debug_box = {
-        .x = 50,
-        .y = 50,
-        .width = 800,
-        .height = 500
-    };
-    wm_renderer_apply_blur(renderer, damage, &debug_box, 1, 20.);
 
     /* End render */
     wm_renderer_end(renderer, damage, output,

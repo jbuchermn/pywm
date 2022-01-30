@@ -69,7 +69,7 @@ struct wm_renderer_primitive_shader {
     GLint params_int;
 };
 
-#define WM_RENDERER_DOWNSAMPLE_BUFFERS 2
+#define WM_RENDERER_DOWNSAMPLE_BUFFERS 3
 
 struct wm_renderer_buffers {
     int width;
