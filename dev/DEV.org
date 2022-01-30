@@ -6,7 +6,11 @@
 **** DONE Initial Kawase blur and test without WM_CUSTOM_RENDERER 
 **** STRT Current buffer setup does not match swapchain logic (frame vs. buffer damage isn't respected)
 **** STRT Test with transforms
+**** STRT Are separate FBOs necessary - or should we use wlr ones instead? Bind a texture to them?
 **** TODO Properly align Kawase shaders
+**** TODO Use frame instead of buffer damage while rendering to FBO
+
+*** TODO Profiling, optimize CPU usage (Focus: pywm-fullscreen vs sway)
 *** TODO wlr-output-management-unstable-v1 (in order to use wdisplays)
 *** TODO Documentation
     - Gestures removed
