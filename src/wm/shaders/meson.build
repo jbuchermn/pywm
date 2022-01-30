@@ -7,6 +7,7 @@ texture_shaders = [
 ]
 
 primitive_shaders = [
+  'rect',
   'rounded_corners_rect',
   'rounded_corners_border',
   'corner'

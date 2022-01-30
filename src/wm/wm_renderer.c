@@ -440,7 +440,9 @@ static void render_primitive_with_matrix(
     glEnableVertexAttribArray(renderer->primitive_shader_selected->pos_attrib);
     glEnableVertexAttribArray(renderer->primitive_shader_selected->tex_attrib);
 
+    glBindFramebuffer(GL_FRAMEBUFFER, renderer->current->renderer_buffers->frame_buffer);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glDisableVertexAttribArray(renderer->primitive_shader_selected->pos_attrib);
     glDisableVertexAttribArray(renderer->primitive_shader_selected->tex_attrib);
@@ -590,6 +592,7 @@ void wm_renderer_destroy(struct wm_renderer *renderer) {
 }
 
 static void wm_renderer_scissor(struct wm_renderer* renderer, struct wlr_box* box){
+#ifdef WM_CUSTOM_RENDERER
     struct wlr_gles2_renderer *gles2_renderer =
         gles2_get_renderer(renderer->wlr_renderer);
 
@@ -601,6 +604,10 @@ static void wm_renderer_scissor(struct wm_renderer* renderer, struct wlr_box* bo
         glDisable(GL_SCISSOR_TEST);
     }
     pop_gles2_debug(gles2_renderer);
+#else
+    wlr_renderer_scissor(renderer->wlr_renderer, box);
+
+#endif
 }
 
 void wm_renderer_begin(struct wm_renderer *renderer, struct wm_output *output) {
@@ -615,16 +622,7 @@ void wm_renderer_begin(struct wm_renderer *renderer, struct wm_output *output) {
 }
 
 void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
-                     struct wm_output *output) {
-
-    // DEBUG
-    struct wlr_box debug_box = {
-        .x = 50,
-        .y = 50,
-        .width = 800,
-        .height = 500
-    };
-    wm_renderer_apply_blur(renderer, damage, &debug_box, 1, 40.);
+                     struct wm_output *output, bool clear_before) {
 
 #ifdef WM_CUSTOM_RENDERER
     struct wlr_gles2_renderer *gles2_renderer = gles2_get_renderer(renderer->wlr_renderer);
@@ -632,6 +630,10 @@ void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
 
     wlr_renderer_begin(renderer->wlr_renderer, output->wlr_output->width, output->wlr_output->height);
     glBindFramebuffer(GL_FRAMEBUFFER, gles2_renderer->current_buffer->fbo);
+
+    if(clear_before){
+        wlr_renderer_clear(renderer->wlr_renderer, (float[]){1.,1.,0.,1.});
+    }
 
     glUseProgram(renderer->quad_shader.shader);
     glDisable(GL_BLEND);
@@ -659,8 +661,6 @@ void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
                                      .y = rects[i].y1,
                                      .width = rects[i].x2 - rects[i].x1,
                                      .height = rects[i].y2 - rects[i].y1};
-        if (wlr_box_empty(&damage_box))
-            continue;
 
         wlr_box_transform(&damage_box, &damage_box, transform, ow, oh);
         wlr_renderer_scissor(renderer->wlr_renderer, &damage_box);
@@ -950,4 +950,20 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
 #else
     // noop
 #endif
+}
+
+
+void wm_renderer_clear(struct wm_renderer* renderer, pixman_region32_t* damage, float* color){
+    int ow, oh;
+    wlr_output_transformed_resolution(renderer->current->wlr_output, &ow, &oh);
+
+    struct wlr_box box = {
+        .x = 0.,
+        .y = 0.,
+        .width = ow,
+        .height = oh
+    };
+
+    wm_renderer_select_primitive_shader(renderer, "rect");
+    wm_renderer_render_primitive(renderer, damage, &box, 1.0, (int[]){}, color);
 }

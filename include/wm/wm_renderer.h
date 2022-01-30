@@ -173,7 +173,7 @@ void wm_renderer_select_primitive_shader(struct wm_renderer* renderer, const cha
 
 void wm_renderer_begin(struct wm_renderer *renderer, struct wm_output *output);
 void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
-                     struct wm_output *output);
+                     struct wm_output *output, bool clear_before);
 void wm_renderer_render_texture_at(struct wm_renderer *renderer,
                                    pixman_region32_t *damage,
                                    struct wlr_surface* surface,
@@ -187,7 +187,14 @@ void wm_renderer_render_primitive(struct wm_renderer* renderer,
                                   struct wlr_box* box,
                                   double opacity, int* params_int, float* params_float);
 
-void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_box* box, int radius, double cornerradius);
+void wm_renderer_apply_blur(struct wm_renderer* renderer,
+                            pixman_region32_t* damage,
+                            struct wlr_box* box,
+                            int radius,
+                            double cornerradius);
 
+void wm_renderer_clear(struct wm_renderer* renderer,
+                       pixman_region32_t* damage,
+                       float* color);
 
 #endif

@@ -2,7 +2,10 @@
 
 * Development
 ** Current (v0.3)
-*** STRT Kawase blur + cleanup of renderer and shaders and test without WM_CUSTOM_RENDERER
+*** DONE Initial Kawase blur and test without WM_CUSTOM_RENDERER 
+*** STRT Test with transforms
+*** STRT Issues with blurring blurred images
+*** STRT Is the filter properly matched? --> Artifacts when background moves
 *** TODO wlr-output-management-unstable-v1 (in order to use wdisplays)
 *** TODO Documentation
     - Gestures removed

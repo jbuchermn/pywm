@@ -16,8 +16,8 @@
 #include <wlr/util/region.h>
 #include <wlr/types/wlr_matrix.h>
 
-/* #define DEBUG_DAMAGE_HIGHLIGHT */
-/* #define DEBUG_DAMAGE_RERENDER */
+#define DEBUG_DAMAGE_HIGHLIGHT
+#define DEBUG_DAMAGE_RERENDER
 
 /*
  * Callbacks
@@ -56,11 +56,6 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     /* Begin render */
     wm_renderer_begin(renderer, output);
 
-#ifdef DEBUG_DAMAGE_HIGHLIGHT
-    // TODO --> wlr buffer
-    wlr_renderer_clear(renderer->wlr_renderer, (float[]){1, 1, 0, 1});
-#endif
-
     bool needs_clear = false;
     struct wm_content *r;
     /* 
@@ -76,25 +71,7 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     }
 
     if(needs_clear){
-        int nrects;
-        pixman_box32_t* rects = pixman_region32_rectangles(damage, &nrects);
-        for(int i=0; i<nrects; i++){
-            struct wlr_box damage_box = {
-                .x = rects[i].x1,
-                .y = rects[i].y1,
-                .width = rects[i].x2 - rects[i].x1,
-                .height = rects[i].y2 - rects[i].y1
-            };
-
-            float matrix[9];
-            wlr_matrix_project_box(matrix, &damage_box,
-                    WL_OUTPUT_TRANSFORM_NORMAL, 0,
-                    renderer->current->wlr_output->transform_matrix);
-            // TODO --> Framebuffer
-            wlr_render_rect(
-                    renderer->wlr_renderer,
-                    &damage_box, (float[]){0., 0., 0., 1.}, renderer->current->wlr_output->transform_matrix);
-        }
+        wm_renderer_clear(renderer, damage, (float[]){ 0., 0., 0., 1.});
     }
 
     /* Do render */
@@ -103,8 +80,24 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
         wm_content_render(r, output, damage, now);
     }
 
+    // DEBUG
+    struct wlr_box debug_box = {
+        .x = 50,
+        .y = 50,
+        .width = 800,
+        .height = 500
+    };
+    wm_renderer_apply_blur(renderer, damage, &debug_box, 1, 20.);
+
     /* End render */
-    wm_renderer_end(renderer, damage, output);
+    wm_renderer_end(renderer, damage, output,
+#ifdef DEBUG_DAMAGE_HIGHLIGHT
+    true
+#else
+    false
+#endif
+    );
+
 
     int width, height;
     wlr_output_transformed_resolution(output->wlr_output, &width, &height);
@@ -301,7 +294,9 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
     /* Let the cursor know we possibly have a new scale */
     wm_cursor_ensure_loaded_for_scale(server->wm_seat->wm_cursor, scale);
 
+#ifdef WM_CUSTOM_RENDERER
     output->renderer_buffers = NULL;
+#endif
 }
 
 void wm_output_reconfigure(struct wm_output* output){
