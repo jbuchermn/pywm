@@ -18,7 +18,23 @@
 #include <render/gles2.h>
 #include "wm/shaders/wm_shaders.h"
 
+#include "quad_shaders.c"
+
 static const GLfloat verts[] = {
+    1, 0, // top right
+    0, 0, // top left
+    1, 1, // bottom right
+    0, 1, // bottom left
+};
+
+static const GLfloat quad_verts[] = {
+     1, -1, // top right
+    -1, -1, // top left
+     1, 1, // bottom right
+    -1, 1, // bottom left
+};
+
+static const GLfloat quad_texcoord[] = {
     1, 0, // top right
     0, 0, // top left
     1, 1, // bottom right
@@ -92,6 +108,43 @@ error:
     return 0;
 }
 
+static void wm_renderer_init_quad_shaders(struct wm_renderer* renderer){
+    /* Quad shader */
+    renderer->quad_shader.shader = wm_renderer_link_program(renderer, quad_vertex_src, quad_fragment_src);
+    assert(renderer->quad_shader.shader);
+
+    renderer->quad_shader.tex = glGetUniformLocation(renderer->quad_shader.shader, "tex");
+    renderer->quad_shader.pos_attrib = glGetAttribLocation(renderer->quad_shader.shader, "pos");
+    renderer->quad_shader.tex_attrib = glGetAttribLocation(renderer->quad_shader.shader, "texcoord");
+
+    /* Downsample shader */
+    renderer->downsample_shader.shader = wm_renderer_link_program(renderer, quad_vertex_src, quad_fragment_downsample_src);
+    assert(renderer->downsample_shader.shader);
+
+    renderer->downsample_shader.tex = glGetUniformLocation(renderer->downsample_shader.shader, "tex");
+    renderer->downsample_shader.halfpixel = glGetUniformLocation(renderer->downsample_shader.halfpixel, "tex");
+    renderer->downsample_shader.offset = glGetUniformLocation(renderer->downsample_shader.offset, "tex");
+    renderer->downsample_shader.pos_attrib = glGetAttribLocation(renderer->downsample_shader.shader, "pos");
+    renderer->downsample_shader.tex_attrib = glGetAttribLocation(renderer->downsample_shader.shader, "texcoord");
+
+    /* Upsample shader */
+    renderer->upsample_shader.shader = wm_renderer_link_program(renderer, quad_vertex_src, quad_fragment_upsample_src);
+    assert(renderer->upsample_shader.shader);
+
+    renderer->upsample_shader.tex = glGetUniformLocation(renderer->upsample_shader.shader, "tex");
+    renderer->upsample_shader.halfpixel = glGetUniformLocation(renderer->upsample_shader.halfpixel, "tex");
+    renderer->upsample_shader.offset = glGetUniformLocation(renderer->upsample_shader.offset, "tex");
+    renderer->upsample_shader.width = glGetUniformLocation(renderer->upsample_shader.shader, "width");
+    renderer->upsample_shader.height = glGetUniformLocation(renderer->upsample_shader.shader, "height");
+    renderer->upsample_shader.padding_l = glGetUniformLocation(renderer->upsample_shader.shader, "padding_l");
+    renderer->upsample_shader.padding_t = glGetUniformLocation(renderer->upsample_shader.shader, "padding_t");
+    renderer->upsample_shader.padding_r = glGetUniformLocation(renderer->upsample_shader.shader, "padding_r");
+    renderer->upsample_shader.padding_b = glGetUniformLocation(renderer->upsample_shader.shader, "padding_b");
+    renderer->upsample_shader.cornerradius = glGetUniformLocation(renderer->upsample_shader.shader, "cornerradius");
+    renderer->upsample_shader.pos_attrib = glGetAttribLocation(renderer->upsample_shader.shader, "pos");
+    renderer->upsample_shader.tex_attrib = glGetAttribLocation(renderer->upsample_shader.shader, "texcoord");
+}
+
 static void wm_renderer_link_texture_shader(struct wm_renderer *renderer,
                                      struct wm_renderer_texture_shader *shader,
                                      const GLchar *vert_src,
@@ -120,73 +173,6 @@ static void wm_renderer_link_texture_shader(struct wm_renderer *renderer,
 void wm_renderer_init_texture_shaders(struct wm_renderer* renderer, int n_shaders){
     renderer->texture_shaders = calloc(n_shaders, sizeof(struct wm_renderer_texture_shaders));
     renderer->n_texture_shaders = n_shaders;
-
-    const GLchar quad_vertex_src[] =
-    "attribute vec2 pos;\n"
-    "attribute vec2 texcoord;\n"
-    "varying vec2 v_texcoord;\n"
-    "\n"
-    "void main() {\n"
-    "	gl_Position = vec4(pos, 1.0, 1.0);\n"
-    "	v_texcoord = texcoord;\n"
-    "}\n";
-
-    const GLchar quad_fragment_src[] =
-    "precision mediump float;\n"
-    "varying vec2 v_texcoord;\n"
-    "uniform sampler2D tex;\n"
-    "uniform float alpha;\n"
-    "\n"
-    "void main() {\n"
-    "	gl_FragColor = texture2D(tex, v_texcoord) * alpha;\n"
-    "}\n";
-
-    wm_renderer_link_texture_shader(renderer, &renderer->quad_shader, quad_vertex_src, quad_fragment_src);
-
-    const GLchar downsample_fragment_src[] =
-    "precision mediump float;\n"
-    "varying vec2 v_texcoord;\n"
-    "uniform sampler2D tex;\n"
-    "uniform float width;\n"
-    "uniform float height;\n"
-    "uniform float alpha;\n"
-    "\n"
-    "void main() {\n"
-    "   float offset = alpha;\n"
-    "   vec2 halfpixel = vec2(width, height);\n"
-    "   vec4 sum = texture2D(tex, v_texcoord) * 4.0;\n"
-    "   sum += texture2D(tex, v_texcoord - halfpixel.xy * offset);\n"
-    "   sum += texture2D(tex, v_texcoord + halfpixel.xy * offset);\n"
-    "   sum += texture2D(tex, v_texcoord + vec2(halfpixel.x, -halfpixel.y) * offset);\n"
-    "   sum += texture2D(tex, v_texcoord - vec2(halfpixel.x, -halfpixel.y) * offset);\n"
-    "	gl_FragColor = sum / 8.;\n"
-    "}\n";
-
-    wm_renderer_link_texture_shader(renderer, &renderer->downsample_shader, quad_vertex_src, downsample_fragment_src);
-
-    const GLchar upsample_fragment_src[] =
-    "precision mediump float;\n"
-    "varying vec2 v_texcoord;\n"
-    "uniform sampler2D tex;\n"
-    "uniform float width;\n"
-    "uniform float height;\n"
-    "uniform float alpha;\n"
-    "\n"
-    "void main() {\n"
-    "   float offset = alpha;\n"
-    "   vec2 halfpixel = vec2(width, height);\n"
-    "   vec4 sum = texture2D(tex, v_texcoord + vec2(-halfpixel.x * 2.0, 0.0) * offset);\n"
-    "   sum += texture2D(tex, v_texcoord + vec2(-halfpixel.x, halfpixel.y) * offset) * 2.0;\n"
-    "   sum += texture2D(tex, v_texcoord + vec2(0.0, halfpixel.y * 2.0) * offset);\n"
-    "   sum += texture2D(tex, v_texcoord + vec2(halfpixel.x, halfpixel.y) * offset) * 2.0;\n"
-    "   sum += texture2D(tex, v_texcoord + vec2(halfpixel.x * 2.0, 0.0) * offset);\n"
-    "   sum += texture2D(tex, v_texcoord + vec2(halfpixel.x, -halfpixel.y) * offset) * 2.0;\n"
-    "   sum += texture2D(tex, v_texcoord + vec2(0.0, -halfpixel.y * 2.0) * offset);\n"
-    "   sum += texture2D(tex, v_texcoord + vec2(-halfpixel.x, -halfpixel.y) * offset) * 2.0;\n"
-    "	gl_FragColor = sum / 12.;\n"
-    "}\n";
-
-    wm_renderer_link_texture_shader(renderer, &renderer->upsample_shader, quad_vertex_src, upsample_fragment_src);
 }
 
 void wm_renderer_add_texture_shaders(
@@ -449,17 +435,8 @@ static void render_primitive_with_matrix(
         glUniform1fv(renderer->primitive_shader_selected->params_float, renderer->primitive_shader_selected->n_params_float, params_float);
     }
 
-    const GLfloat texcoord[] = {
-        1, 0, // top right
-        0, 0, // top left
-        1, 1, // bottom right
-        0, 1, // bottom left
-    };
-
-    glVertexAttribPointer(renderer->primitive_shader_selected->pos_attrib, 2, GL_FLOAT,
-                          GL_FALSE, 0, verts);
-    glVertexAttribPointer(renderer->primitive_shader_selected->tex_attrib, 2, GL_FLOAT, GL_FALSE, 0,
-                          texcoord);
+    glVertexAttribPointer(renderer->primitive_shader_selected->pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, verts);
+    glVertexAttribPointer(renderer->primitive_shader_selected->tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, quad_texcoord);
     glEnableVertexAttribArray(renderer->primitive_shader_selected->pos_attrib);
     glEnableVertexAttribArray(renderer->primitive_shader_selected->tex_attrib);
 
@@ -496,6 +473,7 @@ void wm_renderer_init(struct wm_renderer *renderer, struct wm_server *server) {
     assert(wlr_egl_make_current(r->egl));
     wm_texture_shaders_init(renderer);
     wm_primitive_shaders_init(renderer);
+    wm_renderer_init_quad_shaders(renderer);
 
     wm_renderer_select_texture_shaders(renderer, server->wm_config->texture_shaders);
     renderer->primitive_shader_selected = renderer->primitive_shaders;
@@ -645,10 +623,10 @@ void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
 
     // DEBUG
     struct wlr_box debug_box = {
-        .x = 0,
-        .y = 0,
+        .x = 50,
+        .y = 50,
         .width = 200,
-        .height = 200
+        .height = 500
     };
     wm_renderer_apply_blur(renderer, damage, &debug_box);
 
@@ -659,45 +637,43 @@ void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
     wlr_renderer_begin(renderer->wlr_renderer, output->wlr_output->width, output->wlr_output->height);
     glBindFramebuffer(GL_FRAMEBUFFER, gles2_renderer->current_buffer->fbo);
 
-    struct wm_renderer_texture_shader* shader = &renderer->quad_shader;
-
-    const GLfloat texcoord[] = {
-        1, 0, // top right
-        0, 0, // top left
-        1, 1, // bottom right
-        0, 1, // bottom left
-    };
-
-    const GLfloat verts[] = {
-        1, -1, // top right
-        -1, -1, // top left
-        1, 1, // bottom right
-        -1, 1, // bottom left
-    };
-
-    /* TODO For each damage --> wlr_scissor */
-    wlr_renderer_scissor(renderer->wlr_renderer, NULL);
-
-    glUseProgram(shader->shader);
-
+    glUseProgram(renderer->quad_shader.shader);
     glDisable(GL_BLEND);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, renderer->current->renderer_buffers->frame_buffer_tex);
-    glUniform1i(shader->tex, 0);
+    glUniform1i(renderer->quad_shader.tex, 0);
 
-    glUniform1f(shader->alpha, 1.);
+    glVertexAttribPointer(renderer->quad_shader.pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, quad_verts);
+    glVertexAttribPointer(renderer->quad_shader.tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, quad_texcoord);
 
-    glVertexAttribPointer(shader->pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, verts);
-    glVertexAttribPointer(shader->tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, texcoord);
+    glEnableVertexAttribArray(renderer->quad_shader.pos_attrib);
+    glEnableVertexAttribArray(renderer->quad_shader.tex_attrib);
 
-    glEnableVertexAttribArray(shader->pos_attrib);
-    glEnableVertexAttribArray(shader->tex_attrib);
+    int ow, oh;
+    wlr_output_transformed_resolution(renderer->current->wlr_output, &ow, &oh);
 
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    enum wl_output_transform transform =
+        wlr_output_transform_invert(renderer->current->wlr_output->transform);
 
-    glDisableVertexAttribArray(shader->pos_attrib);
-    glDisableVertexAttribArray(shader->tex_attrib);
+    int nrects;
+    pixman_box32_t *rects = pixman_region32_rectangles(damage, &nrects);
+    for (int i = 0; i < nrects; i++) {
+        struct wlr_box damage_box = {.x = rects[i].x1,
+                                     .y = rects[i].y1,
+                                     .width = rects[i].x2 - rects[i].x1,
+                                     .height = rects[i].y2 - rects[i].y1};
+        if (wlr_box_empty(&damage_box))
+            continue;
+
+        wlr_box_transform(&damage_box, &damage_box, transform, ow, oh);
+        wlr_renderer_scissor(renderer->wlr_renderer, &damage_box);
+
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    }
+
+    glDisableVertexAttribArray(renderer->quad_shader.pos_attrib);
+    glDisableVertexAttribArray(renderer->quad_shader.tex_attrib);
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -826,159 +802,124 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
     struct wlr_gles2_renderer *gles2_renderer = gles2_get_renderer(renderer->wlr_renderer);
     push_gles2_debug(gles2_renderer);
 
-    wm_renderer_scissor(renderer, box);
+    int offset = 4; // TODO: Parameter
 
-    int offset = 4;
+    int ow, oh;
+    wlr_output_transformed_resolution(renderer->current->wlr_output, &ow, &oh);
 
-    const GLfloat texcoord[] = {
-        1, 0, // top right
-        0, 0, // top left
-        1, 1, // bottom right
-        0, 1, // bottom left
-    };
+    enum wl_output_transform transform =
+        wlr_output_transform_invert(renderer->current->wlr_output->transform);
 
-    const GLfloat verts[] = {
-        1, -1, // top right
-        -1, -1, // top left
-        1, 1, // bottom right
-        -1, 1, // bottom left
-    };
+    struct wlr_box transformed_box;
+    wlr_box_transform(&transformed_box, box, transform, ow, oh);
 
-    /*
-     * Downsample
-     */
-    {
-        glViewport(0, 0, renderer->current->renderer_buffers->downsample_buffers_width[0], renderer->current->renderer_buffers->downsample_buffers_height[0]);
+    int nrects;
+    pixman_box32_t *rects = pixman_region32_rectangles(damage, &nrects);
+    for (int i = 0; i < nrects; i++) {
+        struct wlr_box damage_box = {.x = rects[i].x1,
+                                     .y = rects[i].y1,
+                                     .width = rects[i].x2 - rects[i].x1,
+                                     .height = rects[i].y2 - rects[i].y1};
+        if (wlr_box_empty(&damage_box))
+            continue;
 
-        glBindFramebuffer(GL_FRAMEBUFFER, renderer->current->renderer_buffers->downsample_buffers[0]);
-        struct wm_renderer_texture_shader* shader = &renderer->downsample_shader;
+        wlr_box_transform(&damage_box, &damage_box, transform, ow, oh);
 
-        glUseProgram(shader->shader);
+        struct wlr_box inters;
+        wlr_box_intersection(&inters, &damage_box, &transformed_box);
+        /* TODO downsampled scissoring */
+        /* wm_renderer_scissor(renderer, &inters); */
+        wm_renderer_scissor(renderer, NULL);
 
+        /*
+         * Downsample
+         */
+        glUseProgram(renderer->downsample_shader.shader);
         glDisable(GL_BLEND);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, renderer->current->renderer_buffers->frame_buffer_tex);
-        glUniform1i(shader->tex, 0);
+        glVertexAttribPointer(renderer->downsample_shader.pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, quad_verts);
+        glVertexAttribPointer(renderer->downsample_shader.tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, quad_texcoord);
 
-        // Misuse attributes
-        glUniform1f(shader->width, 0.5 / renderer->current->renderer_buffers->width);
-        glUniform1f(shader->height, 0.5 / renderer->current->renderer_buffers->height);
-        glUniform1f(shader->alpha, offset);
+        glEnableVertexAttribArray(renderer->downsample_shader.pos_attrib);
+        glEnableVertexAttribArray(renderer->downsample_shader.tex_attrib);
 
-        glVertexAttribPointer(shader->pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, verts);
-        glVertexAttribPointer(shader->tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, texcoord);
+        for(int i=0; i<WM_RENDERER_DOWNSAMPLE_BUFFERS; i++){
+            glViewport(0, 0, renderer->current->renderer_buffers->downsample_buffers_width[i], renderer->current->renderer_buffers->downsample_buffers_height[i]);
 
-        glEnableVertexAttribArray(shader->pos_attrib);
-        glEnableVertexAttribArray(shader->tex_attrib);
+            glBindFramebuffer(GL_FRAMEBUFFER, renderer->current->renderer_buffers->downsample_buffers[i]);
 
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, i==0 ? renderer->current->renderer_buffers->frame_buffer_tex : renderer->current->renderer_buffers->downsample_buffers_tex[i-1]);
+            glUniform1i(renderer->downsample_shader.tex, 0);
 
-        glDisableVertexAttribArray(shader->pos_attrib);
-        glDisableVertexAttribArray(shader->tex_attrib);
+            glUniform2f(renderer->downsample_shader.halfpixel,
+                    0.5 / (i==0 ? renderer->current->renderer_buffers->width : renderer->current->renderer_buffers->downsample_buffers_width[i-1]),
+                    0.5 / (i==0 ? renderer->current->renderer_buffers->height : renderer->current->renderer_buffers->downsample_buffers_height[i-1]));
+            glUniform1f(renderer->downsample_shader.offset, offset);
 
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    {
-        glViewport(0, 0, renderer->current->renderer_buffers->downsample_buffers_width[1], renderer->current->renderer_buffers->downsample_buffers_height[1]);
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
 
-        glBindFramebuffer(GL_FRAMEBUFFER, renderer->current->renderer_buffers->downsample_buffers[1]);
-        struct wm_renderer_texture_shader* shader = &renderer->downsample_shader;
+        glDisableVertexAttribArray(renderer->downsample_shader.pos_attrib);
+        glDisableVertexAttribArray(renderer->downsample_shader.tex_attrib);
 
-        glUseProgram(shader->shader);
-
+        /*
+         * Upsample
+         */
+        glUseProgram(renderer->upsample_shader.shader);
         glDisable(GL_BLEND);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, renderer->current->renderer_buffers->downsample_buffers_tex[0]);
-        glUniform1i(shader->tex, 0);
+        glVertexAttribPointer(renderer->upsample_shader.pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, quad_verts);
+        glVertexAttribPointer(renderer->upsample_shader.tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, quad_texcoord);
 
-        // Misuse attributes
-        glUniform1f(shader->width, 0.5 / renderer->current->renderer_buffers->downsample_buffers_width[0]);
-        glUniform1f(shader->height, 0.5 / renderer->current->renderer_buffers->downsample_buffers_height[0]);
-        glUniform1f(shader->alpha, offset);
+        glEnableVertexAttribArray(renderer->upsample_shader.pos_attrib);
+        glEnableVertexAttribArray(renderer->upsample_shader.tex_attrib);
 
-        glVertexAttribPointer(shader->pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, verts);
-        glVertexAttribPointer(shader->tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, texcoord);
 
-        glEnableVertexAttribArray(shader->pos_attrib);
-        glEnableVertexAttribArray(shader->tex_attrib);
+        for(int i=WM_RENDERER_DOWNSAMPLE_BUFFERS-1; i>=0; i--){
+            int width = i==0 ? renderer->current->renderer_buffers->width : renderer->current->renderer_buffers->downsample_buffers_width[i-1];
+            int height = i==0 ? renderer->current->renderer_buffers->height : renderer->current->renderer_buffers->downsample_buffers_height[i-1];
+            glViewport(0, 0, width, height);
 
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            glBindFramebuffer(GL_FRAMEBUFFER, i==0 ? renderer->current->renderer_buffers->frame_buffer : renderer->current->renderer_buffers->downsample_buffers[i-1]);
 
-        glDisableVertexAttribArray(shader->pos_attrib);
-        glDisableVertexAttribArray(shader->tex_attrib);
+            /* TODO: Set these properly */
+            if(i == 0){
+                glUniform1f(renderer->upsample_shader.width, width);
+                glUniform1f(renderer->upsample_shader.height, height);
+                glUniform1f(renderer->upsample_shader.padding_l, transformed_box.x);
+                glUniform1f(renderer->upsample_shader.padding_t, transformed_box.y);
+                glUniform1f(renderer->upsample_shader.padding_r, width - transformed_box.x - transformed_box.width);
+                glUniform1f(renderer->upsample_shader.padding_b, height - transformed_box.y - transformed_box.height);
+                glUniform1f(renderer->upsample_shader.cornerradius, 20.); // TODO: Parameter
+            }else{
+                glUniform1f(renderer->upsample_shader.width, width);
+                glUniform1f(renderer->upsample_shader.height, height);
+                glUniform1f(renderer->upsample_shader.padding_l, 0);
+                glUniform1f(renderer->upsample_shader.padding_t, 0);
+                glUniform1f(renderer->upsample_shader.padding_r, 0);
+                glUniform1f(renderer->upsample_shader.padding_b, 0);
+                glUniform1f(renderer->upsample_shader.cornerradius, 0.);
+            }
 
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, renderer->current->renderer_buffers->downsample_buffers_tex[i]);
+            glUniform1i(renderer->upsample_shader.tex, 0);
 
-    /*
-     * Upsample
-     */
-    {
-        glViewport(0, 0, renderer->current->renderer_buffers->downsample_buffers_width[0], renderer->current->renderer_buffers->downsample_buffers_height[0]);
+            glUniform2f(renderer->upsample_shader.halfpixel,
+                    0.5 / renderer->current->renderer_buffers->downsample_buffers_width[i],
+                    0.5 / renderer->current->renderer_buffers->downsample_buffers_height[i]);
+            glUniform1f(renderer->upsample_shader.offset, offset);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, renderer->current->renderer_buffers->downsample_buffers[0]);
-        struct wm_renderer_texture_shader* shader = &renderer->upsample_shader;
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-        glUseProgram(shader->shader);
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
 
-        glDisable(GL_BLEND);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, renderer->current->renderer_buffers->downsample_buffers_tex[1]);
-        glUniform1i(shader->tex, 0);
-
-        glVertexAttribPointer(shader->pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, verts);
-        glVertexAttribPointer(shader->tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, texcoord);
-
-        // Misuse attributes
-        glUniform1f(shader->width, 0.5 / renderer->current->renderer_buffers->downsample_buffers_width[1]);
-        glUniform1f(shader->height, 0.5 / renderer->current->renderer_buffers->downsample_buffers_height[1]);
-        glUniform1f(shader->alpha, offset);
-
-        glEnableVertexAttribArray(shader->pos_attrib);
-        glEnableVertexAttribArray(shader->tex_attrib);
-
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-        glDisableVertexAttribArray(shader->pos_attrib);
-        glDisableVertexAttribArray(shader->tex_attrib);
-
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-    {
-        glViewport(0, 0, renderer->current->renderer_buffers->width, renderer->current->renderer_buffers->height);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, renderer->current->renderer_buffers->frame_buffer);
-        struct wm_renderer_texture_shader* shader = &renderer->upsample_shader;
-
-        glUseProgram(shader->shader);
-
-        glDisable(GL_BLEND);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, renderer->current->renderer_buffers->downsample_buffers_tex[0]);
-        glUniform1i(shader->tex, 0);
-
-        glVertexAttribPointer(shader->pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, verts);
-        glVertexAttribPointer(shader->tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, texcoord);
-
-        // Misuse attributes
-        glUniform1f(shader->width, 0.5 / renderer->current->renderer_buffers->downsample_buffers_width[0]);
-        glUniform1f(shader->height, 0.5 / renderer->current->renderer_buffers->downsample_buffers_height[0]);
-        glUniform1f(shader->alpha, offset);
-
-        glEnableVertexAttribArray(shader->pos_attrib);
-        glEnableVertexAttribArray(shader->tex_attrib);
-
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-        glDisableVertexAttribArray(shader->pos_attrib);
-        glDisableVertexAttribArray(shader->tex_attrib);
-
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glDisableVertexAttribArray(renderer->upsample_shader.pos_attrib);
+        glDisableVertexAttribArray(renderer->upsample_shader.tex_attrib);
     }
 
     wm_renderer_scissor(renderer, NULL);

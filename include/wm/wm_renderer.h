@@ -104,16 +104,44 @@ struct wm_renderer {
     int n_texture_shaders;
     struct wm_renderer_texture_shaders* texture_shaders;
 
-    struct wm_renderer_texture_shader quad_shader;
-    struct wm_renderer_texture_shader downsample_shader;
-    struct wm_renderer_texture_shader upsample_shader;
+    struct {
+        GLuint shader;
+        GLint tex;
+        GLint pos_attrib;
+        GLint tex_attrib;
+    } quad_shader;
+    struct {
+        GLuint shader;
+        GLint tex;
+        GLint pos_attrib;
+        GLint tex_attrib;
+
+        GLint halfpixel;
+        GLint offset;
+    } downsample_shader;
+    struct {
+        GLuint shader;
+        GLint tex;
+        GLint pos_attrib;
+        GLint tex_attrib;
+
+        GLint halfpixel;
+        GLint offset;
+
+        GLint width;
+        GLint height;
+        GLint padding_l;
+        GLint padding_t;
+        GLint padding_r;
+        GLint padding_b;
+        GLint cornerradius;
+    } upsample_shader;
 
     int n_primitive_shaders;
     struct wm_renderer_primitive_shader* primitive_shaders;
 
     struct wm_renderer_texture_shaders* texture_shaders_selected;
     struct wm_renderer_primitive_shader* primitive_shader_selected;
-
 #endif
 };
 

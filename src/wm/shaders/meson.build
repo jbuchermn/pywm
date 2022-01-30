@@ -46,3 +46,10 @@ primitive_shaders_c = custom_target(
     input : ['generate_primitive_shaders.py'] + primitive_shader_files,
     command : [prog_python, '@INPUT0@', '@OUTPUT@']
 )
+
+quad_shaders_c = custom_target(
+    'quad_shaders.c',
+    output : 'quad_shaders.c',
+    input : ['generate_quad_shaders.py'],
+    command : [prog_python, '@INPUT0@', '@OUTPUT@']
+)
