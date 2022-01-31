@@ -13,6 +13,13 @@ primitive_shaders = [
   'corner'
 ]
 
+quad_shader_files = [
+  'quad/vertex.glsl',
+  'quad/fragment.glsl',
+  'quad/fragment_downsample.glsl',
+  'quad/fragment_upsample.glsl',
+]
+
 texture_shader_files = []
 foreach s : texture_shaders
   texture_shader_files += [
@@ -51,6 +58,6 @@ primitive_shaders_c = custom_target(
 quad_shaders_c = custom_target(
     'quad_shaders.c',
     output : 'quad_shaders.c',
-    input : ['generate_quad_shaders.py'],
+    input : ['generate_quad_shaders.py'] + quad_shader_files,
     command : [prog_python, '@INPUT0@', '@OUTPUT@']
 )

@@ -3,12 +3,14 @@
 * Development
 ** Current (v0.3)
 *** Bugs
-**** TODO Damaging issues on blurred regions (e.g. animated FocusBorder)
+**** TODO Damaging a window behind blur requires also damaging a region around it
 **** TODO Shader padding does not work together with transforms
 
 *** STRT Kawase blurring
 **** STRT Use frame damage instead of buffer damage while rendering to FBO - slight optimization
 **** STRT Properly align Kawase shaders - results are quite poor at the moment
+**** TODO Enable runtime switching between wlr_renderer, wm_renderer (with FBO and blur), wm_renderer (without FBO and blur)
+**** TODO Set up wm_widget "blur"
 **** KILL Are separate FBOs necessary - or should we use wlr ones instead? wlr uses render buffers - would probably require patching
 
 *** TODO Profiling, optimize CPU usage (Focus: pywm-fullscreen vs sway)

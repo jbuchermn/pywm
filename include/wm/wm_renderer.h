@@ -69,7 +69,7 @@ struct wm_renderer_primitive_shader {
     GLint params_int;
 };
 
-#define WM_RENDERER_DOWNSAMPLE_BUFFERS 3
+#define WM_RENDERER_DOWNSAMPLE_BUFFERS 4
 
 struct wm_renderer_buffers {
     int width;
@@ -191,6 +191,7 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer,
                             pixman_region32_t* damage,
                             struct wlr_box* box,
                             int radius,
+                            int passes,
                             double cornerradius);
 
 void wm_renderer_clear(struct wm_renderer* renderer,

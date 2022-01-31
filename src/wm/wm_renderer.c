@@ -113,6 +113,7 @@ error:
 }
 
 static void wm_renderer_init_quad_shaders(struct wm_renderer* renderer){
+    wlr_log(WLR_DEBUG, "Setting up quad shaders");
     /* Quad shader */
     renderer->quad_shader.shader = wm_renderer_link_program(renderer, quad_vertex_src, quad_fragment_src);
     assert(renderer->quad_shader.shader);
@@ -126,18 +127,22 @@ static void wm_renderer_init_quad_shaders(struct wm_renderer* renderer){
     assert(renderer->downsample_shader.shader);
 
     renderer->downsample_shader.tex = glGetUniformLocation(renderer->downsample_shader.shader, "tex");
-    renderer->downsample_shader.halfpixel = glGetUniformLocation(renderer->downsample_shader.halfpixel, "tex");
-    renderer->downsample_shader.offset = glGetUniformLocation(renderer->downsample_shader.offset, "tex");
     renderer->downsample_shader.pos_attrib = glGetAttribLocation(renderer->downsample_shader.shader, "pos");
     renderer->downsample_shader.tex_attrib = glGetAttribLocation(renderer->downsample_shader.shader, "texcoord");
+
+    renderer->downsample_shader.halfpixel = glGetUniformLocation(renderer->downsample_shader.shader, "halfpixel");
+    renderer->downsample_shader.offset = glGetUniformLocation(renderer->downsample_shader.shader, "offset");
 
     /* Upsample shader */
     renderer->upsample_shader.shader = wm_renderer_link_program(renderer, quad_vertex_src, quad_fragment_upsample_src);
     assert(renderer->upsample_shader.shader);
 
     renderer->upsample_shader.tex = glGetUniformLocation(renderer->upsample_shader.shader, "tex");
-    renderer->upsample_shader.halfpixel = glGetUniformLocation(renderer->upsample_shader.halfpixel, "tex");
-    renderer->upsample_shader.offset = glGetUniformLocation(renderer->upsample_shader.offset, "tex");
+    renderer->upsample_shader.pos_attrib = glGetAttribLocation(renderer->upsample_shader.shader, "pos");
+    renderer->upsample_shader.tex_attrib = glGetAttribLocation(renderer->upsample_shader.shader, "texcoord");
+
+    renderer->upsample_shader.halfpixel = glGetUniformLocation(renderer->upsample_shader.shader, "halfpixel");
+    renderer->upsample_shader.offset = glGetUniformLocation(renderer->upsample_shader.shader, "offset");
     renderer->upsample_shader.width = glGetUniformLocation(renderer->upsample_shader.shader, "width");
     renderer->upsample_shader.height = glGetUniformLocation(renderer->upsample_shader.shader, "height");
     renderer->upsample_shader.padding_l = glGetUniformLocation(renderer->upsample_shader.shader, "padding_l");
@@ -145,8 +150,6 @@ static void wm_renderer_init_quad_shaders(struct wm_renderer* renderer){
     renderer->upsample_shader.padding_r = glGetUniformLocation(renderer->upsample_shader.shader, "padding_r");
     renderer->upsample_shader.padding_b = glGetUniformLocation(renderer->upsample_shader.shader, "padding_b");
     renderer->upsample_shader.cornerradius = glGetUniformLocation(renderer->upsample_shader.shader, "cornerradius");
-    renderer->upsample_shader.pos_attrib = glGetAttribLocation(renderer->upsample_shader.shader, "pos");
-    renderer->upsample_shader.tex_attrib = glGetAttribLocation(renderer->upsample_shader.shader, "texcoord");
 }
 
 static void wm_renderer_link_texture_shader(struct wm_renderer *renderer,
@@ -811,8 +814,13 @@ void wm_renderer_render_primitive(struct wm_renderer* renderer,
     }
 }
 
-void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_box* box, int radius, double cornerradius){
+// TODO
+#define WM_CUSTOM_RENDERER_DAMAGE_EXTEND 10
+
+void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_box* box, int radius, int passes, double cornerradius){
 #ifdef WM_CUSTOM_RENDERER
+    if(passes > WM_RENDERER_DOWNSAMPLE_BUFFERS) passes = WM_RENDERER_DOWNSAMPLE_BUFFERS;
+
     struct wlr_gles2_renderer *gles2_renderer = gles2_get_renderer(renderer->wlr_renderer);
     push_gles2_debug(gles2_renderer);
 
@@ -839,6 +847,12 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
         if (wlr_box_empty(&inters))
             continue;
 
+        struct wlr_box inters_ext = {
+            .x = inters.x - WM_CUSTOM_RENDERER_DAMAGE_EXTEND*radius,
+            .y = inters.y - WM_CUSTOM_RENDERER_DAMAGE_EXTEND*radius,
+            .width = inters.width + 2*WM_CUSTOM_RENDERER_DAMAGE_EXTEND*radius,
+            .height = inters.height + 2*WM_CUSTOM_RENDERER_DAMAGE_EXTEND*radius,
+        };
         /*
          * Downsample
          */
@@ -851,19 +865,15 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
         glEnableVertexAttribArray(renderer->downsample_shader.pos_attrib);
         glEnableVertexAttribArray(renderer->downsample_shader.tex_attrib);
 
-        for(int i=0; i<WM_RENDERER_DOWNSAMPLE_BUFFERS; i++){
+        for(int i=0; i<passes; i++){
             glViewport(0, 0, renderer->current->renderer_buffers->downsample_buffers_width[i], renderer->current->renderer_buffers->downsample_buffers_height[i]);
 
             struct wlr_box scissor = {
-                .x = inters.x * renderer->current->renderer_buffers->downsample_buffers_width[i] / renderer->current->renderer_buffers->width,
-                .y = inters.y * renderer->current->renderer_buffers->downsample_buffers_height[i] / renderer->current->renderer_buffers->height,
-                .width = inters.width * renderer->current->renderer_buffers->downsample_buffers_width[i] / renderer->current->renderer_buffers->width,
-                .height = inters.height * renderer->current->renderer_buffers->downsample_buffers_height[i] / renderer->current->renderer_buffers->height,
+                .x = inters_ext.x * renderer->current->renderer_buffers->downsample_buffers_width[i] / renderer->current->renderer_buffers->width,
+                .y = inters_ext.y * renderer->current->renderer_buffers->downsample_buffers_height[i] / renderer->current->renderer_buffers->height,
+                .width = inters_ext.width * renderer->current->renderer_buffers->downsample_buffers_width[i] / renderer->current->renderer_buffers->width,
+                .height = inters_ext.height * renderer->current->renderer_buffers->downsample_buffers_height[i] / renderer->current->renderer_buffers->height,
             };
-            scissor.x -= 2*radius;
-            scissor.y -= 2*radius;
-            scissor.width += 4*radius;
-            scissor.height += 4*radius;
             wm_renderer_scissor(renderer, &scissor);
 
             glBindFramebuffer(GL_FRAMEBUFFER, renderer->current->renderer_buffers->downsample_buffers[i]);
@@ -900,22 +910,18 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
         glEnableVertexAttribArray(renderer->upsample_shader.tex_attrib);
 
 
-        for(int i=WM_RENDERER_DOWNSAMPLE_BUFFERS-1; i>=0; i--){
+        for(int i=passes-1; i>=0; i--){
             int width = i==0 ? renderer->current->renderer_buffers->width : renderer->current->renderer_buffers->downsample_buffers_width[i-1];
             int height = i==0 ? renderer->current->renderer_buffers->height : renderer->current->renderer_buffers->downsample_buffers_height[i-1];
             glViewport(0, 0, width, height);
 
             if(i > 0){
                 struct wlr_box scissor = {
-                    .x = inters.x * width / renderer->current->renderer_buffers->width,
-                    .y = inters.y * height / renderer->current->renderer_buffers->height,
-                    .width = inters.width * width / renderer->current->renderer_buffers->width,
-                    .height = inters.height * height / renderer->current->renderer_buffers->height,
+                    .x = inters_ext.x * width / renderer->current->renderer_buffers->width,
+                    .y = inters_ext.y * height / renderer->current->renderer_buffers->height,
+                    .width = inters_ext.width * width / renderer->current->renderer_buffers->width,
+                    .height = inters_ext.height * height / renderer->current->renderer_buffers->height,
                 };
-                scissor.x -= 4*radius;
-                scissor.y -= 4*radius;
-                scissor.width += 8*radius;
-                scissor.height += 8*radius;
                 wm_renderer_scissor(renderer, &scissor);
             }else{
                 wm_renderer_scissor(renderer, &inters);
