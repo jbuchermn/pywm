@@ -50,19 +50,26 @@ static void handle_present(struct wl_listener *listener, void *data) {
 static void render(struct wm_output *output, struct timespec now, pixman_region32_t *damage) {
     struct wm_renderer *renderer = output->wm_server->wm_renderer;
 
+    /* If we are rendering to a (signle) FBO - use frame damage, else buffer damage */
+    pixman_region32_t* rerender_damage = renderer->mode == WM_RENDERER_INDIRECT ? &output->wlr_output_damage->current : damage;
+
     /* Ensure z-index */
     wm_server_update_contents(output->wm_server);
 
     /* Begin render */
     wm_renderer_begin(renderer, output);
 
-    bool needs_clear = false;
-    struct wm_content *r;
+#ifdef DEBUG_DAMAGE_HIGHLIGHT
+    wlr_renderer_clear(renderer->wlr_renderer, (float[]){1, 1, 0, 1});
+#endif
+
     /* 
      * This does not catch all cases, where clearing is necessary - specifically, if only the texture contains transparency,
      * but compositor opacaity is set to 1, needs_clear will be false.
      *
      * In the end the assumption is there's always a background and this catches a fading out background */
+    bool needs_clear = false;
+    struct wm_content *r;
     wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
         if(wm_content_get_opacity(r) < 1. - 0.0001){
             needs_clear=true;
@@ -71,45 +78,40 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     }
 
     if(needs_clear){
-        wm_renderer_clear(renderer, damage, (float[]){ 0., 0., 0., 1.});
+        wm_renderer_clear(renderer, rerender_damage, (float[]){ 0., 0., 0., 1.});
     }
 
     /* Do render */
     wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
         if(wm_content_get_opacity(r) < 0.0001) continue;
         /* BEGIN DEBUG */
-        /* if(wm_content_is_view(r)){ */
-        /*     struct wlr_fbox debug_box; */
-        /*     wm_content_get_box(r, &debug_box.x, &debug_box.y, &debug_box.width, &debug_box.height); */
-        /*     struct wlr_box debug_box1 = { */
-        /*         .x = debug_box.x*2, */
-        /*         .y = debug_box.y*2, */
-        /*         .width = debug_box.width*2, */
-        /*         .height = debug_box.height*2 */
-        /*     }; */
-        /*     wm_renderer_apply_blur(renderer, damage, &debug_box1, 5, r->corner_radius*2); */
-        /* } */
+        if(wm_content_is_view(r)){
+            struct wlr_fbox debug_box;
+            wm_content_get_box(r, &debug_box.x, &debug_box.y, &debug_box.width, &debug_box.height);
+            struct wlr_box debug_box1 = {
+                .x = debug_box.x*2,
+                .y = debug_box.y*2,
+                .width = debug_box.width*2,
+                .height = debug_box.height*2
+            };
+            wm_renderer_apply_blur(renderer, rerender_damage, &debug_box1, 3, 2, r->corner_radius*2);
+        }
         /* END DEBUG */
-        wm_content_render(r, output, damage, now);
+        wm_content_render(r, output, rerender_damage, now);
     }
 
-    struct wlr_box debug_box1 = {
-        .x = 50,
-        .y = 50,
-        .width = 800,
-        .height = 600
-    };
-    wm_renderer_apply_blur(renderer, damage, &debug_box1, 1, 50);
+        /* BEGIN DEBUG */
+    /* struct wlr_box debug_box1 = { */
+    /*     .x = 50, */
+    /*     .y = 50, */
+    /*     .width = 800, */
+    /*     .height = 600 */
+    /* }; */
+    /* wm_renderer_apply_blur(renderer, damage, &debug_box1, 3, 2, 50); */
+    /* END DEBUG */
 
     /* End render */
-    wm_renderer_end(renderer, damage, output,
-#ifdef DEBUG_DAMAGE_HIGHLIGHT
-    true
-#else
-    false
-#endif
-    );
-
+    wm_renderer_end(renderer, damage, output);
 
     int width, height;
     wlr_output_transformed_resolution(output->wlr_output, &width, &height);

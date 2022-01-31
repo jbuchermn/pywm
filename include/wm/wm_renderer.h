@@ -100,6 +100,17 @@ struct wm_renderer {
 
     struct wm_output* current;
 
+    enum {
+        /* Pass all methods to wlr_renderer */
+        WM_RENDERER_PASSTHROUGH,
+
+        /* Directly render to wlr buffers using own shaders */
+        WM_RENDERER_DIRECT,
+
+        /* Render to FBO, supports blur, more resource-intensive */
+        WM_RENDERER_INDIRECT
+    } mode;
+
 #ifdef WM_CUSTOM_RENDERER
     int n_texture_shaders;
     struct wm_renderer_texture_shaders* texture_shaders;
@@ -170,10 +181,11 @@ void wm_renderer_add_primitive_shader(struct wm_renderer* renderer, const char* 
 
 void wm_renderer_select_texture_shaders(struct wm_renderer* renderer, const char* name);
 void wm_renderer_select_primitive_shader(struct wm_renderer* renderer, const char* name);
+bool wm_renderer_check_primitive_params(struct wm_renderer* renderer, int n_int, int n_float);
 
 void wm_renderer_begin(struct wm_renderer *renderer, struct wm_output *output);
 void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
-                     struct wm_output *output, bool clear_before);
+                     struct wm_output *output);
 void wm_renderer_render_texture_at(struct wm_renderer *renderer,
                                    pixman_region32_t *damage,
                                    struct wlr_surface* surface,
