@@ -3,16 +3,14 @@
 * Development
 ** Current (v0.3)
 *** Bugs
-**** TODO Damaging a window behind blur requires also damaging a region around it
-**** TODO Shader padding does not work together with transforms
+**** TODO Shader padding does not work together with transforms - wm_renderer api should expose second wlr_box instead of four paddings
 
-*** STRT Kawase blurring
+*** STRT Better renderer
 **** DONE Use frame damage instead of buffer damage while rendering to FBO - slight optimization
 **** DONE Properly align Kawase shaders - results are quite poor at the moment
 **** STRT Enable runtime switching between wlr_renderer, wm_renderer (with FBO and blur), wm_renderer (without FBO and blur)
-**** TODO Set up wm_composite
+**** STRT Set up wm_composite: Goal - Damaging a window behind blur requires also damaging a region around it
 **** TODO Extensively test DEBUG_DAMAGE, different render modes, switching between render modes, frame buffer optimization
-**** KILL Are separate FBOs necessary - or should we use wlr ones instead? wlr uses render buffers - would probably require patching
 
 *** TODO Profiling, optimize CPU usage (Focus: pywm-fullscreen vs sway)
 *** TODO wlr-output-management-unstable-v1 (in order to use wdisplays)

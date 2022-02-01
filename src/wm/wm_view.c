@@ -13,6 +13,7 @@
 #include "wm/wm_output.h"
 #include "wm/wm_renderer.h"
 #include "wm/wm_server.h"
+#include "wm/wm_layout.h"
 #include "wm/wm.h"
 
 #include "wm/wm_util.h"
@@ -177,6 +178,7 @@ static void wm_view_render(struct wm_content* super, struct wm_output* output, p
 
 
 struct damage_data {
+    struct wm_content *owner;
     struct wm_output *output;
     double x;
     double y;
@@ -228,7 +230,7 @@ static void damage_surface(struct wlr_surface *surface, int sx, int sy,
                                            ceil(ws_y + ws_h) - floor(ws_y));
         }
 
-        wlr_output_damage_add(output->wlr_output_damage, &region);
+        wm_layout_damage_output(output->wm_layout, output, &region, ddata->owner);
         pixman_region32_fini(&region);
     }
 
@@ -254,13 +256,8 @@ static void damage_surface(struct wlr_surface *surface, int sx, int sy,
                                            ceil(ws_x + ws_w) - floor(ws_x),
                                            ceil(ws_y + ws_h) - floor(ws_y));
         }
-
-        wlr_output_damage_add(output->wlr_output_damage, &region);
+        wm_layout_damage_output(output->wm_layout, output, &region, ddata->owner);
         pixman_region32_fini(&region);
-    }
-
-    if (!wl_list_empty(&surface->current.frame_callback_list)) {
-        wlr_output_schedule_frame(output->wlr_output);
     }
 }
 
@@ -284,6 +281,7 @@ static void wm_view_damage_output(struct wm_content* super, struct wm_output* ou
     }
 
     struct damage_data ddata = {
+        .owner = super,
         .output = output,
         .x = display_x - output->layout_x,
         .y = display_y - output->layout_y,

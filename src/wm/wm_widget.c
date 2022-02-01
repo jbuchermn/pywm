@@ -115,43 +115,6 @@ static void wm_widget_render(struct wm_content* super, struct wm_output* output,
     }
 }
 
-static void wm_widget_damage_output(struct wm_content* super, struct wm_output* output, struct wlr_surface* origin){
-    pixman_region32_t region;
-    pixman_region32_init(&region);
-
-    double x, y, w, h;
-    wm_content_get_box(super, &x, &y, &w, &h);
-    x -= output->layout_x;
-    y -= output->layout_y;
-
-    x *= output->wlr_output->scale;
-    y *= output->wlr_output->scale;
-    w *= output->wlr_output->scale;
-    h *= output->wlr_output->scale;
-    pixman_region32_union_rect(&region, &region,
-            floor(x), floor(y),
-            ceil(x + w) - floor(x), ceil(y + h) - floor(y));
-
-    if(wm_content_has_workspace(super)){
-        double workspace_x, workspace_y, workspace_w, workspace_h;
-        wm_content_get_workspace(super, &workspace_x, &workspace_y,
-                                 &workspace_w, &workspace_h);
-        workspace_x = (workspace_x - output->layout_x) * output->wlr_output->scale;
-        workspace_y = (workspace_y - output->layout_y) * output->wlr_output->scale;
-        workspace_w *= output->wlr_output->scale;
-        workspace_h *= output->wlr_output->scale;
-        pixman_region32_intersect_rect(
-            &region, &region,
-            floor(workspace_x),
-            floor(workspace_y),
-            ceil(workspace_x + workspace_w) - floor(workspace_x),
-            ceil(workspace_y + workspace_h) - floor(workspace_y));
-    }
-
-    wlr_output_damage_add(output->wlr_output_damage, &region);
-    pixman_region32_fini(&region);
-}
-
 static void wm_widget_printf(FILE* file, struct wm_content* super){
     struct wm_widget* widget = wm_cast(wm_widget, super);
     fprintf(file, "wm_widget (%f, %f - %f, %f)\n", widget->super.display_x, widget->super.display_y, widget->super.display_width, widget->super.display_height);
@@ -160,6 +123,6 @@ static void wm_widget_printf(FILE* file, struct wm_content* super){
 struct wm_content_vtable wm_widget_vtable = {
     .destroy = &wm_widget_destroy,
     .render = &wm_widget_render,
-    .damage_output = &wm_widget_damage_output,
+    .damage_output = NULL,
     .printf = &wm_widget_printf
 };

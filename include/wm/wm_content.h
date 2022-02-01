@@ -85,9 +85,16 @@ void wm_content_destroy(struct wm_content* content);
 
 void wm_content_render(struct wm_content* content, struct wm_output* output, pixman_region32_t* output_damage, struct timespec now);
 
+void wm_content_damage_output_base(struct wm_content* content, struct wm_output* output, struct wlr_surface* origin);
+
 static inline void wm_content_damage_output(struct wm_content* content, struct wm_output* output, struct wlr_surface* origin){
-    (*content->vtable->damage_output)(content, output, origin);
+    if(content->vtable->damage_output){
+        (*content->vtable->damage_output)(content, output, origin);
+    }else{
+        wm_content_damage_output_base(content, output, origin);
+    }
 }
+
 static inline void wm_content_printf(FILE* file, struct wm_content* content){
     (*content->vtable->printf)(file, content);
 }
