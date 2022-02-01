@@ -3,26 +3,27 @@
 * Development
 ** Current (v0.3)
 *** Bugs
-**** TODO Shader padding does not work together with transforms - wm_renderer api should expose second wlr_box instead of four paddings
+**** TODO Shader padding does not work together with transforms - issue with using gl_FragCoord (transformed) instead of texcoord in fragment shaders
 **** TODO Open alacritty, hit Mod - slow animations. Open alacritty, start "tail -f newm_log" (i.e. client-side damaging), hit Mod - fast animations (Mitigated by higher wm_config.callback...)
+**** TODO Profiling, optimize CPU usage (Focus: pywm-fullscreen vs sway)
 
 *** STRT Better renderer
 **** DONE Set up wm_composite: Goal - Damaging a window behind blur requires also damaging a region around it
 **** DONE Enable runtime switching between wlr_renderer, wm_renderer (with FBO and blur), wm_renderer (without FBO and blur)
+**** TODO Clean up shaders (no separate lock shaders)
 **** TODO Extensively test DEBUG_DAMAGE, different render modes, switching between render modes, frame damage optimization, damaging and blur + build test cases
 **** TODO Performance comparison of renderers / of blur
 
-*** TODO Profiling, optimize CPU usage (Focus: pywm-fullscreen vs sway)
 *** TODO wlr-output-management-unstable-v1 (in order to use wdisplays)
 *** TODO Documentation
     - Gestures removed
     - pywm-fullscreen
 
 ** Backlog / Ideas
+*** If performance-critical: Store wm_composite as texture, better damage handling
 *** Enable keyboard-exclusive client (e.g. layer shell keyboard_interactivity / use in lock screen)
 *** Complete libinput device config / support for external mouse
 *** Use libseat from python / patched python evdev
-*** Are separate lock shaders necessary? (It's only a performance thing)
 *** Support newm-sidecar (or similar, via ws://) as touchpad
 *** Touch input from yoga or similar
 
