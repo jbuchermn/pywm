@@ -61,7 +61,7 @@
           # END Fucking subprojects bug workaround
 
           nativeBuildInputs = with pkgs; [
-            meson_0_60
+            meson
             ninja
             pkg-config
             wayland-scanner
@@ -118,7 +118,7 @@
       in
         pkgs.mkShell {
           nativeBuildInputs = with pkgs; [ 
-            meson_0_60
+            meson
             ninja
             pkg-config
             wayland-scanner
