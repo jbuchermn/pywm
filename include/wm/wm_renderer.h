@@ -10,8 +10,9 @@
 #ifdef WM_CUSTOM_RENDERER
 
 struct wm_output;
+struct wm_renderer;
 
-#include <GLES2/gl2.h>
+#include <GLES3/gl32.h>
 struct wm_renderer_texture_shader {
     GLuint shader;
 
@@ -68,27 +69,98 @@ struct wm_renderer_primitive_shader {
     GLint params_int;
 };
 
+#define WM_RENDERER_DOWNSAMPLE_BUFFERS 4
+
+struct wm_renderer_buffers {
+    int width;
+    int height;
+    struct wm_renderer* parent;
+
+    GLuint frame_buffer;
+    GLuint frame_buffer_rbo;
+    GLuint frame_buffer_tex;
+
+    GLuint downsample_buffers[WM_RENDERER_DOWNSAMPLE_BUFFERS];
+    GLuint downsample_buffers_rbo[WM_RENDERER_DOWNSAMPLE_BUFFERS];
+    GLuint downsample_buffers_tex[WM_RENDERER_DOWNSAMPLE_BUFFERS];
+
+    int downsample_buffers_width[WM_RENDERER_DOWNSAMPLE_BUFFERS];
+    int downsample_buffers_height[WM_RENDERER_DOWNSAMPLE_BUFFERS];
+};
+
+void wm_renderer_buffers_init(struct wm_renderer_buffers* buffers, struct wm_renderer* renderer, int width, int height);
+void wm_renderer_buffers_destroy(struct wm_renderer_buffers* buffers);
+void wm_renderer_buffers_ensure(struct wm_renderer* renderer, struct wm_output* output);
+
 #endif
+
+enum wm_renderer_mode {
+    /* Pass all methods to wlr_renderer */
+    WM_RENDERER_PASSTHROUGH,
+
+    /* Directly render to wlr buffers using own shaders */
+    WM_RENDERER_DIRECT,
+
+    /* Render to FBO, supports blur, more resource-intensive */
+    WM_RENDERER_INDIRECT
+};
 
 struct wm_renderer {
     struct wm_server* wm_server;
     struct wlr_renderer* wlr_renderer;
 
+    struct wm_output* current;
+
+    enum wm_renderer_mode mode;
+
 #ifdef WM_CUSTOM_RENDERER
     int n_texture_shaders;
     struct wm_renderer_texture_shaders* texture_shaders;
+
+    struct {
+        GLuint shader;
+        GLint tex;
+        GLint pos_attrib;
+        GLint tex_attrib;
+    } quad_shader;
+    struct {
+        GLuint shader;
+        GLint tex;
+        GLint pos_attrib;
+        GLint tex_attrib;
+
+        GLint halfpixel;
+        GLint offset;
+    } downsample_shader;
+    struct {
+        GLuint shader;
+        GLint tex;
+        GLint pos_attrib;
+        GLint tex_attrib;
+
+        GLint halfpixel;
+        GLint offset;
+
+        GLint width;
+        GLint height;
+        GLint padding_l;
+        GLint padding_t;
+        GLint padding_r;
+        GLint padding_b;
+        GLint cornerradius;
+    } upsample_shader;
+
     int n_primitive_shaders;
     struct wm_renderer_primitive_shader* primitive_shaders;
-#endif
 
     struct wm_renderer_texture_shaders* texture_shaders_selected;
     struct wm_renderer_primitive_shader* primitive_shader_selected;
-
-    struct wm_output* current;
+#endif
 };
 
 void wm_renderer_init(struct wm_renderer *renderer, struct wm_server *server);
 void wm_renderer_destroy(struct wm_renderer *renderer);
+int wm_renderer_init_output(struct wm_renderer* renderer, struct wm_output* output);
 
 #ifdef WM_CUSTOM_RENDERER
 
@@ -111,6 +183,7 @@ void wm_renderer_add_primitive_shader(struct wm_renderer* renderer, const char* 
 
 void wm_renderer_select_texture_shaders(struct wm_renderer* renderer, const char* name);
 void wm_renderer_select_primitive_shader(struct wm_renderer* renderer, const char* name);
+bool wm_renderer_check_primitive_params(struct wm_renderer* renderer, int n_int, int n_float);
 
 void wm_renderer_begin(struct wm_renderer *renderer, struct wm_output *output);
 void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
@@ -128,5 +201,17 @@ void wm_renderer_render_primitive(struct wm_renderer* renderer,
                                   struct wlr_box* box,
                                   double opacity, int* params_int, float* params_float);
 
+void wm_renderer_apply_blur(struct wm_renderer* renderer,
+                            pixman_region32_t* damage,
+                            struct wlr_box* box,
+                            int radius,
+                            int passes,
+                            double cornerradius);
+
+void wm_renderer_clear(struct wm_renderer* renderer,
+                       pixman_region32_t* damage,
+                       float* color);
+
+void wm_renderer_ensure_mode(struct wm_renderer* renderer, enum wm_renderer_mode mode);
 
 #endif

@@ -59,9 +59,6 @@ void wm_set_locked(double locked);
 void wm_open_virtual_output(const char* name);
 void wm_close_virtual_output(const char* name);
 
-struct wm_widget* wm_create_widget();
-void wm_destroy_widget(struct wm_widget* widget);
-
 /*
  * Instead of writing setters for every single callback,
  * just put them in this object

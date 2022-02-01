@@ -7,9 +7,17 @@ texture_shaders = [
 ]
 
 primitive_shaders = [
+  'rect',
   'rounded_corners_rect',
   'rounded_corners_border',
   'corner'
+]
+
+quad_shader_files = [
+  'quad/vertex.glsl',
+  'quad/fragment.glsl',
+  'quad/fragment_downsample.glsl',
+  'quad/fragment_upsample.glsl',
 ]
 
 texture_shader_files = []
@@ -44,5 +52,12 @@ primitive_shaders_c = custom_target(
     'primitive_shaders.c',
     output : 'primitive_shaders.c',
     input : ['generate_primitive_shaders.py'] + primitive_shader_files,
+    command : [prog_python, '@INPUT0@', '@OUTPUT@']
+)
+
+quad_shaders_c = custom_target(
+    'quad_shaders.c',
+    output : 'quad_shaders.c',
+    input : ['generate_quad_shaders.py'] + quad_shader_files,
     command : [prog_python, '@INPUT0@', '@OUTPUT@']
 )

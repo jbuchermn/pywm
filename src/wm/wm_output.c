@@ -50,6 +50,9 @@ static void handle_present(struct wl_listener *listener, void *data) {
 static void render(struct wm_output *output, struct timespec now, pixman_region32_t *damage) {
     struct wm_renderer *renderer = output->wm_server->wm_renderer;
 
+    /* If we are rendering to a (signle) FBO - use frame damage, else buffer damage */
+    pixman_region32_t* rerender_damage = renderer->mode == WM_RENDERER_INDIRECT ? &output->wlr_output_damage->current : damage;
+
     /* Ensure z-index */
     wm_server_update_contents(output->wm_server);
 
@@ -60,6 +63,11 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     wlr_renderer_clear(renderer->wlr_renderer, (float[]){1, 1, 0, 1});
 #endif
 
+    /* 
+     * This does not catch all cases, where clearing is necessary - specifically, if only the texture contains transparency,
+     * but compositor opacaity is set to 1, needs_clear will be false.
+     *
+     * In the end the assumption is there's always a background and this catches a fading out background */
     bool needs_clear = false;
     struct wm_content *r;
     wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
@@ -70,30 +78,13 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     }
 
     if(needs_clear){
-        int nrects;
-        pixman_box32_t* rects = pixman_region32_rectangles(damage, &nrects);
-        for(int i=0; i<nrects; i++){
-            struct wlr_box damage_box = {
-                .x = rects[i].x1,
-                .y = rects[i].y1,
-                .width = rects[i].x2 - rects[i].x1,
-                .height = rects[i].y2 - rects[i].y1
-            };
-
-            float matrix[9];
-            wlr_matrix_project_box(matrix, &damage_box,
-                    WL_OUTPUT_TRANSFORM_NORMAL, 0,
-                    renderer->current->wlr_output->transform_matrix);
-            wlr_render_rect(
-                    renderer->wlr_renderer,
-                    &damage_box, (float[]){0., 0., 0., 1.}, renderer->current->wlr_output->transform_matrix);
-        }
+        wm_renderer_clear(renderer, rerender_damage, (float[]){ 0., 0., 0., 1.});
     }
 
     /* Do render */
     wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
         if(wm_content_get_opacity(r) < 0.0001) continue;
-        wm_content_render(r, output, damage, now);
+        wm_content_render(r, output, rerender_damage, now);
     }
 
     /* End render */
@@ -112,8 +103,7 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
                          width, height);
 
 #ifdef DEBUG_DAMAGE_HIGHLIGHT
-    pixman_region32_union_rect(&frame_damage, &frame_damage,
-        0, 0, output->wlr_output->width, output->wlr_output->height);
+    pixman_region32_union_rect(&frame_damage, &frame_damage, 0, 0, width, height);
 #endif
 
     wlr_output_set_damage(output->wlr_output, &frame_damage);
@@ -133,7 +123,9 @@ static void handle_damage_frame(struct wl_listener *listener, void *data) {
     if (wlr_output_damage_attach_render(
                 output->wlr_output_damage, &needs_frame, &damage)) {
 #ifdef DEBUG_DAMAGE_RERENDER
-        pixman_region32_union_rect(&damage, &damage, 0, 0, output->wlr_output->width, output->wlr_output->height);
+        int width, height;
+        wlr_output_transformed_resolution(output->wlr_output, &width, &height);
+        pixman_region32_union_rect(&damage, &damage, 0, 0, width, height);
         needs_frame = true;
 #endif
 
@@ -262,8 +254,7 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
     output->layout_x = 0;
     output->layout_y = 0;
 
-    if (!wlr_output_init_render(output->wlr_output, server->wlr_allocator,
-                                server->wm_renderer->wlr_renderer)) {
+    if (!wm_renderer_init_output(server->wm_renderer, output)) {
         wlr_log(WLR_ERROR, "Failed to init output render");
         return;
     }
@@ -294,6 +285,10 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
 
     /* Let the cursor know we possibly have a new scale */
     wm_cursor_ensure_loaded_for_scale(server->wm_seat->wm_cursor, scale);
+
+#ifdef WM_CUSTOM_RENDERER
+    output->renderer_buffers = NULL;
+#endif
 }
 
 void wm_output_reconfigure(struct wm_output* output){
@@ -308,4 +303,8 @@ void wm_output_destroy(struct wm_output *output) {
     wl_list_remove(&output->present.link);
     wl_list_remove(&output->link);
     wm_layout_remove_output(output->wm_layout, output);
+
+#if WM_CUSTOM_RENDERER
+    wm_renderer_buffers_destroy(output->renderer_buffers);
+#endif
 }

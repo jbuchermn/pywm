@@ -82,12 +82,14 @@ sources = [
     'src/wm/wm_config.c',
     'src/wm/wm_idle_inhibit.c',
     'src/wm/wm_drag.c',
+    'src/wm/wm_composite.c',
 ]
 
 if get_option('custom_renderer')
     sources += [
         texture_shaders_c,
-        primitive_shaders_c
+        primitive_shaders_c,
+        quad_shaders_c
     ]
 endif
 

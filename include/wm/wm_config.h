@@ -39,6 +39,7 @@ struct wm_config {
     char xkb_options[WM_CONFIG_STRLEN];
 
     char texture_shaders[WM_CONFIG_STRLEN];
+    char renderer_mode[WM_CONFIG_STRLEN];
 
     struct wl_list outputs;
 

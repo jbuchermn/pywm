@@ -22,7 +22,7 @@ static void xcursor_setenv(struct wm_config* config){
 void wm_config_init_default(struct wm_config *config) {
     config->enable_xwayland = false;
 
-    config->callback_frequency = 20;
+    config->callback_frequency = 10;
 
     strcpy(config->xkb_model, "");
     strcpy(config->xkb_layout, "");
@@ -72,6 +72,14 @@ void wm_config_reconfigure(struct wm_config* config, struct wm_server* server){
 
     wm_renderer_select_texture_shaders(server->wm_renderer, config->texture_shaders);
     xcursor_setenv(config);
+
+    if(!strcmp(config->renderer_mode, "passthrough")){
+        wm_renderer_ensure_mode(server->wm_renderer, WM_RENDERER_PASSTHROUGH);
+    }else if(!strcmp(config->renderer_mode, "direct")){
+        wm_renderer_ensure_mode(server->wm_renderer, WM_RENDERER_DIRECT);
+    }else if(!strcmp(config->renderer_mode, "indirect")){
+        wm_renderer_ensure_mode(server->wm_renderer, WM_RENDERER_INDIRECT);
+    } 
 }
 
 void wm_config_set_xcursor_theme(struct wm_config* config, const char* xcursor_theme){

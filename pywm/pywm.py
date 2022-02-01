@@ -297,14 +297,14 @@ class PyWM(Generic[ViewT]):
 
 
     @callback
-    def _query_new_widget(self, new_handle: int) -> bool:
+    def _query_new_widget(self, new_handle: int) -> int:
         if len(self._pending_widgets) > 0:
             widget = self._pending_widgets.pop(0)
             widget._handle = new_handle
             self._widgets[new_handle] = widget
-            return True
+            return 2 if widget._is_composite else 1
 
-        return False
+        return 0
     
     @callback
     def _query_destroy_widget(self) -> Optional[int]:

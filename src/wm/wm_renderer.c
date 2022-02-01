@@ -18,7 +18,26 @@
 #include <render/gles2.h>
 #include "wm/shaders/wm_shaders.h"
 
+#include "quad_shaders.c"
+
+
+/* #define DEBUG_DAMAGE */
+
 static const GLfloat verts[] = {
+    1, 0, // top right
+    0, 0, // top left
+    1, 1, // bottom right
+    0, 1, // bottom left
+};
+
+static const GLfloat quad_verts[] = {
+     1, -1, // top right
+    -1, -1, // top left
+     1, 1, // bottom right
+    -1, 1, // bottom left
+};
+
+static const GLfloat quad_texcoord[] = {
     1, 0, // top right
     0, 0, // top left
     1, 1, // bottom right
@@ -90,6 +109,46 @@ static GLuint wm_renderer_link_program(struct wm_renderer *renderer,
 
 error:
     return 0;
+}
+
+static void wm_renderer_init_quad_shaders(struct wm_renderer* renderer){
+    wlr_log(WLR_DEBUG, "Setting up quad shaders");
+    /* Quad shader */
+    renderer->quad_shader.shader = wm_renderer_link_program(renderer, quad_vertex_src, quad_fragment_src);
+    assert(renderer->quad_shader.shader);
+
+    renderer->quad_shader.tex = glGetUniformLocation(renderer->quad_shader.shader, "tex");
+    renderer->quad_shader.pos_attrib = glGetAttribLocation(renderer->quad_shader.shader, "pos");
+    renderer->quad_shader.tex_attrib = glGetAttribLocation(renderer->quad_shader.shader, "texcoord");
+
+    /* Downsample shader */
+    renderer->downsample_shader.shader = wm_renderer_link_program(renderer, quad_vertex_src, quad_fragment_downsample_src);
+    assert(renderer->downsample_shader.shader);
+
+    renderer->downsample_shader.tex = glGetUniformLocation(renderer->downsample_shader.shader, "tex");
+    renderer->downsample_shader.pos_attrib = glGetAttribLocation(renderer->downsample_shader.shader, "pos");
+    renderer->downsample_shader.tex_attrib = glGetAttribLocation(renderer->downsample_shader.shader, "texcoord");
+
+    renderer->downsample_shader.halfpixel = glGetUniformLocation(renderer->downsample_shader.shader, "halfpixel");
+    renderer->downsample_shader.offset = glGetUniformLocation(renderer->downsample_shader.shader, "offset");
+
+    /* Upsample shader */
+    renderer->upsample_shader.shader = wm_renderer_link_program(renderer, quad_vertex_src, quad_fragment_upsample_src);
+    assert(renderer->upsample_shader.shader);
+
+    renderer->upsample_shader.tex = glGetUniformLocation(renderer->upsample_shader.shader, "tex");
+    renderer->upsample_shader.pos_attrib = glGetAttribLocation(renderer->upsample_shader.shader, "pos");
+    renderer->upsample_shader.tex_attrib = glGetAttribLocation(renderer->upsample_shader.shader, "texcoord");
+
+    renderer->upsample_shader.halfpixel = glGetUniformLocation(renderer->upsample_shader.shader, "halfpixel");
+    renderer->upsample_shader.offset = glGetUniformLocation(renderer->upsample_shader.shader, "offset");
+    renderer->upsample_shader.width = glGetUniformLocation(renderer->upsample_shader.shader, "width");
+    renderer->upsample_shader.height = glGetUniformLocation(renderer->upsample_shader.shader, "height");
+    renderer->upsample_shader.padding_l = glGetUniformLocation(renderer->upsample_shader.shader, "padding_l");
+    renderer->upsample_shader.padding_t = glGetUniformLocation(renderer->upsample_shader.shader, "padding_t");
+    renderer->upsample_shader.padding_r = glGetUniformLocation(renderer->upsample_shader.shader, "padding_r");
+    renderer->upsample_shader.padding_b = glGetUniformLocation(renderer->upsample_shader.shader, "padding_b");
+    renderer->upsample_shader.cornerradius = glGetUniformLocation(renderer->upsample_shader.shader, "cornerradius");
 }
 
 static void wm_renderer_link_texture_shader(struct wm_renderer *renderer,
@@ -178,6 +237,8 @@ void wm_renderer_add_primitive_shader(struct wm_renderer *renderer,
     }
     assert(i < renderer->n_primitive_shaders);
 
+    wlr_log(WLR_DEBUG, "Adding shader %s at %d", name, i);
+
     renderer->primitive_shaders[i].name = strdup(name);
     renderer->primitive_shaders[i].n_params_float = n_params_float;
     renderer->primitive_shaders[i].n_params_int = n_params_int;
@@ -218,8 +279,6 @@ void wm_renderer_select_texture_shaders(struct wm_renderer *renderer,
         wlr_log(WLR_INFO, "Could not find texture shaders '%s' - defaulting", name);
         renderer->texture_shaders_selected = renderer->texture_shaders;
     }
-#else
-    // noop
 #endif
 }
 
@@ -237,9 +296,24 @@ void wm_renderer_select_primitive_shader(struct wm_renderer *renderer,
         wlr_log(WLR_INFO, "Could not find primitive shader '%s' - defaulting", name);
         renderer->primitive_shader_selected = renderer->primitive_shaders;
     }
-#else
-    // noop
 #endif
+}
+
+bool wm_renderer_check_primitive_params(struct wm_renderer* renderer, int n_int, int n_float){
+#ifdef WM_CUSTOM_RENDERER
+    if(!renderer->primitive_shader_selected) return false;
+
+    if(n_int < renderer->primitive_shader_selected->n_params_int){
+        wlr_log(WLR_ERROR, "Not enough int parameters (%d) for shader %s (%d)", n_int, renderer->primitive_shader_selected->name, renderer->primitive_shader_selected->n_params_int);
+        return false;
+    }
+    if(n_float < renderer->primitive_shader_selected->n_params_float){
+        wlr_log(WLR_ERROR, "Not enough float parameters (%d) for shader %s (%d)", n_float, renderer->primitive_shader_selected->name, renderer->primitive_shader_selected->n_params_float);
+        return false;
+    }
+#endif
+
+    return true;
 }
 
 #ifdef WM_CUSTOM_RENDERER
@@ -380,17 +454,8 @@ static void render_primitive_with_matrix(
         glUniform1fv(renderer->primitive_shader_selected->params_float, renderer->primitive_shader_selected->n_params_float, params_float);
     }
 
-    const GLfloat texcoord[] = {
-        1, 0, // top right
-        0, 0, // top left
-        1, 1, // bottom right
-        0, 1, // bottom left
-    };
-
-    glVertexAttribPointer(renderer->primitive_shader_selected->pos_attrib, 2, GL_FLOAT,
-                          GL_FALSE, 0, verts);
-    glVertexAttribPointer(renderer->primitive_shader_selected->tex_attrib, 2, GL_FLOAT, GL_FALSE, 0,
-                          texcoord);
+    glVertexAttribPointer(renderer->primitive_shader_selected->pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, verts);
+    glVertexAttribPointer(renderer->primitive_shader_selected->tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, quad_texcoord);
     glEnableVertexAttribArray(renderer->primitive_shader_selected->pos_attrib);
     glEnableVertexAttribArray(renderer->primitive_shader_selected->tex_attrib);
 
@@ -414,39 +479,240 @@ void wm_renderer_init(struct wm_renderer *renderer, struct wm_server *server) {
     wlr_renderer_init_wl_display(renderer->wlr_renderer, server->wl_display);
 
     renderer->current = NULL;
+    renderer->mode = WM_RENDERER_PASSTHROUGH;
 
 #ifdef WM_CUSTOM_RENDERER
-    struct wlr_gles2_renderer *r = gles2_get_renderer(renderer->wlr_renderer);
-    assert(r);
 
     renderer->n_primitive_shaders = 0;
     renderer->n_texture_shaders = 0;
     renderer->texture_shaders_selected = NULL;
     renderer->primitive_shader_selected = NULL;
 
-    assert(wlr_egl_make_current(r->egl));
-    wm_texture_shaders_init(renderer);
-    wm_primitive_shaders_init(renderer);
-    wlr_egl_unset_current(r->egl);
+    if(wlr_renderer_is_gles2(renderer->wlr_renderer)){
+        renderer->mode = WM_RENDERER_INDIRECT;
 
-    wm_renderer_select_texture_shaders(renderer, server->wm_config->texture_shaders);
-    renderer->primitive_shader_selected = renderer->primitive_shaders;
+        struct wlr_gles2_renderer *gles2_renderer = gles2_get_renderer(renderer->wlr_renderer);
+        assert(wlr_egl_make_current(gles2_renderer->egl));
+        wm_texture_shaders_init(renderer);
+        wm_primitive_shaders_init(renderer);
+        wm_renderer_init_quad_shaders(renderer);
+
+        wm_renderer_select_texture_shaders(renderer, server->wm_config->texture_shaders);
+        renderer->primitive_shader_selected = renderer->primitive_shaders;
+
+        wlr_egl_unset_current(gles2_renderer->egl);
+    }else{
+        wlr_log(WLR_INFO, "Not using GLES2 - PyWM custom renderer disabled");
+    }
 #endif
 
+}
+
+#ifdef WM_CUSTOM_RENDERER
+void wm_renderer_buffers_init(struct wm_renderer_buffers* buffers, struct wm_renderer* renderer, int width, int height){
+    buffers->width = width;
+    buffers->height = height;
+    buffers->parent = renderer;
+    wlr_log(WLR_DEBUG, "Initialising renderer buffers for output: %dx%d", width, height);
+
+    struct wlr_gles2_renderer *gles2_renderer = gles2_get_renderer(renderer->wlr_renderer);
+    assert(wlr_egl_make_current(gles2_renderer->egl));
+
+    glGenFramebuffers(1, &buffers->frame_buffer);
+    glGenTextures(1, &buffers->frame_buffer_tex);
+
+    glBindTexture(GL_TEXTURE_2D, buffers->frame_buffer_tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, buffers->frame_buffer);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, buffers->frame_buffer_tex, 0);
+
+    glGenRenderbuffers(1, &buffers->frame_buffer_rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, buffers->frame_buffer_rbo); 
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);  
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, buffers->frame_buffer_rbo);
+
+    assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    int ds_width = width;
+    int ds_height = height;
+    for(int i=0; i<WM_RENDERER_DOWNSAMPLE_BUFFERS; i++){
+        ds_width /= 2;
+        ds_height /= 2;
+        buffers->downsample_buffers_width[i] = ds_width;
+        buffers->downsample_buffers_height[i] = ds_height;
+        glGenFramebuffers(1, &buffers->downsample_buffers[i]);
+        glGenTextures(1, &buffers->downsample_buffers_tex[i]);
+
+        glBindTexture(GL_TEXTURE_2D, buffers->downsample_buffers_tex[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, ds_width, ds_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, buffers->downsample_buffers[i]);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, buffers->downsample_buffers_tex[i], 0);
+
+        glGenRenderbuffers(1, &buffers->downsample_buffers_rbo[i]);
+        glBindRenderbuffer(GL_RENDERBUFFER, buffers->downsample_buffers_rbo[i]); 
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, ds_width, ds_height);  
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, buffers->downsample_buffers_rbo[i]);
+
+        assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    wlr_egl_unset_current(gles2_renderer->egl);
+}
+
+void wm_renderer_buffers_destroy(struct wm_renderer_buffers* buffers){
+    if(!buffers) return;
+
+    wlr_log(WLR_DEBUG, "Freeing renderer buffers for output: %dx%d", buffers->width, buffers->height);
+
+    struct wlr_gles2_renderer *r = gles2_get_renderer(buffers->parent->wlr_renderer);
+    assert(wlr_egl_make_current(r->egl));
+
+    glDeleteFramebuffers(1, &buffers->frame_buffer);
+    glDeleteRenderbuffers(1, &buffers->frame_buffer_rbo);
+    glDeleteTextures(1, &buffers->frame_buffer_tex);
+
+    for(int i=0; i<WM_RENDERER_DOWNSAMPLE_BUFFERS; i++){
+        glDeleteFramebuffers(1, &buffers->downsample_buffers[i]);
+        glDeleteRenderbuffers(1, &buffers->downsample_buffers[i]);
+        glDeleteTextures(1, &buffers->downsample_buffers_tex[i]);
+    }
+
+    wlr_egl_unset_current(r->egl);
+}
+
+void wm_renderer_buffers_ensure(struct wm_renderer* renderer, struct wm_output* output){
+    if(output->renderer_buffers && output->renderer_buffers->width == output->wlr_output->width && output->renderer_buffers->height == output->wlr_output->height){
+        return;
+    }
+
+    if(!output->renderer_buffers){
+        output->renderer_buffers = calloc(1, sizeof(struct wm_renderer_buffers));
+    }else{
+        wm_renderer_buffers_destroy(output->renderer_buffers);
+    }
+    wm_renderer_buffers_init(output->renderer_buffers, renderer, output->wlr_output->width, output->wlr_output->height);
+}
+
+#endif
+
+int wm_renderer_init_output(struct wm_renderer* renderer, struct wm_output* output){
+    return wlr_output_init_render(output->wlr_output, renderer->wm_server->wlr_allocator,
+            renderer->wlr_renderer);
 }
 
 void wm_renderer_destroy(struct wm_renderer *renderer) {
     wlr_renderer_destroy(renderer->wlr_renderer);
 }
 
+static void wm_renderer_scissor(struct wm_renderer* renderer, struct wlr_box* box){
+    wlr_renderer_scissor(renderer->wlr_renderer, box);
+}
+
+#ifdef WM_CUSTOM_RENDERER
+static void wm_renderer_bind_fbo(struct wm_renderer* renderer){
+    if(renderer->mode == WM_RENDERER_INDIRECT){
+        glBindFramebuffer(GL_FRAMEBUFFER, renderer->current->renderer_buffers->frame_buffer);
+    }else if(renderer->mode == WM_RENDERER_DIRECT){
+        struct wlr_gles2_renderer *gles2_renderer = gles2_get_renderer(renderer->wlr_renderer);
+        glBindFramebuffer(GL_FRAMEBUFFER, gles2_renderer->current_buffer->fbo);
+    }
+}
+#endif
+
 void wm_renderer_begin(struct wm_renderer *renderer, struct wm_output *output) {
-    wlr_renderer_begin(renderer->wlr_renderer, output->wlr_output->width,
-                       output->wlr_output->height);
     renderer->current = output;
+
+#ifdef WM_CUSTOM_RENDERER
+    if(renderer->mode == WM_RENDERER_INDIRECT){
+        wm_renderer_buffers_ensure(renderer, output);
+
+        struct wlr_gles2_renderer *gles2_renderer = gles2_get_renderer(renderer->wlr_renderer);
+        assert(wlr_egl_make_current(gles2_renderer->egl));
+    }
+#endif
+
+    wlr_renderer_begin(renderer->wlr_renderer, output->wlr_output->width, output->wlr_output->height);
+
+#ifdef WM_CUSTOM_RENDERER
+    wm_renderer_bind_fbo(renderer);
+
+#ifdef DEBUG_DAMAGE
+    if(renderer->mode == WM_RENDERER_INDIRECT){
+        glBindFramebuffer(GL_FRAMEBUFFER, renderer->current->renderer_buffers->frame_buffer);
+        glClearColor(1.0, 0.0, 0.0, 1.0);
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+#endif
+
+#endif
 }
 
 void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
                      struct wm_output *output) {
+
+#ifdef WM_CUSTOM_RENDERER
+    if(renderer->mode == WM_RENDERER_INDIRECT){
+        struct wlr_gles2_renderer *gles2_renderer = gles2_get_renderer(renderer->wlr_renderer);
+        push_gles2_debug(gles2_renderer);
+
+        glUseProgram(renderer->quad_shader.shader);
+        glDisable(GL_BLEND);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, gles2_renderer->current_buffer->fbo);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, renderer->current->renderer_buffers->frame_buffer_tex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glUniform1i(renderer->quad_shader.tex, 0);
+
+        glVertexAttribPointer(renderer->quad_shader.pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, quad_verts);
+        glVertexAttribPointer(renderer->quad_shader.tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, quad_texcoord);
+
+        glEnableVertexAttribArray(renderer->quad_shader.pos_attrib);
+        glEnableVertexAttribArray(renderer->quad_shader.tex_attrib);
+
+        int ow, oh;
+        wlr_output_transformed_resolution(renderer->current->wlr_output, &ow, &oh);
+
+        enum wl_output_transform transform =
+            wlr_output_transform_invert(renderer->current->wlr_output->transform);
+
+        int nrects;
+        pixman_box32_t *rects = pixman_region32_rectangles(damage, &nrects);
+        for (int i = 0; i < nrects; i++) {
+            struct wlr_box damage_box = {.x = rects[i].x1,
+                                         .y = rects[i].y1,
+                                         .width = rects[i].x2 - rects[i].x1,
+                                         .height = rects[i].y2 - rects[i].y1};
+
+
+            wlr_box_transform(&damage_box, &damage_box, transform, ow, oh);
+            wlr_renderer_scissor(renderer->wlr_renderer, &damage_box);
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        }
+
+        /* DEBUG - copy full FBO */
+        /* wlr_renderer_scissor(renderer->wlr_renderer, NULL); */
+        /* glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); */
+
+        glDisableVertexAttribArray(renderer->quad_shader.pos_attrib);
+        glDisableVertexAttribArray(renderer->quad_shader.tex_attrib);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        pop_gles2_debug(gles2_renderer);
+    }
+#endif
+
     wlr_renderer_scissor(renderer->wlr_renderer, NULL);
     wlr_output_render_software_cursors(output->wlr_output, damage);
     wlr_renderer_end(renderer->wlr_renderer);
@@ -495,19 +761,23 @@ void wm_renderer_render_texture_at(struct wm_renderer *renderer,
             continue;
 
         wlr_box_transform(&inters, &inters, transform, ow, oh);
-        wlr_renderer_scissor(renderer->wlr_renderer, &inters);
+        wm_renderer_scissor(renderer, &inters);
 
 #ifdef WM_CUSTOM_RENDERER
-        render_subtexture_with_matrix(
-            renderer, texture, &fbox, matrix, opacity, box, mask->x - box->x,
-            mask->y - box->y, box->x + box->width - mask->x - mask->width,
-            box->y + box->height - mask->y - mask->height, corner_radius,
-            lock_perc);
-#else
-
-        wlr_render_subtexture_with_matrix(renderer->wlr_renderer, texture,
-                                          &fbox, matrix, opacity);
+        if(renderer->mode != WM_RENDERER_PASSTHROUGH){
+            render_subtexture_with_matrix(
+                renderer, texture, &fbox, matrix, opacity, box, mask->x - box->x,
+                mask->y - box->y, box->x + box->width - mask->x - mask->width,
+                box->y + box->height - mask->y - mask->height, corner_radius,
+                lock_perc);
+        }
 #endif
+
+        if(renderer->mode == WM_RENDERER_PASSTHROUGH){
+            wlr_render_subtexture_with_matrix(renderer->wlr_renderer, texture,
+                                              &fbox, matrix, opacity);
+        }
+
     }
 }
 
@@ -548,13 +818,236 @@ void wm_renderer_render_primitive(struct wm_renderer* renderer,
             continue;
 
         wlr_box_transform(&inters, &inters, transform, ow, oh);
-        wlr_renderer_scissor(renderer->wlr_renderer, &inters);
+        wm_renderer_scissor(renderer, &inters);
 
 #ifdef WM_CUSTOM_RENDERER
-        render_primitive_with_matrix(
-            renderer, &fbox, matrix, opacity, params_int, params_float);
+        if(renderer->mode != WM_RENDERER_PASSTHROUGH){
+            render_primitive_with_matrix(
+                renderer, &fbox, matrix, opacity, params_int, params_float);
+        }
+#endif
+        if(renderer->mode == WM_RENDERER_PASSTHROUGH){
+            wlr_render_rect(renderer->wlr_renderer, box, (float[]){0.0, 0.0, 0.0, 0.2}, renderer->current->wlr_output->transform_matrix);
+        }
+    }
+}
+
+/* TODO */
+#define WM_CUSTOM_RENDERER_DAMAGE_EXTEND 10
+
+void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_box* box, int radius, int passes, double cornerradius){
+    if(renderer->mode != WM_RENDERER_INDIRECT) return;
+
+#ifdef WM_CUSTOM_RENDERER
+    if(passes > WM_RENDERER_DOWNSAMPLE_BUFFERS) passes = WM_RENDERER_DOWNSAMPLE_BUFFERS;
+
+    struct wlr_gles2_renderer *gles2_renderer = gles2_get_renderer(renderer->wlr_renderer);
+    push_gles2_debug(gles2_renderer);
+
+    int ow, oh;
+    wlr_output_transformed_resolution(renderer->current->wlr_output, &ow, &oh);
+
+    enum wl_output_transform transform =
+        wlr_output_transform_invert(renderer->current->wlr_output->transform);
+
+    struct wlr_box transformed_box;
+    wlr_box_transform(&transformed_box, box, transform, ow, oh);
+
+    int nrects;
+    pixman_box32_t *rects = pixman_region32_rectangles(damage, &nrects);
+    for (int i = 0; i < nrects; i++) {
+        struct wlr_box damage_box = {.x = rects[i].x1,
+                                     .y = rects[i].y1,
+                                     .width = rects[i].x2 - rects[i].x1,
+                                     .height = rects[i].y2 - rects[i].y1};
+        wlr_box_transform(&damage_box, &damage_box, transform, ow, oh);
+
+        struct wlr_box inters;
+        wlr_box_intersection(&inters, &damage_box, &transformed_box);
+        if (wlr_box_empty(&inters))
+            continue;
+
+        struct wlr_box inters_ext = {
+            .x = inters.x - WM_CUSTOM_RENDERER_DAMAGE_EXTEND*radius,
+            .y = inters.y - WM_CUSTOM_RENDERER_DAMAGE_EXTEND*radius,
+            .width = inters.width + 2*WM_CUSTOM_RENDERER_DAMAGE_EXTEND*radius,
+            .height = inters.height + 2*WM_CUSTOM_RENDERER_DAMAGE_EXTEND*radius,
+        };
+        /*
+         * Downsample
+         */
+        glUseProgram(renderer->downsample_shader.shader);
+        glDisable(GL_BLEND);
+
+        glVertexAttribPointer(renderer->downsample_shader.pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, quad_verts);
+        glVertexAttribPointer(renderer->downsample_shader.tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, quad_texcoord);
+
+        glEnableVertexAttribArray(renderer->downsample_shader.pos_attrib);
+        glEnableVertexAttribArray(renderer->downsample_shader.tex_attrib);
+
+        for(int i=0; i<passes; i++){
+            glViewport(0, 0, renderer->current->renderer_buffers->downsample_buffers_width[i], renderer->current->renderer_buffers->downsample_buffers_height[i]);
+
+            struct wlr_box scissor = {
+                .x = inters_ext.x * renderer->current->renderer_buffers->downsample_buffers_width[i] / renderer->current->renderer_buffers->width,
+                .y = inters_ext.y * renderer->current->renderer_buffers->downsample_buffers_height[i] / renderer->current->renderer_buffers->height,
+                .width = inters_ext.width * renderer->current->renderer_buffers->downsample_buffers_width[i] / renderer->current->renderer_buffers->width,
+                .height = inters_ext.height * renderer->current->renderer_buffers->downsample_buffers_height[i] / renderer->current->renderer_buffers->height,
+            };
+            wm_renderer_scissor(renderer, &scissor);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, renderer->current->renderer_buffers->downsample_buffers[i]);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, i==0 ? renderer->current->renderer_buffers->frame_buffer_tex : renderer->current->renderer_buffers->downsample_buffers_tex[i-1]);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glUniform1i(renderer->downsample_shader.tex, 0);
+
+            glUniform2f(renderer->downsample_shader.halfpixel,
+                    0.5 / renderer->current->renderer_buffers->downsample_buffers_width[i],
+                    0.5 / renderer->current->renderer_buffers->downsample_buffers_height[i]);
+            glUniform1f(renderer->downsample_shader.offset, radius);
+
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
+
+        glDisableVertexAttribArray(renderer->downsample_shader.pos_attrib);
+        glDisableVertexAttribArray(renderer->downsample_shader.tex_attrib);
+
+        /*
+         * Upsample
+         */
+        glUseProgram(renderer->upsample_shader.shader);
+        glDisable(GL_BLEND);
+
+        glVertexAttribPointer(renderer->upsample_shader.pos_attrib, 2, GL_FLOAT, GL_FALSE, 0, quad_verts);
+        glVertexAttribPointer(renderer->upsample_shader.tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, quad_texcoord);
+
+        glEnableVertexAttribArray(renderer->upsample_shader.pos_attrib);
+        glEnableVertexAttribArray(renderer->upsample_shader.tex_attrib);
+
+
+        for(int i=passes-1; i>=0; i--){
+            int width = i==0 ? renderer->current->renderer_buffers->width : renderer->current->renderer_buffers->downsample_buffers_width[i-1];
+            int height = i==0 ? renderer->current->renderer_buffers->height : renderer->current->renderer_buffers->downsample_buffers_height[i-1];
+            glViewport(0, 0, width, height);
+
+            if(i > 0){
+                struct wlr_box scissor = {
+                    .x = inters_ext.x * width / renderer->current->renderer_buffers->width,
+                    .y = inters_ext.y * height / renderer->current->renderer_buffers->height,
+                    .width = inters_ext.width * width / renderer->current->renderer_buffers->width,
+                    .height = inters_ext.height * height / renderer->current->renderer_buffers->height,
+                };
+                wm_renderer_scissor(renderer, &scissor);
+            }else{
+                wm_renderer_scissor(renderer, &inters);
+            }
+
+            glBindFramebuffer(GL_FRAMEBUFFER, i==0 ? renderer->current->renderer_buffers->frame_buffer : renderer->current->renderer_buffers->downsample_buffers[i-1]);
+
+            if(i == 0){
+                glUniform1f(renderer->upsample_shader.width, width);
+                glUniform1f(renderer->upsample_shader.height, height);
+                glUniform1f(renderer->upsample_shader.padding_l, transformed_box.x);
+                glUniform1f(renderer->upsample_shader.padding_t, transformed_box.y);
+                glUniform1f(renderer->upsample_shader.padding_r, width - transformed_box.x - transformed_box.width);
+                glUniform1f(renderer->upsample_shader.padding_b, height - transformed_box.y - transformed_box.height);
+                glUniform1f(renderer->upsample_shader.cornerradius, cornerradius);
+            }else{
+                glUniform1f(renderer->upsample_shader.width, width);
+                glUniform1f(renderer->upsample_shader.height, height);
+                glUniform1f(renderer->upsample_shader.padding_l, 0);
+                glUniform1f(renderer->upsample_shader.padding_t, 0);
+                glUniform1f(renderer->upsample_shader.padding_r, 0);
+                glUniform1f(renderer->upsample_shader.padding_b, 0);
+                glUniform1f(renderer->upsample_shader.cornerradius, 0.);
+            }
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, renderer->current->renderer_buffers->downsample_buffers_tex[i]);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glUniform1i(renderer->upsample_shader.tex, 0);
+
+            glUniform2f(renderer->upsample_shader.halfpixel,
+                    0.5 / (i==0 ? renderer->current->renderer_buffers->width : renderer->current->renderer_buffers->downsample_buffers_width[i-1]),
+                    0.5 / (i==0 ? renderer->current->renderer_buffers->height : renderer->current->renderer_buffers->downsample_buffers_height[i-1]));
+            glUniform1f(renderer->upsample_shader.offset, radius);
+
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
+
+        glDisableVertexAttribArray(renderer->upsample_shader.pos_attrib);
+        glDisableVertexAttribArray(renderer->upsample_shader.tex_attrib);
+    }
+
+    wm_renderer_scissor(renderer, NULL);
+    wm_renderer_bind_fbo(renderer);
+
+    pop_gles2_debug(gles2_renderer);
 #else
-        wlr_render_rect(renderer->wlr_renderer, box, (float[]){1.0, 1.0, 0.0, 1.0}, renderer->current->wlr_output->transform_matrix);
+    // noop
+#endif
+}
+
+
+void wm_renderer_clear(struct wm_renderer* renderer, pixman_region32_t* damage, float* color){
+    /* Alternative wm_renderer-based implementation. Not really necessary... */
+    /* int ow, oh; */
+    /* wlr_output_transformed_resolution(renderer->current->wlr_output, &ow, &oh); */
+    /*  */
+    /* struct wlr_box box = { */
+    /*     .x = 0., */
+    /*     .y = 0., */
+    /*     .width = ow, */
+    /*     .height = oh */
+    /* }; */
+    /*  */
+    /* wm_renderer_select_primitive_shader(renderer, "rect"); */
+    /* wm_renderer_render_primitive(renderer, damage, &box, 1.0, (int[]){}, color); */
+
+    int nrects;
+    pixman_box32_t* rects = pixman_region32_rectangles(damage, &nrects);
+    for(int i=0; i<nrects; i++){
+        struct wlr_box damage_box = {
+            .x = rects[i].x1,
+            .y = rects[i].y1,
+            .width = rects[i].x2 - rects[i].x1,
+            .height = rects[i].y2 - rects[i].y1
+        };
+
+        float matrix[9];
+        wlr_matrix_project_box(matrix, &damage_box,
+                WL_OUTPUT_TRANSFORM_NORMAL, 0,
+                renderer->current->wlr_output->transform_matrix);
+        wlr_render_rect(
+                renderer->wlr_renderer,
+                &damage_box, (float[]){0., 0., 0., 1.}, renderer->current->wlr_output->transform_matrix);
+    }
+}
+
+void wm_renderer_ensure_mode(struct wm_renderer* renderer, enum wm_renderer_mode mode){
+    if(mode == WM_RENDERER_PASSTHROUGH){
+        wlr_log(WLR_INFO, "Disabling PyWM custom renderer");
+        renderer->mode = WM_RENDERER_PASSTHROUGH;
+    }else{
+#ifdef WM_CUSTOM_RENDERER
+        if(wlr_renderer_is_gles2(renderer->wlr_renderer)){
+            wlr_log(WLR_INFO, "Enabling PyWM custom renderer");
+            renderer->mode = mode;
+        }else{
+            wlr_log(WLR_INFO, "Not using GLES2 - PyWM custom renderer disabled");
+            renderer->mode = WM_RENDERER_PASSTHROUGH;
+        }
+#else
+        renderer->mode = WM_RENDERER_PASSTHROUGH;
 #endif
     }
 }
+

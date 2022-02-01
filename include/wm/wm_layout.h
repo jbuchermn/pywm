@@ -33,10 +33,13 @@ void wm_layout_reconfigure(struct wm_layout* layout);
 /* Damage whole output layout */
 void wm_layout_damage_whole(struct wm_layout* layout);
 
+/* Calls wm_content_damage_output, expects calls to wm_layout_damage_output */
 void wm_layout_damage_from(struct wm_layout* layout, struct wm_content* content, struct wlr_surface* origin);
+void wm_layout_damage_output(struct wm_layout* layout, struct wm_output* output, pixman_region32_t* damage, struct wm_content* from);
 
 void wm_layout_update_content_outputs(struct wm_layout* layout, struct wm_content* content);
 
 void wm_layout_printf(FILE* file, struct wm_layout* layout);
+
 
 #endif
