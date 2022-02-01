@@ -99,7 +99,14 @@ void wm_layout_damage_whole(struct wm_layout* layout){
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
         wlr_output_damage_add_whole(output->wlr_output_damage);
+
+        /* No need to call wm_composite_on_damage_below here, as this method
+         * is only meant to extend frame damage. This might change, if wm_composites
+         * store their contents in buffers. */
+
+        wlr_output_schedule_frame(output->wlr_output);
     }
+
 }
 
 
