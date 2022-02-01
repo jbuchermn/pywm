@@ -60,7 +60,7 @@ static void wm_composite_render(struct wm_content* super, struct wm_output* outp
         wm_renderer_apply_blur(super->wm_server->wm_renderer, output_damage, &box,
                 comp->params.n_params_int >= 1 ? comp->params.params_int[0] : 1,
                 comp->params.n_params_int >= 2 ? comp->params.params_int[1] : 2,
-                super->corner_radius);
+                output->wlr_output->scale * super->corner_radius);
     }
 
 }

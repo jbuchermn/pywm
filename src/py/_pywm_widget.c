@@ -34,18 +34,20 @@ void _pywm_widget_update(struct _pywm_widget* widget){
         double mask_x, mask_y, mask_w, mask_h;
         int output_key;
         double opacity;
+        double corner_radius;
         double z_index;
         int lock_enabled;
         double workspace_x, workspace_y, workspace_w, workspace_h;
         PyObject* pixels;
         PyObject* primitive;
         if(!PyArg_ParseTuple(res, 
-                    "p(dddd)(dddd)idd(dddd)OO",
+                    "p(dddd)(dddd)iddd(dddd)OO",
                     &lock_enabled,
                     &x, &y, &w, &h,
                     &mask_x, &mask_y, &mask_w, &mask_h,
                     &output_key,
                     &opacity,
+                    &corner_radius,
                     &z_index,
                     &workspace_x, &workspace_y, &workspace_w, &workspace_h, &pixels, &primitive
            )){
@@ -54,6 +56,7 @@ void _pywm_widget_update(struct _pywm_widget* widget){
         }
 
         wm_content_set_opacity(widget->super, opacity);
+        wm_content_set_corner_radius(widget->super, corner_radius);
         if(w >= 0.0 && h >= 0.0)
             wm_content_set_box(widget->super, x, y, w, h);
         wm_content_set_mask(widget->super, mask_x, mask_y, mask_w, mask_h);
