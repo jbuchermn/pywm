@@ -94,22 +94,24 @@ void wm_renderer_buffers_ensure(struct wm_renderer* renderer, struct wm_output* 
 
 #endif
 
+enum wm_renderer_mode {
+    /* Pass all methods to wlr_renderer */
+    WM_RENDERER_PASSTHROUGH,
+
+    /* Directly render to wlr buffers using own shaders */
+    WM_RENDERER_DIRECT,
+
+    /* Render to FBO, supports blur, more resource-intensive */
+    WM_RENDERER_INDIRECT
+};
+
 struct wm_renderer {
     struct wm_server* wm_server;
     struct wlr_renderer* wlr_renderer;
 
     struct wm_output* current;
 
-    enum {
-        /* Pass all methods to wlr_renderer */
-        WM_RENDERER_PASSTHROUGH,
-
-        /* Directly render to wlr buffers using own shaders */
-        WM_RENDERER_DIRECT,
-
-        /* Render to FBO, supports blur, more resource-intensive */
-        WM_RENDERER_INDIRECT
-    } mode;
+    enum wm_renderer_mode mode;
 
 #ifdef WM_CUSTOM_RENDERER
     int n_texture_shaders;
@@ -209,5 +211,7 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer,
 void wm_renderer_clear(struct wm_renderer* renderer,
                        pixman_region32_t* damage,
                        float* color);
+
+void wm_renderer_ensure_mode(struct wm_renderer* renderer, enum wm_renderer_mode mode);
 
 #endif

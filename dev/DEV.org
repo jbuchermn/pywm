@@ -7,9 +7,9 @@
 **** TODO Open alacritty, hit Mod - slow animations. Open alacritty, start "tail -f newm_log" (i.e. client-side damaging), hit Mod - fast animations (Mitigated by higher wm_config.callback...)
 
 *** STRT Better renderer
-**** STRT Enable runtime switching between wlr_renderer, wm_renderer (with FBO and blur), wm_renderer (without FBO and blur)
-**** STRT Set up wm_composite: Goal - Damaging a window behind blur requires also damaging a region around it
-**** TODO Extensively test DEBUG_DAMAGE, different render modes, switching between render modes, frame damage optimization, damaging and blur
+**** DONE Set up wm_composite: Goal - Damaging a window behind blur requires also damaging a region around it
+**** DONE Enable runtime switching between wlr_renderer, wm_renderer (with FBO and blur), wm_renderer (without FBO and blur)
+**** TODO Extensively test DEBUG_DAMAGE, different render modes, switching between render modes, frame damage optimization, damaging and blur + build test cases
 **** TODO Performance comparison of renderers / of blur
 
 *** TODO Profiling, optimize CPU usage (Focus: pywm-fullscreen vs sway)

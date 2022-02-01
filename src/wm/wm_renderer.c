@@ -489,9 +489,7 @@ void wm_renderer_init(struct wm_renderer *renderer, struct wm_server *server) {
     renderer->primitive_shader_selected = NULL;
 
     if(wlr_renderer_is_gles2(renderer->wlr_renderer)){
-        // TODO: Configure
         renderer->mode = WM_RENDERER_INDIRECT;
-        /* renderer->mode = WM_RENDERER_DIRECT; */
 
         struct wlr_gles2_renderer *gles2_renderer = gles2_get_renderer(renderer->wlr_renderer);
         assert(wlr_egl_make_current(gles2_renderer->egl));
@@ -834,7 +832,7 @@ void wm_renderer_render_primitive(struct wm_renderer* renderer,
     }
 }
 
-// TODO
+/* TODO */
 #define WM_CUSTOM_RENDERER_DAMAGE_EXTEND 10
 
 void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_box* box, int radius, int passes, double cornerradius){
@@ -1033,3 +1031,23 @@ void wm_renderer_clear(struct wm_renderer* renderer, pixman_region32_t* damage, 
                 &damage_box, (float[]){0., 0., 0., 1.}, renderer->current->wlr_output->transform_matrix);
     }
 }
+
+void wm_renderer_ensure_mode(struct wm_renderer* renderer, enum wm_renderer_mode mode){
+    if(mode == WM_RENDERER_PASSTHROUGH){
+        wlr_log(WLR_INFO, "Disabling PyWM custom renderer");
+        renderer->mode = WM_RENDERER_PASSTHROUGH;
+    }else{
+#ifdef WM_CUSTOM_RENDERER
+        if(wlr_renderer_is_gles2(renderer->wlr_renderer)){
+            wlr_log(WLR_INFO, "Enabling PyWM custom renderer");
+            renderer->mode = mode;
+        }else{
+            wlr_log(WLR_INFO, "Not using GLES2 - PyWM custom renderer disabled");
+            renderer->mode = WM_RENDERER_PASSTHROUGH;
+        }
+#else
+        renderer->mode = WM_RENDERER_PASSTHROUGH;
+#endif
+    }
+}
+
