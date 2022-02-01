@@ -40,6 +40,7 @@ class PyWMWidgetDownstreamState:
 class PyWMWidget(Generic[PyWMT]):
     def __init__(self, wm: PyWMT, output: Optional[PyWMOutput]) -> None:
         self._handle = -1
+        self._is_composite = False
 
         self.wm = wm
         self.output = output
@@ -74,6 +75,10 @@ class PyWMWidget(Generic[PyWMT]):
         self._pending_pixels = (stride, width, height, data)
 
     def set_primitive(self, name: str, params_int: list[int], params_float: list[float]) -> None:
+        self._pending_primitive = name, params_int, params_float
+
+    def set_composite(self, name: str, params_int: list[int], params_float: list[float]) -> None:
+        self._is_composite = True
         self._pending_primitive = name, params_int, params_float
 
     @abstractmethod

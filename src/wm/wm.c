@@ -131,18 +131,6 @@ void wm_close_virtual_output(const char* name){
    wm_server_close_virtual_output(wm.server, name);
 }
 
-struct wm_widget *wm_create_widget() {
-    if (!wm.server)
-        return NULL;
-
-    return wm_server_create_widget(wm.server);
-}
-
-void wm_destroy_widget(struct wm_widget *widget) {
-    wm_content_destroy(&widget->super);
-    free(widget);
-}
-
 struct wm *get_wm() {
     return &wm;
 }

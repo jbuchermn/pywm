@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdlib.h>
+#include <assert.h>
 
 #include "wm/wm_composite.h"
 #include "wm/wm_server.h"
@@ -16,14 +17,30 @@ void wm_composite_init(struct wm_composite* comp, struct wm_server* server){
     wm_content_init(&comp->super, server);
     comp->super.vtable = &wm_composite_vtable;
     comp->type = WM_COMPOSITE_BLUR;
+
+    comp->params.n_params_float = 0;
+    comp->params.n_params_int = 0;
+    comp->params.params_float = NULL;
+    comp->params.params_int = NULL;
 }
 
 static void wm_composite_destroy(struct wm_content* super){
     wm_content_base_destroy(super);
+    struct wm_composite* comp = wm_cast(wm_composite, super);
+
+    free(comp->params.params_float);
+    free(comp->params.params_int);
 }
 
-void wm_composite_set_type(struct wm_composite* comp, enum wm_composite_type type){
-    comp->type = type;
+void wm_composite_set_type(struct wm_composite* comp, const char* type, int n_params_int, int* params_int, int n_params_float, float* params_float){
+    assert(!strcmp(type, "blur"));
+    comp->type = WM_COMPOSITE_BLUR;
+
+    comp->params.n_params_int = n_params_int;
+    comp->params.params_int = params_int;
+    comp->params.n_params_float = n_params_float;
+    comp->params.params_float = params_float;
+
     wm_layout_damage_from(comp->super.wm_server->wm_layout, &comp->super, NULL);
 }
 
@@ -40,7 +57,10 @@ static void wm_composite_render(struct wm_content* super, struct wm_output* outp
         .height = round(display_h * output->wlr_output->scale)};
 
     if(comp->type == WM_COMPOSITE_BLUR){
-        wm_renderer_apply_blur(super->wm_server->wm_renderer, output_damage, &box, 1/* TODO */, 2/* TODO */, super->corner_radius);
+        wm_renderer_apply_blur(super->wm_server->wm_renderer, output_damage, &box,
+                comp->params.n_params_int >= 1 ? comp->params.params_int[0] : 1,
+                comp->params.n_params_int >= 2 ? comp->params.params_int[1] : 2,
+                super->corner_radius);
     }
 
 }

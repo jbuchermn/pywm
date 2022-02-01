@@ -6,6 +6,7 @@
 
 #include "wm/wm.h"
 #include "wm/wm_widget.h"
+#include "wm/wm_composite.h"
 #include "py/_pywm_widget.h"
 #include "py/_pywm_callbacks.h"
 #include "wm/wm_util.h"
@@ -13,9 +14,14 @@
 static struct _pywm_widgets widgets = { 0 };
 static long next_handle = 1;
 
-void _pywm_widget_init(struct _pywm_widget* _widget, struct wm_widget* widget){
+void _pywm_widget_init(struct _pywm_widget* _widget, struct wm_widget* widget, struct wm_composite* composite){
     _widget->handle = (next_handle++);
     _widget->widget = widget;
+    _widget->composite = composite;
+
+    assert((_widget->widget || _widget->composite) && !(_widget->widget && _widget->composite));
+    _widget->super = _widget->widget ? &_widget->widget->super : &_widget->composite->super;
+
     _widget->next_widget = NULL;
 }
 
@@ -47,17 +53,17 @@ void _pywm_widget_update(struct _pywm_widget* widget){
             return;
         }
 
-        wm_content_set_opacity(&widget->widget->super, opacity);
+        wm_content_set_opacity(widget->super, opacity);
         if(w >= 0.0 && h >= 0.0)
-            wm_content_set_box(&widget->widget->super, x, y, w, h);
-        wm_content_set_mask(&widget->widget->super, mask_x, mask_y, mask_w, mask_h);
-        wm_content_set_z_index(&widget->widget->super, z_index);
-        wm_content_set_lock_enabled(&widget->widget->super, lock_enabled);
+            wm_content_set_box(widget->super, x, y, w, h);
+        wm_content_set_mask(widget->super, mask_x, mask_y, mask_w, mask_h);
+        wm_content_set_z_index(widget->super, z_index);
+        wm_content_set_lock_enabled(widget->super, lock_enabled);
 
-        wm_content_set_output(&widget->widget->super, output_key, NULL);
-        wm_content_set_workspace(&widget->widget->super, workspace_x, workspace_y, workspace_w, workspace_h);
+        wm_content_set_output(widget->super, output_key, NULL);
+        wm_content_set_workspace(widget->super, workspace_x, workspace_y, workspace_w, workspace_h);
 
-        if(pixels && pixels != Py_None){
+        if(pixels && pixels != Py_None && widget->widget){
             int stride, width, height;
             PyObject* data;
             if(!PyArg_ParseTuple(pixels, "iiiS", &stride, &width, &height, &data)){
@@ -97,7 +103,11 @@ void _pywm_widget_update(struct _pywm_widget* widget){
                 p_float[i] = PyFloat_AsDouble(PyList_GetItem(params_float, i));
             }
 
-            wm_widget_set_primitive(widget->widget, strdup(name), PyList_Size(params_int), p_int, PyList_Size(params_float), p_float);
+            if(widget->widget){
+                wm_widget_set_primitive(widget->widget, strdup(name), PyList_Size(params_int), p_int, PyList_Size(params_float), p_float);
+            }else{
+                wm_composite_set_type(widget->composite, name, PyList_Size(params_int), p_int, PyList_Size(params_float), p_float);
+            }
 
         }
 
@@ -106,7 +116,7 @@ void _pywm_widget_update(struct _pywm_widget* widget){
     Py_XDECREF(res);
 }
 
-long _pywm_widgets_add(struct wm_widget* widget){
+long _pywm_widgets_add(struct wm_widget* widget, struct wm_composite* composite){
     struct _pywm_widget* it;
     for(it = widgets.first_widget; it && it->next_widget; it=it->next_widget);
     struct _pywm_widget** insert;
@@ -117,18 +127,18 @@ long _pywm_widgets_add(struct wm_widget* widget){
     }
 
     *insert = malloc(sizeof(struct _pywm_widget));
-    _pywm_widget_init(*insert, widget);
+    _pywm_widget_init(*insert, widget, composite);
     return (*insert)->handle;
 }
 
-long _pywm_widgets_remove(struct wm_widget* widget){
+long _pywm_widgets_remove(struct wm_content* content){
     struct _pywm_widget* remove;
-    if(widgets.first_widget && widgets.first_widget->widget == widget){
+    if(widgets.first_widget && widgets.first_widget->super == content){
         remove = widgets.first_widget;
         widgets.first_widget = remove->next_widget;
     }else{
         struct _pywm_widget* prev;
-        for(prev = widgets.first_widget; prev && prev->next_widget && prev->next_widget->widget != widget; prev=prev->next_widget);
+        for(prev = widgets.first_widget; prev && prev->next_widget && prev->next_widget->super != content; prev=prev->next_widget);
         assert(prev);
 
         remove = prev->next_widget;
@@ -142,9 +152,9 @@ long _pywm_widgets_remove(struct wm_widget* widget){
     return handle;
 }
 
-long _pywm_widgets_get_handle(struct wm_widget* widget){
+long _pywm_widgets_get_handle(struct wm_content* content){
     for(struct _pywm_widget* it = widgets.first_widget; it; it=it->next_widget){
-        if(it->widget == widget) return it->handle;
+        if(it->super == content) return it->handle;
     }
 
     return 0;
@@ -163,13 +173,13 @@ void _pywm_widgets_update(){
             goto err;
         }
 
-        struct wm_widget* widget = _pywm_widgets_from_handle(handle);
-        if(!widget){
+        struct wm_content* content = _pywm_widgets_from_handle(handle);
+        if(!content){
             PyErr_SetString(PyExc_TypeError, "Widget has been destroyed");
             goto err;
         }
-        _pywm_widgets_remove(widget);
-        wm_destroy_widget(widget);
+        _pywm_widgets_remove(content);
+        wm_content_destroy(content);
     }
     Py_XDECREF(res);
 
@@ -177,9 +187,17 @@ void _pywm_widgets_update(){
     args = Py_BuildValue("(l)", next_handle);
     res = PyObject_Call(_pywm_callbacks_get_all()->query_new_widget, args, NULL);
     Py_XDECREF(args);
-    if(res == Py_True){
-        struct wm_widget* widget = wm_create_widget();
-        _pywm_widgets_add(widget);
+    if(res && res != Py_None){
+        long r = PyLong_AsLong(res);
+        if(r == 1){
+            struct wm_widget* widget = calloc(1, sizeof(struct wm_widget));
+            wm_widget_init(widget, get_wm()->server);
+            _pywm_widgets_add(widget, NULL);
+        }else if(r == 2){
+            struct wm_composite* composite = calloc(1, sizeof(struct wm_composite));
+            wm_composite_init(composite, get_wm()->server);
+            _pywm_widgets_add(NULL, composite);
+        }
     }
     Py_XDECREF(res);
 
@@ -198,16 +216,16 @@ struct _pywm_widget* _pywm_widgets_container_from_handle(long handle){
     for(struct _pywm_widget* widget = widgets.first_widget; widget; widget=widget->next_widget){
         if(widget->handle == handle) return widget;
     }
-    
+
     return NULL;
 }
 
-struct wm_widget* _pywm_widgets_from_handle(long handle){
+struct wm_content* _pywm_widgets_from_handle(long handle){
     struct _pywm_widget* widget = _pywm_widgets_container_from_handle(handle);
     if(!widget){
         return NULL;
     }
- 
-    return widget->widget;
+
+    return widget->super;
 }
 

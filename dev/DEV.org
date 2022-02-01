@@ -10,6 +10,7 @@
 **** STRT Enable runtime switching between wlr_renderer, wm_renderer (with FBO and blur), wm_renderer (without FBO and blur)
 **** STRT Set up wm_composite: Goal - Damaging a window behind blur requires also damaging a region around it
 **** TODO Extensively test DEBUG_DAMAGE, different render modes, switching between render modes, frame damage optimization, damaging and blur
+**** TODO Performance comparison of renderers / of blur
 
 *** TODO Profiling, optimize CPU usage (Focus: pywm-fullscreen vs sway)
 *** TODO wlr-output-management-unstable-v1 (in order to use wdisplays)

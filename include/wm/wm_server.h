@@ -76,9 +76,6 @@ struct wm_view* wm_server_view_for_surface(struct wm_server* server, struct wlr_
 
 void wm_server_update_contents(struct wm_server* server);
 
-/* passes ownership to caller, no need to unregister, simply destroy */
-struct wm_widget* wm_server_create_widget(struct wm_server* server);
-
 void wm_server_open_virtual_output(struct wm_server* server, const char* name);
 void wm_server_close_virtual_output(struct wm_server* server, const char* name);
 

@@ -15,10 +15,18 @@ enum wm_composite_type {
 struct wm_composite {
     struct wm_content super;
     enum wm_composite_type type;
+
+    struct {
+        int n_params_int;
+        int* params_int;
+        int n_params_float;
+        float* params_float;
+    } params;
+
 };
 
 void wm_composite_init(struct wm_composite* comp, struct wm_server* server);
-void wm_composite_set_type(struct wm_composite* comp, enum wm_composite_type type);
+void wm_composite_set_type(struct wm_composite* comp, const char* type, int n_params_int, int* params_int, int n_params_float, float* params_float);
 
 void wm_composite_on_damage_below(struct wm_composite* comp, struct wm_output* output, struct wm_content* from, pixman_region32_t* damage);
 
