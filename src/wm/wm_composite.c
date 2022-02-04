@@ -68,7 +68,7 @@ static void wm_composite_render(struct wm_content* super, struct wm_output* outp
 /* TODO */
 #define WM_COMPOSITE_EXTEND 10
 
-void wm_composite_on_damage_below(struct wm_composite* comp, struct wm_output* output, struct wm_content* from, pixman_region32_t* damage){
+void wm_composite_on_damage_below(struct wm_composite* comp, struct wm_output* output, pixman_region32_t* damage){
 
     double x, y, w, h;
     wm_content_get_box(&comp->super, &x, &y, &w, &h);

@@ -50,7 +50,7 @@ static void handle_present(struct wl_listener *listener, void *data) {
 static void render(struct wm_output *output, struct timespec now, pixman_region32_t *damage) {
     struct wm_renderer *renderer = output->wm_server->wm_renderer;
 
-    /* If we are rendering to a (signle) FBO - use frame damage, else buffer damage */
+    /* If we are rendering to a (single) FBO - use frame damage, else buffer damage */
     pixman_region32_t* rerender_damage = renderer->mode == WM_RENDERER_INDIRECT ? &output->wlr_output_damage->current : damage;
 
     /* Ensure z-index */

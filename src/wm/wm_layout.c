@@ -131,8 +131,8 @@ void wm_layout_damage_output(struct wm_layout* layout, struct wm_output* output,
     wl_list_for_each(content, &layout->wm_server->wm_contents, link){
         if(!wm_content_is_composite(content)) continue;
         struct wm_composite* comp = wm_cast(wm_composite, content);
-        if(comp->super.z_index > from->z_index){
-            wm_composite_on_damage_below(comp, output, from, damage);
+        if(&comp->super != from && comp->super.z_index > from->z_index){
+            wm_composite_on_damage_below(comp, output, damage);
         }
     }
 

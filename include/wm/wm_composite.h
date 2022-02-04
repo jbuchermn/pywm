@@ -28,7 +28,7 @@ struct wm_composite {
 void wm_composite_init(struct wm_composite* comp, struct wm_server* server);
 void wm_composite_set_type(struct wm_composite* comp, const char* type, int n_params_int, int* params_int, int n_params_float, float* params_float);
 
-void wm_composite_on_damage_below(struct wm_composite* comp, struct wm_output* output, struct wm_content* from, pixman_region32_t* damage);
+void wm_composite_on_damage_below(struct wm_composite* comp, struct wm_output* output, pixman_region32_t* damage);
 
 bool wm_content_is_composite(struct wm_content* content);
 
