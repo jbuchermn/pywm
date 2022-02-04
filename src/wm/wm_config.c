@@ -70,16 +70,21 @@ void wm_config_reconfigure(struct wm_config* config, struct wm_server* server){
     wm_layout_reconfigure(server->wm_layout);
     wm_server_reconfigure(server);
 
-    wm_renderer_select_texture_shaders(server->wm_renderer, config->texture_shaders);
     xcursor_setenv(config);
+    wm_renderer_select_texture_shaders(server->wm_renderer, config->texture_shaders);
+    wm_renderer_ensure_mode(server->wm_renderer, wm_config_get_renderer_mode(config));
+}
 
+enum wm_renderer_mode wm_config_get_renderer_mode(struct wm_config* config){
     if(!strcmp(config->renderer_mode, "passthrough")){
-        wm_renderer_ensure_mode(server->wm_renderer, WM_RENDERER_PASSTHROUGH);
+        return WM_RENDERER_PASSTHROUGH;
     }else if(!strcmp(config->renderer_mode, "direct")){
-        wm_renderer_ensure_mode(server->wm_renderer, WM_RENDERER_DIRECT);
+        return WM_RENDERER_DIRECT;
     }else if(!strcmp(config->renderer_mode, "indirect")){
-        wm_renderer_ensure_mode(server->wm_renderer, WM_RENDERER_INDIRECT);
+        return WM_RENDERER_INDIRECT;
     } 
+
+    return WM_RENDERER_PASSTHROUGH;
 }
 
 void wm_config_set_xcursor_theme(struct wm_config* config, const char* xcursor_theme){

@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <wayland-server.h>
 
+#include "wm/wm_renderer.h"
+
 #define WM_CONFIG_POS_MIN -1000000
 #define WM_CONFIG_STRLEN 100
 
@@ -69,5 +71,7 @@ void wm_config_add_output(struct wm_config *config, const char *name,
 struct wm_config_output *wm_config_find_output(struct wm_config *config,
                                                const char *name);
 void wm_config_destroy(struct wm_config *config);
+
+enum wm_renderer_mode wm_config_get_renderer_mode(struct wm_config* config);
 
 #endif

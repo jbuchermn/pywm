@@ -479,7 +479,7 @@ void wm_renderer_init(struct wm_renderer *renderer, struct wm_server *server) {
     wlr_renderer_init_wl_display(renderer->wlr_renderer, server->wl_display);
 
     renderer->current = NULL;
-    renderer->mode = WM_RENDERER_PASSTHROUGH;
+    renderer->mode = wm_config_get_renderer_mode(server->wm_config);
 
 #ifdef WM_CUSTOM_RENDERER
 
@@ -489,7 +489,6 @@ void wm_renderer_init(struct wm_renderer *renderer, struct wm_server *server) {
     renderer->primitive_shader_selected = NULL;
 
     if(wlr_renderer_is_gles2(renderer->wlr_renderer)){
-        renderer->mode = WM_RENDERER_INDIRECT;
 
         struct wlr_gles2_renderer *gles2_renderer = gles2_get_renderer(renderer->wlr_renderer);
         assert(wlr_egl_make_current(gles2_renderer->egl));
@@ -502,8 +501,11 @@ void wm_renderer_init(struct wm_renderer *renderer, struct wm_server *server) {
 
         wlr_egl_unset_current(gles2_renderer->egl);
     }else{
+        renderer->mode = WM_RENDERER_PASSTHROUGH;
         wlr_log(WLR_INFO, "Not using GLES2 - PyWM custom renderer disabled");
     }
+#else
+    renderer->mode = WM_RENDERER_PASSTHROUGH;
 #endif
 
 }
