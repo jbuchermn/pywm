@@ -3,7 +3,7 @@
 * Development
 ** Current (v0.3)
 *** Bugs
-**** TODO Shader padding does not work together with transforms - issue with using gl_FragCoord (transformed) instead of texcoord in fragment shaders
+**** STRT Shader padding does not work together with transforms - issue with using gl_FragCoord (transformed) instead of texcoord in fragment shaders
 
 *** TODO Better callback logic / improve idle CPU
 **** TODO Better logic for damage originitaing python-side (instead of wm_config.callback_frequency)
@@ -12,7 +12,7 @@
 **** TODO Profiling, optimize CPU usage (Focus: pywm-fullscreen vs sway)
 
 *** STRT Better renderer
-**** TODO Clean up shaders (no separate lock shaders)
+**** DONE Clean up shaders (no separate lock shaders)
 **** TODO Extensively test DEBUG_DAMAGE, different render modes, switching between render modes, frame damage optimization, damaging and blur + build test cases
 **** TODO Performance comparison of renderers / of blur
 

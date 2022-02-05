@@ -9,9 +9,6 @@ texture_files = [
     'fragment_rgba.glsl',
     'fragment_rgbx.glsl',
     'fragment_ext.glsl',
-    'fragment_lock_rgba.glsl',
-    'fragment_lock_rgbx.glsl',
-    'fragment_lock_ext.glsl',
 ]
 
 with open(sys.argv[1], "w") as out:

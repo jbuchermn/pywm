@@ -43,10 +43,6 @@ struct wm_renderer_texture_shaders {
     struct wm_renderer_texture_shader rgba;
     struct wm_renderer_texture_shader rgbx;
     struct wm_renderer_texture_shader ext;
-
-    struct wm_renderer_texture_shader lock_rgba;
-    struct wm_renderer_texture_shader lock_rgbx;
-    struct wm_renderer_texture_shader lock_ext;
 };
 
 struct wm_renderer_primitive_shader {
@@ -172,11 +168,7 @@ void wm_renderer_add_texture_shaders(struct wm_renderer* renderer, const char* n
         const GLchar* vert_src,
         const GLchar* frag_src_rgba,
         const GLchar* frag_src_rgbx,
-        const GLchar* frag_src_ext,
-        const GLchar* frag_src_lock_rgba,
-        const GLchar* frag_src_lock_rgbx,
-        const GLchar* frag_src_lock_ext);
-
+        const GLchar* frag_src_ext);
 
 void wm_renderer_init_primitive_shaders(struct wm_renderer* renderer, int n_shaders);
 void wm_renderer_add_primitive_shader(struct wm_renderer* renderer, const char* name,

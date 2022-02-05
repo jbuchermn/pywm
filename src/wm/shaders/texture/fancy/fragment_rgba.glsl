@@ -45,9 +45,13 @@ void main() {
             discard;
     }
 
-    float r = sqrt((v_texcoord.x - 0.5) * (v_texcoord.x - 0.5) + 
-            (v_texcoord.y - 0.5) * (v_texcoord.y - 0.5));
-    float a = atan(v_texcoord.y - 0.5, v_texcoord.x - 0.5);
-    gl_FragColor = texture2D(tex, vec2(0.5 + r*cos(a + lock_perc * 10.0 * 
-                    (0.5 - r)), 0.5 + r*sin(a + lock_perc * 10.0 * (0.5 - r)))) * alpha;
+    if(lock_perc > 0.0001){
+        float r = sqrt((v_texcoord.x - 0.5) * (v_texcoord.x - 0.5) + 
+                (v_texcoord.y - 0.5) * (v_texcoord.y - 0.5));
+        float a = atan(v_texcoord.y - 0.5, v_texcoord.x - 0.5);
+        gl_FragColor = texture2D(tex, vec2(0.5 + r*cos(a + lock_perc * 10.0 * 
+                        (0.5 - r)), 0.5 + r*sin(a + lock_perc * 10.0 * (0.5 - r)))) * alpha;
+    }else{
+        gl_FragColor = texture2D(tex, v_texcoord) * alpha;
+    }
 }

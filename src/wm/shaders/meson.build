@@ -27,9 +27,6 @@ foreach s : texture_shaders
     './texture/' + s + '/fragment_rgba.glsl',
     './texture/' + s + '/fragment_rgbx.glsl',
     './texture/' + s + '/fragment_ext.glsl',
-    './texture/' + s + '/fragment_lock_rgba.glsl',
-    './texture/' + s + '/fragment_lock_rgbx.glsl',
-    './texture/' + s + '/fragment_lock_ext.glsl',
   ]
 endforeach
 

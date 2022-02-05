@@ -185,8 +185,7 @@ void wm_renderer_init_texture_shaders(struct wm_renderer* renderer, int n_shader
 void wm_renderer_add_texture_shaders(
     struct wm_renderer *renderer, const char *name, const GLchar *vert_src,
     const GLchar *frag_src_rgba, const GLchar *frag_src_rgbx,
-    const GLchar *frag_src_ext, const GLchar *frag_src_lock_rgba,
-    const GLchar *frag_src_lock_rgbx, const GLchar *frag_src_lock_ext) {
+    const GLchar *frag_src_ext) {
 
     struct wlr_gles2_renderer *gles2_renderer =
         gles2_get_renderer(renderer->wlr_renderer);
@@ -202,23 +201,14 @@ void wm_renderer_add_texture_shaders(
 
     wm_renderer_link_texture_shader(
         renderer, &renderer->texture_shaders[i].rgba, vert_src, frag_src_rgba);
-    wm_renderer_link_texture_shader(renderer,
-                                    &renderer->texture_shaders[i].lock_rgba,
-                                    vert_src, frag_src_lock_rgba);
 
     wm_renderer_link_texture_shader(
         renderer, &renderer->texture_shaders[i].rgbx, vert_src, frag_src_rgbx);
-    wm_renderer_link_texture_shader(renderer,
-                                    &renderer->texture_shaders[i].lock_rgbx,
-                                    vert_src, frag_src_lock_rgbx);
 
     if (gles2_renderer->exts.OES_egl_image_external) {
         wm_renderer_link_texture_shader(renderer,
                                         &renderer->texture_shaders[i].ext,
                                         vert_src, frag_src_ext);
-        wm_renderer_link_texture_shader(renderer,
-                                        &renderer->texture_shaders[i].lock_ext,
-                                        vert_src, frag_src_lock_ext);
     }
 }
 
@@ -334,16 +324,13 @@ static bool render_subtexture_with_matrix(
     switch (texture->target) {
     case GL_TEXTURE_2D:
         if (texture->has_alpha) {
-            shader = lock_perc > 0.001 ? &renderer->texture_shaders_selected->lock_rgba
-                                       : &renderer->texture_shaders_selected->rgba;
+            shader = &renderer->texture_shaders_selected->rgba;
         } else {
-            shader = lock_perc > 0.001 ? &renderer->texture_shaders_selected->lock_rgbx
-                                       : &renderer->texture_shaders_selected->rgbx;
+            shader = &renderer->texture_shaders_selected->rgbx;
         }
         break;
     case GL_TEXTURE_EXTERNAL_OES:
-        shader = lock_perc > 0.001 ? &renderer->texture_shaders_selected->lock_ext
-                                   : &renderer->texture_shaders_selected->ext;
+        shader = &renderer->texture_shaders_selected->ext;
 
         if (!gles2_renderer->exts.OES_egl_image_external) {
             wlr_log(WLR_ERROR, "Failed to render texture: "
@@ -1046,23 +1033,60 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
 
 
 void wm_renderer_clear(struct wm_renderer* renderer, pixman_region32_t* damage, float* color){
-    if(renderer->mode == WM_RENDERER_INDIRECT){
-        for(int i=0; i<WM_RENDERER_INDIRECT_BUFFERS; i++){
-            wm_renderer_to_indirect_buffer(renderer, i);
+#ifdef WM_CUSTOM_RENDERER
+    if(renderer->mode != WM_RENDERER_PASSTHROUGH){
+        int ow, oh;
+        wlr_output_transformed_resolution(renderer->current->wlr_output, &ow, &oh);
 
-            int ow, oh;
-            wlr_output_transformed_resolution(renderer->current->wlr_output, &ow, &oh);
+        struct wlr_box box = {
+            .x = 0,
+            .y = 0,
+            .width = ow,
+            .height = oh
+        };
 
-            struct wlr_box box = {
-                .x = 0.,
-                .y = 0.,
-                .width = ow,
-                .height = oh
-            };
+        enum wl_output_transform transform =
+            wlr_output_transform_invert(renderer->current->wlr_output->transform);
 
-            wm_renderer_select_primitive_shader(renderer, "rect");
-            wm_renderer_render_primitive(renderer, damage, &box, 1.0, (int[]){}, color);
+        int nrects;
+        pixman_box32_t *rects = pixman_region32_rectangles(damage, &nrects);
+        for (int i = 0; i < nrects; i++) {
+            struct wlr_box damage_box = {.x = rects[i].x1,
+                                         .y = rects[i].y1,
+                                         .width = rects[i].x2 - rects[i].x1,
+                                         .height = rects[i].y2 - rects[i].y1};
+            struct wlr_box inters;
+            wlr_box_intersection(&inters, &box, &damage_box);
+            if (wlr_box_empty(&inters))
+                continue;
+
+            wlr_box_transform(&inters, &inters, transform, ow, oh);
+            wm_renderer_scissor(renderer, &inters);
+
+            glClearColor(color[0], color[1], color[2], color[3]);
+            glClear(GL_COLOR_BUFFER_BIT);
         }
+
+        return;
+    }
+#endif
+
+    int nrects;
+    pixman_box32_t* rects = pixman_region32_rectangles(damage, &nrects);
+    for(int i=0; i<nrects; i++){
+        struct wlr_box damage_box = {
+            .x = rects[i].x1,
+            .y = rects[i].y1,
+            .width = rects[i].x2 - rects[i].x1,
+            .height = rects[i].y2 - rects[i].y1
+         };
+        float matrix[9];
+        wlr_matrix_project_box(matrix, &damage_box,
+                WL_OUTPUT_TRANSFORM_NORMAL, 0,
+                renderer->current->wlr_output->transform_matrix);
+        wlr_render_rect(
+                renderer->wlr_renderer,
+                &damage_box, color, renderer->current->wlr_output->transform_matrix);
     }
 }
 

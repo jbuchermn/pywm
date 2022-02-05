@@ -55,8 +55,15 @@ static void render_at(struct wm_output* output, struct wm_renderer* renderer, st
         render_at(output, renderer, server, it, now);
     }
 
-    /* Content below composite layer -> target to composite input (except for root) */
-    wm_renderer_to_indirect_buffer(renderer, at->parent ? 1 : 0);
+    if(at->parent){
+        /* Content below composite layer -> target to composite input */
+        wm_renderer_to_indirect_buffer(renderer, 1);
+        /* Clear secondary buffer */
+        wm_renderer_clear(renderer, &at->leaf_input, (float[]){0., 0., 0., 1.});
+    }else{
+        /* Content below root layer -> target to output */
+        wm_renderer_to_indirect_buffer(renderer, 0);
+    }
 
     if(pixman_region32_not_empty(&at->leaf_input)){
 
@@ -122,6 +129,7 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     }
 
     if(needs_clear){
+        wm_renderer_to_indirect_buffer(renderer, 0);
         wm_renderer_clear(renderer, rerender_damage, (float[]){ 0., 0., 0., 1.});
     }
 
