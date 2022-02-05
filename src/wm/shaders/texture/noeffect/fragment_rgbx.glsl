@@ -6,6 +6,8 @@ uniform float alpha;
 
 uniform float offset_x;
 uniform float offset_y;
+uniform float scale_x;
+uniform float scale_y;
 uniform float width;
 uniform float height;
 

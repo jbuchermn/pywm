@@ -25,6 +25,8 @@ struct wm_renderer_texture_shader {
 
     GLint offset_x;
     GLint offset_y;
+    GLint scale_x;
+    GLint scale_y;
     GLint width;
     GLint height;
 

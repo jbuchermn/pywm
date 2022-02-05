@@ -165,6 +165,8 @@ static void wm_renderer_link_texture_shader(struct wm_renderer *renderer,
     shader->alpha = glGetUniformLocation(shader->shader, "alpha");
     shader->offset_x = glGetUniformLocation(shader->shader, "offset_x");
     shader->offset_y = glGetUniformLocation(shader->shader, "offset_y");
+    shader->scale_x = glGetUniformLocation(shader->shader, "scale_x");
+    shader->scale_y = glGetUniformLocation(shader->shader, "scale_y");
     shader->width = glGetUniformLocation(shader->shader, "width");
     shader->height = glGetUniformLocation(shader->shader, "height");
     shader->padding_l = glGetUniformLocation(shader->shader, "padding_l");
@@ -370,8 +372,10 @@ static bool render_subtexture_with_matrix(
     glUniformMatrix3fv(shader->proj, 1, GL_FALSE, gl_matrix);
     glUniform1i(shader->tex, 0);
     glUniform1f(shader->alpha, alpha);
-    glUniform1f(shader->offset_x, display_box->x);
-    glUniform1f(shader->offset_y, display_box->y);
+    glUniform1f(shader->offset_x, box->x / wlr_texture->width);
+    glUniform1f(shader->offset_y, box->y / wlr_texture->height);
+    glUniform1f(shader->scale_x, display_box->width / (box->width / wlr_texture->width));
+    glUniform1f(shader->scale_y, display_box->height / (box->height / wlr_texture->height));
     glUniform1f(shader->width, display_box->width);
     glUniform1f(shader->height, display_box->height);
     glUniform1f(shader->padding_l, padding_l);
