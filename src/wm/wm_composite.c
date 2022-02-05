@@ -51,8 +51,7 @@ static void wm_composite_render(struct wm_content* super, struct wm_output* outp
 }
 
 static int blur_extend(int passes, int radius){
-    return 50;
-    /* return radius * pow(2., passes - 1.); */
+    return radius * pow(2., passes - 1.);
 }
 
 void wm_composite_apply(struct wm_composite* composite, struct wm_output* output, pixman_region32_t* damage, unsigned int from_buffer, struct timespec now){
