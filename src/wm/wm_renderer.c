@@ -848,10 +848,7 @@ void wm_renderer_render_primitive(struct wm_renderer* renderer,
     }
 }
 
-/* TODO */
-#define WM_CUSTOM_RENDERER_DAMAGE_EXTEND 50
-
-void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* damage, struct wlr_box* box, unsigned int from_buffer, int radius, int passes, double cornerradius){
+void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* damage, int extend_damage, struct wlr_box* box, unsigned int from_buffer, int radius, int passes, double cornerradius){
     if(renderer->mode != WM_RENDERER_INDIRECT) return;
 
     assert(from_buffer < WM_RENDERER_INDIRECT_BUFFERS);
@@ -901,10 +898,10 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
             continue;
 
         struct wlr_box inters_ext = {
-            .x = inters.x - WM_CUSTOM_RENDERER_DAMAGE_EXTEND,
-            .y = inters.y - WM_CUSTOM_RENDERER_DAMAGE_EXTEND,
-            .width = inters.width + 2*WM_CUSTOM_RENDERER_DAMAGE_EXTEND,
-            .height = inters.height + 2*WM_CUSTOM_RENDERER_DAMAGE_EXTEND,
+            .x = inters.x - extend_damage,
+            .y = inters.y - extend_damage,
+            .width = inters.width + 2*extend_damage,
+            .height = inters.height + 2*extend_damage,
         };
         glUseProgram(renderer->downsample_shader.shader);
         glDisable(GL_BLEND);
@@ -963,10 +960,10 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
             continue;
 
         struct wlr_box inters_ext = {
-            .x = inters.x - WM_CUSTOM_RENDERER_DAMAGE_EXTEND,
-            .y = inters.y - WM_CUSTOM_RENDERER_DAMAGE_EXTEND,
-            .width = inters.width + 2*WM_CUSTOM_RENDERER_DAMAGE_EXTEND,
-            .height = inters.height + 2*WM_CUSTOM_RENDERER_DAMAGE_EXTEND,
+            .x = inters.x - extend_damage,
+            .y = inters.y - extend_damage,
+            .width = inters.width + 2*extend_damage,
+            .height = inters.height + 2*extend_damage,
         };
         glUseProgram(renderer->upsample_shader.shader);
         glDisable(GL_BLEND);
@@ -1049,37 +1046,23 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
 
 
 void wm_renderer_clear(struct wm_renderer* renderer, pixman_region32_t* damage, float* color){
-    /* Alternative wm_renderer-based implementation. Not really necessary... */
-    /* int ow, oh; */
-    /* wlr_output_transformed_resolution(renderer->current->wlr_output, &ow, &oh); */
-    /*  */
-    /* struct wlr_box box = { */
-    /*     .x = 0., */
-    /*     .y = 0., */
-    /*     .width = ow, */
-    /*     .height = oh */
-    /* }; */
-    /*  */
-    /* wm_renderer_select_primitive_shader(renderer, "rect"); */
-    /* wm_renderer_render_primitive(renderer, damage, &box, 1.0, (int[]){}, color); */
+    if(renderer->mode == WM_RENDERER_INDIRECT){
+        for(int i=0; i<WM_RENDERER_INDIRECT_BUFFERS; i++){
+            wm_renderer_to_indirect_buffer(renderer, i);
 
-    int nrects;
-    pixman_box32_t* rects = pixman_region32_rectangles(damage, &nrects);
-    for(int i=0; i<nrects; i++){
-        struct wlr_box damage_box = {
-            .x = rects[i].x1,
-            .y = rects[i].y1,
-            .width = rects[i].x2 - rects[i].x1,
-            .height = rects[i].y2 - rects[i].y1
-        };
+            int ow, oh;
+            wlr_output_transformed_resolution(renderer->current->wlr_output, &ow, &oh);
 
-        float matrix[9];
-        wlr_matrix_project_box(matrix, &damage_box,
-                WL_OUTPUT_TRANSFORM_NORMAL, 0,
-                renderer->current->wlr_output->transform_matrix);
-        wlr_render_rect(
-                renderer->wlr_renderer,
-                &damage_box, (float[]){0., 0., 0., 1.}, renderer->current->wlr_output->transform_matrix);
+            struct wlr_box box = {
+                .x = 0.,
+                .y = 0.,
+                .width = ow,
+                .height = oh
+            };
+
+            wm_renderer_select_primitive_shader(renderer, "rect");
+            wm_renderer_render_primitive(renderer, damage, &box, 1.0, (int[]){}, color);
+        }
     }
 }
 

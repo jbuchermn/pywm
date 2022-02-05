@@ -3,15 +3,15 @@
 * Development
 ** Current (v0.3)
 *** Bugs
-**** TODO damaging, rerender and blur does not yet work together (e.g. two alacritty above one another, e.g. wf-recorder and software cursor)
-**** TODO When stacking windows it can hapen that blur widget is separated from window
 **** TODO Shader padding does not work together with transforms - issue with using gl_FragCoord (transformed) instead of texcoord in fragment shaders
-**** TODO Open alacritty, hit Mod - slow animations. Open alacritty, start "tail -f newm_log" (i.e. client-side damaging), hit Mod - fast animations (Mitigated by higher wm_config.callback...)
+
+*** TODO Better callback logic / improve idle CPU
+**** TODO Better logic for damage originitaing python-side (instead of wm_config.callback_frequency)
+    - Slow frquency, Open alacritty, hit Mod - slow animations. Open alacritty, start "tail -f newm_log" (i.e. client-side damaging), hit Mod - fast animations
+    - Fast frequency requires a lot of idle CPU
 **** TODO Profiling, optimize CPU usage (Focus: pywm-fullscreen vs sway)
 
 *** STRT Better renderer
-**** DONE Set up wm_composite: Goal - Damaging a window behind blur requires also damaging a region around it
-**** DONE Enable runtime switching between wlr_renderer, wm_renderer (with FBO and blur), wm_renderer (without FBO and blur)
 **** TODO Clean up shaders (no separate lock shaders)
 **** TODO Extensively test DEBUG_DAMAGE, different render modes, switching between render modes, frame damage optimization, damaging and blur + build test cases
 **** TODO Performance comparison of renderers / of blur

@@ -50,6 +50,10 @@ static void wm_composite_render(struct wm_content* super, struct wm_output* outp
     // Nop
 }
 
+static int blur_extend(int passes, int radius){
+    return radius * pow(2., passes - 1.);
+}
+
 void wm_composite_apply(struct wm_composite* composite, struct wm_output* output, pixman_region32_t* damage, unsigned int from_buffer, struct timespec now){
     double display_x, display_y, display_w, display_h;
     wm_content_get_box(&composite->super, &display_x, &display_y, &display_w, &display_h);
@@ -61,9 +65,10 @@ void wm_composite_apply(struct wm_composite* composite, struct wm_output* output
         .height = round(display_h * output->wlr_output->scale)};
 
     if(composite->type == WM_COMPOSITE_BLUR){
-        wm_renderer_apply_blur(composite->super.wm_server->wm_renderer, damage, &box, from_buffer,
-                composite->params.n_params_int >= 1 ? composite->params.params_int[0] : 1,
-                composite->params.n_params_int >= 2 ? composite->params.params_int[1] : 2,
+        int radius = composite->params.n_params_int >= 1 ? composite->params.params_int[0] : 1;
+        int passes = composite->params.n_params_int >= 2 ? composite->params.params_int[1] : 2;
+        wm_renderer_apply_blur(composite->super.wm_server->wm_renderer, damage, blur_extend(passes, radius), &box, from_buffer,
+                radius, passes,
                 output->wlr_output->scale * composite->super.corner_radius);
     }
 }
@@ -88,6 +93,13 @@ struct wm_content_vtable wm_composite_vtable = {
 //////////////////////////////////////////////////////////////////
 
 static void wm_compose_insert(struct wm_output* output, struct wm_compose_tree* at, struct wm_composite* composite, struct wlr_box* composite_output_box){
+    int extend = 0;
+    if(composite->type == WM_COMPOSITE_BLUR){
+        int radius = composite->params.n_params_int >= 1 ? composite->params.params_int[0] : 1;
+        int passes = composite->params.n_params_int >= 2 ? composite->params.params_int[1] : 2;
+        extend = blur_extend(passes, radius);
+    }
+
     pixman_region32_t inters;
     pixman_region32_init(&inters);
     pixman_region32_intersect_rect(&inters, &at->leaf_input, composite_output_box->x, composite_output_box->y, composite_output_box->width, composite_output_box->height);
@@ -108,10 +120,10 @@ static void wm_compose_insert(struct wm_output* output, struct wm_compose_tree* 
         pixman_box32_t *rects = pixman_region32_rectangles(&inters, &nrects);
         for (int i = 0; i < nrects; i++) {
             pixman_region32_union_rect(&new->leaf_input, &new->leaf_input,
-                    rects[i].x1 - 50 /* TODO */,
-                    rects[i].y1 - 50 /* TODO */,
-                    rects[i].x2 - rects[i].x1 + 100 /* TODO */,
-                    rects[i].y2 - rects[i].y1 + 100 /* TODO */);
+                    rects[i].x1 - extend,
+                    rects[i].y1 - extend,
+                    rects[i].x2 - rects[i].x1 + 2*extend,
+                    rects[i].y2 - rects[i].y1 + 2*extend);
         }
     }
     pixman_region32_fini(&inters);

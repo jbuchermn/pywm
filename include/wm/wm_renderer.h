@@ -208,6 +208,7 @@ void wm_renderer_render_primitive(struct wm_renderer* renderer,
 
 void wm_renderer_apply_blur(struct wm_renderer* renderer,
                             pixman_region32_t* damage,
+                            int extend_damage,
                             struct wlr_box* box,
                             unsigned int from_buffer,
                             int radius,
