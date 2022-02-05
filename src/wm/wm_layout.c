@@ -98,12 +98,14 @@ void wm_layout_reconfigure(struct wm_layout* layout){
 void wm_layout_damage_whole(struct wm_layout* layout){
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
+        wlr_log(WLR_DEBUG, "DEBUGLAG - Damaging whole on output %d", output->key);
         wlr_output_damage_add_whole(output->wlr_output_damage);
 
         /* No need to call wm_composite_on_damage_below here, as this method
          * is only meant to extend frame damage. This might change, if wm_composites
          * store their contents in buffers. */
 
+        wlr_log(WLR_DEBUG, "DEBUGLAG - scheduling frame (2) on output %d", output->key);
         wlr_output_schedule_frame(output->wlr_output);
     }
 
@@ -111,6 +113,7 @@ void wm_layout_damage_whole(struct wm_layout* layout){
 
 
 void wm_layout_damage_from(struct wm_layout* layout, struct wm_content* content, struct wlr_surface* origin){
+    wlr_log(WLR_DEBUG, "DEBUGLAG - wm_layout_damage_from %p", origin);
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
         if(!wm_content_is_on_output(content, output)) continue;
@@ -125,6 +128,7 @@ void wm_layout_damage_from(struct wm_layout* layout, struct wm_content* content,
 
 void wm_layout_damage_output(struct wm_layout* layout, struct wm_output* output, pixman_region32_t* damage, struct wm_content* from){
 
+    wlr_log(WLR_DEBUG, "DEBUGLAG - Adding damage on output %d", output->key);
     wlr_output_damage_add(output->wlr_output_damage, damage);
 
     struct wm_content* content;
@@ -137,6 +141,7 @@ void wm_layout_damage_output(struct wm_layout* layout, struct wm_output* output,
     }
 
 
+    wlr_log(WLR_DEBUG, "DEBUGLAG - scheduling frame (1) on output %d", output->key);
     wlr_output_schedule_frame(output->wlr_output);
 }
 
