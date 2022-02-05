@@ -7,6 +7,7 @@
 #include <wayland-server.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_matrix.h>
+#include <wlr/util/log.h>
 
 #include "wm/wm_output.h"
 #include "wm/wm_renderer.h"
@@ -838,9 +839,9 @@ void wm_renderer_render_primitive(struct wm_renderer* renderer,
 void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* damage, int extend_damage, struct wlr_box* box, unsigned int from_buffer, int radius, int passes, double cornerradius){
     if(renderer->mode != WM_RENDERER_INDIRECT) return;
 
+#ifdef WM_CUSTOM_RENDERER
     assert(from_buffer < WM_RENDERER_INDIRECT_BUFFERS);
 
-#ifdef WM_CUSTOM_RENDERER
     if(passes > WM_RENDERER_DOWNSAMPLE_BUFFERS) passes = WM_RENDERER_DOWNSAMPLE_BUFFERS;
 
     struct wlr_gles2_renderer *gles2_renderer = gles2_get_renderer(renderer->wlr_renderer);
