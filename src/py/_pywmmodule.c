@@ -8,6 +8,7 @@
 #include "wm/wm.h"
 #include "wm/wm_config.h"
 #include "wm/wm_server.h"
+#include "wm/wm_util.h"
 #include "py/_pywm_callbacks.h"
 #include "py/_pywm_view.h"
 #include "py/_pywm_widget.h"
@@ -93,6 +94,7 @@ static void handle_update_view(struct wm_view* view){
 static void handle_update(){
     PyGILState_STATE gil = PyGILState_Ensure();
 
+    TIMER_START(callback_update_pywm);
     PyObject* args = Py_BuildValue("()");
     PyObject* res = PyObject_Call(_pywm_callbacks_get_all()->update, args, NULL);
     Py_XDECREF(args);
@@ -137,11 +139,19 @@ static void handle_update(){
     }
     Py_XDECREF(res);
 
+    TIMER_STOP(callback_update_pywm);
+    TIMER_PRINT(callback_update_pywm);
 
+    TIMER_START(callback_update_views);
     _pywm_views_update();
+    TIMER_STOP(callback_update_views);
+    TIMER_PRINT(callback_update_views);
 
     /* State of widgets (e.g. decorations) might depend on views - other way round not possible, as widgets have no upstream state */
+    TIMER_START(callback_update_widgets);
     _pywm_widgets_update();
+    TIMER_STOP(callback_update_widgets);
+    TIMER_PRINT(callback_update_widgets);
 
 
     PyGILState_Release(gil);

@@ -206,7 +206,10 @@ void _pywm_widgets_update(){
 
     /* Update existing widgets */
     for(struct _pywm_widget* widget = widgets.first_widget; widget; widget=widget->next_widget){
+        TIMER_START(callback_update_widgets_single);
         _pywm_widget_update(widget);
+        TIMER_STOP(callback_update_widgets_single);
+        TIMER_PRINT(callback_update_widgets_single);
     }
 
 err:

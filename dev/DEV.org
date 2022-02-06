@@ -2,11 +2,15 @@
 
 * Development
 ** Current (v0.3)
-*** STRT Better callback logic / improve idle CPU
-**** TODO Better logic for damage originating python-side (instead of wm_config.callback_frequency)
-    - Slow frquency, Open alacritty, hit Mod - slow animations. Open alacritty, start "tail -f newm_log" (i.e. client-side damaging), hit Mod - fast animations
-    - Fast frequency requires a lot of idle CPU
-**** TODO Profiling, optimize CPU usage (Focus: pywm-fullscreen vs sway)
+*** TODO Performance topics
+   - Goal: Idle CPU low - comparable between sway and pywm-fullscreen
+   - Goal: No dropped frames in pywm animations or gestures
+   - Issue: newm - pyevdev gestures uses a lot of CPU and spawns lots of threads
+   - Issue: newm - permanent top bar uses a lot of CPU
+   - Issue: Callbacks occassionally take a long time - dropped frames
+   - Issue: wm_config.callback_frequency low means gestures start jumpy and animations start late; high uses a lot of CPU (as long as callbacks are inefficient)
+   - Issue: Are there slow animation frames (Python message), where there is no issue with too slow callbacks (i.e. other non-performance-related)
+   - Example: Open alacritty, hit Mod - slow animations. Open alacritty, start "tail -f newm_log" (i.e. client-side damaging), hit Mod - fast animations (low wm_config.callback_frequency)
 
 *** STRT Better renderer
 **** TODO Extensively test DEBUG_DAMAGE, different render modes, switching between render modes, frame damage optimization, damaging and blur + build test cases

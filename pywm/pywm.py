@@ -63,9 +63,13 @@ def callback(func: Callable[..., Optional[T]]) -> Callable[..., Optional[T]]:
     def wrapped_func(*args: list[Any], **kwargs: dict[Any, Any]) -> Optional[T]:
         res = None
         try:
+            dt = time.time()
             res = func(*args, **kwargs)
+            dt = time.time() - dt
+            if dt > 0.001:
+                logger.debug("TIMER: %s took longer than 1ms: %.3fms" % (func, dt*1000.))
             return res
-        except Exception as e:
+        except Exception:
             logger.exception("---- Error in callback %s (RET %s)", repr(func), res)
             return None
     return wrapped_func
