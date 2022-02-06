@@ -123,6 +123,9 @@ void wm_layout_damage_from(struct wm_layout* layout, struct wm_content* content,
         }else{
             wm_content_damage_output(content, output, origin);
         }
+
+        wlr_log(WLR_DEBUG, "DEBUGLAG - scheduling frame (1) on output %d", output->key);
+        wlr_output_schedule_frame(output->wlr_output);
     }
 }
 
@@ -139,10 +142,6 @@ void wm_layout_damage_output(struct wm_layout* layout, struct wm_output* output,
             wm_composite_on_damage_below(comp, output, damage);
         }
     }
-
-
-    wlr_log(WLR_DEBUG, "DEBUGLAG - scheduling frame (1) on output %d", output->key);
-    wlr_output_schedule_frame(output->wlr_output);
 }
 
 struct send_enter_leave_data {
