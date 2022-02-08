@@ -19,7 +19,7 @@
 #include <wlr/types/wlr_matrix.h>
 
 /* #define DEBUG_DAMAGE_HIGHLIGHT */
-/* #define DEBUG_DAMAGE_RERENDER */
+#define DEBUG_DAMAGE_RERENDER
 
 /*
  * Callbacks
