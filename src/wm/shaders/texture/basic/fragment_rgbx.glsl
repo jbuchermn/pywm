@@ -6,6 +6,8 @@ uniform float alpha;
 
 uniform float offset_x;
 uniform float offset_y;
+uniform float scale_x;
+uniform float scale_y;
 uniform float width;
 uniform float height;
 
@@ -17,8 +19,8 @@ uniform float cornerradius;
 uniform float lock_perc;
 
 void main() {
-    float x = gl_FragCoord.x - offset_x;
-    float y = gl_FragCoord.y - offset_y;
+    float x = (v_texcoord.x - offset_x)*scale_x;
+    float y = (v_texcoord.y - offset_y)*scale_y;
 
     if(x < padding_l) discard;
     if(y < padding_t) discard;

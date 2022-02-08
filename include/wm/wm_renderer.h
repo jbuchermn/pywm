@@ -25,6 +25,8 @@ struct wm_renderer_texture_shader {
 
     GLint offset_x;
     GLint offset_y;
+    GLint scale_x;
+    GLint scale_y;
     GLint width;
     GLint height;
 
@@ -43,10 +45,6 @@ struct wm_renderer_texture_shaders {
     struct wm_renderer_texture_shader rgba;
     struct wm_renderer_texture_shader rgbx;
     struct wm_renderer_texture_shader ext;
-
-    struct wm_renderer_texture_shader lock_rgba;
-    struct wm_renderer_texture_shader lock_rgbx;
-    struct wm_renderer_texture_shader lock_ext;
 };
 
 struct wm_renderer_primitive_shader {
@@ -69,6 +67,7 @@ struct wm_renderer_primitive_shader {
     GLint params_int;
 };
 
+#define WM_RENDERER_INDIRECT_BUFFERS 2
 #define WM_RENDERER_DOWNSAMPLE_BUFFERS 4
 
 struct wm_renderer_buffers {
@@ -76,9 +75,9 @@ struct wm_renderer_buffers {
     int height;
     struct wm_renderer* parent;
 
-    GLuint frame_buffer;
-    GLuint frame_buffer_rbo;
-    GLuint frame_buffer_tex;
+    GLuint frame_buffer[WM_RENDERER_INDIRECT_BUFFERS];
+    GLuint frame_buffer_rbo[WM_RENDERER_INDIRECT_BUFFERS];
+    GLuint frame_buffer_tex[WM_RENDERER_INDIRECT_BUFFERS];
 
     GLuint downsample_buffers[WM_RENDERER_DOWNSAMPLE_BUFFERS];
     GLuint downsample_buffers_rbo[WM_RENDERER_DOWNSAMPLE_BUFFERS];
@@ -155,6 +154,8 @@ struct wm_renderer {
 
     struct wm_renderer_texture_shaders* texture_shaders_selected;
     struct wm_renderer_primitive_shader* primitive_shader_selected;
+
+    unsigned int selected_buffer;
 #endif
 };
 
@@ -169,11 +170,7 @@ void wm_renderer_add_texture_shaders(struct wm_renderer* renderer, const char* n
         const GLchar* vert_src,
         const GLchar* frag_src_rgba,
         const GLchar* frag_src_rgbx,
-        const GLchar* frag_src_ext,
-        const GLchar* frag_src_lock_rgba,
-        const GLchar* frag_src_lock_rgbx,
-        const GLchar* frag_src_lock_ext);
-
+        const GLchar* frag_src_ext);
 
 void wm_renderer_init_primitive_shaders(struct wm_renderer* renderer, int n_shaders);
 void wm_renderer_add_primitive_shader(struct wm_renderer* renderer, const char* name,
@@ -184,6 +181,8 @@ void wm_renderer_add_primitive_shader(struct wm_renderer* renderer, const char* 
 void wm_renderer_select_texture_shaders(struct wm_renderer* renderer, const char* name);
 void wm_renderer_select_primitive_shader(struct wm_renderer* renderer, const char* name);
 bool wm_renderer_check_primitive_params(struct wm_renderer* renderer, int n_int, int n_float);
+
+void wm_renderer_to_indirect_buffer(struct wm_renderer* renderer, unsigned int buffer);
 
 void wm_renderer_begin(struct wm_renderer *renderer, struct wm_output *output);
 void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
@@ -203,7 +202,9 @@ void wm_renderer_render_primitive(struct wm_renderer* renderer,
 
 void wm_renderer_apply_blur(struct wm_renderer* renderer,
                             pixman_region32_t* damage,
+                            int extend_damage,
                             struct wlr_box* box,
+                            unsigned int from_buffer,
                             int radius,
                             int passes,
                             double cornerradius);

@@ -6,6 +6,8 @@ uniform float alpha;
 
 uniform float offset_x;
 uniform float offset_y;
+uniform float scale_x;
+uniform float scale_y;
 uniform float width;
 uniform float height;
 
@@ -17,8 +19,8 @@ uniform float cornerradius;
 uniform float lock_perc;
 
 void main() {
-    float x = gl_FragCoord.x - offset_x;
-    float y = gl_FragCoord.y - offset_y;
+    float x = (v_texcoord.x - offset_x)*scale_x;
+    float y = (v_texcoord.y - offset_y)*scale_y;
 
     if(x < padding_l) discard;
     if(y < padding_t) discard;
@@ -45,10 +47,14 @@ void main() {
             discard;
     }
 
-    float r = sqrt((v_texcoord.x - 0.5) * (v_texcoord.x - 0.5) + 
-            (v_texcoord.y - 0.5) * (v_texcoord.y - 0.5));
-    float a = atan(v_texcoord.y - 0.5, v_texcoord.x - 0.5);
-    gl_FragColor = vec4(texture2D(tex, vec2(0.5 + r*cos(a + lock_perc * 
-                        10.0 * (0.5 - r)), 0.5 + r*sin(a + lock_perc * 10.0 * (0.5 - r)))).rgb, 
-            1.0) * alpha;
+    if(lock_perc > 0.0001){
+        float r = sqrt((v_texcoord.x - 0.5) * (v_texcoord.x - 0.5) + 
+                (v_texcoord.y - 0.5) * (v_texcoord.y - 0.5));
+        float a = atan(v_texcoord.y - 0.5, v_texcoord.x - 0.5);
+        gl_FragColor = vec4(texture2D(tex, vec2(0.5 + r*cos(a + lock_perc * 
+                            10.0 * (0.5 - r)), 0.5 + r*sin(a + lock_perc * 10.0 * (0.5 - r)))).rgb, 
+                1.0) * alpha;
+    }else{
+        gl_FragColor = vec4(texture2D(tex, v_texcoord).rgb, 1.0) * alpha;
+    }
 }

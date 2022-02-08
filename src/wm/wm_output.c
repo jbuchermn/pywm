@@ -10,8 +10,10 @@
 #include "wm/wm_widget.h"
 #include "wm/wm_seat.h"
 #include "wm/wm_cursor.h"
+#include "wm/wm_composite.h"
 #include <assert.h>
 #include <time.h>
+#include <stdlib.h>
 #include <wlr/util/log.h>
 #include <wlr/util/region.h>
 #include <wlr/types/wlr_matrix.h>
@@ -47,14 +49,63 @@ static void handle_present(struct wl_listener *listener, void *data) {
     wm_server_schedule_update(output->wm_server);
 }
 
+static void render_at(struct wm_output* output, struct wm_renderer* renderer, struct wm_server* server, struct wm_compose_tree* at, struct timespec now){
+    struct wm_compose_tree* it;
+    wl_list_for_each(it, &at->children, link){
+        render_at(output, renderer, server, it, now);
+    }
+
+    if(at->parent){
+        /* Content below composite layer -> target to composite input */
+        wm_renderer_to_indirect_buffer(renderer, 1);
+        /* Clear secondary buffer */
+        wm_renderer_clear(renderer, &at->leaf_input, (float[]){0., 0., 0., 1.});
+    }else{
+        /* Content below root layer -> target to output */
+        wm_renderer_to_indirect_buffer(renderer, 0);
+    }
+
+    if(pixman_region32_not_empty(&at->leaf_input)){
+
+        /* Render all content below with damage at->leaf_input */
+        struct wm_content* r;
+        wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
+            if(at->composite && wm_content_get_z_index(r) > wm_content_get_z_index(&at->composite->super)) break;
+
+            if(wm_content_get_opacity(r) < 0.0001) continue;
+            wm_content_render(r, output, &at->leaf_input, now);
+        }
+    }
+
+    /* Content above composite layer -> target to composite output */
+    wm_renderer_to_indirect_buffer(renderer, (at->parent && at->parent->parent) ? 1 : 0);
+
+    if(at->composite && pixman_region32_not_empty(&at->output)){
+        /* Apply composite on at->output from buffer 1 */
+        wm_composite_apply(at->composite, output, &at->output, 1, now);
+    }
+
+    if(at->parent){
+        /* Render all content between self and parent inside output */
+        struct wm_content* r;
+        wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
+            if(at->parent->composite && wm_content_get_z_index(r) > wm_content_get_z_index(&at->parent->composite->super)) break;
+            if(at->composite && wm_content_get_z_index(r) <= wm_content_get_z_index(&at->composite->super)) continue;
+
+            if(wm_content_get_opacity(r) < 0.0001) continue;
+            wm_content_render(r, output, &at->output, now);
+        }
+    }
+
+}
+
 static void render(struct wm_output *output, struct timespec now, pixman_region32_t *damage) {
     struct wm_renderer *renderer = output->wm_server->wm_renderer;
 
     /* If we are rendering to a (single) FBO - use frame damage, else buffer damage */
     pixman_region32_t* rerender_damage = renderer->mode == WM_RENDERER_INDIRECT ? &output->wlr_output_damage->current : damage;
 
-    /* Ensure z-index */
-    wm_server_update_contents(output->wm_server);
+    struct wm_compose_tree* tree = wm_compose_tree_from_damage(output->wm_server, output, rerender_damage, renderer->mode != WM_RENDERER_INDIRECT);
 
     /* Begin render */
     wm_renderer_begin(renderer, output);
@@ -78,14 +129,13 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     }
 
     if(needs_clear){
+        wm_renderer_to_indirect_buffer(renderer, 0);
         wm_renderer_clear(renderer, rerender_damage, (float[]){ 0., 0., 0., 1.});
     }
 
     /* Do render */
-    wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
-        if(wm_content_get_opacity(r) < 0.0001) continue;
-        wm_content_render(r, output, rerender_damage, now);
-    }
+    render_at(output, renderer, output->wm_server, tree, now);
+
 
     /* End render */
     wm_renderer_end(renderer, damage, output);
@@ -112,6 +162,9 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     if (!wlr_output_commit(output->wlr_output)) {
         wlr_log(WLR_DEBUG, "Commit frame failed");
     }
+
+    wm_compose_tree_destroy(tree);
+    free(tree);
 }
 
 static void handle_damage_frame(struct wl_listener *listener, void *data) {

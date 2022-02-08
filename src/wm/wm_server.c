@@ -203,14 +203,7 @@ static int callback_timer_handler(void* data){
 
     if(ms_diff > 0.9 * 1000000 / server->wm_layout->fastest_output_mHz){
         server->last_callback = now;
-
-        TIMER_DEFINE(between_callback_update);
-        TIMER_STOP(between_callback_update);
-        TIMER_PRINT(between_callback_update);
-
         wm_callback_update();
-
-        TIMER_STARTONLY(between_callback_update);
     }
 
     return 0;
@@ -554,14 +547,7 @@ void wm_server_update_contents(struct wm_server* server){
 
 
 void wm_server_schedule_update(struct wm_server* server){
-
-    TIMER_DEFINE(between_schedule_callback);
-    TIMER_STOP(between_schedule_callback);
-    TIMER_PRINT(between_schedule_callback);
-
     wl_event_source_timer_update(server->callback_timer, 1);
-
-    TIMER_STARTONLY(between_schedule_callback);
 }
 
 void wm_server_set_locked(struct wm_server* server, double lock_perc){
