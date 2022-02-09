@@ -4,6 +4,9 @@
 #include <wlr/util/log.h>
 #include <time.h>
 
+/* Warning - very chatty */
+#define DEBUG_PERFORMANCE_ENABLED
+
 #define wm_offset_of(_struct_, _member_)  (size_t)&(((struct _struct_ *)0)->_member_)
  
 #define wm_cast(_subclass_, _superclass_pt_)                           \
@@ -17,6 +20,12 @@
 
 static inline long msec_diff(struct timespec t1, struct timespec t2){
     return (t1.tv_sec - t2.tv_sec) * 1000L + (t1.tv_nsec - t2.tv_nsec) / 1000000L;
+}
+
+static inline double secs_now(){
+    struct timespec now;
+    clock_gettime(CLOCK_REALTIME, &now);
+    return ((double)now.tv_sec) + (double)now.tv_nsec / 1000000000.;
 }
 
 #define TIMER_DEFINE(TNAME) \
@@ -60,5 +69,12 @@ static inline long msec_diff(struct timespec t1, struct timespec t2){
         TIMER_ ## TNAME ## _nsec_agg = 0; \
         TIMER_ ## TNAME ## _last_print = TIMER_ ## TNAME ## _print; \
     }
+
+#ifdef DEBUG_PERFORMANCE_ENABLED
+#define DEBUG_PERFORMANCE(name) wlr_log(WLR_DEBUG, "DEBUGPERFORMANCE[%s]: %.6f", #name, secs_now());
+#else
+#define DEBUG_PERFORMANCE(name);
+#endif
+
 
 #endif

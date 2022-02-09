@@ -98,10 +98,9 @@ void wm_layout_reconfigure(struct wm_layout* layout){
 void wm_layout_damage_whole(struct wm_layout* layout){
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
-        wlr_log(WLR_DEBUG, "DEBUGLAG - Damaging whole on output %d", output->key);
         wlr_output_damage_add_whole(output->wlr_output_damage);
 
-        wlr_log(WLR_DEBUG, "DEBUGLAG - scheduling frame (2) on output %d", output->key);
+        DEBUG_PERFORMANCE(schedule_frame);
         wlr_output_schedule_frame(output->wlr_output);
     }
 
@@ -109,7 +108,7 @@ void wm_layout_damage_whole(struct wm_layout* layout){
 
 
 void wm_layout_damage_from(struct wm_layout* layout, struct wm_content* content, struct wlr_surface* origin){
-    wlr_log(WLR_DEBUG, "DEBUGLAG - wm_layout_damage_from %p", origin);
+    DEBUG_PERFORMANCE(damage);
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
         if(!wm_content_is_on_output(content, output)) continue;
@@ -120,7 +119,7 @@ void wm_layout_damage_from(struct wm_layout* layout, struct wm_content* content,
             wm_content_damage_output(content, output, origin);
         }
 
-        wlr_log(WLR_DEBUG, "DEBUGLAG - scheduling frame (1) on output %d", output->key);
+        DEBUG_PERFORMANCE(schedule_frame);
         wlr_output_schedule_frame(output->wlr_output);
     }
 }

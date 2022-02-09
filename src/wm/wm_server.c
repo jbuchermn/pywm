@@ -203,7 +203,9 @@ static int callback_timer_handler(void* data){
 
     if(ms_diff > 0.9 * 1000000 / server->wm_layout->fastest_output_mHz){
         server->last_callback = now;
+        DEBUG_PERFORMANCE(py_start);
         wm_callback_update();
+        DEBUG_PERFORMANCE(py_finish);
     }
 
     return 0;

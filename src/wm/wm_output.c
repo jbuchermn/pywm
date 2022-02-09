@@ -186,19 +186,19 @@ static void handle_damage_frame(struct wl_listener *listener, void *data) {
             struct timespec now;
             clock_gettime(CLOCK_MONOTONIC, &now);
 
-            wlr_log(WLR_DEBUG, "DEBUGLAG - Render");
+            DEBUG_PERFORMANCE(render);
             TIMER_START(render);
             render(output, now, &damage);
             TIMER_STOP(render);
             TIMER_PRINT(render);
         } else {
-            wlr_log(WLR_DEBUG, "DEBUGLAG - No frame needed");
+            DEBUG_PERFORMANCE(skip_frame);
             wlr_output_rollback(output->wlr_output);
         }
 
         pixman_region32_fini(&damage);
     }else{
-        wlr_log(WLR_DEBUG, "DEBUGLAG - Attach render failed");
+        wlr_log(WLR_DEBUG, "Attaching to renderer failed");
     }
 }
 
