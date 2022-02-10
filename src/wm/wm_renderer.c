@@ -23,6 +23,7 @@
 
 
 /* #define DEBUG_DAMAGE */
+/* #define DEBUG_SECONDARY_BUFFER */
 
 static const GLfloat verts[] = {
     1, 0, // top right
@@ -716,7 +717,11 @@ void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
     if(renderer->mode == WM_RENDERER_INDIRECT){
         struct wlr_gles2_renderer *gles2_renderer = gles2_get_renderer(renderer->wlr_renderer);
         push_gles2_debug(gles2_renderer);
+#ifdef DEBUG_SECONDARY_BUFFER
+        blit_framebuffer(renderer, damage, 1, gles2_renderer->current_buffer->fbo);
+#else
         blit_framebuffer(renderer, damage, 0, gles2_renderer->current_buffer->fbo);
+#endif
         pop_gles2_debug(gles2_renderer);
     }
 #endif

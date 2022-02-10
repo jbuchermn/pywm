@@ -364,6 +364,9 @@ class PyWM(Generic[ViewT], DamageTracked):
     def exit_constant_damage(self) -> None:
         damage(0)
 
+    def damage_once(self) -> None:
+        damage(2)
+
     """
     Public API
     """
