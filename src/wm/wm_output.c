@@ -159,6 +159,12 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
 
     wm_compose_tree_destroy(tree);
     free(tree);
+
+    /* 
+     * Synchronous update is best scheduled immediately after frame
+     */
+    DEBUG_PERFORMANCE(present_frame);
+    wm_server_schedule_update(output->wm_server, output);
 }
 
 static void handle_damage_frame(struct wl_listener *listener, void *data) {
@@ -195,11 +201,6 @@ static void handle_damage_frame(struct wl_listener *listener, void *data) {
         wlr_log(WLR_DEBUG, "Attaching to renderer failed");
     }
 
-    /* 
-     * Synchronous update is best scheduled immediately after frame
-     */
-    DEBUG_PERFORMANCE(present_frame);
-    wm_server_schedule_update(output->wm_server, output);
 }
 
 static void handle_damage_destroy(struct wl_listener *listener, void *data) {
