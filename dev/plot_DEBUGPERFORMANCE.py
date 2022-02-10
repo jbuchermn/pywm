@@ -33,7 +33,9 @@ if sys.argv[2] == "plot":
         'render': 'g-',
         'render2': 'g-',
         'damage': 'b.',
-        'schedule_frame': 'y.',
+        'schedule_frame': 'b+',
+        'skip_frame': 'y.',
+        'present_frame': 'ro',
         'py_start': 'r+',
         'py_finish': 'r.',
     }

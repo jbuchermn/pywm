@@ -198,15 +198,10 @@ static int callback_timer_handler(void* data){
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
 
-    long long ms_diff = now.tv_nsec / 1000000 - server->last_callback.tv_nsec / 1000000;
-    ms_diff += (now.tv_sec - server->last_callback.tv_sec)*1000;
-
-    if(ms_diff > 0.9 * 1000000 / server->wm_layout->fastest_output_mHz){
-        server->last_callback = now;
-        DEBUG_PERFORMANCE(py_start);
-        wm_callback_update();
-        DEBUG_PERFORMANCE(py_finish);
-    }
+    server->last_callback = now;
+    DEBUG_PERFORMANCE(py_start);
+    wm_callback_update();
+    DEBUG_PERFORMANCE(py_finish);
 
     return 0;
 }
@@ -214,18 +209,12 @@ static int callback_timer_handler(void* data){
 static int callback_fallback_timer_handler(void* data){
     struct wm_server* server = data;
 
-    callback_timer_handler(data);
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    if(msec_diff(now, server->last_callback) > 1000 / server->wm_config->callback_frequency){
+        callback_timer_handler(data);
+    }
 
-    /* A bit hacky: Prevent fallback timer from blocking subsequent regular timer. Background:
-     *  1. No more damaging client-side --> no new frames
-     *  2. Fallback timer is triggered, calls Python update
-     *  3. Python updates trigger damages scheduling new frame
-     *  4. Frame is rendered, schedule_update is called
-     *  5. Correct schedule_update is blocked due to last_callback
-     *  6. Next update is triggered again by fallback_timer */
-    server->last_callback.tv_sec -= 1;
-
-    /* Reschedule */
     wl_event_source_timer_update(
             server->callback_fallback_timer,
             1000 / server->wm_config->callback_frequency);
@@ -548,8 +537,10 @@ void wm_server_update_contents(struct wm_server* server){
 }
 
 
-void wm_server_schedule_update(struct wm_server* server){
-    wl_event_source_timer_update(server->callback_timer, 1);
+void wm_server_schedule_update(struct wm_server* server, struct wm_output* from_output){
+    if(from_output->key == server->wm_layout->refresh_master_output){
+        wl_event_source_timer_update(server->callback_timer, 1);
+    }
 }
 
 void wm_server_set_locked(struct wm_server* server, double lock_perc){
