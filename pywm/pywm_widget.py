@@ -3,7 +3,8 @@ from typing import TYPE_CHECKING, TypeVar, Optional, Generic
 
 from abc import abstractmethod
 
-# Python imports are great
+from .damage_tracked import DamageTracked
+
 if TYPE_CHECKING:
     from .pywm import PyWM, PyWMOutput, ViewT
     PyWMT = TypeVar('PyWMT', bound=PyWM)
@@ -39,8 +40,9 @@ class PyWMWidgetDownstreamState:
             primitive
         )
 
-class PyWMWidget(Generic[PyWMT]):
-    def __init__(self, wm: PyWMT, output: Optional[PyWMOutput]) -> None:
+class PyWMWidget(Generic[PyWMT], DamageTracked):
+    def __init__(self, wm: PyWMT, output: Optional[PyWMOutput], override_parent: Optional[DamageTracked]=None) -> None:
+        DamageTracked.__init__(self, wm if override_parent is None else override_parent)
         self._handle = -1
         self._is_composite = False
 
@@ -48,7 +50,6 @@ class PyWMWidget(Generic[PyWMT]):
         self.output = output
 
         self._down_state = PyWMWidgetDownstreamState(0, (0, 0, 0, 0))
-        self._damaged = True
 
         """
         (stride, width, height, data)
@@ -58,17 +59,13 @@ class PyWMWidget(Generic[PyWMT]):
         self._pending_primitive: Optional[tuple[str, list[int], list[float]]] = None
 
     def _update(self) -> tuple[bool, tuple[float, float, float, float], tuple[float, float, float, float], int, float, float, float, tuple[float, float, float, float], Optional[tuple[int, int, int, bytes]], Optional[tuple[str, list[int], list[float]]]]:
-        if self._damaged:
-            self._damaged = False
+        if self.is_damaged():
             self._down_state = self.process()
         pixels = self._pending_pixels
         primitive = self._pending_primitive
         self._pending_pixels = None
         self._pending_primitive = None
         return self._down_state.get(self.wm, self.output, pixels, primitive)
-
-    def damage(self) -> None:
-        self._damaged = True
 
     def destroy(self) -> None:
         self.wm.widget_destroy(self)

@@ -2,6 +2,8 @@
 
 * Development
 ** Current (v0.3)
+*** STRT Updates are lost on destroy_view and sometimes on map
+
 *** TODO Performance topics
    - Goal: Idle CPU low - comparable between sway and pywm-fullscreen
    - Goal: No dropped frames in pywm animations or gestures

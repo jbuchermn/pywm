@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING, Optional, TypeVar, Generic, Any
 import logging
 from abc import abstractmethod
 
-# Python imports are great
+from .damage_tracked import DamageTracked
+
 if TYPE_CHECKING:
     from .pywm import PyWM, PyWMOutput, ViewT
     PyWMT = TypeVar('PyWMT', bound=PyWM)
@@ -151,8 +152,9 @@ class PyWMViewDownstreamState:
         return str(self.__dict__)
 
 
-class PyWMView(Generic[PyWMT]):
+class PyWMView(Generic[PyWMT], DamageTracked):
     def __init__(self, wm: PyWMT, handle: int) -> None: # Python imports are great
+        DamageTracked.__init__(self, wm)
         self._handle = handle
 
         self.wm = wm
@@ -165,7 +167,6 @@ class PyWMView(Generic[PyWMT]):
         self.up_state: Optional[PyWMViewUpstreamState] = None
         self.last_up_state: Optional[PyWMViewUpstreamState] = None
 
-        self._damaged = False
         self._down_state: Optional[PyWMViewDownstreamState] = None
         self._last_down_state: Optional[PyWMViewDownstreamState] = None
 
@@ -234,11 +235,10 @@ class PyWMView(Generic[PyWMT]):
             if up_state.is_mapped:
                 self.on_map()
 
-        elif self._damaged or last_up_state is None or up_state.is_update(last_up_state):
+        elif self.is_damaged() or last_up_state is None or up_state.is_update(last_up_state):
             """
             Update
             """
-            self._damaged = False
             if last_up_state is None or up_state.is_focused != last_up_state.is_focused:
                 self.on_focus_change()
 
@@ -250,7 +250,7 @@ class PyWMView(Generic[PyWMT]):
 
             try:
                 down_state = self.process(up_state)
-            except Exception as e:
+            except Exception:
                 logger.exception("Exception during view.process")
                 down_state = self._last_down_state
 
@@ -315,10 +315,7 @@ class PyWMView(Generic[PyWMT]):
     def close(self) -> None:
         self._down_action_close = True
 
-    def damage(self) -> None:
-        self._damaged = True
 
-    
     """
     Virtual methods
     """

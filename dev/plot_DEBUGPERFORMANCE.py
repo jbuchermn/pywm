@@ -1,11 +1,9 @@
 import matplotlib.pyplot as plt  # type: ignore
-import matplotlib as mpl
 import sys
 import re
 
-# mpl.use('Gtk3Cairo')
 
-
+print("Loading data...")
 pattern = re.compile(r".*DEBUGPERFORMANCE\[(.*)\]: ([0-9]*.[0-9]*)")
 
 data: list[tuple[str, int, float, float]] = []
@@ -30,8 +28,8 @@ data = [d for d in data if d[2] <= 0.]
 
 if sys.argv[2] == "plot":
     visual = {
-        'render': 'g-',
-        'render2': 'g-',
+        'render': 'g.-',
+        'render2': 'g.-',
         'damage': 'b.',
         'schedule_frame': 'b+',
         'skip_frame': 'y.',
@@ -40,6 +38,7 @@ if sys.argv[2] == "plot":
         'py_finish': 'r.',
     }
 
+    print("Plotting...")
     plt.figure()
     for kind in visual:
         plt.plot([t[1] for t in data if t[0] == kind], [t[2] for t in data if t[0] == kind], visual[kind], alpha=.5)

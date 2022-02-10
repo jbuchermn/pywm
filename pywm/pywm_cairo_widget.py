@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import cairo
 import numpy as np
@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 
 
 class PyWMCairoWidget(PyWMWidget):
-    def __init__(self, wm: PyWM[ViewT], output: PyWMOutput, width: int, height: int) -> None:
-        super().__init__(wm, output)
+    def __init__(self, wm: PyWM[ViewT], output: PyWMOutput, width: int, height: int, *args: Any, **kwargs: Any) -> None:
+        super().__init__(wm, output, *args, **kwargs)
 
         self.width = max(1, width)
         self.height = max(1, height)
