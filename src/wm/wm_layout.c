@@ -19,14 +19,14 @@
 static int _wm_output_key = 0;
 static void handle_change(struct wl_listener* listener, void* data){
     struct wm_layout* layout = wl_container_of(listener, layout, change);
-    layout->fastest_output_mHz = 1000;
 
     struct wm_output* output;
+    int fastest_mHz = 0;
     wl_list_for_each(output, &layout->wm_outputs, link){
         output->key = _wm_output_key++;
 
-        if(output->wlr_output->refresh > layout->fastest_output_mHz){
-            layout->fastest_output_mHz = output->wlr_output->refresh;
+        if(output->wlr_output->refresh > fastest_mHz){
+            layout->refresh_master_output = output->key;
         }
 
         struct wlr_output_layout_output* o = wlr_output_layout_get(layout->wlr_output_layout, output->wlr_output);
@@ -54,9 +54,6 @@ void wm_layout_init(struct wm_layout* layout, struct wm_server* server){
 
     layout->change.notify = &handle_change;
     wl_signal_add(&layout->wlr_output_layout->events.change, &layout->change);
-
-    /* Some sensible (too slow) default */
-    layout->fastest_output_mHz = 1000;
 }
 
 void wm_layout_destroy(struct wm_layout* layout) {
@@ -99,6 +96,8 @@ void wm_layout_damage_whole(struct wm_layout* layout){
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
         wlr_output_damage_add_whole(output->wlr_output_damage);
+
+        DEBUG_PERFORMANCE(schedule_frame);
         wlr_output_schedule_frame(output->wlr_output);
     }
 
@@ -106,6 +105,7 @@ void wm_layout_damage_whole(struct wm_layout* layout){
 
 
 void wm_layout_damage_from(struct wm_layout* layout, struct wm_content* content, struct wlr_surface* origin){
+    DEBUG_PERFORMANCE(damage);
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
         if(!wm_content_is_on_output(content, output)) continue;
@@ -115,6 +115,8 @@ void wm_layout_damage_from(struct wm_layout* layout, struct wm_content* content,
         }else{
             wm_content_damage_output(content, output, origin);
         }
+
+        DEBUG_PERFORMANCE(schedule_frame);
         wlr_output_schedule_frame(output->wlr_output);
     }
 }

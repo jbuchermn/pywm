@@ -16,6 +16,7 @@ struct wm_config;
 struct wm_seat;
 struct wm_layout;
 struct wm_renderer;
+struct wm_output;
 struct wm_idle_inhibit;
 
 struct wm_server{
@@ -80,11 +81,9 @@ void wm_server_open_virtual_output(struct wm_server* server, const char* name);
 void wm_server_close_virtual_output(struct wm_server* server, const char* name);
 
 /*
- * Schedule wm_callback_update() assuming now is a good time (e.g. after frame)
- *
- * Calling the update this way is preferred over callback_timer
+ * Schedule wm_callback_update() after frame present
  */
-void wm_server_schedule_update(struct wm_server* server);
+void wm_server_schedule_update(struct wm_server* server, struct wm_output* from_output);
 
 void wm_server_set_locked(struct wm_server* server, double lock_perc);
 bool wm_server_is_locked(struct wm_server* server);

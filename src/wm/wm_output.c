@@ -43,10 +43,10 @@ static void handle_present(struct wl_listener *listener, void *data) {
     struct wm_output *output = wl_container_of(listener, output, present);
 
     /* 
-     * Synchronous update is best scheduled immediately after
-     * frame present
+     * Synchronous update is best scheduled immediately after frame
      */
-    wm_server_schedule_update(output->wm_server);
+    /* DEBUG_PERFORMANCE(present_frame); */
+    /* wm_server_schedule_update(output->wm_server, output); */
 }
 
 static void render_at(struct wm_output* output, struct wm_renderer* renderer, struct wm_server* server, struct wm_compose_tree* at, struct timespec now){
@@ -165,6 +165,12 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
 
     wm_compose_tree_destroy(tree);
     free(tree);
+
+    /* 
+     * Synchronous update is best scheduled immediately after frame
+     */
+    DEBUG_PERFORMANCE(present_frame);
+    wm_server_schedule_update(output->wm_server, output);
 }
 
 static void handle_damage_frame(struct wl_listener *listener, void *data) {
@@ -186,15 +192,19 @@ static void handle_damage_frame(struct wl_listener *listener, void *data) {
             struct timespec now;
             clock_gettime(CLOCK_MONOTONIC, &now);
 
-            TIMER_START(render)
+            DEBUG_PERFORMANCE(render);
+            TIMER_START(render);
             render(output, now, &damage);
             TIMER_STOP(render);
             TIMER_PRINT(render);
         } else {
+            DEBUG_PERFORMANCE(skip_frame);
             wlr_output_rollback(output->wlr_output);
         }
 
         pixman_region32_fini(&damage);
+    }else{
+        wlr_log(WLR_DEBUG, "Attaching to renderer failed");
     }
 }
 
