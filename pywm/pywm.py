@@ -8,10 +8,12 @@ from threading import Thread, Lock
 
 from .pywm_widget import PyWMWidget
 from .pywm_view import PyWMView
+from .damage_tracked import DamageTracked
 
 from ._pywm import (
     run,
-    register
+    register,
+    damage
 )
 
 PYWM_MOD_SHIFT = 1
@@ -63,12 +65,7 @@ def callback(func: Callable[..., Optional[T]]) -> Callable[..., Optional[T]]:
     def wrapped_func(*args: list[Any], **kwargs: dict[Any, Any]) -> Optional[T]:
         res = None
         try:
-            dt = time.time()
-            res = func(*args, **kwargs)
-            dt = time.time() - dt
-            if dt > 0.001:
-                logger.debug("TIMER: %s took longer than 1ms: %.3fms" % (func, dt*1000.))
-            return res
+            return func(*args, **kwargs)
         except Exception:
             logger.exception("---- Error in callback %s (RET %s)", repr(func), res)
             return None
@@ -94,8 +91,27 @@ class PyWMOutput:
             return False
         return self._key == other._key
 
-class PyWM(Generic[ViewT]):
+class PyWMThread(Thread):
+    def __init__(self, wm: PyWM) -> None:
+        super().__init__()
+        self.wm = wm
+        self.running = True
+
+    def stop(self) -> None:
+        self.running = False
+
+    def run(self) -> None:
+        i = 0
+        while self.running:
+            if i%10 == 0:
+                self.wm._update_idle(False)
+            i+=1
+            time.sleep(.1)
+
+
+class PyWM(Generic[ViewT], DamageTracked):
     def __init__(self, view_class: type=PyWMView, **kwargs: Any) -> None:
+        DamageTracked.__init__(self)
         logger.debug("PyWM init")
 
         register("ready", self._ready)
@@ -128,7 +144,6 @@ class PyWM(Generic[ViewT]):
         self._pending_config: Optional[dict[str, Any]] = None
 
         self._down_state = PyWMDownstreamState()
-        self._damaged = False
 
         """
         -1: Do nothing
@@ -149,7 +164,7 @@ class PyWM(Generic[ViewT]):
         self.modifiers = 0
         self.cursor_pos: tuple[float, float] = (0, 0)
 
-        self._last_update: float = 0.
+        self._thread = PyWMThread(self)
         self._idle_last_activity: float = time.time()
         self._idle_last_update_active: float = time.time()
         self._idle_last_update_inactive: float = time.time()
@@ -204,6 +219,7 @@ class PyWM(Generic[ViewT]):
     def _ready(self) -> None:
         logger.debug("PyWM ready")
         Thread(target=self._exec_main).start()
+        self._thread.start()
 
     @callback
     def _motion(self, time_msec: int, delta_x: float, delta_y: float, abs_x: float, abs_y: float) -> bool:
@@ -290,6 +306,7 @@ class PyWM(Generic[ViewT]):
                 self._views[h].parent = None
 
         if view is not None:
+            view.damage_finish()
             view.destroy()
 
     @callback
@@ -319,20 +336,7 @@ class PyWM(Generic[ViewT]):
 
     @callback
     def _update(self) -> tuple[int, int, int, float, str, str, bool, Optional[dict[str, Any]]]:
-        t = time.time()
-
-        if self._last_update != 0.:
-            dt = t - self._last_update
-            if dt > 5.:
-                logger.debug("Triggering wakeup on dt=%f", dt)
-                self.on_wakeup()
-                self._update_idle()
-            else:
-                self._update_idle(False)
-        self._last_update = t
-
-        if self._damaged:
-            self._damaged = False
+        if self.is_damaged():
             self._down_state = self.process()
 
         res = self._down_state.get(
@@ -352,12 +356,10 @@ class PyWM(Generic[ViewT]):
         self._pending_config = None
 
         return res
-    
-    def damage(self) -> None:
-        self._damaged = True
 
     def widget_destroy(self, widget: PyWMWidget) -> None:
         self._widgets.pop(widget._handle, None)
+        widget.damage_finish()
         if widget._handle >= 0:
             self._pending_destroy_widgets += [widget]
         else:
@@ -372,6 +374,16 @@ class PyWM(Generic[ViewT]):
             return [self._encode(k) for k in v]
         else:
             return v
+
+    def enter_constant_damage(self) -> None:
+        damage(1)
+
+    def exit_constant_damage(self) -> None:
+        damage(0)
+
+    def damage_once(self) -> None:
+        damage(2)
+
     """
     Public API
     """
@@ -387,6 +399,7 @@ class PyWM(Generic[ViewT]):
 
     def terminate(self) -> None:
         logger.debug("PyWM terminating")
+        self._thread.stop()
         self._pending_terminate = True
 
     def open_virtual_output(self, name: str) -> None:
@@ -395,8 +408,8 @@ class PyWM(Generic[ViewT]):
     def close_virtual_output(self, name: str) -> None:
         self._pending_close_virtual_output = name
 
-    def create_widget(self, widget_class: Callable[..., WidgetT], output: Optional[PyWMOutput], *args: Any, **kwargs: Any) -> WidgetT:
-        widget = widget_class(self, output, *args, **kwargs)
+    def create_widget(self, widget_class: Callable[..., WidgetT], output: Optional[PyWMOutput], *args: Any, override_parent: Optional[DamageTracked]=None, **kwargs: Any) -> WidgetT:
+        widget = widget_class(self, output, *args, override_parent=override_parent, **kwargs)
         self._pending_widgets += [widget]
         return widget
 
@@ -497,11 +510,5 @@ class PyWM(Generic[ViewT]):
         elapsed == 0 means there has been an activity, possibly a wakeup from idle is necessary
         elapsed > 0 describes the amount of seconds which have passed since the last activity, possibly sleep is necessary
         idle_inhibited is True if there is at least one view with is_inhibiting_idle==True
-        """
-        pass
-
-    def on_wakeup(self) -> None:
-        """
-        Called if a wakeup from suspend (longer than 1sec) is detected
         """
         pass

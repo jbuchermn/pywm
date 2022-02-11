@@ -41,12 +41,6 @@ static void handle_mode(struct wl_listener *listener, void *data) {
 
 static void handle_present(struct wl_listener *listener, void *data) {
     struct wm_output *output = wl_container_of(listener, output, present);
-
-    /* 
-     * Synchronous update is best scheduled immediately after frame
-     */
-    /* DEBUG_PERFORMANCE(present_frame); */
-    /* wm_server_schedule_update(output->wm_server, output); */
 }
 
 static void render_at(struct wm_output* output, struct wm_renderer* renderer, struct wm_server* server, struct wm_compose_tree* at, struct timespec now){
@@ -206,6 +200,7 @@ static void handle_damage_frame(struct wl_listener *listener, void *data) {
     }else{
         wlr_log(WLR_DEBUG, "Attaching to renderer failed");
     }
+
 }
 
 static void handle_damage_destroy(struct wl_listener *listener, void *data) {

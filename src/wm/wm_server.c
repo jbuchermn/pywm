@@ -84,14 +84,6 @@ static void handle_new_output(struct wl_listener* listener, void* data){
     struct wlr_output* output = data;
 
     wm_layout_add_output(server->wm_layout, output);
-
-    /* Start the timer loop once an output is there */
-    if(!server->callback_fallback_timer_started){
-        server->callback_fallback_timer_started = true;
-        wl_event_source_timer_update(
-                server->callback_fallback_timer,
-                1000 / server->wm_config->callback_frequency);
-    }
 }
 
 static void handle_new_xdg_surface(struct wl_listener* listener, void* data){
@@ -194,31 +186,33 @@ static void handle_ready(struct wl_listener* listener, void* data){
 static int callback_timer_handler(void* data){
     struct wm_server* server = data;
 
-
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-
-    server->last_callback = now;
-    DEBUG_PERFORMANCE(py_start);
-    wm_callback_update();
-    DEBUG_PERFORMANCE(py_finish);
+    if(server->constant_damage_mode == -1){
+        wm_layout_damage_whole(server->wm_layout);
+        server->constant_damage_mode = 1;
+    }else{
+        DEBUG_PERFORMANCE(py_start);
+        wm_layout_start_update(server->wm_layout);
+        wm_callback_update();
+        if(server->constant_damage_mode == 1 && !wm_layout_frame_scheduled(server->wm_layout)){
+            wm_layout_damage_whole(server->wm_layout);
+        }
+        DEBUG_PERFORMANCE(py_finish);
+    }
 
     return 0;
 }
 
-static int callback_fallback_timer_handler(void* data){
-    struct wm_server* server = data;
-
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    if(msec_diff(now, server->last_callback) > 1000 / server->wm_config->callback_frequency){
-        callback_timer_handler(data);
+void wm_server_set_constant_damage_mode(struct wm_server* server, int mode){
+    if(mode == 1 && server->constant_damage_mode == 0){
+        DEBUG_PERFORMANCE(enter_constant_damage);
+        wl_event_source_timer_update(server->callback_timer, 1);
+        server->constant_damage_mode = -1;
+    }else if(mode == 0 && server->constant_damage_mode != 0){
+        DEBUG_PERFORMANCE(exit_constant_damage);
+        server->constant_damage_mode = 0;
+    }else if(mode == 2){
+        wl_event_source_timer_update(server->callback_timer, 1);
     }
-
-    wl_event_source_timer_update(
-            server->callback_fallback_timer,
-            1000 / server->wm_config->callback_frequency);
-    return 0;
 }
 
 
@@ -242,8 +236,8 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     wm_renderer_init(server->wm_renderer, server);
 
     /* Allocator */
-	server->wlr_allocator = wlr_allocator_autocreate(server->wlr_backend,
-		server->wm_renderer->wlr_renderer);
+    server->wlr_allocator = wlr_allocator_autocreate(server->wlr_backend,
+        server->wm_renderer->wlr_renderer);
 
     /* Event loop */
     server->wl_event_loop = 
@@ -348,15 +342,13 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
 
     server->callback_timer = wl_event_loop_add_timer(
         server->wl_event_loop, callback_timer_handler, server);
-    server->callback_fallback_timer = wl_event_loop_add_timer(
-        server->wl_event_loop, callback_fallback_timer_handler, server);
-    server->callback_fallback_timer_started = false;
-    clock_gettime(CLOCK_MONOTONIC, &server->last_callback);
 
     server->lock_perc = 0.0;
 
     server->wlr_xcursor_manager = NULL;
     wm_server_reconfigure(server);
+
+    server->constant_damage_mode = 0;
 }
 
 void wm_server_destroy(struct wm_server* server){

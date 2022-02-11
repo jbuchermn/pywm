@@ -60,12 +60,10 @@ struct wm_server{
     struct wl_listener xwayland_ready;
     struct wl_listener new_xwayland_surface;
 
-    struct timespec last_callback;
-    struct wl_event_source* callback_timer;
-    struct wl_event_source* callback_fallback_timer;
-    bool callback_fallback_timer_started;
-
     double lock_perc;
+
+    int constant_damage_mode;
+    struct wl_event_source* callback_timer;
 };
 
 void wm_server_init(struct wm_server* server, struct wm_config* config);
@@ -80,6 +78,7 @@ void wm_server_update_contents(struct wm_server* server);
 void wm_server_open_virtual_output(struct wm_server* server, const char* name);
 void wm_server_close_virtual_output(struct wm_server* server, const char* name);
 
+void wm_server_set_constant_damage_mode(struct wm_server* server, int mode);
 /*
  * Schedule wm_callback_update() after frame present
  */

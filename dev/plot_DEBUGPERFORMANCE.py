@@ -1,11 +1,9 @@
 import matplotlib.pyplot as plt  # type: ignore
-import matplotlib as mpl
 import sys
 import re
 
-# mpl.use('Gtk3Cairo')
 
-
+print("Loading data...")
 pattern = re.compile(r".*DEBUGPERFORMANCE\[(.*)\]: ([0-9]*.[0-9]*)")
 
 data: list[tuple[str, int, float, float]] = []
@@ -30,21 +28,27 @@ data = [d for d in data if d[2] <= 0.]
 
 if sys.argv[2] == "plot":
     visual = {
-        'render': 'g-',
-        'render2': 'g-',
-        'damage': 'b.',
-        'schedule_frame': 'b+',
-        'skip_frame': 'y.',
+        'render': 'g.-',
+        'render2': 'g.-',
+        'damage': 'b+',
+        'schedule_frame': 'b.',
+        'skip_frame': 'gx',
         'present_frame': 'ro',
         'py_start': 'r+',
         'py_finish': 'r.',
+        'callback_start': 'y+',
+        'callback_finish': 'y.',
     }
 
+    print("Plotting...")
     plt.figure()
+    plt.plot([t[1] for t in data], [t[3]-data[0][3] for t in data], 'k-')
     for kind in visual:
-        plt.plot([t[1] for t in data if t[0] == kind], [t[2] for t in data if t[0] == kind], visual[kind], alpha=.5)
+        plt.plot([t[1] for t in data if t[0] == kind], [1000.*t[2] for t in data if t[0] == kind], visual[kind], alpha=.5)
 
     plt.show()
 elif sys.argv[2] == "show":
     idx = int(sys.argv[3])
-    print([d for d in data if d[1] == idx])
+    for d in data:
+        if d[1] == idx:
+            print(d)

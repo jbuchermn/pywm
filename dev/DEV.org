@@ -2,6 +2,11 @@
 
 * Development
 ** Current (v0.3)
+*** STRT Updates are lost on map (if size negotiation fails? or only xwayland?)
+*** STRT Artifacts on view corners
+*** STRT place three alacrittys, open e.g. imv - artifacts on blur
+*** TODO Horizontal damage artifacts after closing views
+
 *** TODO Performance topics
    - Goal: Idle CPU low - comparable between sway and pywm-fullscreen
    - Goal: No dropped frames in pywm animations or gestures

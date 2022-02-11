@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import logging
@@ -38,12 +38,12 @@ def _load(path: str) -> np.ndarray:
 
 
 class PyWMBackgroundWidget(PyWMWidget):
-    def __init__(self, wm: PyWM[ViewT], output: PyWMOutput, path: str):
+    def __init__(self, wm: PyWM[ViewT], output: PyWMOutput, path: str, *args: Any, **kwargs: Any):
         """
         transpose == 't': matrix transpose
         transpose == 'f': flip the image
         """
-        super().__init__(wm, output)
+        super().__init__(wm, output, *args, **kwargs)
 
         # Prevent division by zero
         self.width = 1

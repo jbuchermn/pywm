@@ -222,6 +222,10 @@ static bool call_hold_end(struct wlr_event_pointer_hold_end* event){
 
 static void call_init_view(struct wm_view* view){
     _pywm_views_add(view);
+
+    PyGILState_STATE gil = PyGILState_Ensure();
+    _pywm_views_update_single(view);
+    PyGILState_Release(gil);
 }
 
 static void call_destroy_view(struct wm_view* view){

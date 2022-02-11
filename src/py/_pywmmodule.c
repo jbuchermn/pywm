@@ -8,6 +8,7 @@
 #include "wm/wm.h"
 #include "wm/wm_config.h"
 #include "wm/wm_server.h"
+#include "wm/wm_layout.h"
 #include "wm/wm_util.h"
 #include "py/_pywm_callbacks.h"
 #include "py/_pywm_view.h"
@@ -221,10 +222,25 @@ static PyObject* _pywm_register(PyObject* self, PyObject* args){
     return Py_None;
 }
 
+static PyObject* _pywm_damage(PyObject* self, PyObject* args){
+    int code;
+
+    if(!PyArg_ParseTuple(args, "i", &code)){
+        PyErr_SetString(PyExc_TypeError, "Invalid parameters");
+        return NULL;
+    }
+
+    wm_server_set_constant_damage_mode(get_wm()->server, code);
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 
 static PyMethodDef _pywm_methods[] = {
     { "run",                       (PyCFunction)_pywm_run,           METH_VARARGS | METH_KEYWORDS,   "Start the compositor in this thread" },
     { "register",                  _pywm_register,                   METH_VARARGS,                   "Register callback"  },
+    { "damage",                    _pywm_damage,                     METH_VARARGS,                   "Track damage, or set mode to continuous damage"  },
 
     { NULL, NULL, 0, NULL }
 };

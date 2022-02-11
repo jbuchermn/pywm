@@ -35,3 +35,5 @@ from .pywm_widget import (
 from .pywm_background_widget import PyWMBackgroundWidget
 from .pywm_cairo_widget import PyWMCairoWidget
 from .pywm_blur_widget import PyWMBlurWidget
+
+from .damage_tracked import DamageTracked

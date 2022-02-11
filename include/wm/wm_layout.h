@@ -20,6 +20,7 @@ struct wm_layout {
     struct wl_listener change;
 
     int refresh_master_output;
+    bool frame_scheduled;
 };
 
 void wm_layout_init(struct wm_layout* layout, struct wm_server* server);
@@ -35,8 +36,10 @@ void wm_layout_damage_whole(struct wm_layout* layout);
 
 /* Calls wm_content_damage_output, expects calls to wm_layout_damage_output */
 void wm_layout_damage_from(struct wm_layout* layout, struct wm_content* content, struct wlr_surface* origin);
-
 void wm_layout_damage_output(struct wm_layout* layout, struct wm_output* output, pixman_region32_t* damage, struct wm_content* from);
+
+void wm_layout_start_update(struct wm_layout* layout);
+bool wm_layout_frame_scheduled(struct wm_layout* layout);
 
 void wm_layout_update_content_outputs(struct wm_layout* layout, struct wm_content* content);
 
