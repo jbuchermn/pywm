@@ -91,6 +91,24 @@ class PyWMOutput:
             return False
         return self._key == other._key
 
+class PyWMThread(Thread):
+    def __init__(self, wm: PyWM) -> None:
+        super().__init__()
+        self.wm = wm
+        self.running = True
+
+    def stop(self) -> None:
+        self.running = False
+
+    def run(self) -> None:
+        i = 0
+        while self.running:
+            if i%10 == 0:
+                self.wm._update_idle(False)
+            i+=1
+            time.sleep(.1)
+
+
 class PyWM(Generic[ViewT], DamageTracked):
     def __init__(self, view_class: type=PyWMView, **kwargs: Any) -> None:
         DamageTracked.__init__(self)
@@ -146,6 +164,7 @@ class PyWM(Generic[ViewT], DamageTracked):
         self.modifiers = 0
         self.cursor_pos: tuple[float, float] = (0, 0)
 
+        self._thread = PyWMThread(self)
         self._idle_last_activity: float = time.time()
         self._idle_last_update_active: float = time.time()
         self._idle_last_update_inactive: float = time.time()
@@ -200,6 +219,7 @@ class PyWM(Generic[ViewT], DamageTracked):
     def _ready(self) -> None:
         logger.debug("PyWM ready")
         Thread(target=self._exec_main).start()
+        self._thread.start()
 
     @callback
     def _motion(self, time_msec: int, delta_x: float, delta_y: float, abs_x: float, abs_y: float) -> bool:
@@ -316,8 +336,6 @@ class PyWM(Generic[ViewT], DamageTracked):
 
     @callback
     def _update(self) -> tuple[int, int, int, float, str, str, bool, Optional[dict[str, Any]]]:
-        self._update_idle(False)
-
         if self.is_damaged():
             self._down_state = self.process()
 
@@ -381,6 +399,7 @@ class PyWM(Generic[ViewT], DamageTracked):
 
     def terminate(self) -> None:
         logger.debug("PyWM terminating")
+        self._thread.stop()
         self._pending_terminate = True
 
     def open_virtual_output(self, name: str) -> None:
