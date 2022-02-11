@@ -63,7 +63,6 @@ struct wm_server{
     double lock_perc;
 
     int constant_damage_mode;
-    struct timespec last_callback;
     struct wl_event_source* callback_timer;
 };
 

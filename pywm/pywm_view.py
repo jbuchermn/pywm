@@ -299,21 +299,27 @@ class PyWMView(Generic[PyWMT], DamageTracked):
 
     def focus(self) -> None:
         self._down_action_focus = True
+        self.wm.damage_once()
 
     def set_resizing(self, val: bool) -> None:
         self._down_action_resizing = bool(val)
+        self.wm.damage_once()
 
     def set_fullscreen(self, val: bool) -> None:
         self._down_action_fullscreen = bool(val)
+        self.wm.damage_once()
 
     def set_maximized(self, val: bool) -> None:
         self._down_action_maximized = bool(val)
+        self.wm.damage_once()
 
     def force_size(self) -> None:
         self._down_force_size = True
+        self.wm.damage_once()
 
     def close(self) -> None:
         self._down_action_close = True
+        self.wm.damage_once()
 
 
     """

@@ -316,7 +316,6 @@ class PyWM(Generic[ViewT], DamageTracked):
 
     @callback
     def _update(self) -> tuple[int, int, int, float, str, str, bool, Optional[dict[str, Any]]]:
-        t = time.time()
         self._update_idle(False)
 
         if self.is_damaged():
@@ -339,7 +338,7 @@ class PyWM(Generic[ViewT], DamageTracked):
         self._pending_config = None
 
         return res
-    
+
     def widget_destroy(self, widget: PyWMWidget) -> None:
         self._widgets.pop(widget._handle, None)
         widget.damage_finish()
