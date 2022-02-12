@@ -163,7 +163,7 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     /* 
      * Synchronous update is best scheduled immediately after frame
      */
-    DEBUG_PERFORMANCE(present_frame);
+    DEBUG_PERFORMANCE(present_frame, output->key);
     wm_server_schedule_update(output->wm_server, output);
 }
 
@@ -186,13 +186,13 @@ static void handle_damage_frame(struct wl_listener *listener, void *data) {
             struct timespec now;
             clock_gettime(CLOCK_MONOTONIC, &now);
 
-            DEBUG_PERFORMANCE(render);
+            DEBUG_PERFORMANCE(render, output->key);
             TIMER_START(render);
             render(output, now, &damage);
             TIMER_STOP(render);
             TIMER_PRINT(render);
         } else {
-            DEBUG_PERFORMANCE(skip_frame);
+            DEBUG_PERFORMANCE(skip_frame, output->key);
             wlr_output_rollback(output->wlr_output);
         }
 
