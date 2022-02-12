@@ -36,6 +36,7 @@ struct wm_config {
 
     char xkb_model[WM_CONFIG_STRLEN];
     char xkb_layout[WM_CONFIG_STRLEN];
+    char xkb_variant[WM_CONFIG_STRLEN];
     char xkb_options[WM_CONFIG_STRLEN];
 
     struct wl_list outputs;

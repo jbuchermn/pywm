@@ -113,6 +113,7 @@ void wm_keyboard_reconfigure(struct wm_keyboard* keyboard){
     struct xkb_rule_names rules = {0};
     rules.model = keyboard->wm_seat->wm_server->wm_config->xkb_model;
     rules.layout = keyboard->wm_seat->wm_server->wm_config->xkb_layout;
+    rules.variant = keyboard->wm_seat->wm_server->wm_config->xkb_variant;
     rules.options = keyboard->wm_seat->wm_server->wm_config->xkb_options;
 
     struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);

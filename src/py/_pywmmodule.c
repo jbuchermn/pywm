@@ -56,6 +56,7 @@ static void set_config(struct wm_config* conf, PyObject* dict, int reconfigure){
     }
     o = PyDict_GetItemString(dict, "xkb_model"); if(o){ strncpy(conf->xkb_model, PyBytes_AsString(o), WM_CONFIG_STRLEN-1); }
     o = PyDict_GetItemString(dict, "xkb_layout"); if(o){ strncpy(conf->xkb_layout, PyBytes_AsString(o), WM_CONFIG_STRLEN-1); }
+    o = PyDict_GetItemString(dict, "xkb_variant"); if(o){ strncpy(conf->xkb_variant, PyBytes_AsString(o), WM_CONFIG_STRLEN-1); }
     o = PyDict_GetItemString(dict, "xkb_options"); if(o){ strncpy(conf->xkb_options, PyBytes_AsString(o), WM_CONFIG_STRLEN-1); }
 
     o = PyDict_GetItemString(dict, "xcursor_theme"); if(o){ wm_config_set_xcursor_theme(conf, PyBytes_AsString(o)); }
