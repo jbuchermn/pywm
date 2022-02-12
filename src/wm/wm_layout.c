@@ -122,6 +122,15 @@ void wm_layout_damage_from(struct wm_layout* layout, struct wm_content* content,
 void wm_layout_damage_output(struct wm_layout* layout, struct wm_output* output, pixman_region32_t* damage, struct wm_content* from){
     wlr_output_damage_add(output->wlr_output_damage, damage);
 
+    struct wm_content* content;
+    wl_list_for_each(content, &layout->wm_server->wm_contents, link){
+        if(!wm_content_is_composite(content)) continue;
+        struct wm_composite* comp = wm_cast(wm_composite, content);
+        if(comp->super.z_index > from->z_index && &comp->super != from){
+            wm_composite_on_damage_below(comp, output, from, damage);
+        }
+    }
+
     DEBUG_PERFORMANCE(schedule_frame);
     layout->frame_scheduled = true;
 }

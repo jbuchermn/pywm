@@ -54,6 +54,52 @@ static int blur_extend(int passes, int radius){
     return radius * pow(2., passes);
 }
 
+void wm_composite_on_damage_below(struct wm_composite* comp, struct wm_output* output, struct wm_content* from, pixman_region32_t* damage){
+    double x, y, w, h;
+    wm_content_get_box(&comp->super, &x, &y, &w, &h);
+    x -= output->layout_x;
+    y -= output->layout_y;
+
+    x *= output->wlr_output->scale;
+    y *= output->wlr_output->scale;
+    w *= output->wlr_output->scale;
+    h *= output->wlr_output->scale;
+
+    int extend = 0;
+    if(comp->type == WM_COMPOSITE_BLUR){
+        int radius = comp->params.n_params_int >= 1 ? comp->params.params_int[0] : 1;
+        int passes = comp->params.n_params_int >= 2 ? comp->params.params_int[1] : 2;
+        extend = blur_extend(passes, radius);
+    }
+
+    struct wlr_box box = {
+        .x = x,
+        .y = y,
+        .width = w,
+        .height = h,
+    };
+
+    int nrects;
+    pixman_box32_t* rects = pixman_region32_rectangles(damage, &nrects);
+    for(int i = 0; i < nrects; i++){
+        struct wlr_box damage_box = {.x = rects[i].x1 - extend,
+                                     .y = rects[i].y1 - extend,
+                                     .width = rects[i].x2 - rects[i].x1 + 2*extend,
+                                     .height = rects[i].y2 - rects[i].y1 + 2*extend};
+
+        struct wlr_box inters;
+        wlr_box_intersection(&inters, &damage_box, &box);
+        if (wlr_box_empty(&inters))
+            continue;
+
+        pixman_region32_t region;
+        pixman_region32_init(&region);
+        pixman_region32_union_rect(&region, &region, inters.x, inters.y, inters.width, inters.height);
+        wm_layout_damage_output(output->wm_layout, output, &region, &comp->super);
+        pixman_region32_fini(&region);
+    }
+}
+
 void wm_composite_apply(struct wm_composite* composite, struct wm_output* output, pixman_region32_t* damage, unsigned int from_buffer, struct timespec now){
     double display_x, display_y, display_w, display_h;
     wm_content_get_box(&composite->super, &display_x, &display_y, &display_w, &display_h);

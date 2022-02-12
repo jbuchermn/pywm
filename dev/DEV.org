@@ -2,10 +2,10 @@
 
 * Development
 ** Current (v0.3)
-*** STRT Updates are lost on map (if size negotiation fails? or only xwayland?)
-*** STRT Artifacts on view corners
-*** STRT place three alacrittys, open e.g. imv - artifacts on blur
-*** TODO Horizontal damage artifacts after closing views
+*** Bugs
+**** DONE place three alacrittys, open e.g. imv - artifacts on blur, or on animated FocusBorder -> wm_compose_tree has no notion of whether the damage happens below or above composite. Does it need to? Or can we just globally extend damage above composites before hand (and correspondingly below composites even further)
+**** DONE Artifacts on view corners
+**** TODO Horizontal damage artifacts after closing views
 
 *** TODO Performance topics
    - Goal: Idle CPU low - comparable between sway and pywm-fullscreen
