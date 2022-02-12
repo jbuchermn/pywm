@@ -100,7 +100,9 @@ void wm_layout_damage_whole(struct wm_layout* layout){
         wlr_output_damage_add_whole(output->wlr_output_damage);
 
         DEBUG_PERFORMANCE(schedule_frame, output->key);
-        layout->frame_scheduled = true;
+        if(output->key == layout->refresh_master_output){
+            layout->frame_scheduled = true;
+        }
     }
 
 }
@@ -125,7 +127,9 @@ void wm_layout_damage_output(struct wm_layout* layout, struct wm_output* output,
     wlr_output_damage_add(output->wlr_output_damage, damage);
 
     DEBUG_PERFORMANCE(schedule_frame, output->key);
-    layout->frame_scheduled = true;
+    if(output->key == layout->refresh_master_output){
+        layout->frame_scheduled = true;
+    }
 }
 
 void wm_layout_start_update(struct wm_layout* layout){

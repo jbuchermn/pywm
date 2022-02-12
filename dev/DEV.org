@@ -3,11 +3,12 @@
 * Development
 ** Current (v0.3)
 *** Bugs
-**** DONE place three alacrittys, open e.g. imv - artifacts on blur, or on animated FocusBorder -> wm_compose_tree has no notion of whether the damage happens below or above composite. Does it need to? Or can we just globally extend damage above composites before hand (and correspondingly below composites even further)
-**** DONE Artifacts on view corners
+**** TODO Lag in fullscreen video on chrome
 **** TODO Horizontal damage artifacts after closing views
+**** DONE Gestures break up on secondary monitor
+**** STRT Respect workspace in blur and ensure newm sets it properly (multiple screens issue)
 
-*** TODO Performance topics
+*** STRT Performance topics
    - Goal: Idle CPU low - comparable between sway and pywm-fullscreen
    - Goal: No dropped frames in pywm animations or gestures
    - Issue: newm - pyevdev gestures uses a lot of CPU and spawns lots of threads
@@ -17,8 +18,10 @@
    - Issue: Are there slow animation frames (Python message), where there is no issue with too slow callbacks (i.e. other non-performance-related)
    - Example: Open alacritty, hit Mod - slow animations. Open alacritty, start "tail -f newm_log" (i.e. client-side damaging), hit Mod - fast animations (low wm_config.callback_frequency)
 
+*** TODO Test cases and comparison
+
 *** STRT Better renderer
-**** TODO Extensively test DEBUG_DAMAGE, different render modes, switching between render modes, frame damage optimization, damaging and blur + build test cases
+**** TODO Extensively test DEBUG_DAMAGE, different render modes, switching between render modes, frame damage optimization, damaging and blur + build test cases (e.g. damage behind blur by FocusBorder)
 **** TODO Performance comparison of renderers / of blur
 
 *** TODO wlr-output-management-unstable-v1 (in order to use wdisplays)
