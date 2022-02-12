@@ -21,12 +21,14 @@ static void handle_change(struct wl_listener* listener, void* data){
     struct wm_layout* layout = wl_container_of(listener, layout, change);
 
     struct wm_output* output;
-    int fastest_mHz = 0;
+    int fastest_mHz = -1;
     wl_list_for_each(output, &layout->wm_outputs, link){
         output->key = _wm_output_key++;
 
         if(output->wlr_output->refresh > fastest_mHz){
             layout->refresh_master_output = output->key;
+            fastest_mHz = output->wlr_output->refresh;
+            wlr_log(WLR_DEBUG, "Following master output: %d", layout->refresh_master_output);
         }
 
         struct wlr_output_layout_output* o = wlr_output_layout_get(layout->wlr_output_layout, output->wlr_output);
@@ -98,7 +100,9 @@ void wm_layout_damage_whole(struct wm_layout* layout){
         wlr_output_damage_add_whole(output->wlr_output_damage);
 
         DEBUG_PERFORMANCE(schedule_frame, output->key);
-        layout->frame_scheduled = true;
+        if(output->key == layout->refresh_master_output){
+            layout->frame_scheduled = true;
+        }
     }
 
 }
@@ -132,7 +136,9 @@ void wm_layout_damage_output(struct wm_layout* layout, struct wm_output* output,
     }
 
     DEBUG_PERFORMANCE(schedule_frame, output->key);
-    layout->frame_scheduled = true;
+    if(output->key == layout->refresh_master_output){
+        layout->frame_scheduled = true;
+    }
 }
 
 void wm_layout_start_update(struct wm_layout* layout){

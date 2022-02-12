@@ -54,16 +54,31 @@ static int blur_extend(int passes, int radius){
     return radius * pow(2., passes);
 }
 
-void wm_composite_on_damage_below(struct wm_composite* comp, struct wm_output* output, struct wm_content* from, pixman_region32_t* damage){
-    double x, y, w, h;
-    wm_content_get_box(&comp->super, &x, &y, &w, &h);
-    x -= output->layout_x;
-    y -= output->layout_y;
+static void wm_composite_get_effective_box(struct wm_composite* composite, struct wm_output* output, struct wlr_box* box){
+    double display_x, display_y, display_w, display_h;
+    wm_content_get_box(&composite->super, &display_x, &display_y, &display_w, &display_h);
 
-    x *= output->wlr_output->scale;
-    y *= output->wlr_output->scale;
-    w *= output->wlr_output->scale;
-    h *= output->wlr_output->scale;
+    box->x = round((display_x - output->layout_x) * output->wlr_output->scale);
+    box->y = round((display_y - output->layout_y) * output->wlr_output->scale);
+    box->width = round(display_w * output->wlr_output->scale);
+    box->height = round(display_h * output->wlr_output->scale);
+
+    if(wm_content_has_workspace(&composite->super)){
+        double ws_x, ws_y, ws_w, ws_h;
+        wm_content_get_workspace(&composite->super, &ws_x, &ws_y, &ws_w, &ws_h);
+
+        struct wlr_box workspace_box = {
+            .x = round((ws_x - output->layout_x) * output->wlr_output->scale),
+            .y = round((ws_y - output->layout_y) * output->wlr_output->scale),
+            .width = round(ws_w * output->wlr_output->scale),
+            .height = round(ws_h * output->wlr_output->scale)};
+        wlr_box_intersection(box, box, &workspace_box);
+    }
+}
+
+void wm_composite_on_damage_below(struct wm_composite* comp, struct wm_output* output, struct wm_content* from, pixman_region32_t* damage){
+    struct wlr_box box;
+    wm_composite_get_effective_box(comp, output, &box);
 
     int extend = 0;
     if(comp->type == WM_COMPOSITE_BLUR){
@@ -71,14 +86,6 @@ void wm_composite_on_damage_below(struct wm_composite* comp, struct wm_output* o
         int passes = comp->params.n_params_int >= 2 ? comp->params.params_int[1] : 2;
         extend = blur_extend(passes, radius);
     }
-
-    struct wlr_box box = {
-        .x = x,
-        .y = y,
-        .width = w,
-        .height = h,
-    };
-
     int nrects;
     pixman_box32_t* rects = pixman_region32_rectangles(damage, &nrects);
     for(int i = 0; i < nrects; i++){
@@ -101,14 +108,8 @@ void wm_composite_on_damage_below(struct wm_composite* comp, struct wm_output* o
 }
 
 void wm_composite_apply(struct wm_composite* composite, struct wm_output* output, pixman_region32_t* damage, unsigned int from_buffer, struct timespec now){
-    double display_x, display_y, display_w, display_h;
-    wm_content_get_box(&composite->super, &display_x, &display_y, &display_w, &display_h);
-
-    struct wlr_box box = {
-        .x = round((display_x - output->layout_x) * output->wlr_output->scale),
-        .y = round((display_y - output->layout_y) * output->wlr_output->scale),
-        .width = round(display_w * output->wlr_output->scale),
-        .height = round(display_h * output->wlr_output->scale)};
+    struct wlr_box box;
+    wm_composite_get_effective_box(composite, output, &box);
 
     if(composite->type == WM_COMPOSITE_BLUR){
         int radius = composite->params.n_params_int >= 1 ? composite->params.params_int[0] : 1;
@@ -224,13 +225,8 @@ struct wm_compose_tree* wm_compose_tree_from_damage(struct wm_server* server, st
 
             struct wm_composite* composite = wm_cast(wm_composite, content);
 
-            double display_x, display_y, display_w, display_h;
-            wm_content_get_box(&composite->super, &display_x, &display_y, &display_w, &display_h);
-            struct wlr_box box = {
-                .x = round((display_x - output->layout_x) * output->wlr_output->scale),
-                .y = round((display_y - output->layout_y) * output->wlr_output->scale),
-                .width = round(display_w * output->wlr_output->scale),
-                .height = round(display_h * output->wlr_output->scale)};
+            struct wlr_box box;
+            wm_composite_get_effective_box(composite, output, &box);
             wm_compose_insert(output, root, composite, &box);
         }
     }
