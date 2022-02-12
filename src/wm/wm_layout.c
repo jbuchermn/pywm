@@ -27,6 +27,8 @@ static void handle_change(struct wl_listener* listener, void* data){
 
         if(output->wlr_output->refresh > fastest_mHz){
             layout->refresh_master_output = output->key;
+            fastest_mHz = output->wlr_output->refresh;
+            wlr_log(WLR_DEBUG, "Following master output: %d", layout->refresh_master_output);
         }
 
         struct wlr_output_layout_output* o = wlr_output_layout_get(layout->wlr_output_layout, output->wlr_output);
