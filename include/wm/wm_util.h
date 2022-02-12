@@ -5,7 +5,7 @@
 #include <time.h>
 
 /* Warning - very chatty */
-#define DEBUG_PERFORMANCE_ENABLED
+// #define DEBUG_PERFORMANCE_ENABLED
 
 #define wm_offset_of(_struct_, _member_)  (size_t)&(((struct _struct_ *)0)->_member_)
  

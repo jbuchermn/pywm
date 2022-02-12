@@ -859,10 +859,10 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
     if(from_buffer != renderer->selected_buffer && cornerradius > 0.){
         pixman_region32_t corners;
         pixman_region32_init(&corners);
-        pixman_region32_union_rect(&corners, &corners, box->x, box->y, cornerradius, cornerradius);
-        pixman_region32_union_rect(&corners, &corners, box->x + box->width - cornerradius, box->y, cornerradius, cornerradius);
-        pixman_region32_union_rect(&corners, &corners, box->x, box->y + box->height - cornerradius, cornerradius, cornerradius);
-        pixman_region32_union_rect(&corners, &corners, box->x + box->width - cornerradius, box->y + box->height - cornerradius, cornerradius, cornerradius);
+        pixman_region32_union_rect(&corners, &corners, box->x, box->y, ceil(cornerradius), ceil(cornerradius));
+        pixman_region32_union_rect(&corners, &corners, box->x + box->width - ceil(cornerradius), box->y, ceil(cornerradius), ceil(cornerradius));
+        pixman_region32_union_rect(&corners, &corners, box->x, box->y + box->height - ceil(cornerradius), ceil(cornerradius), ceil(cornerradius));
+        pixman_region32_union_rect(&corners, &corners, box->x + box->width - ceil(cornerradius), box->y + box->height - ceil(cornerradius), ceil(cornerradius), ceil(cornerradius));
         pixman_region32_intersect(&corners, &corners, damage);
         blit_framebuffer(renderer, &corners, from_buffer, renderer->current->renderer_buffers->frame_buffer[renderer->selected_buffer]);
         pixman_region32_fini(&corners);
