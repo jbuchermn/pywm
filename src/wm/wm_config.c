@@ -26,6 +26,7 @@ void wm_config_init_default(struct wm_config *config) {
 
     strcpy(config->xkb_model, "");
     strcpy(config->xkb_layout, "");
+    strcpy(config->xkb_variant, "");
     strcpy(config->xkb_options, "");
     strcpy(config->texture_shaders, "basic");
 
