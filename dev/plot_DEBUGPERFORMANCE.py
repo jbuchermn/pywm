@@ -4,7 +4,9 @@ import re
 
 
 print("Loading data...")
-pattern = re.compile(r".*DEBUGPERFORMANCE\[(.*)\]: ([0-9]*.[0-9]*)")
+pattern = re.compile(r".*DEBUGPERFORMANCE\[(.*)\(([0-9]*)\)\]: ([0-9]*.[0-9]*)")
+
+output = int(sys.argv[2])
 
 data: list[tuple[str, int, float, float]] = []
 with open(sys.argv[1], 'r') as inp:
@@ -12,7 +14,9 @@ with open(sys.argv[1], 'r') as inp:
     for l in inp:
         res = pattern.match(l)
         if res is not None:
-            kind, ts = res.group(1), float(res.group(2))
+            kind, o, ts = res.group(1), int(res.group(2)), float(res.group(3))
+            if o != 0 and o != output:
+                continue
             data += [(kind, idx_render, ts, ts)]
 
             if kind == "render":
@@ -26,7 +30,7 @@ with open(sys.argv[1], 'r') as inp:
 
 data = [d for d in data if d[2] <= 0.]
 
-if sys.argv[2] == "plot":
+if sys.argv[3] == "plot":
     visual = {
         'render': 'g.-',
         'render2': 'g.-',
@@ -47,8 +51,8 @@ if sys.argv[2] == "plot":
         plt.plot([t[1] for t in data if t[0] == kind], [1000.*t[2] for t in data if t[0] == kind], visual[kind], alpha=.5)
 
     plt.show()
-elif sys.argv[2] == "show":
-    idx = int(sys.argv[3])
+elif sys.argv[3] == "show":
+    idx = int(sys.argv[4])
     for d in data:
         if d[1] == idx:
             print(d)
