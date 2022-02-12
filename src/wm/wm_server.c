@@ -190,13 +190,13 @@ static int callback_timer_handler(void* data){
         wm_layout_damage_whole(server->wm_layout);
         server->constant_damage_mode = 1;
     }else{
-        DEBUG_PERFORMANCE(py_start);
+        DEBUG_PERFORMANCE(py_start, 0);
         wm_layout_start_update(server->wm_layout);
         wm_callback_update();
         if(server->constant_damage_mode == 1 && !wm_layout_frame_scheduled(server->wm_layout)){
             wm_layout_damage_whole(server->wm_layout);
         }
-        DEBUG_PERFORMANCE(py_finish);
+        DEBUG_PERFORMANCE(py_finish, 0);
     }
 
     return 0;
@@ -204,11 +204,11 @@ static int callback_timer_handler(void* data){
 
 void wm_server_set_constant_damage_mode(struct wm_server* server, int mode){
     if(mode == 1 && server->constant_damage_mode == 0){
-        DEBUG_PERFORMANCE(enter_constant_damage);
+        DEBUG_PERFORMANCE(enter_constant_damage, 0);
         wl_event_source_timer_update(server->callback_timer, 1);
         server->constant_damage_mode = -1;
     }else if(mode == 0 && server->constant_damage_mode != 0){
-        DEBUG_PERFORMANCE(exit_constant_damage);
+        DEBUG_PERFORMANCE(exit_constant_damage, 0);
         server->constant_damage_mode = 0;
     }else if(mode == 2){
         wl_event_source_timer_update(server->callback_timer, 1);

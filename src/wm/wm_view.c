@@ -214,8 +214,14 @@ static void damage_surface(struct wlr_surface *surface, int sx, int sy,
         .width = ceil(x + width) - floor(x),
         .height = ceil(y + height) - floor(y)};
 
-    /* origin == NULL means damage everything */
-    if(!ddata->origin){
+    pixman_region32_t region;
+    pixman_region32_init(&region);
+
+    wlr_surface_get_effective_damage(surface, &region);
+
+    /* origin == NULL means damage everything
+     * Also clients occasionally send empty damages (Firefox, Kitty e.g.) - take this to mean damage everything */
+    if(!ddata->origin || !pixman_region32_not_empty(&region)){
         pixman_region32_t region;
         pixman_region32_init(&region);
 
@@ -235,14 +241,8 @@ static void damage_surface(struct wlr_surface *surface, int sx, int sy,
     }
 
 
-
     /* effective damage might go beyond box, so do this even if origin == NULL */
-    if (pixman_region32_not_empty(&surface->buffer_damage)) {
-        pixman_region32_t region;
-        pixman_region32_init(&region);
-
-        wlr_surface_get_effective_damage(surface, &region);
-
+    if(pixman_region32_not_empty(&region)){
         wlr_region_scale_xy(&region, &region,
                             ddata->x_scale * output->wlr_output->scale,
                             ddata->y_scale * output->wlr_output->scale);

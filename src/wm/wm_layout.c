@@ -97,7 +97,7 @@ void wm_layout_damage_whole(struct wm_layout* layout){
     wl_list_for_each(output, &layout->wm_outputs, link){
         wlr_output_damage_add_whole(output->wlr_output_damage);
 
-        DEBUG_PERFORMANCE(schedule_frame);
+        DEBUG_PERFORMANCE(schedule_frame, output->key);
         layout->frame_scheduled = true;
     }
 
@@ -105,10 +105,10 @@ void wm_layout_damage_whole(struct wm_layout* layout){
 
 
 void wm_layout_damage_from(struct wm_layout* layout, struct wm_content* content, struct wlr_surface* origin){
-    DEBUG_PERFORMANCE(damage);
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
         if(!wm_content_is_on_output(content, output)) continue;
+        DEBUG_PERFORMANCE(damage, output->key);
 
         if(!content->lock_enabled && wm_server_is_locked(layout->wm_server)){
             wm_content_damage_output(content, output, NULL);
@@ -131,7 +131,7 @@ void wm_layout_damage_output(struct wm_layout* layout, struct wm_output* output,
         }
     }
 
-    DEBUG_PERFORMANCE(schedule_frame);
+    DEBUG_PERFORMANCE(schedule_frame, output->key);
     layout->frame_scheduled = true;
 }
 
