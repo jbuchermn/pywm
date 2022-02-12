@@ -64,6 +64,18 @@ void wm_composite_apply(struct wm_composite* composite, struct wm_output* output
         .width = round(display_w * output->wlr_output->scale),
         .height = round(display_h * output->wlr_output->scale)};
 
+    if(wm_content_has_workspace(&composite->super)){
+        double ws_x, ws_y, ws_w, ws_h;
+        wm_content_get_workspace(&composite->super, &ws_x, &ws_y, &ws_w, &ws_h);
+
+        struct wlr_box workspace_box = {
+            .x = round((ws_x - output->layout_x) * output->wlr_output->scale),
+            .y = round((ws_y - output->layout_y) * output->wlr_output->scale),
+            .width = round(ws_w * output->wlr_output->scale),
+            .height = round(ws_h * output->wlr_output->scale)};
+        wlr_box_intersection(&box, &box, &workspace_box);
+    }
+
     if(composite->type == WM_COMPOSITE_BLUR){
         int radius = composite->params.n_params_int >= 1 ? composite->params.params_int[0] : 1;
         int passes = composite->params.n_params_int >= 2 ? composite->params.params_int[1] : 2;

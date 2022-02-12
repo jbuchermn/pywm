@@ -6,7 +6,9 @@
 **** TODO Lag in fullscreen video on chrome
 **** TODO Horizontal damage artifacts after closing views
 **** DONE Gestures break up on secondary monitor
-**** STRT Respect workspace in blur and ensure newm sets it properly (multiple screens issue)
+**** TODO After gestures -> broken blur
+**** TODO FocusBorder on secondary monitor
+**** DONE Respect workspace in blur and ensure newm sets it properly (multiple screens issue)
 
 *** STRT Performance topics
    - Goal: Idle CPU low - comparable between sway and pywm-fullscreen
