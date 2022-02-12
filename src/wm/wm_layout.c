@@ -21,7 +21,7 @@ static void handle_change(struct wl_listener* listener, void* data){
     struct wm_layout* layout = wl_container_of(listener, layout, change);
 
     struct wm_output* output;
-    int fastest_mHz = 0;
+    int fastest_mHz = -1;
     wl_list_for_each(output, &layout->wm_outputs, link){
         output->key = _wm_output_key++;
 
