@@ -3,6 +3,7 @@
 * Development
 ** Current (v0.3)
 *** Bugs
+**** STRT Always present top bar with blur - black fades in, once a terminal is in fullscreen this changes
 **** TODO Horizontal damage artifacts after closing views
 **** WAIT Lag in fullscreen video on chrome
 
@@ -25,6 +26,7 @@
     - pywm-fullscreen
 
 ** Backlog / Ideas
+*** Secondary buffer for blurring should extend beyond primary buffer (however this is very complicated, intervenes with workspace logic, for little reward)
 *** If performance-critical: Store wm_composite as texture, better damage handling
 *** Enable keyboard-exclusive client (e.g. layer shell keyboard_interactivity / use in lock screen)
 *** Complete libinput device config / support for external mouse
