@@ -8,7 +8,7 @@ pattern = re.compile(r".*DEBUGPERFORMANCE\[(.*)\(([0-9]*)\)\]: ([0-9]*.[0-9]*)")
 
 output = int(sys.argv[2])
 
-data: list[tuple[str, float, float, float]] = []
+data: list[tuple[str, float, float, float, int]] = []
 with open(sys.argv[1], 'r') as inp:
     idx_render = 0
     for l in inp:
@@ -17,14 +17,14 @@ with open(sys.argv[1], 'r') as inp:
             kind, o, ts = res.group(1), int(res.group(2)), float(res.group(3))
             if o != 0 and o != output and kind != "py_start" and kind != "py_finish":
                 continue
-            data += [(kind, idx_render, ts, ts)]
+            data += [(kind, idx_render, ts, ts, idx_render)]
 
             if kind == "render":
                 for i in range(1, len(data)):
                     if i > 1 and data[-i][0] == "render":
                         break
-                    data[-i] = data[-i][0], data[-i][1], data[-i][2] - ts, data[-i][3]
-                data += [("render2", idx_render + 1, ts, ts)]
+                    data[-i] = data[-i][0], data[-i][1], data[-i][2] - ts, data[-i][3], data[-i][4]
+                data += [("render2", idx_render + 1, ts, ts, idx_render + 1)]
                 idx_render += 1
 
 
@@ -36,7 +36,7 @@ cur_ts = 0.
 for i in range(len(data)):
     if data[i][1] != cur_idx:
         cur_idx, cur_ts = data[i][1], data[i][3] - zero_ts
-    data[i] = data[i][0], cur_ts, data[i][2], data[i][3] - zero_ts
+    data[i] = data[i][0], cur_ts, data[i][2], data[i][3] - zero_ts, data[i][4]
 
 
 
@@ -63,7 +63,7 @@ if sys.argv[3] == "plot":
         elif d[0] == 'exit_constant_damage':
             plt.axvline(d[1], color='gray', linestyle='--')
 
-    plt.plot([t[1] for t in data], [t[3] for t in data], 'k-')
+    plt.plot([t[1] for t in data], [t[4] for t in data], 'k.')
     for kind in visual:
         plt.plot([t[1] for t in data if t[0] == kind], [1000.*t[2] for t in data if t[0] == kind], visual[kind], alpha=.5)
 
@@ -71,5 +71,5 @@ if sys.argv[3] == "plot":
 elif sys.argv[3] == "show":
     idx = int(sys.argv[4])
     for d in data:
-        if d[1] == idx:
+        if d[4] == idx:
             print(d)

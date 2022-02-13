@@ -926,6 +926,8 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
             glBindTexture(GL_TEXTURE_2D, i==0 ? renderer->current->renderer_buffers->frame_buffer_tex[from_buffer] : renderer->current->renderer_buffers->downsample_buffers_tex[i-1]);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
             glUniform1i(renderer->downsample_shader.tex, 0);
 
             glUniform2f(renderer->downsample_shader.halfpixel,
@@ -1017,6 +1019,8 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer, pixman_region32_t* dam
             glBindTexture(GL_TEXTURE_2D, renderer->current->renderer_buffers->downsample_buffers_tex[i]);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
             glUniform1i(renderer->upsample_shader.tex, 0);
 
             glUniform2f(renderer->upsample_shader.halfpixel,

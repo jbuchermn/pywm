@@ -72,8 +72,10 @@ static inline double secs_now(){
 
 #ifdef DEBUG_PERFORMANCE_ENABLED
 #define DEBUG_PERFORMANCE(name, output) wlr_log(WLR_DEBUG, "DEBUGPERFORMANCE[%s(%d)]: %.6f", #name, output, secs_now());
+#define DEBUG_PERFORMANCE_PTR(name, output) wlr_log(WLR_DEBUG, "DEBUGPERFORMANCE[%s(%d)]: %.6f", name, output, secs_now());
 #else
 #define DEBUG_PERFORMANCE(name, output);
+#define DEBUG_PERFORMANCE_PTR(name, output);
 #endif
 
 

@@ -237,11 +237,26 @@ static PyObject* _pywm_damage(PyObject* self, PyObject* args){
     return Py_None;
 }
 
+static PyObject* _pywm_debugperformance(PyObject* self, PyObject* args){
+    const char* key;
+
+    if(!PyArg_ParseTuple(args, "s", &key)){
+        PyErr_SetString(PyExc_TypeError, "Invalid parameters");
+        return NULL;
+    }
+
+    DEBUG_PERFORMANCE_PTR(key, 0);
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 
 static PyMethodDef _pywm_methods[] = {
     { "run",                       (PyCFunction)_pywm_run,           METH_VARARGS | METH_KEYWORDS,   "Start the compositor in this thread" },
     { "register",                  _pywm_register,                   METH_VARARGS,                   "Register callback"  },
     { "damage",                    _pywm_damage,                     METH_VARARGS,                   "Track damage, or set mode to continuous damage"  },
+    { "debug_performance",         _pywm_debugperformance,           METH_VARARGS,                   "Debug uitlity - uses DEBUG_PERFORMANCE macro"  },
 
     { NULL, NULL, 0, NULL }
 };

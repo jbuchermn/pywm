@@ -3,17 +3,18 @@
 * Development
 ** Current (v0.3)
 *** Bugs
-**** STRT Always present top bar with blur - black fades in, once a terminal is in fullscreen this changes
+**** DONE Always present top bar with blur - black fades in, once a terminal is in fullscreen this changes
 **** TODO Horizontal damage artifacts after closing views
 **** WAIT Lag in fullscreen video on chrome
 
 *** Performance topics
    - Goal: Idle CPU low - comparable between sway and pywm-fullscreen
-   - Goal: No dropped frames in pywm animations or gestures
    - Issue: newm - pyevdev gestures uses a lot of CPU and spawns lots of threads
    - Issue: newm - permanent top bar uses a lot of CPU
+**** STRT Feedback loop wm_callback_update is too slow
+   - Goal: No dropped frames in pywm animations or gestures
    - Issue: (Probably) callbacks occassionally take a long time - dropped frames
-**** STRT Timing issues on multi-monitor setup
+   - Issue: C-Side of view update loop takes a long time (comparable to python) - simplify using constant damage mode?
 **** TODO Test cases and comparison
 
 *** STRT Better renderer

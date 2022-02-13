@@ -97,10 +97,11 @@ void wm_layout_reconfigure(struct wm_layout* layout){
 void wm_layout_damage_whole(struct wm_layout* layout){
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
+        DEBUG_PERFORMANCE(damage, output->key);
         wlr_output_damage_add_whole(output->wlr_output_damage);
 
-        DEBUG_PERFORMANCE(schedule_frame, output->key);
         if(layout->refresh_master_output != layout->refresh_scheduled){
+            DEBUG_PERFORMANCE(schedule_frame, output->key);
             layout->refresh_scheduled = output->key;
         }
     }
@@ -135,8 +136,8 @@ void wm_layout_damage_output(struct wm_layout* layout, struct wm_output* output,
         }
     }
 
-    DEBUG_PERFORMANCE(schedule_frame, output->key);
     if(layout->refresh_master_output != layout->refresh_scheduled){
+        DEBUG_PERFORMANCE(schedule_frame, output->key);
         layout->refresh_scheduled = output->key;
     }
 }
