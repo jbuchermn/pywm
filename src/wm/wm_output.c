@@ -170,6 +170,14 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
 static void handle_damage_frame(struct wl_listener *listener, void *data) {
     struct wm_output *output = wl_container_of(listener, output, damage_frame);
 
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+
+    double diff = msec_diff(now, output->last_frame);
+    if(output->expecting_frame &&  diff > 1.5 * 1000000./output->wlr_output->current_mode->refresh){
+        wlr_log(WLR_DEBUG, "Output %d dropped frame (%.2fms)", output->key, diff);
+    }
+
     bool needs_frame;
     pixman_region32_t damage;
     pixman_region32_init(&damage);
@@ -183,20 +191,22 @@ static void handle_damage_frame(struct wl_listener *listener, void *data) {
 #endif
 
         if (needs_frame) {
-            struct timespec now;
-            clock_gettime(CLOCK_MONOTONIC, &now);
-
             DEBUG_PERFORMANCE(render, output->key);
             TIMER_START(render);
             render(output, now, &damage);
             TIMER_STOP(render);
             TIMER_PRINT(render);
+
+            output->expecting_frame = true;
         } else {
             DEBUG_PERFORMANCE(skip_frame, output->key);
             wlr_output_rollback(output->wlr_output);
-        }
 
+            output->expecting_frame = false;
+        }
         pixman_region32_fini(&damage);
+
+        output->last_frame = now;
     }else{
         wlr_log(WLR_DEBUG, "Attaching to renderer failed");
     }
@@ -347,6 +357,9 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
 #ifdef WM_CUSTOM_RENDERER
     output->renderer_buffers = NULL;
 #endif
+
+    output->expecting_frame = false;
+    clock_gettime(CLOCK_MONOTONIC, &output->last_frame);
 }
 
 void wm_output_reconfigure(struct wm_output* output){
