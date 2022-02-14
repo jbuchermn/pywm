@@ -17,7 +17,9 @@
    - Issue: Focus view animations (Mod-hjkl) seem to be slower than e.g. fullscreen or overview
    - Issue: Looks like frames are dropped when keeping enter pressed in a terminal
    - Issue: Do we really need two separate framebuffers (or is one seconadary buffer to read from enough?)
-   - Issue: Frame drops don't happen in direct or passthrough render modes, only in indirect (reproduce by triggering animation that does not damage - therefore full layout damaging at every frame, too slow)
+   - Issue: Frame drops don't happen in direct or passthrough render modes, only in indirect
+        - reproduce by triggering animation that does not damage - therefore full layout damaging at every frame
+        - mostly with lots of adjacent terminals, which produce complicated wm_compose_tree (possibility to have wm_composites on same z-index and therefore not influence each other)
 **** TODO Test cases and comparison
 
 *** STRT Better renderer

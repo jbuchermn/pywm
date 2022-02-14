@@ -13,7 +13,7 @@
 
 struct wm_content_vtable wm_composite_vtable;
 
-/* #define DEBUG_COMPOSE_TREE */
+#define DEBUG_COMPOSE_TREE
 
 void wm_composite_init(struct wm_composite* comp, struct wm_server* server){
     wm_content_init(&comp->super, server);
