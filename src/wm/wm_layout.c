@@ -97,11 +97,12 @@ void wm_layout_reconfigure(struct wm_layout* layout){
 void wm_layout_damage_whole(struct wm_layout* layout){
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
+        DEBUG_PERFORMANCE(damage, output->key);
         wlr_output_damage_add_whole(output->wlr_output_damage);
 
-        DEBUG_PERFORMANCE(schedule_frame, output->key);
-        if(output->key == layout->refresh_master_output){
-            layout->frame_scheduled = true;
+        if(layout->refresh_master_output != layout->refresh_scheduled){
+            DEBUG_PERFORMANCE(schedule_frame, output->key);
+            layout->refresh_scheduled = output->key;
         }
     }
 
@@ -135,17 +136,17 @@ void wm_layout_damage_output(struct wm_layout* layout, struct wm_output* output,
         }
     }
 
-    DEBUG_PERFORMANCE(schedule_frame, output->key);
-    if(output->key == layout->refresh_master_output){
-        layout->frame_scheduled = true;
+    if(layout->refresh_master_output != layout->refresh_scheduled){
+        DEBUG_PERFORMANCE(schedule_frame, output->key);
+        layout->refresh_scheduled = output->key;
     }
 }
 
 void wm_layout_start_update(struct wm_layout* layout){
-    layout->frame_scheduled = false;
+    layout->refresh_scheduled = -1;
 }
-bool wm_layout_frame_scheduled(struct wm_layout* layout){
-    return layout->frame_scheduled;
+int wm_layout_get_refresh_output(struct wm_layout* layout){
+    return layout->refresh_scheduled;
 }
 
 struct send_enter_leave_data {

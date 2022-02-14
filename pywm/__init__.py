@@ -37,3 +37,4 @@ from .pywm_cairo_widget import PyWMCairoWidget
 from .pywm_blur_widget import PyWMBlurWidget
 
 from .damage_tracked import DamageTracked
+from ._pywm import debug_performance

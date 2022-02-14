@@ -3,24 +3,20 @@
 * Development
 ** Current (v0.3)
 *** Bugs
-**** STRT FocusBorder on secondary monitor
-**** TODO Lag in fullscreen video on chrome
+**** DONE Always present top bar with blur - black fades in, once a terminal is in fullscreen this changes
 **** TODO Horizontal damage artifacts after closing views
-**** DONE Gestures break up on secondary monitor
-**** DONE After gestures -> broken blur
-**** DONE Respect workspace in blur and ensure newm sets it properly (multiple screens issue)
+**** WAIT Lag in fullscreen video on chrome
 
-*** STRT Performance topics
+*** Performance topics
    - Goal: Idle CPU low - comparable between sway and pywm-fullscreen
-   - Goal: No dropped frames in pywm animations or gestures
    - Issue: newm - pyevdev gestures uses a lot of CPU and spawns lots of threads
    - Issue: newm - permanent top bar uses a lot of CPU
-   - Issue: Callbacks occassionally take a long time - dropped frames
-   - Issue: wm_config.callback_frequency low means gestures start jumpy and animations start late; high uses a lot of CPU (as long as callbacks are inefficient)
-   - Issue: Are there slow animation frames (Python message), where there is no issue with too slow callbacks (i.e. other non-performance-related)
-   - Example: Open alacritty, hit Mod - slow animations. Open alacritty, start "tail -f newm_log" (i.e. client-side damaging), hit Mod - fast animations (low wm_config.callback_frequency)
-
-*** TODO Test cases and comparison
+**** STRT Feedback loop wm_callback_update is too slow
+   - Goal: No dropped frames in pywm animations or gestures
+   - Issue: (Probably) callbacks occassionally take a long time - dropped frames
+   - Issue: C-Side of view update loop takes a long time (comparable to python) - simplify using constant damage mode?
+   - Issue: Focus view animations (Mod-hjkl) seem to be slower than e.g. fullscreen or overview
+**** TODO Test cases and comparison
 
 *** STRT Better renderer
 **** TODO Extensively test DEBUG_DAMAGE, different render modes, switching between render modes, frame damage optimization, damaging and blur + build test cases (e.g. damage behind blur by FocusBorder)
@@ -32,6 +28,7 @@
     - pywm-fullscreen
 
 ** Backlog / Ideas
+*** Secondary buffer for blurring should extend beyond primary buffer (however this is very complicated, intervenes with workspace logic, for little reward)
 *** If performance-critical: Store wm_composite as texture, better damage handling
 *** Enable keyboard-exclusive client (e.g. layer shell keyboard_interactivity / use in lock screen)
 *** Complete libinput device config / support for external mouse

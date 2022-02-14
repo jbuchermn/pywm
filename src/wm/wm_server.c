@@ -193,7 +193,7 @@ static int callback_timer_handler(void* data){
         DEBUG_PERFORMANCE(py_start, 0);
         wm_layout_start_update(server->wm_layout);
         wm_callback_update();
-        if(server->constant_damage_mode == 1 && !wm_layout_frame_scheduled(server->wm_layout)){
+        if(server->constant_damage_mode == 1 && wm_layout_get_refresh_output(server->wm_layout) < 0){
             wm_layout_damage_whole(server->wm_layout);
         }
         DEBUG_PERFORMANCE(py_finish, 0);
@@ -530,7 +530,7 @@ void wm_server_update_contents(struct wm_server* server){
 
 
 void wm_server_schedule_update(struct wm_server* server, struct wm_output* from_output){
-    if(from_output->key == server->wm_layout->refresh_master_output){
+    if(from_output->key == wm_layout_get_refresh_output(server->wm_layout)){
         wl_event_source_timer_update(server->callback_timer, 1);
     }
 }

@@ -196,7 +196,6 @@ class PyWMView(Generic[PyWMT], DamageTracked):
                 shows_csd: bool,
                 fixed_output_key: int,
                 ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, float, bool, bool, int, tuple[int, int], int, int, int, int, int, int, tuple[float, float, float, float]]:
-
         if general is not None:
             if self.parent is None:
                 try:
