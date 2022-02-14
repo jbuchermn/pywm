@@ -205,9 +205,6 @@ static void wm_compose_tree_printf(struct wm_compose_tree* tree, int indent){
 }
 
 struct wm_compose_tree* wm_compose_tree_from_damage(struct wm_server* server, struct wm_output* output, pixman_region32_t* damage, bool bypass){
-    /* Ensure z-indes */
-    wm_server_update_contents(server);
-
     struct wm_compose_tree* root = calloc(1, sizeof(struct wm_compose_tree));
     root->parent = NULL;
     root->composite = NULL;

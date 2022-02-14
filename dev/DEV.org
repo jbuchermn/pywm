@@ -19,12 +19,18 @@
    - Issue: Do we really need two separate framebuffers (or is one seconadary buffer to read from enough?)
    - Issue: Frame drops don't happen in direct or passthrough render modes, only in indirect
         - reproduce by triggering animation that does not damage - therefore full layout damaging at every frame
-        - mostly with lots of adjacent terminals, which produce complicated wm_compose_tree (possibility to have wm_composites on same z-index and therefore not influence each other)
+        - mostly with lots of adjacent terminals, which produce complicated wm_compose_tree 
+            - Idea (difficult): possibility to have wm_composites on same z-index and therefore not influence each other)
+            - Idea: compose_trees are two complicated in certain cases (i.e. full damage - can be rendered by just going layer-by-layer) w/ overhead due to complicated rendering pipeline
+***** DONE Verify, performance issues can be overcome if rendering is kept simple (3x2 terminals with overlapping damage extents a s an example)
+
 **** TODO Test cases and comparison
 
 *** STRT Better renderer
 **** TODO Extensively test DEBUG_DAMAGE, different render modes, switching between render modes, frame damage optimization, damaging and blur + build test cases (e.g. damage behind blur by FocusBorder)
 **** TODO Performance comparison of renderers / of blur
+
+*** TODO vaapi on nixOS
 
 *** TODO wlr-output-management-unstable-v1 (in order to use wdisplays)
 *** TODO Documentation
@@ -34,6 +40,7 @@
 ** Backlog / Ideas
 *** Secondary buffer for blurring should extend beyond primary buffer (however this is very complicated, intervenes with workspace logic, for little reward)
 *** If performance-critical: Store wm_composite as texture, better damage handling
+*** If performance-critical: Further optimize (simplification algorithm, incorporate all wm_contents) wm_compose_tree
 *** Enable keyboard-exclusive client (e.g. layer shell keyboard_interactivity / use in lock screen)
 *** Complete libinput device config / support for external mouse
 *** Use libseat from python / patched python evdev

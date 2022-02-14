@@ -52,8 +52,6 @@ static void render_at(struct wm_output* output, struct wm_renderer* renderer, st
     if(at->parent){
         /* Content below composite layer -> target to composite input */
         wm_renderer_to_indirect_buffer(renderer, 1);
-        /* Clear secondary buffer */
-        wm_renderer_clear(renderer, &at->leaf_input, (float[]){0., 0., 0., 1.});
     }else{
         /* Content below root layer -> target to output */
         wm_renderer_to_indirect_buffer(renderer, 0);
@@ -96,10 +94,16 @@ static void render_at(struct wm_output* output, struct wm_renderer* renderer, st
 static void render(struct wm_output *output, struct timespec now, pixman_region32_t *damage) {
     struct wm_renderer *renderer = output->wm_server->wm_renderer;
 
+    int width, height;
+    wlr_output_transformed_resolution(output->wlr_output, &width, &height);
+
+    /* Ensure z-indes */
+    wm_server_update_contents(output->wm_server);
+
+
     /* If we are rendering to a (single) FBO - use frame damage, else buffer damage */
     pixman_region32_t* rerender_damage = renderer->mode == WM_RENDERER_INDIRECT ? &output->wlr_output_damage->current : damage;
 
-    struct wm_compose_tree* tree = wm_compose_tree_from_damage(output->wm_server, output, rerender_damage, renderer->mode != WM_RENDERER_INDIRECT);
 
     /* Begin render */
     wm_renderer_begin(renderer, output);
@@ -125,17 +129,43 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     if(needs_clear){
         wm_renderer_to_indirect_buffer(renderer, 0);
         wm_renderer_clear(renderer, rerender_damage, (float[]){ 0., 0., 0., 1.});
+
+        if(renderer->mode == WM_RENDERER_INDIRECT){
+            wm_renderer_to_indirect_buffer(renderer, 1);
+            wm_renderer_clear(renderer, rerender_damage, (float[]){ 0., 0., 0., 1.});
+        }
     }
 
     /* Do render */
-    render_at(output, renderer, output->wm_server, tree, now);
-
+    int nrects;
+    pixman_box32_t* rects = pixman_region32_rectangles(damage, &nrects);
+    if(nrects == 1 && rects[0].x1 == 0 && rects[0].y1 == 0 && rects[0].x2 == width && rects[0].y2 == height){
+        /* 
+         * If the whole screen is damaged, use a simple rendering algorithm on one buffer - this is way more efficient
+         * than wm_compose_tree, which tends to suffer from swiss-cheese. Also overlapping regions are rendered many
+         * times using wm_compose_tree, which is only necessary if the damage is localized.
+         */
+        wm_renderer_to_indirect_buffer(renderer, 0);
+        wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
+            if(wm_content_get_opacity(r) < 0.0001) continue;
+            if(wm_content_is_composite(r)){
+                wm_composite_apply(wm_cast(wm_composite, r), output, damage, 0, now);
+            }else{
+                wm_content_render(r, output, damage, now);
+            }
+        }
+    }else{
+        /*
+         * If the damage is localized, hopefully rendering only the damage (and depending on composites a small region around) is more efficient. 
+         */
+        struct wm_compose_tree* tree = wm_compose_tree_from_damage(output->wm_server, output, rerender_damage, renderer->mode != WM_RENDERER_INDIRECT);
+        render_at(output, renderer, output->wm_server, tree, now);
+        wm_compose_tree_destroy(tree);
+        free(tree);
+    }
 
     /* End render */
     wm_renderer_end(renderer, damage, output);
-
-    int width, height;
-    wlr_output_transformed_resolution(output->wlr_output, &width, &height);
 
     /* Commit */
     pixman_region32_t frame_damage;
@@ -156,9 +186,6 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     if (!wlr_output_commit(output->wlr_output)) {
         wlr_log(WLR_DEBUG, "Commit frame failed");
     }
-
-    wm_compose_tree_destroy(tree);
-    free(tree);
 
     /* 
      * Synchronous update is best scheduled immediately after frame
