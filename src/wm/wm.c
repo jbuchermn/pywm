@@ -354,9 +354,11 @@ void wm_callback_view_event(struct wm_view *view, const char *event) {
 
 void wm_callback_update_view(struct wm_view *view){
     TIMER_START(callback_update_view);
+    DEBUG_PERFORMANCE(py_start, 0);
     if (wm.callback_update_view) {
         (*wm.callback_update_view)(view);
     }
+    DEBUG_PERFORMANCE(py_finish, 0);
     TIMER_STOP(callback_update_view);
     TIMER_PRINT(callback_update_view);
 }
