@@ -10,25 +10,22 @@ output = int(sys.argv[2])
 
 data: list[tuple[str, float, float, float, int]] = []
 with open(sys.argv[1], 'r') as inp:
+    last_render = -1.
     idx_render = 0
     for l in inp:
         res = pattern.match(l)
         if res is not None:
-            kind, o, ts = res.group(1), int(res.group(2)), float(res.group(3))
+            kind, o, ts = str(res.group(1)), int(res.group(2)), float(res.group(3))
             if o != 0 and o != output and kind != "py_start" and kind != "py_finish":
                 continue
-            data += [(kind, idx_render, ts, ts, idx_render)]
+            if last_render > 0:
+                data += [(kind, idx_render, ts - last_render, ts, idx_render)]
 
             if kind == "render":
-                for i in range(1, len(data)):
-                    if i > 1 and data[-i][0] == "render":
-                        break
-                    data[-i] = data[-i][0], data[-i][1], data[-i][2] - ts, data[-i][3], data[-i][4]
-                data += [("render2", idx_render + 1, ts, ts, idx_render + 1)]
+                last_render = ts
                 idx_render += 1
+                data += [("render2", idx_render, 0, ts, idx_render)]
 
-
-data = [d for d in data if d[2] <= 0.]
 
 zero_ts = data[0][3]
 cur_idx = -1.
@@ -44,8 +41,8 @@ if sys.argv[3] == "plot":
     visual = {
         'render': 'g.-',
         'render2': 'g.-',
-        'damage': 'b+',
-        'schedule_frame': 'b.',
+        'damage': 'b.',
+        'schedule_frame': 'b+',
         'skip_frame': 'gx',
         'present_frame': 'ro',
         'py_start': 'r+',

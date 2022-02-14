@@ -15,6 +15,7 @@
    - Goal: No dropped frames in pywm animations or gestures
    - Issue: (Probably) callbacks occassionally take a long time - dropped frames
    - Issue: C-Side of view update loop takes a long time (comparable to python) - simplify using constant damage mode?
+   - Issue: Focus view animations (Mod-hjkl) seem to be slower than e.g. fullscreen or overview
 **** TODO Test cases and comparison
 
 *** STRT Better renderer
