@@ -33,4 +33,16 @@ void wm_composite_on_damage_below(struct wm_composite* comp, struct wm_output* o
 bool wm_content_is_composite(struct wm_content* content);
 void wm_composite_apply(struct wm_composite* composite, struct wm_output* output, pixman_region32_t* damage, struct timespec now);
 
+struct wm_compose_chain {
+    struct wm_compose_chain* lower;
+    struct wm_compose_chain* higher;
+    struct wm_composite* composite;
+    double z_index;
+    pixman_region32_t damage;
+    pixman_region32_t composite_output;
+};
+
+struct wm_compose_chain* wm_compose_chain_from_damage(struct wm_server* server, struct wm_output* output, pixman_region32_t* damage);
+void wm_compose_chain_free(struct wm_compose_chain* chain);
+
 #endif

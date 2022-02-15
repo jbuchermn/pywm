@@ -667,18 +667,23 @@ static void blit_framebuffer(struct wm_renderer* renderer, pixman_region32_t* da
     enum wl_output_transform transform =
         wlr_output_transform_invert(renderer->current->wlr_output->transform);
 
-    int nrects;
-    pixman_box32_t *rects = pixman_region32_rectangles(damage, &nrects);
-    for (int i = 0; i < nrects; i++) {
-        struct wlr_box damage_box = {.x = rects[i].x1,
-                                     .y = rects[i].y1,
-                                     .width = rects[i].x2 - rects[i].x1,
-                                     .height = rects[i].y2 - rects[i].y1};
-
-
-        wlr_box_transform(&damage_box, &damage_box, transform, ow, oh);
-        wlr_renderer_scissor(renderer->wlr_renderer, &damage_box);
+    if(!damage){
+        wlr_renderer_scissor(renderer->wlr_renderer, NULL);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    }else{
+        int nrects;
+        pixman_box32_t *rects = pixman_region32_rectangles(damage, &nrects);
+        for (int i = 0; i < nrects; i++) {
+            struct wlr_box damage_box = {.x = rects[i].x1,
+                                         .y = rects[i].y1,
+                                         .width = rects[i].x2 - rects[i].x1,
+                                         .height = rects[i].y2 - rects[i].y1};
+
+
+            wlr_box_transform(&damage_box, &damage_box, transform, ow, oh);
+            wlr_renderer_scissor(renderer->wlr_renderer, &damage_box);
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        }
     }
 
     glDisableVertexAttribArray(renderer->quad_shader.pos_attrib);

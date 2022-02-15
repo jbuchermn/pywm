@@ -53,7 +53,6 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     /* Ensure z-indes */
     wm_server_update_contents(output->wm_server);
 
-
     /* Begin render */
     wm_renderer_begin(renderer, output);
 
@@ -75,45 +74,46 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
         }
     }
 
-    /*
-     * TODO:
-     * - Select indirect based on damage and wm_composites,
-     * - If true extend damage to render_damage based on wm_composite extends
-     * - Possibly extend damage based on z-index
-     */
-    bool indirect = true;
-    pixman_region32_t* render_damage = damage;
+    struct wm_compose_chain* chain = wm_compose_chain_from_damage(output->wm_server, output, damage);
+
+    struct wm_compose_chain* last = chain;
+    while(last->lower) last = last->lower;
 
     if(needs_clear){
         wm_renderer_to_buffer(renderer, 0);
         wm_renderer_clear(renderer, damage, (float[]){ 0., 0., 0., 1.});
 
-        if(indirect){
+        if(last != chain){
             wm_renderer_to_buffer(renderer, 1);
-            wm_renderer_clear(renderer, render_damage, (float[]){ 0., 0., 0., 1.});
+            wm_renderer_clear(renderer, &last->damage, (float[]){ 0., 0., 0., 1.});
         }
     }
 
-    if(indirect){
+    if(last != chain){
         wm_renderer_to_buffer(renderer, 1);
     }
 
     /* Do render */
-    wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
-        if(wm_content_get_opacity(r) < 0.0001) continue;
-        if(wm_content_is_composite(r)){
-            wm_composite_apply(wm_cast(wm_composite, r), output, render_damage, now);
-        }else{
-            wm_content_render(r, output, render_damage, now);
+    for(struct wm_compose_chain* at=last; at; at=at->higher){
+        wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
+            if(at->lower && wm_content_get_z_index(r) < at->lower->z_index) continue;
+            if(wm_content_get_z_index(r) > at->z_index) break;
+
+            if(wm_content_get_opacity(r) < 0.0001) continue;
+            wm_content_render(r, output, &at->damage, now);
+        }
+        if(at->composite){
+            wm_composite_apply(at->composite, output, &at->composite_output, now);
         }
     }
 
-    if(indirect){
+    if(last != chain){
         wm_renderer_to_buffer(renderer, 1);
     }
 
     /* End render */
-    wm_renderer_end(renderer, damage, output);
+    wm_renderer_end(renderer, &chain->damage, output);
+    wm_compose_chain_free(chain);
 
     /* Commit */
     pixman_region32_t frame_damage;

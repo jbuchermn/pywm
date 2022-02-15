@@ -52,6 +52,33 @@ static int blur_extend(int passes, int radius){
     return radius * pow(2., passes);
 }
 
+static int wm_composite_extend(struct wm_composite* comp){
+    if(comp->type == WM_COMPOSITE_BLUR){
+        int radius = comp->params.n_params_int >= 1 ? comp->params.params_int[0] : 1;
+        int passes = comp->params.n_params_int >= 2 ? comp->params.params_int[1] : 2;
+        return blur_extend(passes, radius);
+    }
+    return 0;
+}
+
+static void wm_composite_extend_box(struct wlr_box* box, struct wlr_box* comp_box, int extend){
+    struct wlr_box extended_comp_box = {
+        .x = comp_box->x - extend,
+        .y = comp_box->y - extend,
+        .width = comp_box->width + 2*extend,
+        .height = comp_box->height + 2*extend,
+    };
+
+    struct wlr_box extended_box = {
+        .x = box->x - extend,
+        .y = box->y - extend,
+        .width = box->width + 2*extend,
+        .height = box->height + 2*extend,
+    };
+
+    wlr_box_intersection(box, &extended_comp_box, &extended_box);
+}
+
 static void wm_composite_get_effective_box(struct wm_composite* composite, struct wm_output* output, struct wlr_box* box){
     double display_x, display_y, display_w, display_h;
     wm_content_get_box(&composite->super, &display_x, &display_y, &display_w, &display_h);
@@ -78,12 +105,7 @@ void wm_composite_on_damage_below(struct wm_composite* comp, struct wm_output* o
     struct wlr_box box;
     wm_composite_get_effective_box(comp, output, &box);
 
-    int extend = 0;
-    if(comp->type == WM_COMPOSITE_BLUR){
-        int radius = comp->params.n_params_int >= 1 ? comp->params.params_int[0] : 1;
-        int passes = comp->params.n_params_int >= 2 ? comp->params.params_int[1] : 2;
-        extend = blur_extend(passes, radius);
-    }
+    int extend = wm_composite_extend(comp);
     int nrects;
     pixman_box32_t* rects = pixman_region32_rectangles(damage, &nrects);
     for(int i = 0; i < nrects; i++){
@@ -133,3 +155,82 @@ struct wm_content_vtable wm_composite_vtable = {
     .damage_output = NULL,
     .printf = &wm_composite_printf
 };
+
+
+struct wm_compose_chain* wm_compose_chain_from_damage(struct wm_server* server, struct wm_output* output, pixman_region32_t* damage){
+
+    struct wm_compose_chain* result = calloc(1, sizeof(struct wm_compose_chain));
+    pixman_region32_init(&result->damage);
+    pixman_region32_union(&result->damage, &result->damage, damage);
+
+    pixman_region32_init(&result->composite_output);
+
+    struct wm_compose_chain* at = result;
+
+    struct wm_content* content;
+    bool initial = true;
+
+    wl_list_for_each(content, &server->wm_contents, link){
+        if(initial) result->z_index = wm_content_get_z_index(content) + 1.;
+
+        if(wm_content_is_composite(content)){
+            at->lower = calloc(1, sizeof(struct wm_compose_chain));
+            at->lower->higher = at;
+            at = at->lower;
+
+            at->composite = wm_cast(wm_composite, content);
+            at->z_index = wm_content_get_z_index(content);
+            pixman_region32_init(&at->damage);
+            pixman_region32_init(&at->composite_output);
+
+
+            int extend = wm_composite_extend(at->composite);
+            struct wlr_box box;
+            wm_composite_get_effective_box(at->composite, output, &box);
+
+            int nrects;
+            pixman_box32_t* rects = pixman_region32_rectangles(&at->higher->damage, &nrects);
+            for(int i=0; i<nrects; i++){
+                struct wlr_box damage_box = {
+                    .x = rects[i].x1,
+                    .y = rects[i].y1,
+                    .width = rects[i].x2 - rects[i].x1,
+                    .height = rects[i].y2 - rects[i].y1
+                };
+
+                struct wlr_box composite_output;
+                wlr_box_intersection(&composite_output, &box, &damage_box);
+                pixman_region32_union_rect(&at->composite_output, &at->composite_output, 
+                        composite_output.x, composite_output.y, composite_output.width, composite_output.height);
+
+
+                pixman_region32_union_rect(&at->damage, &at->damage,
+                        damage_box.x, damage_box.y, damage_box.width, damage_box.height);
+
+                wm_composite_extend_box(&damage_box, &box, extend);
+                pixman_region32_union_rect(&at->damage, &at->damage,
+                        damage_box.x, damage_box.y, damage_box.width, damage_box.height);
+
+            }
+
+            if(!pixman_region32_not_empty(&at->composite_output)){
+                at = at->higher;
+                wm_compose_chain_free(at->lower);
+                at->lower = NULL;
+            }
+        }
+
+        initial = false;
+    }
+
+    return result;
+}
+
+void wm_compose_chain_free(struct wm_compose_chain* chain){
+    if(chain->lower){
+        wm_compose_chain_free(chain->lower);
+    }
+    pixman_region32_fini(&chain->damage);
+    pixman_region32_fini(&chain->composite_output);
+    free(chain);
+}
