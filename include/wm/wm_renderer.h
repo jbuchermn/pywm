@@ -67,7 +67,6 @@ struct wm_renderer_primitive_shader {
     GLint params_int;
 };
 
-#define WM_RENDERER_INDIRECT_BUFFERS 2
 #define WM_RENDERER_DOWNSAMPLE_BUFFERS 4
 
 struct wm_renderer_buffers {
@@ -75,9 +74,9 @@ struct wm_renderer_buffers {
     int height;
     struct wm_renderer* parent;
 
-    GLuint frame_buffer[WM_RENDERER_INDIRECT_BUFFERS];
-    GLuint frame_buffer_rbo[WM_RENDERER_INDIRECT_BUFFERS];
-    GLuint frame_buffer_tex[WM_RENDERER_INDIRECT_BUFFERS];
+    GLuint frame_buffer;
+    GLuint frame_buffer_rbo;
+    GLuint frame_buffer_tex;
 
     GLuint downsample_buffers[WM_RENDERER_DOWNSAMPLE_BUFFERS];
     GLuint downsample_buffers_rbo[WM_RENDERER_DOWNSAMPLE_BUFFERS];
@@ -95,13 +94,10 @@ void wm_renderer_buffers_ensure(struct wm_renderer* renderer, struct wm_output* 
 
 enum wm_renderer_mode {
     /* Pass all methods to wlr_renderer */
-    WM_RENDERER_PASSTHROUGH,
+    WM_RENDERER_WLR,
 
-    /* Directly render to wlr buffers using own shaders */
-    WM_RENDERER_DIRECT,
-
-    /* Render to FBO, supports blur, more resource-intensive */
-    WM_RENDERER_INDIRECT
+    /* Use own shaders */
+    WM_RENDERER_PYWM,
 };
 
 struct wm_renderer {
@@ -182,7 +178,7 @@ void wm_renderer_select_texture_shaders(struct wm_renderer* renderer, const char
 void wm_renderer_select_primitive_shader(struct wm_renderer* renderer, const char* name);
 bool wm_renderer_check_primitive_params(struct wm_renderer* renderer, int n_int, int n_float);
 
-void wm_renderer_to_indirect_buffer(struct wm_renderer* renderer, unsigned int buffer);
+void wm_renderer_to_buffer(struct wm_renderer* renderer, unsigned int buffer);
 
 void wm_renderer_begin(struct wm_renderer *renderer, struct wm_output *output);
 void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
@@ -204,7 +200,6 @@ void wm_renderer_apply_blur(struct wm_renderer* renderer,
                             pixman_region32_t* damage,
                             int extend_damage,
                             struct wlr_box* box,
-                            unsigned int from_buffer,
                             int radius,
                             int passes,
                             double cornerradius);

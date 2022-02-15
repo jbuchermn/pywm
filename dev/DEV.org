@@ -3,6 +3,15 @@
 * Development
 ** Current (v0.3)
 *** Bugs
+**** TODO wm_compose_tree does not quite reproduce "stupid" rendering - flickering during switches. Probably there are issues in region logic when setting up compose_tree
+            - Issues with  composite -------------
+                           composite        ---------------
+                           composite ++++-------
+                +++ are not taken as input to top composite --> Issue is, multiple children of one node overwrite each others output with their own leaf_input
+                --> Need something more like a chain than a tree
+**** TODO wm_compose_tree rendering seems to be really cpu intensive (keep gesture alive for a long time e.g.)
+
+
 **** TODO Horizontal damage artifacts after closing views
 **** WAIT Lag in fullscreen video on chrome
 
@@ -22,7 +31,6 @@
         - mostly with lots of adjacent terminals, which produce complicated wm_compose_tree 
             - Idea (difficult): possibility to have wm_composites on same z-index and therefore not influence each other)
             - Idea: compose_trees are two complicated in certain cases (i.e. full damage - can be rendered by just going layer-by-layer) w/ overhead due to complicated rendering pipeline
-***** DONE Verify, performance issues can be overcome if rendering is kept simple (3x2 terminals with overlapping damage extents a s an example)
 
 **** TODO Test cases and comparison
 

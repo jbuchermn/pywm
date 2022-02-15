@@ -5,7 +5,7 @@
 #include <time.h>
 
 /* Warning - very chatty */
-#define DEBUG_PERFORMANCE_ENABLED
+// #define DEBUG_PERFORMANCE
 
 #define wm_offset_of(_struct_, _member_)  (size_t)&(((struct _struct_ *)0)->_member_)
  
@@ -70,7 +70,7 @@ static inline double secs_now(){
         TIMER_ ## TNAME ## _last_print = TIMER_ ## TNAME ## _print; \
     }
 
-#ifdef DEBUG_PERFORMANCE_ENABLED
+#ifdef DEBUG_PERFORMANCE
 #define DEBUG_PERFORMANCE(name, output) wlr_log(WLR_DEBUG, "DEBUGPERFORMANCE[%s(%d)]: %.6f", #name, output, secs_now());
 #define DEBUG_PERFORMANCE_PTR(name, output) wlr_log(WLR_DEBUG, "DEBUGPERFORMANCE[%s(%d)]: %.6f", name, output, secs_now());
 #else

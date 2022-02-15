@@ -43,53 +43,6 @@ static void handle_present(struct wl_listener *listener, void *data) {
     struct wm_output *output = wl_container_of(listener, output, present);
 }
 
-static void render_at(struct wm_output* output, struct wm_renderer* renderer, struct wm_server* server, struct wm_compose_tree* at, struct timespec now){
-    struct wm_compose_tree* it;
-    wl_list_for_each(it, &at->children, link){
-        render_at(output, renderer, server, it, now);
-    }
-
-    if(at->parent){
-        /* Content below composite layer -> target to composite input */
-        wm_renderer_to_indirect_buffer(renderer, 1);
-    }else{
-        /* Content below root layer -> target to output */
-        wm_renderer_to_indirect_buffer(renderer, 0);
-    }
-
-    if(pixman_region32_not_empty(&at->leaf_input)){
-
-        /* Render all content below with damage at->leaf_input */
-        struct wm_content* r;
-        wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
-            if(at->composite && wm_content_get_z_index(r) > wm_content_get_z_index(&at->composite->super)) break;
-
-            if(wm_content_get_opacity(r) < 0.0001) continue;
-            wm_content_render(r, output, &at->leaf_input, now);
-        }
-    }
-
-    /* Content above composite layer -> target to composite output */
-    wm_renderer_to_indirect_buffer(renderer, (at->parent && at->parent->parent) ? 1 : 0);
-
-    if(at->composite && pixman_region32_not_empty(&at->output)){
-        /* Apply composite on at->output from buffer 1 */
-        wm_composite_apply(at->composite, output, &at->output, 1, now);
-    }
-
-    if(at->parent){
-        /* Render all content between self and parent inside output */
-        struct wm_content* r;
-        wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
-            if(at->parent->composite && wm_content_get_z_index(r) > wm_content_get_z_index(&at->parent->composite->super)) break;
-            if(at->composite && wm_content_get_z_index(r) <= wm_content_get_z_index(&at->composite->super)) continue;
-
-            if(wm_content_get_opacity(r) < 0.0001) continue;
-            wm_content_render(r, output, &at->output, now);
-        }
-    }
-
-}
 
 static void render(struct wm_output *output, struct timespec now, pixman_region32_t *damage) {
     struct wm_renderer *renderer = output->wm_server->wm_renderer;
@@ -99,10 +52,6 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
 
     /* Ensure z-indes */
     wm_server_update_contents(output->wm_server);
-
-
-    /* If we are rendering to a (single) FBO - use frame damage, else buffer damage */
-    pixman_region32_t* rerender_damage = renderer->mode == WM_RENDERER_INDIRECT ? &output->wlr_output_damage->current : damage;
 
 
     /* Begin render */
@@ -126,42 +75,41 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
         }
     }
 
-    if(needs_clear){
-        wm_renderer_to_indirect_buffer(renderer, 0);
-        wm_renderer_clear(renderer, rerender_damage, (float[]){ 0., 0., 0., 1.});
+    /*
+     * TODO:
+     * - Select indirect based on damage and wm_composites,
+     * - If true extend damage to render_damage based on wm_composite extends
+     * - Possibly extend damage based on z-index
+     */
+    bool indirect = true;
+    pixman_region32_t* render_damage = damage;
 
-        if(renderer->mode == WM_RENDERER_INDIRECT){
-            wm_renderer_to_indirect_buffer(renderer, 1);
-            wm_renderer_clear(renderer, rerender_damage, (float[]){ 0., 0., 0., 1.});
+    if(needs_clear){
+        wm_renderer_to_buffer(renderer, 0);
+        wm_renderer_clear(renderer, damage, (float[]){ 0., 0., 0., 1.});
+
+        if(indirect){
+            wm_renderer_to_buffer(renderer, 1);
+            wm_renderer_clear(renderer, render_damage, (float[]){ 0., 0., 0., 1.});
         }
     }
 
+    if(indirect){
+        wm_renderer_to_buffer(renderer, 1);
+    }
+
     /* Do render */
-    int nrects;
-    pixman_box32_t* rects = pixman_region32_rectangles(damage, &nrects);
-    if(nrects == 1 && rects[0].x1 == 0 && rects[0].y1 == 0 && rects[0].x2 == width && rects[0].y2 == height){
-        /* 
-         * If the whole screen is damaged, use a simple rendering algorithm on one buffer - this is way more efficient
-         * than wm_compose_tree, which tends to suffer from swiss-cheese. Also overlapping regions are rendered many
-         * times using wm_compose_tree, which is only necessary if the damage is localized.
-         */
-        wm_renderer_to_indirect_buffer(renderer, 0);
-        wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
-            if(wm_content_get_opacity(r) < 0.0001) continue;
-            if(wm_content_is_composite(r)){
-                wm_composite_apply(wm_cast(wm_composite, r), output, damage, 0, now);
-            }else{
-                wm_content_render(r, output, damage, now);
-            }
+    wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
+        if(wm_content_get_opacity(r) < 0.0001) continue;
+        if(wm_content_is_composite(r)){
+            wm_composite_apply(wm_cast(wm_composite, r), output, render_damage, now);
+        }else{
+            wm_content_render(r, output, render_damage, now);
         }
-    }else{
-        /*
-         * If the damage is localized, hopefully rendering only the damage (and depending on composites a small region around) is more efficient. 
-         */
-        struct wm_compose_tree* tree = wm_compose_tree_from_damage(output->wm_server, output, rerender_damage, renderer->mode != WM_RENDERER_INDIRECT);
-        render_at(output, renderer, output->wm_server, tree, now);
-        wm_compose_tree_destroy(tree);
-        free(tree);
+    }
+
+    if(indirect){
+        wm_renderer_to_buffer(renderer, 1);
     }
 
     /* End render */
@@ -201,7 +149,7 @@ static void handle_damage_frame(struct wl_listener *listener, void *data) {
     clock_gettime(CLOCK_MONOTONIC, &now);
 
     double diff = msec_diff(now, output->last_frame);
-    if(output->expecting_frame &&  diff > 1.5 * 1000000./output->wlr_output->current_mode->refresh){
+    if(output->expecting_frame &&  output->wlr_output->current_mode && diff > 1.5 * 1000000./output->wlr_output->current_mode->refresh){
         wlr_log(WLR_DEBUG, "Output %d dropped frame (%.2fms)", output->key, diff);
     }
 
