@@ -290,7 +290,7 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
         strcpy(out->name, wm_output_overridden_name);
         wm_output_overridden_name = NULL;
     }
-    wlr_log(WLR_INFO, "New output: %s: %s - %s (%s)", out->make, out->model, out->name, out->description);
+    wlr_log(WLR_INFO, "New output: %s: %s (%s) - use name: '%s' to configure", out->make, out->model, out->description, out->name);
     output->wm_server = server;
     output->wm_layout = layout;
     output->wlr_output = out;
