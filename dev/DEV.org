@@ -3,44 +3,25 @@
 * Development
 ** Current (v0.3)
 *** Bugs
-**** TODO wm_compose_tree does not quite reproduce "stupid" rendering - flickering during switches. Probably there are issues in region logic when setting up compose_tree
-            - Issues with  composite -------------
-                           composite        ---------------
-                           composite ++++-------
-                +++ are not taken as input to top composite --> Issue is, multiple children of one node overwrite each others output with their own leaf_input
-                --> Need something more like a chain than a tree
-**** TODO wm_compose_tree rendering seems to be really cpu intensive (keep gesture alive for a long time e.g.)
-
-
-**** TODO Horizontal damage artifacts after closing views
+**** WAIT Horizontal damage artifacts after closing views
 **** WAIT Lag in fullscreen video on chrome
 
 *** Performance topics
    - Goal: Idle CPU low - comparable between sway and pywm-fullscreen
    - Issue: newm - pyevdev gestures uses a lot of CPU and spawns lots of threads
    - Issue: newm - permanent top bar uses a lot of CPU
-**** STRT Feedback loop wm_callback_update is too slow
    - Goal: No dropped frames in pywm animations or gestures
    - Issue: (Probably) callbacks occassionally take a long time - dropped frames
    - Issue: C-Side of view update loop takes a long time (comparable to python) - simplify using constant damage mode?
-   - Issue: Focus view animations (Mod-hjkl) seem to be slower than e.g. fullscreen or overview
-   - Issue: Looks like frames are dropped when keeping enter pressed in a terminal
-   - Issue: Do we really need two separate framebuffers (or is one seconadary buffer to read from enough?)
-   - Issue: Frame drops don't happen in direct or passthrough render modes, only in indirect
-        - reproduce by triggering animation that does not damage - therefore full layout damaging at every frame
-        - mostly with lots of adjacent terminals, which produce complicated wm_compose_tree 
-            - Idea (difficult): possibility to have wm_composites on same z-index and therefore not influence each other)
-            - Idea: compose_trees are two complicated in certain cases (i.e. full damage - can be rendered by just going layer-by-layer) w/ overhead due to complicated rendering pipeline
-
 **** TODO Test cases and comparison
 
 *** STRT Better renderer
-**** TODO Extensively test DEBUG_DAMAGE, different render modes, switching between render modes, frame damage optimization, damaging and blur + build test cases (e.g. damage behind blur by FocusBorder)
-**** TODO Performance comparison of renderers / of blur
+**** TODO Extensively test DEBUG_DAMAGE, WM_CUSTOM_RENDERER, different render modes, switching between render modes, frame damage optimization, damaging and blur 
+**** TODO Build test cases (e.g. damage behind blur by FocusBorder)
 
 *** TODO vaapi on nixOS
 
-*** TODO wlr-output-management-unstable-v1 (in order to use wdisplays)
+*** STRT wlr-output-management-unstable-v1 (in order to use wdisplays)
 *** TODO Documentation
     - Gestures removed
     - pywm-fullscreen
