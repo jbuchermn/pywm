@@ -43,63 +43,15 @@ static void handle_present(struct wl_listener *listener, void *data) {
     struct wm_output *output = wl_container_of(listener, output, present);
 }
 
-static void render_at(struct wm_output* output, struct wm_renderer* renderer, struct wm_server* server, struct wm_compose_tree* at, struct timespec now){
-    struct wm_compose_tree* it;
-    wl_list_for_each(it, &at->children, link){
-        render_at(output, renderer, server, it, now);
-    }
-
-    if(at->parent){
-        /* Content below composite layer -> target to composite input */
-        wm_renderer_to_indirect_buffer(renderer, 1);
-        /* Clear secondary buffer */
-        wm_renderer_clear(renderer, &at->leaf_input, (float[]){0., 0., 0., 1.});
-    }else{
-        /* Content below root layer -> target to output */
-        wm_renderer_to_indirect_buffer(renderer, 0);
-    }
-
-    if(pixman_region32_not_empty(&at->leaf_input)){
-
-        /* Render all content below with damage at->leaf_input */
-        struct wm_content* r;
-        wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
-            if(at->composite && wm_content_get_z_index(r) > wm_content_get_z_index(&at->composite->super)) break;
-
-            if(wm_content_get_opacity(r) < 0.0001) continue;
-            wm_content_render(r, output, &at->leaf_input, now);
-        }
-    }
-
-    /* Content above composite layer -> target to composite output */
-    wm_renderer_to_indirect_buffer(renderer, (at->parent && at->parent->parent) ? 1 : 0);
-
-    if(at->composite && pixman_region32_not_empty(&at->output)){
-        /* Apply composite on at->output from buffer 1 */
-        wm_composite_apply(at->composite, output, &at->output, 1, now);
-    }
-
-    if(at->parent){
-        /* Render all content between self and parent inside output */
-        struct wm_content* r;
-        wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
-            if(at->parent->composite && wm_content_get_z_index(r) > wm_content_get_z_index(&at->parent->composite->super)) break;
-            if(at->composite && wm_content_get_z_index(r) <= wm_content_get_z_index(&at->composite->super)) continue;
-
-            if(wm_content_get_opacity(r) < 0.0001) continue;
-            wm_content_render(r, output, &at->output, now);
-        }
-    }
-
-}
 
 static void render(struct wm_output *output, struct timespec now, pixman_region32_t *damage) {
     struct wm_renderer *renderer = output->wm_server->wm_renderer;
 
-    /* If we are rendering to a (single) FBO - use frame damage, else buffer damage */
-    pixman_region32_t* rerender_damage = renderer->mode == WM_RENDERER_INDIRECT ? &output->wlr_output_damage->current : damage;
+    int width, height;
+    wlr_output_transformed_resolution(output->wlr_output, &width, &height);
 
-    struct wm_compose_tree* tree = wm_compose_tree_from_damage(output->wm_server, output, rerender_damage, renderer->mode != WM_RENDERER_INDIRECT);
+    /* Ensure z-indes */
+    wm_server_update_contents(output->wm_server);
 
     /* Begin render */
     wm_renderer_begin(renderer, output);
@@ -122,20 +74,46 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
         }
     }
 
+    struct wm_compose_chain* chain = wm_compose_chain_from_damage(output->wm_server, output, damage);
+
+    struct wm_compose_chain* last = chain;
+    while(last->lower) last = last->lower;
+
     if(needs_clear){
-        wm_renderer_to_indirect_buffer(renderer, 0);
-        wm_renderer_clear(renderer, rerender_damage, (float[]){ 0., 0., 0., 1.});
+        wm_renderer_to_buffer(renderer, 0);
+        wm_renderer_clear(renderer, damage, (float[]){ 0., 0., 0., 1.});
+
+        if(last != chain){
+            wm_renderer_to_buffer(renderer, 1);
+            wm_renderer_clear(renderer, &last->damage, (float[]){ 0., 0., 0., 1.});
+        }
+    }
+
+    if(last != chain){
+        wm_renderer_to_buffer(renderer, 1);
     }
 
     /* Do render */
-    render_at(output, renderer, output->wm_server, tree, now);
+    for(struct wm_compose_chain* at=last; at; at=at->higher){
+        wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
+            if(at->lower && wm_content_get_z_index(r) < at->lower->z_index) continue;
+            if(wm_content_get_z_index(r) > at->z_index) break;
 
+            if(wm_content_get_opacity(r) < 0.0001) continue;
+            wm_content_render(r, output, &at->damage, now);
+        }
+        if(at->composite){
+            wm_composite_apply(at->composite, output, &at->composite_output, now);
+        }
+    }
+
+    if(last != chain){
+        wm_renderer_to_buffer(renderer, 1);
+    }
 
     /* End render */
-    wm_renderer_end(renderer, damage, output);
-
-    int width, height;
-    wlr_output_transformed_resolution(output->wlr_output, &width, &height);
+    wm_renderer_end(renderer, &chain->damage, output);
+    wm_compose_chain_free(chain);
 
     /* Commit */
     pixman_region32_t frame_damage;
@@ -157,9 +135,6 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
         wlr_log(WLR_DEBUG, "Commit frame failed");
     }
 
-    wm_compose_tree_destroy(tree);
-    free(tree);
-
     /* 
      * Synchronous update is best scheduled immediately after frame
      */
@@ -169,6 +144,14 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
 
 static void handle_damage_frame(struct wl_listener *listener, void *data) {
     struct wm_output *output = wl_container_of(listener, output, damage_frame);
+
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+
+    double diff = msec_diff(now, output->last_frame);
+    if(output->expecting_frame &&  output->wlr_output->current_mode && diff > 1.5 * 1000000./output->wlr_output->current_mode->refresh){
+        wlr_log(WLR_DEBUG, "Output %d dropped frame (%.2fms)", output->key, diff);
+    }
 
     bool needs_frame;
     pixman_region32_t damage;
@@ -183,20 +166,22 @@ static void handle_damage_frame(struct wl_listener *listener, void *data) {
 #endif
 
         if (needs_frame) {
-            struct timespec now;
-            clock_gettime(CLOCK_MONOTONIC, &now);
-
             DEBUG_PERFORMANCE(render, output->key);
             TIMER_START(render);
             render(output, now, &damage);
             TIMER_STOP(render);
             TIMER_PRINT(render);
+
+            output->expecting_frame = true;
         } else {
             DEBUG_PERFORMANCE(skip_frame, output->key);
             wlr_output_rollback(output->wlr_output);
-        }
 
+            output->expecting_frame = false;
+        }
         pixman_region32_fini(&damage);
+
+        output->last_frame = now;
     }else{
         wlr_log(WLR_DEBUG, "Attaching to renderer failed");
     }
@@ -305,7 +290,7 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
         strcpy(out->name, wm_output_overridden_name);
         wm_output_overridden_name = NULL;
     }
-    wlr_log(WLR_INFO, "New output: %s: %s - %s (%s)", out->make, out->model, out->name, out->description);
+    wlr_log(WLR_INFO, "New output: %s: %s (%s) - use name: '%s' to configure", out->make, out->model, out->description, out->name);
     output->wm_server = server;
     output->wm_layout = layout;
     output->wlr_output = out;
@@ -347,6 +332,9 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
 #ifdef WM_CUSTOM_RENDERER
     output->renderer_buffers = NULL;
 #endif
+
+    output->expecting_frame = false;
+    clock_gettime(CLOCK_MONOTONIC, &output->last_frame);
 }
 
 void wm_output_reconfigure(struct wm_output* output){

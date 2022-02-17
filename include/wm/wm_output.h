@@ -28,6 +28,9 @@ struct wm_output {
     struct wl_listener damage_frame;
     struct wl_listener damage_destroy;
 
+    bool expecting_frame;
+    struct timespec last_frame;
+
 #if WM_CUSTOM_RENDERER
     struct wm_renderer_buffers* renderer_buffers;
 #endif

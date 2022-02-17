@@ -77,15 +77,13 @@ void wm_config_reconfigure(struct wm_config* config, struct wm_server* server){
 }
 
 enum wm_renderer_mode wm_config_get_renderer_mode(struct wm_config* config){
-    if(!strcmp(config->renderer_mode, "passthrough")){
-        return WM_RENDERER_PASSTHROUGH;
-    }else if(!strcmp(config->renderer_mode, "direct")){
-        return WM_RENDERER_DIRECT;
-    }else if(!strcmp(config->renderer_mode, "indirect")){
-        return WM_RENDERER_INDIRECT;
+    if(!strcmp(config->renderer_mode, "wlr")){
+        return WM_RENDERER_WLR;
+    }else if(!strcmp(config->renderer_mode, "pywm")){
+        return WM_RENDERER_PYWM;
     } 
 
-    return WM_RENDERER_PASSTHROUGH;
+    return WM_RENDERER_PYWM;
 }
 
 void wm_config_set_xcursor_theme(struct wm_config* config, const char* xcursor_theme){
