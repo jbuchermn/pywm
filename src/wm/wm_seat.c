@@ -210,8 +210,10 @@ void wm_seat_focus_surface(struct wm_seat* seat, struct wlr_surface* surface){
 
         wm_view_set_activated(view, true);
         struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat->wlr_seat);
-        wlr_seat_keyboard_notify_enter(seat->wlr_seat, surface,
-                keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
+        if(keyboard){
+            wlr_seat_keyboard_notify_enter(seat->wlr_seat, surface,
+                    keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
+        }
     }else{
         wlr_seat_keyboard_clear_focus(seat->wlr_seat);
         wlr_seat_pointer_clear_focus(seat->wlr_seat);
