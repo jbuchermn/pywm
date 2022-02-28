@@ -4,7 +4,7 @@
 #include <wayland-server.h>
 #include <wlr/types/wlr_input_device.h>
 #include <wlr/types/wlr_seat.h>
-#include <wlr/types/wlr_surface.h>
+#include <wlr/types/wlr_compositor.h>
 
 struct wm_server;
 struct wm_cursor;

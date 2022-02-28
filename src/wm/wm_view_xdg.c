@@ -7,6 +7,7 @@
 #include <wlr/util/log.h>
 #include <wlr/xwayland.h>
 #include <wlr/types/wlr_output_layout.h>
+#include <wlr/types/wlr_subcompositor.h>
 
 #include "wm/wm_view_xdg.h"
 
@@ -268,9 +269,10 @@ static void handle_surface_commit(struct wl_listener* listener, void* data){
 
 static void handle_fullscreen(struct wl_listener* listener, void* data){
     struct wm_view_xdg* view = wl_container_of(listener, view, request_fullscreen);
-    struct wlr_xdg_toplevel_set_fullscreen_event* event = data;
 
-    if(event->fullscreen){
+    if(view->wlr_xdg_surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) return;
+
+    if(view->wlr_xdg_surface->toplevel->requested.fullscreen){
         wm_callback_view_event(&view->super, "request_fullscreen");
     }else{
         wm_callback_view_event(&view->super, "request_nofullscreen");
@@ -396,16 +398,17 @@ void wm_popup_xdg_init(struct wm_popup_xdg* popup, struct wm_view_xdg* toplevel,
         };
         wlr_xdg_popup_unconstrain_from_box(popup->wlr_xdg_popup, &box);
     }else{
-        struct wlr_box* output_box = wlr_output_layout_get_box(
-                popup->toplevel->super.super.wm_server->wm_layout->wlr_output_layout, NULL);
+        struct wlr_box output_box;
+        wlr_output_layout_get_box(
+                popup->toplevel->super.super.wm_server->wm_layout->wlr_output_layout, NULL, &output_box);
 
         double x_scale = width / popup->toplevel->super.super.display_width;
         double y_scale = height / popup->toplevel->super.super.display_height;
         struct wlr_box box = {
-            .x = output_box->x -popup->toplevel->super.super.display_x * x_scale,
-            .y = output_box->y -popup->toplevel->super.super.display_y * y_scale,
-            .width = output_box->width * x_scale,
-            .height = output_box->height * y_scale
+            .x = output_box.x -popup->toplevel->super.super.display_x * x_scale,
+            .y = output_box.y -popup->toplevel->super.super.display_y * y_scale,
+            .width = output_box.width * x_scale,
+            .height = output_box.height * y_scale
         };
         wlr_xdg_popup_unconstrain_from_box(popup->wlr_xdg_popup, &box);
     }
@@ -566,7 +569,7 @@ static void wm_view_xdg_request_size(struct wm_view* super, int width, int heigh
             wlr_log(WLR_DEBUG, "DEBUG_SIZE: Request %dx%d", width, height);
         }
 #endif
-        wlr_xdg_toplevel_set_size(view->wlr_xdg_surface, width, height);
+        wlr_xdg_toplevel_set_size(view->wlr_xdg_surface->toplevel, width, height);
     }else{
         wlr_log(WLR_DEBUG, "Warning: Not toplevel");
     }
@@ -629,23 +632,23 @@ static void wm_view_xdg_set_floating(struct wm_view* super, bool floating){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
     if(floating == view->floating_set) return;
 
-    wlr_xdg_toplevel_set_tiled(view->wlr_xdg_surface, floating ? 0 : 15);
+    wlr_xdg_toplevel_set_tiled(view->wlr_xdg_surface->toplevel, floating ? 0 : 15);
     view->floating_set = floating;
 }
 
 static void wm_view_xdg_set_resizing(struct wm_view* super, bool resizing){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
-    wlr_xdg_toplevel_set_resizing(view->wlr_xdg_surface, resizing);
+    wlr_xdg_toplevel_set_resizing(view->wlr_xdg_surface->toplevel, resizing);
 }
 
 static void wm_view_xdg_set_fullscreen(struct wm_view* super, bool fullscreen){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
-    wlr_xdg_toplevel_set_fullscreen(view->wlr_xdg_surface, fullscreen);
+    wlr_xdg_toplevel_set_fullscreen(view->wlr_xdg_surface->toplevel, fullscreen);
 }
 
 static void wm_view_xdg_set_maximized(struct wm_view* super, bool maximized){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
-    wlr_xdg_toplevel_set_maximized(view->wlr_xdg_surface, maximized);
+    wlr_xdg_toplevel_set_maximized(view->wlr_xdg_surface->toplevel, maximized);
 }
 
 static void wm_view_xdg_set_activated(struct wm_view* super, bool activated){
@@ -655,16 +658,16 @@ static void wm_view_xdg_set_activated(struct wm_view* super, bool activated){
     if(!activated){
         struct wlr_xdg_popup* popup, *tmp;
         wl_list_for_each_safe(popup, tmp, &view->wlr_xdg_surface->popups, link){
-            wlr_xdg_popup_destroy(popup->base);
+            wlr_xdg_popup_destroy(popup);
         }
     }
 
-    wlr_xdg_toplevel_set_activated(view->wlr_xdg_surface, activated);
+    wlr_xdg_toplevel_set_activated(view->wlr_xdg_surface->toplevel, activated);
 }
 
 static void wm_view_xdg_request_close(struct wm_view* super){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
-    wlr_xdg_toplevel_send_close(view->wlr_xdg_surface);
+    wlr_xdg_toplevel_send_close(view->wlr_xdg_surface->toplevel);
 }
 
 static void wm_view_xdg_focus(struct wm_view* super, struct wm_seat* seat){
@@ -704,7 +707,7 @@ static void wm_view_xdg_for_each_surface(struct wm_view* super, wm_surface_itera
 
 static struct wm_view* wm_view_xdg_get_parent(struct wm_view* super){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
-    struct wlr_xdg_surface* parent_surface = view->wlr_xdg_surface->toplevel ? view->wlr_xdg_surface->toplevel->parent : NULL;
+    struct wlr_xdg_surface* parent_surface = (view->wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL && view->wlr_xdg_surface->toplevel->parent) ? view->wlr_xdg_surface->toplevel->parent->base : NULL;
     if(!parent_surface){
         return NULL;
     }

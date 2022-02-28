@@ -25,6 +25,8 @@
 *** TODO Documentation
     - Gestures removed
     - pywm-fullscreen
+*** TODO clang-format
+*** TODO Make xwayland optional at compile-time
 
 ** Backlog / Ideas
 *** Secondary buffer for blurring should extend beyond primary buffer (however this is very complicated, intervenes with workspace logic, for little reward)

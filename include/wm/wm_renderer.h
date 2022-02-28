@@ -2,7 +2,7 @@
 #define WM_RENDERER_H
 
 #include <stdbool.h>
-#include <wlr/types/wlr_surface.h>
+#include <wlr/types/wlr_compositor.h>
 #include <wlr/render/wlr_renderer.h>
 #include <pixman.h>
 

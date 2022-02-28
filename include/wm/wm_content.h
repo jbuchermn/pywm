@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <wayland-server.h>
 #include <pixman.h>
-#include <wlr/types/wlr_surface.h>
+#include <wlr/types/wlr_compositor.h>
 #include <wlr/util/log.h>
 
 struct wm_output;

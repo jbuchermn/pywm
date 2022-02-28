@@ -7,6 +7,7 @@
 #include <wlr/backend/headless.h>
 #include <wlr/backend/multi.h>
 #include <wlr/types/wlr_compositor.h>
+#include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/render/allocator.h>
@@ -60,11 +61,11 @@ static void handle_new_virtual_pointer(struct wl_listener* listener, void* data)
     struct wm_server* server = wl_container_of(listener, server, new_virtual_pointer);
     struct wlr_virtual_pointer_v1_new_pointer_event* evt = data;
 
-    wm_seat_add_input_device(server->wm_seat, &evt->new_pointer->input_device);
+    wm_seat_add_input_device(server->wm_seat, &evt->new_pointer->pointer.base);
 
     if(evt->suggested_output){
         wlr_cursor_map_input_to_output(server->wm_seat->wm_cursor->wlr_cursor,
-                                       &evt->new_pointer->input_device, evt->suggested_output);
+                                       &evt->new_pointer->pointer.base, evt->suggested_output);
     }
 }
 
@@ -74,7 +75,7 @@ static void handle_new_virtual_keyboard(struct wl_listener* listener, void* data
     struct wm_server* server = wl_container_of(listener, server, new_virtual_keyboard);
     struct wlr_virtual_keyboard_v1* keyboard = data;
 
-    wm_seat_add_input_device(server->wm_seat, &keyboard->input_device);
+    wm_seat_add_input_device(server->wm_seat, &keyboard->keyboard.base);
 }
 
 static void handle_new_output(struct wl_listener* listener, void* data){
@@ -249,6 +250,9 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wlr_compositor = 
         wlr_compositor_create(server->wl_display, server->wm_renderer->wlr_renderer);
     assert(server->wlr_compositor);
+
+    server->wlr_subcompositor = 
+        wlr_subcompositor_create(server->wl_display);
 
     server->wlr_data_device_manager = wlr_data_device_manager_create(server->wl_display);
     assert(server->wlr_data_device_manager);

@@ -31,6 +31,7 @@ struct wm_server{
     struct wlr_allocator* wlr_allocator;
 
     struct wlr_compositor* wlr_compositor;
+    struct wlr_subcompositor* wlr_subcompositor;
     struct wlr_data_device_manager* wlr_data_device_manager;
     struct wlr_xdg_shell* wlr_xdg_shell;
     struct wlr_server_decoration_manager* wlr_server_decoration_manager;

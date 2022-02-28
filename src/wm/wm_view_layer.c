@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <wayland-server.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
+#include <wlr/types/wlr_subcompositor.h>
 
 #include "wm/wm_view_layer.h"
 #include "wm/wm_layout.h"
@@ -254,13 +255,14 @@ void wm_popup_layer_init(struct wm_popup_layer* popup, struct wm_view_layer* roo
     wl_signal_add(&wlr_xdg_popup->base->surface->events.commit, &popup->surface_commit);
 
     /* Unconstrain popup */
-    struct wlr_box* output_box = wlr_output_layout_get_box(
-            popup->root->super.super.wm_server->wm_layout->wlr_output_layout, popup->root->wlr_layer_surface->output);
+    struct wlr_box output_box; 
+    wlr_output_layout_get_box(
+            popup->root->super.super.wm_server->wm_layout->wlr_output_layout, popup->root->wlr_layer_surface->output, &output_box);
     struct wlr_box box = {
-        .x = output_box->x -popup->root->super.super.display_x,
-        .y = output_box->y -popup->root->super.super.display_y,
-        .width = output_box->width,
-        .height = output_box->height
+        .x = output_box.x -popup->root->super.super.display_x,
+        .y = output_box.y -popup->root->super.super.display_y,
+        .width = output_box.width,
+        .height = output_box.height
     };
     wlr_xdg_popup_unconstrain_from_box(popup->wlr_xdg_popup, &box);
 
@@ -422,7 +424,7 @@ static void wm_view_layer_set_activated(struct wm_view* super, bool activated){
     if(!activated){
         struct wlr_xdg_popup* popup, *tmp;
         wl_list_for_each_safe(popup, tmp, &view->wlr_layer_surface->popups, link){
-            wlr_xdg_popup_destroy(popup->base);
+            wlr_xdg_popup_destroy(popup);
         }
     }
 }
