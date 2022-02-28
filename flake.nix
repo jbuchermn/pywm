@@ -25,7 +25,7 @@
             ./.
             (builtins.fetchGit {
               url = "https://gitlab.freedesktop.org/wlroots/wlroots";
-              rev = "1fbd13ec799c472558aef37436367f0e947f7d89";
+              rev = "e279266f714c7122e9ad97d56d047313f78cfdbe";
               submodules = true;
             })
           ];
