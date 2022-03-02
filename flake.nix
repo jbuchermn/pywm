@@ -97,7 +97,6 @@
             numpy
             pycairo
             evdev
-            matplotlib
           ];
         }
       );
