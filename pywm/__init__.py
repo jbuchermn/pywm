@@ -1,5 +1,6 @@
 from .pywm import (
     PyWM,
+    PyWMModifiers,
     PyWMOutput,
     PyWMDownstreamState,
     PYWM_MOD_SHIFT,

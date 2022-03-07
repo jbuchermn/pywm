@@ -39,6 +39,44 @@ PYWM_TRANSFORM_FLIPPED_270 = 7
 
 logger: logging.Logger = logging.getLogger(__name__)
 
+class PyWMModifiers:
+    def __init__(self, modifiers: int) -> None:
+        self.alt = bool(modifiers & PYWM_MOD_ALT)
+        self.logo = bool(modifiers & PYWM_MOD_LOGO)
+        self.ctrl = bool(modifiers & PYWM_MOD_CTRL)
+        self.mod1 = bool(modifiers & PYWM_MOD_MOD2)
+        self.mod2 = bool(modifiers & PYWM_MOD_MOD3)
+        self.mod3 = bool(modifiers & PYWM_MOD_MOD5)
+
+    def any(self) -> bool:
+        return self.alt or \
+                self.logo or \
+                self.ctrl or \
+                self.mod1 or \
+                self.mod2 or \
+                self.mod3
+
+    def pressed(self, last_modifiers: PyWMModifiers) -> PyWMModifiers:
+        res = PyWMModifiers(0)
+        if self.alt and not last_modifiers.alt:
+            res.alt = True
+        if self.logo and not last_modifiers.logo:
+            res.logo = True
+        if self.ctrl and not last_modifiers.ctrl:
+            res.ctrl = True
+        if self.mod1 and not last_modifiers.mod1:
+            res.mod1 = True
+        if self.mod2 and not last_modifiers.mod2:
+            res.mod2 = True
+        if self.mod3 and not last_modifiers.mod3:
+            res.mod3 = True
+
+        return res
+
+    def __eq__(self, other: object) -> bool:
+        if type(other) is type(self):
+            return self.__dict__ == other.__dict__
+        return False
 
 class PyWMDownstreamState:
     def __init__(self, lock_perc: float=0.0) -> None:
@@ -161,7 +199,7 @@ class PyWM(Generic[ViewT], DamageTracked):
         """
         self.config: dict[str, Any] = kwargs
         self.layout: list[PyWMOutput] = []
-        self.modifiers = 0
+        self.modifiers: PyWMModifiers = PyWMModifiers(0)
         self.cursor_pos: tuple[float, float] = (0, 0)
 
         self._thread = PyWMThread(self)
@@ -246,8 +284,9 @@ class PyWM(Generic[ViewT], DamageTracked):
     @callback
     def _modifiers(self, depressed: int, latched: int, locked: int, group: int) -> bool:
         self._update_idle()
-        self.modifiers = depressed
-        return self.on_modifiers(self.modifiers)
+        last_modifiers = self.modifiers
+        self.modifiers = PyWMModifiers(depressed)
+        return self.on_modifiers(self.modifiers, last_modifiers)
 
     @callback
     def _gesture(self, kind: str, time_msec: int, *args: Any) -> bool:
@@ -502,7 +541,7 @@ class PyWM(Generic[ViewT], DamageTracked):
         """
         return False
 
-    def on_modifiers(self, modifiers: int) -> bool:
+    def on_modifiers(self, modifiers: PyWMModifiers, last_modifiers: PyWMModifiers) -> bool:
         return False
 
     def on_idle(self, elapsed: float, idle_inhibited: bool) -> None:
