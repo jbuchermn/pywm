@@ -78,6 +78,25 @@ class PyWMModifiers:
             return self.__dict__ == other.__dict__
         return False
 
+    def has(self, key: Optional[str]) -> bool:
+        if key is None:
+            return True
+        if key == "":
+            return True
+        if key == "L":
+            return self.logo
+        if key == "C":
+            return self.ctrl
+        if key == "A":
+            return self.alt
+        if key == "1":
+            return self.mod1
+        if key == "2":
+            return self.mod2
+        if key == "3":
+            return self.mod3
+        return False
+
 class PyWMDownstreamState:
     def __init__(self, lock_perc: float=0.0) -> None:
         self.lock_perc = lock_perc
