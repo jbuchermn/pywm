@@ -6,22 +6,17 @@
 **** WAIT Horizontal damage artifacts after closing views
 **** WAIT Lag in fullscreen video on chrome
 
-*** Performance topics
+*** Performance topics / New renderer
    - Goal: Idle CPU low - comparable between sway and pywm-fullscreen
    - Issue: newm - pyevdev gestures uses a lot of CPU and spawns lots of threads
    - Issue: newm - permanent top bar uses a lot of CPU
    - Goal: No dropped frames in pywm animations or gestures
    - Issue: (Probably) callbacks occassionally take a long time - dropped frames
    - Issue: C-Side of view update loop takes a long time (comparable to python) - simplify using constant damage mode?
-**** TODO Test cases and comparison
+**** STRT Performance: Test cases and comparison
+**** STRT Extensively test DEBUG_DAMAGE, WM_CUSTOM_RENDERER, different render modes, switching between render modes, frame damage optimization, damaging and blur 
+**** STRT Build test cases (e.g. damage behind blur by FocusBorder)
 
-*** STRT Better renderer
-**** TODO Extensively test DEBUG_DAMAGE, WM_CUSTOM_RENDERER, different render modes, switching between render modes, frame damage optimization, damaging and blur 
-**** TODO Build test cases (e.g. damage behind blur by FocusBorder)
-
-*** TODO vaapi on nixOS
-
-*** STRT wlr-output-management-unstable-v1 (in order to use wdisplays)
 *** TODO Documentation
     - Gestures removed
     - pywm-fullscreen
@@ -29,9 +24,10 @@
 *** TODO Make xwayland optional at compile-time
 
 ** Backlog / Ideas
-*** Secondary buffer for blurring should extend beyond primary buffer (however this is very complicated, intervenes with workspace logic, for little reward)
+*** wlr-output-management-unstable-v1 (in order to use wdisplays)
 *** If performance-critical: Store wm_composite as texture, better damage handling
 *** If performance-critical: Further optimize (simplification algorithm, incorporate all wm_contents) wm_compose_tree
+*** If necessary: Secondary buffer for blurring should extend beyond primary buffer (however this is very complicated, intervenes with workspace logic, for little reward)
 *** Enable keyboard-exclusive client (e.g. layer shell keyboard_interactivity / use in lock screen)
 *** Complete libinput device config / support for external mouse
 *** Use libseat from python / patched python evdev
