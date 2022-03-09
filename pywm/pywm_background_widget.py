@@ -59,4 +59,8 @@ class PyWMBackgroundWidget(PyWMWidget):
                             self.width, self.height,
                             im_alpha.tobytes())
         except Exception as e:
-            logger.warn("Unable to load background: %s", str(e))
+            logger.warn("Unable to load background: %s - defaulting to 100x100 black", str(e))
+
+            self.width = 100
+            self.height = 100
+            self.set_primitive("rect", [], [0., 0., 0., 1.])
