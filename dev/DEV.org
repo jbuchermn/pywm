@@ -5,6 +5,7 @@
 *** Bugs
 **** WAIT Horizontal damage artifacts after closing views
 **** WAIT Lag in fullscreen video on chrome
+**** DONE Incorporate shift as modifier and send raw keysyms
 
 *** Performance topics / New renderer
    - Goal: Idle CPU low - comparable between sway and pywm-fullscreen

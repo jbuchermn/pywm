@@ -41,6 +41,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 class PyWMModifiers:
     def __init__(self, modifiers: int) -> None:
+        self.shift = bool(modifiers & PYWM_MOD_SHIFT)
         self.alt = bool(modifiers & PYWM_MOD_ALT)
         self.logo = bool(modifiers & PYWM_MOD_LOGO)
         self.ctrl = bool(modifiers & PYWM_MOD_CTRL)
@@ -49,7 +50,8 @@ class PyWMModifiers:
         self.mod3 = bool(modifiers & PYWM_MOD_MOD5)
 
     def any(self) -> bool:
-        return self.alt or \
+        return self.shift or \
+                self.alt or \
                 self.logo or \
                 self.ctrl or \
                 self.mod1 or \
@@ -58,6 +60,8 @@ class PyWMModifiers:
 
     def pressed(self, last_modifiers: PyWMModifiers) -> PyWMModifiers:
         res = PyWMModifiers(0)
+        if self.shift and not last_modifiers.shift:
+            res.shift = True
         if self.alt and not last_modifiers.alt:
             res.alt = True
         if self.logo and not last_modifiers.logo:
@@ -83,6 +87,8 @@ class PyWMModifiers:
             return True
         if key == "":
             return True
+        if key == "S":
+            return self.shift
         if key == "L":
             return self.logo
         if key == "C":

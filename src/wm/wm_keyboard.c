@@ -32,7 +32,15 @@ static void handle_key(struct wl_listener* listener, void* data){
     size_t keysyms_len;
     const xkb_keysym_t* keysyms;
 
-    keysyms_len = xkb_state_key_get_syms(keyboard->wlr_input_device->keyboard->xkb_state, keycode, &keysyms);
+    xkb_layout_index_t layout_index = xkb_state_key_get_layout(
+            keyboard->wlr_input_device->keyboard->xkb_state, keycode);
+    keysyms_len = xkb_keymap_key_get_syms_by_level(
+            keyboard->wlr_input_device->keyboard->keymap,
+            keycode, layout_index, 0, &keysyms);
+
+    /* Translated logic consuming modifiers */
+    /* keysyms_len = xkb_state_key_get_syms( */
+    /*         keyboard->wlr_input_device->keyboard->xkb_state, keycode, &keysyms); */
 
     char keys[KEYS_STRING_LENGTH] = { 0 };
     size_t at=0;
