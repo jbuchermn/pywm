@@ -5,7 +5,6 @@
 *** Bugs
 **** WAIT Horizontal damage artifacts after closing views
 **** WAIT Lag in fullscreen video on chrome
-**** DONE Incorporate shift as modifier and send raw keysyms
 
 *** Performance topics / New renderer
    - Goal: Idle CPU low - comparable between sway and pywm-fullscreen
@@ -14,9 +13,9 @@
    - Goal: No dropped frames in pywm animations or gestures
    - Issue: (Probably) callbacks occassionally take a long time - dropped frames
    - Issue: C-Side of view update loop takes a long time (comparable to python) - simplify using constant damage mode?
-**** STRT Performance: Test cases and comparison
-**** STRT Extensively test DEBUG_DAMAGE, WM_CUSTOM_RENDERER, different render modes, switching between render modes, frame damage optimization, damaging and blur 
-**** STRT Build test cases (e.g. damage behind blur by FocusBorder)
+**** TODO Performance: Test cases and comparison
+**** TODO Extensively test DEBUG_DAMAGE, WM_CUSTOM_RENDERER, different render modes, switching between render modes, frame damage optimization, damaging and blur 
+**** TODO Build test cases (e.g. damage behind blur by FocusBorder)
 
 *** TODO Documentation
     - Gestures removed
