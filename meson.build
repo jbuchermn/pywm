@@ -46,7 +46,7 @@ has_xwayland = xwayland.found() and get_option('xwayland').enabled()
 
 wlroots        = subproject('wlroots', default_options: ['default_library=static']).get_variable('wlroots')
 
-if false # has_xwayland
+if has_xwayland
     add_project_arguments(
         '-DWM_HAS_XWAYLAND',
         language: 'c',
