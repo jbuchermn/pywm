@@ -63,11 +63,13 @@ void *run() {
     }
 
     setenv("WAYLAND_DISPLAY", socket, true);
+#ifdef WM_HAS_XWAYLAND
     if (wm.server->wlr_xwayland) {
         setenv("DISPLAY", wm.server->wlr_xwayland->display_name, true);
     }else{
         wm_callback_ready();
     }
+#endif
 
     /* Main */
     wlr_log(WLR_INFO, "Main...");

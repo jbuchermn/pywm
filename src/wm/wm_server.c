@@ -22,7 +22,10 @@
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_gamma_control_v1.h>
 #include <wlr/util/log.h>
+
+#ifdef WM_HAS_XWAYLAND
 #include <wlr/xwayland.h>
+#endif
 
 #include "wm/wm_server.h"
 #include "wm/wm_util.h"
@@ -31,7 +34,9 @@
 #include "wm/wm_cursor.h"
 #include "wm/wm_view_xdg.h"
 #include "wm/wm_view_layer.h"
+#ifdef WM_HAS_XWAYLAND
 #include "wm/wm_view_xwayland.h"
+#endif
 #include "wm/wm_layout.h"
 #include "wm/wm_widget.h"
 #include "wm/wm_config.h"
@@ -115,6 +120,7 @@ static void handle_new_layer_surface(struct wl_listener* listener, void* data){
     wm_view_layer_init(view, server, surface);
 }
 
+#ifdef WM_HAS_XWAYLAND
 static void handle_new_xwayland_surface(struct wl_listener* listener, void* data){
     wlr_log(WLR_DEBUG, "Server: New xwayland surface");
     
@@ -126,6 +132,7 @@ static void handle_new_xwayland_surface(struct wl_listener* listener, void* data
     struct wm_view_xwayland* view = calloc(1, sizeof(struct wm_view_xwayland));
     wm_view_xwayland_init(view, server, surface);
 }
+#endif
 
 static void handle_new_server_decoration(struct wl_listener* listener, void* data){
     struct wm_server* server = wl_container_of(listener, server, new_server_decoration);
@@ -275,11 +282,13 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     wlr_gamma_control_manager_v1_create(server->wl_display);
     wlr_viewporter_create(server->wl_display);
 
+#ifdef WM_HAS_XWAYLAND
     server->wlr_xwayland = NULL;
     if(config->enable_xwayland){
         server->wlr_xwayland = wlr_xwayland_create(server->wl_display, server->wlr_compositor, false);
         assert(server->wlr_xwayland);
     }
+#endif
 
     server->wlr_virtual_keyboard_manager = wlr_virtual_keyboard_manager_v1_create(server->wl_display);
     server->wlr_virtual_pointer_manager = wlr_virtual_pointer_manager_v1_create(server->wl_display);
@@ -294,9 +303,11 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wm_seat = calloc(1, sizeof(struct wm_seat));
     wm_seat_init(server->wm_seat, server, server->wm_layout);
 
+#ifdef WM_HAS_XWAYLAND
     if(server->wlr_xwayland){
         wlr_xwayland_set_seat(server->wlr_xwayland, server->wm_seat->wlr_seat);
     }
+#endif
 
     server->wm_idle_inhibit = calloc(1, sizeof(struct wm_idle_inhibit));
     wm_idle_inhibit_init(server->wm_idle_inhibit, server);
@@ -332,6 +343,7 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->new_xdg_decoration.notify = handle_new_xdg_decoration;
     wl_signal_add(&server->wlr_xdg_decoration_manager->events.new_toplevel_decoration, &server->new_xdg_decoration);
 
+#ifdef WM_HAS_XWAYLAND
     if(server->wlr_xwayland){
         server->new_xwayland_surface.notify = handle_new_xwayland_surface;
         wl_signal_add(&server->wlr_xwayland->events.new_surface, &server->new_xwayland_surface);
@@ -343,6 +355,7 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
         server->xwayland_ready.notify = handle_ready;
         wl_signal_add(&server->wlr_xwayland->events.ready, &server->xwayland_ready);
     }
+#endif
 
     server->callback_timer = wl_event_loop_add_timer(
         server->wl_event_loop, callback_timer_handler, server);
@@ -367,7 +380,9 @@ void wm_server_destroy(struct wm_server* server){
     free(server->wm_seat);
     free(server->wm_idle_inhibit);
 
+#ifdef WM_HAS_XWAYLAND
     wlr_xwayland_destroy(server->wlr_xwayland);
+#endif
     wl_display_destroy_clients(server->wl_display);
     wl_display_destroy(server->wl_display);
 }
@@ -584,11 +599,13 @@ void wm_server_reconfigure(struct wm_server* server){
     server->wlr_xcursor_manager = wlr_xcursor_manager_create(server->wm_config->xcursor_theme, server->wm_config->xcursor_size);
     assert(server->wlr_xcursor_manager);
 
+#ifdef WM_HAS_XWAYLAND
     struct wlr_xcursor* xcursor = wlr_xcursor_manager_get_xcursor(server->wlr_xcursor_manager, "left_ptr", 1);
     if(server->wm_config->enable_xwayland && xcursor){
         struct wlr_xcursor_image* image = xcursor->images[0];
         wlr_xwayland_set_cursor(server->wlr_xwayland,
                 image->buffer, image->width * 4, image->width, image->height, image->hotspot_x, image->hotspot_y);
     }
+#endif
 
 }

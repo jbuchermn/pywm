@@ -36,7 +36,9 @@ struct wm_server{
     struct wlr_xdg_shell* wlr_xdg_shell;
     struct wlr_server_decoration_manager* wlr_server_decoration_manager;
     struct wlr_xdg_decoration_manager_v1* wlr_xdg_decoration_manager;
+#ifdef WM_HAS_XWAYLAND
     struct wlr_xwayland* wlr_xwayland;
+#endif
     struct wlr_xcursor_manager* wlr_xcursor_manager;
     struct wlr_virtual_keyboard_manager_v1* wlr_virtual_keyboard_manager;
     struct wlr_virtual_pointer_manager_v1* wlr_virtual_pointer_manager;

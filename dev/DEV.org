@@ -17,11 +17,11 @@
 **** TODO Extensively test DEBUG_DAMAGE, WM_CUSTOM_RENDERER, different render modes, switching between render modes, frame damage optimization, damaging and blur 
 **** TODO Build test cases (e.g. damage behind blur by FocusBorder)
 
+*** TODO clang-format
+*** DONE Make xwayland optional at compile-time
 *** TODO Documentation
     - Gestures removed
     - pywm-fullscreen
-*** TODO clang-format
-*** TODO Make xwayland optional at compile-time
 
 ** Backlog / Ideas
 *** wlr-output-management-unstable-v1 (in order to use wdisplays)

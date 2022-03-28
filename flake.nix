@@ -13,6 +13,8 @@
       pkgs = import nixpkgs {
         inherit system;
       };
+      has_xwayland = true;
+      inherit (pkgs.lib) optionals;
     in
     {
       packages.pywm = (
@@ -60,6 +62,8 @@
           '';
           # END Fucking subprojects bug workaround
 
+          mesonFlags = if has_xwayland then "-Dxwayland=enabled" else "";
+
           nativeBuildInputs = with pkgs; [
             meson
             ninja
@@ -77,19 +81,21 @@
             libinput
             libxkbcommon
             pixman
+            vulkan-loader
+            mesa
+            seatd
+
+            libpng
+            ffmpeg
+            libcap
+
             xorg.xcbutilwm
             xorg.xcbutilrenderutil
             xorg.xcbutilerrors
             xorg.xcbutilimage
             xorg.libX11
-            seatd
+          ] ++ optionals has_xwayland [
             xwayland
-            vulkan-loader
-            mesa
-
-            libpng
-            ffmpeg
-            libcap
           ];
 
           propagatedBuildInputs = with pkgs.python3Packages; [
@@ -111,7 +117,7 @@
           matplotlib
 
           python-lsp-server
-          pylsp-mypy
+          (pylsp-mypy.overrideAttrs (old: { pytestCheckPhase = "true"; }))
           mypy
         ]);
       in
@@ -131,13 +137,7 @@
             libinput
             libxkbcommon
             pixman
-            xorg.xcbutilwm
-            xorg.xcbutilrenderutil
-            xorg.xcbutilerrors
-            xorg.xcbutilimage
-            xorg.libX11
             seatd
-            xwayland
             vulkan-loader
             mesa
 
@@ -145,7 +145,15 @@
             ffmpeg
             libcap
             python-with-my-packages 
+
+            xorg.xcbutilwm
+            xorg.xcbutilrenderutil
+            xorg.xcbutilerrors
+            xorg.xcbutilimage
+            xorg.libX11
+            xwayland
           ];
+
         };
     }
   );

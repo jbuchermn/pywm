@@ -6,7 +6,9 @@
 #include "wm/wm.h"
 #include "wm/wm_view.h"
 #include "wm/wm_output.h"
+#ifdef WM_HAS_XWAYLAND
 #include "wm/wm_view_xwayland.h"
+#endif
 #include "wm/wm_util.h"
 
 #include "py/_pywm_view.h"
@@ -52,7 +54,11 @@ void _pywm_view_update(struct _pywm_view* view){
             view->update_cnt--;
         }
 
+#ifdef WM_HAS_XWAYLAND
         bool xwayland = wm_view_is_xwayland(view->view);
+#else
+        bool xwayland = false;
+#endif
 
         args_general = Py_BuildValue(
                 "(lOisss)",
