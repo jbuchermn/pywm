@@ -18,7 +18,6 @@
 **** TODO Build test cases (e.g. damage behind blur by FocusBorder)
 
 *** TODO clang-format
-*** DONE Make xwayland optional at compile-time
 *** TODO Documentation
     - Gestures removed
     - pywm-fullscreen

@@ -103,6 +103,16 @@ class PyWMModifiers:
             return self.mod3
         return False
 
+    def __str__(self) -> str:
+        return (
+            "S" if self.shift else "" +
+            "L" if self.logo else "" +
+            "C" if self.ctrl else "" +
+            "A" if self.alt else "" +
+            "1" if self.mod1 else "" +
+            "2" if self.mod2 else "" +
+            "3" if self.mod3 else "")
+
 class PyWMDownstreamState:
     def __init__(self, lock_perc: float=0.0) -> None:
         self.lock_perc = lock_perc

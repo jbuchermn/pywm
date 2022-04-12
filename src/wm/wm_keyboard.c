@@ -39,19 +39,14 @@ static void handle_key(struct wl_listener* listener, void* data){
             keycode, layout_index, 0, &keysyms);
 
     /* Translated logic consuming modifiers */
-    /* keysyms_len = xkb_state_key_get_syms( */
-    /*         keyboard->wlr_input_device->keyboard->xkb_state, keycode, &keysyms); */
-
-    char keys[KEYS_STRING_LENGTH] = { 0 };
-    size_t at=0;
-    for(size_t i=0; i<keysyms_len; i++){
-        at += xkb_keysym_get_name(keysyms[i], keys + at, KEYS_STRING_LENGTH - at);
-    }
-    assert(at < KEYS_STRING_LENGTH - 1);
+    size_t keysyms_trans_len;
+    const xkb_keysym_t* keysyms_trans;
+    keysyms_trans_len = xkb_state_key_get_syms(
+            keyboard->wlr_input_device->keyboard->xkb_state, keycode, &keysyms_trans);
 
     /* Copied from sway - switch VT on CTRL-ALT-Fx */
-    for (size_t i = 0; i < keysyms_len; ++i) {
-        xkb_keysym_t keysym = keysyms[i];
+    for (size_t i = 0; i < keysyms_trans_len; ++i) {
+        xkb_keysym_t keysym = keysyms_trans[i];
         if (keysym >= XKB_KEY_XF86Switch_VT_1 &&
             keysym <= XKB_KEY_XF86Switch_VT_12) {
             if (wlr_backend_is_multi(
@@ -66,6 +61,14 @@ static void handle_key(struct wl_listener* listener, void* data){
             return;
         }
     }
+
+    char keys[KEYS_STRING_LENGTH] = { 0 };
+    size_t at=0;
+    for(size_t i=0; i<keysyms_len; i++){
+        at += xkb_keysym_get_name(keysyms[i], keys + at, KEYS_STRING_LENGTH - at);
+    }
+    assert(at < KEYS_STRING_LENGTH - 1);
+
 
     if(keyboard->wm_seat->wm_server->wm_config->debug){
         if(!strcmp(keys, "F1") && event->state == WL_KEYBOARD_KEY_STATE_PRESSED){
