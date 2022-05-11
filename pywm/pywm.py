@@ -1,18 +1,19 @@
 from __future__ import annotations
+from typing import Callable, Optional, Any, TypeVar, Generic, Union, cast
 
 from abc import abstractmethod
 import logging
 import time
 from threading import Thread, Lock
-from typing import Callable, Optional, Any, Type, TypeVar, Generic
 
-from .touchpad import TouchpadDaemon, GestureListener, Gesture
 from .pywm_widget import PyWMWidget
 from .pywm_view import PyWMView
+from .damage_tracked import DamageTracked
 
 from ._pywm import (
     run,
-    register
+    register,
+    damage
 )
 
 PYWM_MOD_SHIFT = 1
@@ -38,6 +39,79 @@ PYWM_TRANSFORM_FLIPPED_270 = 7
 
 logger: logging.Logger = logging.getLogger(__name__)
 
+class PyWMModifiers:
+    def __init__(self, modifiers: int) -> None:
+        self.shift = bool(modifiers & PYWM_MOD_SHIFT)
+        self.alt = bool(modifiers & PYWM_MOD_ALT)
+        self.logo = bool(modifiers & PYWM_MOD_LOGO)
+        self.ctrl = bool(modifiers & PYWM_MOD_CTRL)
+        self.mod1 = bool(modifiers & PYWM_MOD_MOD2)
+        self.mod2 = bool(modifiers & PYWM_MOD_MOD3)
+        self.mod3 = bool(modifiers & PYWM_MOD_MOD5)
+
+    def any(self) -> bool:
+        return self.shift or \
+                self.alt or \
+                self.logo or \
+                self.ctrl or \
+                self.mod1 or \
+                self.mod2 or \
+                self.mod3
+
+    def pressed(self, last_modifiers: PyWMModifiers) -> PyWMModifiers:
+        res = PyWMModifiers(0)
+        if self.shift and not last_modifiers.shift:
+            res.shift = True
+        if self.alt and not last_modifiers.alt:
+            res.alt = True
+        if self.logo and not last_modifiers.logo:
+            res.logo = True
+        if self.ctrl and not last_modifiers.ctrl:
+            res.ctrl = True
+        if self.mod1 and not last_modifiers.mod1:
+            res.mod1 = True
+        if self.mod2 and not last_modifiers.mod2:
+            res.mod2 = True
+        if self.mod3 and not last_modifiers.mod3:
+            res.mod3 = True
+
+        return res
+
+    def __eq__(self, other: object) -> bool:
+        if type(other) is type(self):
+            return self.__dict__ == other.__dict__
+        return False
+
+    def has(self, key: Optional[str]) -> bool:
+        if key is None:
+            return True
+        if key == "":
+            return True
+        if key == "S":
+            return self.shift
+        if key == "L":
+            return self.logo
+        if key == "C":
+            return self.ctrl
+        if key == "A":
+            return self.alt
+        if key == "1":
+            return self.mod1
+        if key == "2":
+            return self.mod2
+        if key == "3":
+            return self.mod3
+        return False
+
+    def __str__(self) -> str:
+        return (
+            "S" if self.shift else "" +
+            "L" if self.logo else "" +
+            "C" if self.ctrl else "" +
+            "A" if self.alt else "" +
+            "1" if self.mod1 else "" +
+            "2" if self.mod2 else "" +
+            "3" if self.mod3 else "")
 
 class PyWMDownstreamState:
     def __init__(self, lock_perc: float=0.0) -> None:
@@ -64,9 +138,8 @@ def callback(func: Callable[..., Optional[T]]) -> Callable[..., Optional[T]]:
     def wrapped_func(*args: list[Any], **kwargs: dict[Any, Any]) -> Optional[T]:
         res = None
         try:
-            res = func(*args, **kwargs)
-            return res
-        except Exception as e:
+            return func(*args, **kwargs)
+        except Exception:
             logger.exception("---- Error in callback %s (RET %s)", repr(func), res)
             return None
     return wrapped_func
@@ -91,8 +164,27 @@ class PyWMOutput:
             return False
         return self._key == other._key
 
-class PyWM(Generic[ViewT]):
+class PyWMThread(Thread):
+    def __init__(self, wm: PyWM) -> None:
+        super().__init__()
+        self.wm = wm
+        self.running = True
+
+    def stop(self) -> None:
+        self.running = False
+
+    def run(self) -> None:
+        i = 0
+        while self.running:
+            if i%10 == 0:
+                self.wm._update_idle(False)
+            i+=1
+            time.sleep(.1)
+
+
+class PyWM(Generic[ViewT], DamageTracked):
     def __init__(self, view_class: type=PyWMView, **kwargs: Any) -> None:
+        DamageTracked.__init__(self)
         logger.debug("PyWM init")
 
         register("ready", self._ready)
@@ -102,7 +194,7 @@ class PyWM(Generic[ViewT]):
         register("axis", self._axis)
         register("key", self._key)
         register("modifiers", self._modifiers)
-        register("gesture", self._c_gesture)
+        register("gesture", self._gesture)
 
         register("update_view", self._update_view)
         register("destroy_view", self._destroy_view)
@@ -110,7 +202,6 @@ class PyWM(Generic[ViewT]):
 
         register("query_new_widget", self._query_new_widget)
         register("update_widget", self._update_widget)
-        register("update_widget_pixels", self._update_widget_pixels)
         register("query_destroy_widget", self._query_destroy_widget)
 
         register("update", self._update)
@@ -125,11 +216,7 @@ class PyWM(Generic[ViewT]):
 
         self._pending_config: Optional[dict[str, Any]] = None
 
-        self._touchpad_daemon = TouchpadDaemon(self._gesture)
-        self._touchpad_captured = False
-
         self._down_state = PyWMDownstreamState()
-        self._damaged = False
 
         """
         -1: Do nothing
@@ -147,10 +234,10 @@ class PyWM(Generic[ViewT]):
         """
         self.config: dict[str, Any] = kwargs
         self.layout: list[PyWMOutput] = []
-        self.modifiers = 0
+        self.modifiers: PyWMModifiers = PyWMModifiers(0)
         self.cursor_pos: tuple[float, float] = (0, 0)
 
-        self._last_update: float = 0.
+        self._thread = PyWMThread(self)
         self._idle_last_activity: float = time.time()
         self._idle_last_update_active: float = time.time()
         self._idle_last_update_inactive: float = time.time()
@@ -198,10 +285,6 @@ class PyWM(Generic[ViewT]):
 
 
     def _exec_main(self) -> None:
-        if self._touchpad_daemon is not None:
-            logger.debug("Starting Touchpad daemon")
-            self._touchpad_daemon.start()
-
         logger.debug("Executing main")
         self.main()
 
@@ -209,52 +292,41 @@ class PyWM(Generic[ViewT]):
     def _ready(self) -> None:
         logger.debug("PyWM ready")
         Thread(target=self._exec_main).start()
+        self._thread.start()
 
     @callback
     def _motion(self, time_msec: int, delta_x: float, delta_y: float, abs_x: float, abs_y: float) -> bool:
         self._update_idle()
-        if self._touchpad_captured:
-            return True
-
         self.cursor_pos = (abs_x, abs_y)
         return self.on_motion(time_msec, delta_x, delta_y)
 
     @callback
     def _button(self, time_msec: int, button: int, state: int) -> bool:
         self._update_idle()
-        if self._touchpad_captured:
-            return True
-
         return self.on_button(time_msec, button, state)
 
     @callback
     def _axis(self, time_msec: int, source: int, orientation: int, delta: float, delta_discrete: int) -> bool:
         self._update_idle()
-        if self._touchpad_captured:
-            return True
-
         return self.on_axis(time_msec, source, orientation, delta,
                             delta_discrete)
 
     @callback
     def _key(self, time_msec: int, keycode: int, state: int, keysyms: str) -> bool:
         self._update_idle()
-        result = self.on_key(time_msec, keycode, state, keysyms)
-        return result
+        return self.on_key(time_msec, keycode, state, keysyms)
 
     @callback
     def _modifiers(self, depressed: int, latched: int, locked: int, group: int) -> bool:
         self._update_idle()
-        self.modifiers = depressed
-        return self.on_modifiers(self.modifiers)
+        last_modifiers = self.modifiers
+        self.modifiers = PyWMModifiers(depressed)
+        return self.on_modifiers(self.modifiers, last_modifiers)
 
     @callback
-    def _c_gesture(self, kind: str, *args: Any) -> bool:
+    def _gesture(self, kind: str, time_msec: int, *args: Any) -> bool:
         self._update_idle()
-        if self._touchpad_captured:
-            return True
-
-        return False
+        return self.on_gesture(kind, time_msec, cast(list[Union[float, int]], args))
 
     @callback
     def _layout_change(self, outputs: list[tuple[str, int, float, int, int, int, int]]) -> None:
@@ -294,14 +366,6 @@ class PyWM(Generic[ViewT]):
 
 
     @callback
-    def _update_widget_pixels(self, handle: int, *args): # type: ignore
-        try:
-            return self._widgets[handle]._update_pixels(*args)
-        except Exception:
-            return None
-
-
-    @callback
     def _destroy_view(self, handle: int) -> None:
         view = None
 
@@ -316,6 +380,7 @@ class PyWM(Generic[ViewT]):
                 self._views[h].parent = None
 
         if view is not None:
+            view.damage_finish()
             view.destroy()
 
     @callback
@@ -327,14 +392,14 @@ class PyWM(Generic[ViewT]):
 
 
     @callback
-    def _query_new_widget(self, new_handle: int) -> bool:
+    def _query_new_widget(self, new_handle: int) -> int:
         if len(self._pending_widgets) > 0:
             widget = self._pending_widgets.pop(0)
             widget._handle = new_handle
             self._widgets[new_handle] = widget
-            return True
+            return 2 if widget._is_composite else 1
 
-        return False
+        return 0
     
     @callback
     def _query_destroy_widget(self) -> Optional[int]:
@@ -345,21 +410,7 @@ class PyWM(Generic[ViewT]):
 
     @callback
     def _update(self) -> tuple[int, int, int, float, str, str, bool, Optional[dict[str, Any]]]:
-        t = time.time()
-
-        if self._last_update != 0.:
-            dt = t - self._last_update
-            if dt > 5.:
-                logger.debug("Triggering wakeup on dt=%f", dt)
-                self.on_wakeup()
-                self._update_idle()
-            else:
-                self._update_idle(False)
-        self._last_update = t
-
-
-        if self._damaged:
-            self._damaged = False
+        if self.is_damaged():
             self._down_state = self.process()
 
         res = self._down_state.get(
@@ -379,35 +430,14 @@ class PyWM(Generic[ViewT]):
         self._pending_config = None
 
         return res
-    
-    def damage(self) -> None:
-        self._damaged = True
 
     def widget_destroy(self, widget: PyWMWidget) -> None:
         self._widgets.pop(widget._handle, None)
+        widget.damage_finish()
         if widget._handle >= 0:
             self._pending_destroy_widgets += [widget]
         else:
             self._pending_widgets = [w for w in self._pending_widgets if id(w) != id(widget)]
-
-    def _gesture(self, gesture: Gesture) -> None:
-        self._update_idle()
-        self._touchpad_captured = self.on_gesture(gesture)
-        gesture.listener(GestureListener(None, self._gesture_finished))
-
-    def _gesture_finished(self) -> None:
-        self._touchpad_captured = False
-
-    def reallow_gesture(self) -> None:
-        if self._touchpad_captured:
-            return
-
-        if self._touchpad_daemon is not None:
-            self._touchpad_daemon.reset_gestures()
-
-    def configure_gestures(self, *args: float) -> None:
-        self._touchpad_daemon.update_config(*args)
-
 
     def _encode(self, v: Any) -> Any:
         if isinstance(v, str):
@@ -418,6 +448,16 @@ class PyWM(Generic[ViewT]):
             return [self._encode(k) for k in v]
         else:
             return v
+
+    def enter_constant_damage(self) -> None:
+        damage(1)
+
+    def exit_constant_damage(self) -> None:
+        damage(0)
+
+    def damage_once(self) -> None:
+        damage(2)
+
     """
     Public API
     """
@@ -433,8 +473,7 @@ class PyWM(Generic[ViewT]):
 
     def terminate(self) -> None:
         logger.debug("PyWM terminating")
-        if self._touchpad_daemon is not None:
-            self._touchpad_daemon.stop()
+        self._thread.stop()
         self._pending_terminate = True
 
     def open_virtual_output(self, name: str) -> None:
@@ -443,8 +482,8 @@ class PyWM(Generic[ViewT]):
     def close_virtual_output(self, name: str) -> None:
         self._pending_close_virtual_output = name
 
-    def create_widget(self, widget_class: Callable[..., WidgetT], output: Optional[PyWMOutput], *args: Any, **kwargs: Any) -> WidgetT:
-        widget = widget_class(self, output, *args, **kwargs)
+    def create_widget(self, widget_class: Callable[..., WidgetT], output: Optional[PyWMOutput], *args: Any, override_parent: Optional[DamageTracked]=None, **kwargs: Any) -> WidgetT:
+        widget = widget_class(self, output, *args, override_parent=override_parent, **kwargs)
         self._pending_widgets += [widget]
         return widget
 
@@ -514,9 +553,6 @@ class PyWM(Generic[ViewT]):
     def main(self) -> None:
         pass
 
-    def _execute_view_main(self, view: ViewT) -> None:
-        pass
-
     def on_layout_change(self) -> None:
         pass
 
@@ -529,7 +565,7 @@ class PyWM(Generic[ViewT]):
     def on_axis(self, time_msec: int, source: int, orientation: int, delta: float, delta_discrete: int) -> bool:
         return False
 
-    def on_gesture(self, gesture: Gesture) -> bool:
+    def on_gesture(self, kind: str, time_msec: int, args: list[Union[float, int]]) -> bool:
         return False
 
     def on_key(self, time_msec: int, keycode: int, state: int, keysyms: str) -> bool:
@@ -540,7 +576,7 @@ class PyWM(Generic[ViewT]):
         """
         return False
 
-    def on_modifiers(self, modifiers: int) -> bool:
+    def on_modifiers(self, modifiers: PyWMModifiers, last_modifiers: PyWMModifiers) -> bool:
         return False
 
     def on_idle(self, elapsed: float, idle_inhibited: bool) -> None:
@@ -548,11 +584,5 @@ class PyWM(Generic[ViewT]):
         elapsed == 0 means there has been an activity, possibly a wakeup from idle is necessary
         elapsed > 0 describes the amount of seconds which have passed since the last activity, possibly sleep is necessary
         idle_inhibited is True if there is at least one view with is_inhibiting_idle==True
-        """
-        pass
-
-    def on_wakeup(self) -> None:
-        """
-        Called if a wakeup from suspend (longer than 1sec) is detected
         """
         pass

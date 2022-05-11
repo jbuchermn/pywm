@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 200112L
+#define _POSIX_C_SOURCE 200809L
 
 #include <assert.h>
 #include <stdlib.h>
@@ -142,18 +142,19 @@ void wm_content_get_box(struct wm_content* content, double* display_x, double* d
     *display_height = content->display_height;
 }
 
-void wm_content_set_z_index(struct wm_content* content, int z_index){
-    if(z_index == content->z_index) return;
+void wm_content_set_z_index(struct wm_content* content, double z_index){
+    if(fabs(z_index - content->z_index) < 0.0001) return;
 
     content->z_index = z_index;
     wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
 }
-int wm_content_get_z_index(struct wm_content* content){
+
+double wm_content_get_z_index(struct wm_content* content){
     return content->z_index;
 }
 
 void wm_content_set_opacity(struct wm_content* content, double opacity){
-    if(fabs(content->opacity - opacity) < 0.0000001) return;
+    if(fabs(content->opacity - opacity) < 0.0001) return;
 
     content->opacity = opacity;
     wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
@@ -167,7 +168,7 @@ void wm_content_set_mask(struct wm_content* content, double mask_x, double mask_
     if(fabs(content->mask_x - mask_x) +
             fabs(content->mask_y - mask_y) + 
             fabs(content->mask_w - mask_w) +
-            fabs(content->mask_h - mask_h) < 0.01) return;
+            fabs(content->mask_h - mask_h) < 0.0001) return;
 
     content->mask_x = mask_x;
     content->mask_y = mask_y;
@@ -204,6 +205,11 @@ double wm_content_get_corner_radius(struct wm_content* content){
     return content->corner_radius;
 }
 
+void wm_content_destroy(struct wm_content* content){
+    wm_layout_damage_from(content->wm_server->wm_layout, content, NULL);
+    (*content->vtable->destroy)(content);
+}
+
 void wm_content_render(struct wm_content* content, struct wm_output* output, pixman_region32_t* output_damage, struct timespec now){
     if(!wm_content_is_on_output(content, output)) return;
 
@@ -221,6 +227,43 @@ void wm_content_render(struct wm_content* content, struct wm_output* output, pix
     (*content->vtable->render)(content, output, &damage_on_workspace, now);
 
     pixman_region32_fini(&damage_on_workspace);
+}
+
+void wm_content_damage_output_base(struct wm_content* content, struct wm_output* output, struct wlr_surface* origin){
+    pixman_region32_t region;
+    pixman_region32_init(&region);
+
+    double x, y, w, h;
+    wm_content_get_box(content, &x, &y, &w, &h);
+    x -= output->layout_x;
+    y -= output->layout_y;
+
+    x *= output->wlr_output->scale;
+    y *= output->wlr_output->scale;
+    w *= output->wlr_output->scale;
+    h *= output->wlr_output->scale;
+    pixman_region32_union_rect(&region, &region,
+            floor(x), floor(y),
+            ceil(x + w) - floor(x), ceil(y + h) - floor(y));
+
+    if(wm_content_has_workspace(content)){
+        double workspace_x, workspace_y, workspace_w, workspace_h;
+        wm_content_get_workspace(content, &workspace_x, &workspace_y,
+                                 &workspace_w, &workspace_h);
+        workspace_x = (workspace_x - output->layout_x) * output->wlr_output->scale;
+        workspace_y = (workspace_y - output->layout_y) * output->wlr_output->scale;
+        workspace_w *= output->wlr_output->scale;
+        workspace_h *= output->wlr_output->scale;
+        pixman_region32_intersect_rect(
+            &region, &region,
+            floor(workspace_x),
+            floor(workspace_y),
+            ceil(workspace_x + workspace_w) - floor(workspace_x),
+            ceil(workspace_y + workspace_h) - floor(workspace_y));
+    }
+
+    wm_layout_damage_output(output->wm_layout, output, &region, content);
+    pixman_region32_fini(&region);
 }
 
 struct wm_content_vtable wm_content_base_vtable = {

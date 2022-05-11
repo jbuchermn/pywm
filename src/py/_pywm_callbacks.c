@@ -200,7 +200,7 @@ static bool call_swipe_end(struct wlr_event_pointer_swipe_end* event){
 static bool call_hold_begin(struct wlr_event_pointer_hold_begin* event){
     if(callbacks.gesture){
         PyGILState_STATE gil = PyGILState_Ensure();
-        PyObject* args = Py_BuildValue("(sii)", "swipe", event->time_msec, event->fingers);
+        PyObject* args = Py_BuildValue("(sii)", "hold", event->time_msec, event->fingers);
         bool result = call_bool(callbacks.gesture, args);
         PyGILState_Release(gil);
         return result;
@@ -211,7 +211,7 @@ static bool call_hold_begin(struct wlr_event_pointer_hold_begin* event){
 static bool call_hold_end(struct wlr_event_pointer_hold_end* event){
     if(callbacks.gesture){
         PyGILState_STATE gil = PyGILState_Ensure();
-        PyObject* args = Py_BuildValue("(sii)", "swipe", event->time_msec, event->cancelled);
+        PyObject* args = Py_BuildValue("(sii)", "hold", event->time_msec, event->cancelled);
         bool result = call_bool(callbacks.gesture, args);
         PyGILState_Release(gil);
         return result;
@@ -222,6 +222,10 @@ static bool call_hold_end(struct wlr_event_pointer_hold_end* event){
 
 static void call_init_view(struct wm_view* view){
     _pywm_views_add(view);
+
+    PyGILState_STATE gil = PyGILState_Ensure();
+    _pywm_views_update_single(view);
+    PyGILState_Release(gil);
 }
 
 static void call_destroy_view(struct wm_view* view){
@@ -305,8 +309,6 @@ PyObject** _pywm_callbacks_get(const char* name){
         return &callbacks.query_new_widget;
     }else if(!strcmp(name, "update_widget")){
         return &callbacks.update_widget;
-    }else if(!strcmp(name, "update_widget_pixels")){
-        return &callbacks.update_widget_pixels;
     }else if(!strcmp(name, "query_destroy_widget")){
         return &callbacks.query_destroy_widget;
     }else if(!strcmp(name, "update")){

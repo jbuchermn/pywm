@@ -6,6 +6,7 @@
 #include <wlr/types/wlr_output_damage.h>
 
 struct wm_layout;
+struct wm_renderer_buffers;
 
 struct wm_output {
     struct wm_server* wm_server;
@@ -26,6 +27,13 @@ struct wm_output {
     struct wl_listener present;
     struct wl_listener damage_frame;
     struct wl_listener damage_destroy;
+
+    bool expecting_frame;
+    struct timespec last_frame;
+
+#if WM_CUSTOM_RENDERER
+    struct wm_renderer_buffers* renderer_buffers;
+#endif
 };
 
 void wm_output_init(struct wm_output* output, struct wm_server* server, struct wm_layout* layout, struct wlr_output* out);

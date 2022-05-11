@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 200112L
+#define _POSIX_C_SOURCE 200809L
 
 #include <stdlib.h>
 #include <assert.h>
@@ -10,6 +10,7 @@
 #include "wm/wm_server.h"
 #include "wm/wm_config.h"
 #include "wm/wm_util.h"
+#include "wm/wm_composite.h"
 
 /*
  * Callbacks
@@ -18,14 +19,16 @@
 static int _wm_output_key = 0;
 static void handle_change(struct wl_listener* listener, void* data){
     struct wm_layout* layout = wl_container_of(listener, layout, change);
-    layout->fastest_output_mHz = 1000;
 
     struct wm_output* output;
+    int fastest_mHz = -1;
     wl_list_for_each(output, &layout->wm_outputs, link){
         output->key = _wm_output_key++;
 
-        if(output->wlr_output->refresh > layout->fastest_output_mHz){
-            layout->fastest_output_mHz = output->wlr_output->refresh;
+        if(output->wlr_output->refresh > fastest_mHz){
+            layout->refresh_master_output = output->key;
+            fastest_mHz = output->wlr_output->refresh;
+            wlr_log(WLR_DEBUG, "Following master output: %d", layout->refresh_master_output);
         }
 
         struct wlr_output_layout_output* o = wlr_output_layout_get(layout->wlr_output_layout, output->wlr_output);
@@ -53,9 +56,6 @@ void wm_layout_init(struct wm_layout* layout, struct wm_server* server){
 
     layout->change.notify = &handle_change;
     wl_signal_add(&layout->wlr_output_layout->events.change, &layout->change);
-
-    /* Some sensible (too slow) default */
-    layout->fastest_output_mHz = 1000;
 }
 
 void wm_layout_destroy(struct wm_layout* layout) {
@@ -97,8 +97,15 @@ void wm_layout_reconfigure(struct wm_layout* layout){
 void wm_layout_damage_whole(struct wm_layout* layout){
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
+        DEBUG_PERFORMANCE(damage, output->key);
         wlr_output_damage_add_whole(output->wlr_output_damage);
+
+        if(layout->refresh_master_output != layout->refresh_scheduled){
+            layout->refresh_scheduled = output->key;
+        }
+        DEBUG_PERFORMANCE(schedule_frame, output->key);
     }
+
 }
 
 
@@ -106,13 +113,39 @@ void wm_layout_damage_from(struct wm_layout* layout, struct wm_content* content,
     struct wm_output* output;
     wl_list_for_each(output, &layout->wm_outputs, link){
         if(!wm_content_is_on_output(content, output)) continue;
+        DEBUG_PERFORMANCE(damage, output->key);
 
         if(!content->lock_enabled && wm_server_is_locked(layout->wm_server)){
             wm_content_damage_output(content, output, NULL);
         }else{
             wm_content_damage_output(content, output, origin);
         }
+        DEBUG_PERFORMANCE(schedule_frame, output->key);
     }
+}
+
+void wm_layout_damage_output(struct wm_layout* layout, struct wm_output* output, pixman_region32_t* damage, struct wm_content* from){
+    wlr_output_damage_add(output->wlr_output_damage, damage);
+
+    struct wm_content* content;
+    wl_list_for_each(content, &layout->wm_server->wm_contents, link){
+        if(!wm_content_is_composite(content)) continue;
+        struct wm_composite* comp = wm_cast(wm_composite, content);
+        if(comp->super.z_index > from->z_index && &comp->super != from){
+            wm_composite_on_damage_below(comp, output, from, damage);
+        }
+    }
+
+    if(layout->refresh_master_output != layout->refresh_scheduled){
+        layout->refresh_scheduled = output->key;
+    }
+}
+
+void wm_layout_start_update(struct wm_layout* layout){
+    layout->refresh_scheduled = -1;
+}
+int wm_layout_get_refresh_output(struct wm_layout* layout){
+    return layout->refresh_scheduled;
 }
 
 struct send_enter_leave_data {

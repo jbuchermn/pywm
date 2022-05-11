@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING, Optional, TypeVar, Generic, Any
 import logging
 from abc import abstractmethod
 
-# Python imports are great
+from .damage_tracked import DamageTracked
+
 if TYPE_CHECKING:
     from .pywm import PyWM, PyWMOutput, ViewT
     PyWMT = TypeVar('PyWMT', bound=PyWM)
@@ -20,7 +21,7 @@ class PyWMViewUpstreamState:
                  size_constraints: list[int],
                  offset_x: int, offset_y: int,
                  width: int, height: int,
-                 is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool, fixed_output: Optional[PyWMOutput]) -> None:
+                 is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool, shows_csd: bool, fixed_output: Optional[PyWMOutput]) -> None:
 
         """
         Called from C - just to be sure, wrap every attribute in type constrcutor
@@ -53,6 +54,8 @@ class PyWMViewUpstreamState:
         self.is_resizing = bool(is_resizing)
         self.is_inhibiting_idle = bool(is_inhibiting_idle)
 
+        self.shows_csd = shows_csd
+
         self.fixed_output = fixed_output
 
     def is_update(self, other: PyWMViewUpstreamState) -> bool:
@@ -81,7 +84,7 @@ class PyWMViewUpstreamState:
 
 class PyWMViewDownstreamState:
     def __init__(self,
-                 z_index: int=0, box: tuple[float, float, float, float]=(0, 0, 0, 0),
+                 z_index: float=0, box: tuple[float, float, float, float]=(0, 0, 0, 0),
                  mask: tuple[float, float, float, float]=(-1, -1, -1, -1),
                  opacity: float=1., corner_radius: float=0,
                  accepts_input: bool=False,
@@ -93,7 +96,7 @@ class PyWMViewDownstreamState:
         """
         Just to be sure - wrap in type constructors
         """
-        self.z_index = int(z_index)
+        self.z_index = float(z_index)
         self.box = (float(box[0]), float(box[1]), float(box[2]), float(box[3]))
         self.mask = (float(mask[0]), float(mask[1]), float(mask[2]), float(mask[3]))
         self.opacity = opacity
@@ -122,14 +125,14 @@ class PyWMViewDownstreamState:
             last_state: Optional[PyWMViewDownstreamState],
             force_size: bool,
             focus: Optional[int], fullscreen: Optional[int], maximized: Optional[int], resizing: Optional[int], close: Optional[int]
-            ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, int, tuple[int, int], int, int, int, int, int, int, tuple[float, float, float, float]]:
+            ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, float, bool, bool, int, tuple[int, int], int, int, int, int, int, int, tuple[float, float, float, float]]:
 
         return (
             root.round(*self.box),
             self.mask,
             self.opacity,
             self.corner_radius,
-            int(self.z_index),
+            float(self.z_index),
             bool(self.accepts_input),
             bool(self.lock_enabled),
             int(self.floating) if self.floating is not None else -1,
@@ -149,8 +152,9 @@ class PyWMViewDownstreamState:
         return str(self.__dict__)
 
 
-class PyWMView(Generic[PyWMT]):
+class PyWMView(Generic[PyWMT], DamageTracked):
     def __init__(self, wm: PyWMT, handle: int) -> None: # Python imports are great
+        DamageTracked.__init__(self, wm)
         self._handle = handle
 
         self.wm = wm
@@ -163,7 +167,6 @@ class PyWMView(Generic[PyWMT]):
         self.up_state: Optional[PyWMViewUpstreamState] = None
         self.last_up_state: Optional[PyWMViewUpstreamState] = None
 
-        self._damaged = False
         self._down_state: Optional[PyWMViewDownstreamState] = None
         self._last_down_state: Optional[PyWMViewDownstreamState] = None
 
@@ -190,9 +193,9 @@ class PyWMView(Generic[PyWMT]):
                 is_mapped: bool, is_floating: bool, is_focused: bool, is_fullscreen: bool, is_maximized: bool, is_resizing: bool, is_inhibiting_idle: bool,
                 size_constraints: list[int],
                 offset_x: int, offset_y: int,
+                shows_csd: bool,
                 fixed_output_key: int,
-                ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, int, bool, bool, int, tuple[int, int], int, int, int, int, int, int, tuple[float, float, float, float]]:
-
+                ) -> tuple[tuple[float, float, float, float], tuple[float, float, float, float], float, float, float, bool, bool, int, tuple[int, int], int, int, int, int, int, int, tuple[float, float, float, float]]:
         if general is not None:
             if self.parent is None:
                 try:
@@ -213,6 +216,7 @@ class PyWMView(Generic[PyWMT]):
             offset_x, offset_y,
             width, height,
             is_focused, is_fullscreen, is_maximized, is_resizing, is_inhibiting_idle,
+            shows_csd,
             self.wm.get_output_by_key(fixed_output_key) if fixed_output_key >= 0 else None
         )
         last_up_state = self.up_state
@@ -230,11 +234,10 @@ class PyWMView(Generic[PyWMT]):
             if up_state.is_mapped:
                 self.on_map()
 
-        elif self._damaged or last_up_state is None or up_state.is_update(last_up_state):
+        elif self.is_damaged() or last_up_state is None or up_state.is_update(last_up_state):
             """
             Update
             """
-            self._damaged = False
             if last_up_state is None or up_state.is_focused != last_up_state.is_focused:
                 self.on_focus_change()
 
@@ -246,7 +249,7 @@ class PyWMView(Generic[PyWMT]):
 
             try:
                 down_state = self.process(up_state)
-            except Exception as e:
+            except Exception:
                 logger.exception("Exception during view.process")
                 down_state = self._last_down_state
 
@@ -295,26 +298,29 @@ class PyWMView(Generic[PyWMT]):
 
     def focus(self) -> None:
         self._down_action_focus = True
+        self.wm.damage_once()
 
     def set_resizing(self, val: bool) -> None:
         self._down_action_resizing = bool(val)
+        self.wm.damage_once()
 
     def set_fullscreen(self, val: bool) -> None:
         self._down_action_fullscreen = bool(val)
+        self.wm.damage_once()
 
     def set_maximized(self, val: bool) -> None:
         self._down_action_maximized = bool(val)
+        self.wm.damage_once()
 
     def force_size(self) -> None:
         self._down_force_size = True
+        self.wm.damage_once()
 
     def close(self) -> None:
         self._down_action_close = True
+        self.wm.damage_once()
 
-    def damage(self) -> None:
-        self._damaged = True
 
-    
     """
     Virtual methods
     """

@@ -1,7 +1,6 @@
 #ifndef WM_IDLE_INHIBIT_H
 #define WM_IDLE_INHIBIT_H
 
-#include <wlr/types/wlr_surface.h>
 #include <wlr/types/wlr_idle_inhibit_v1.h>
 
 struct wm_server;

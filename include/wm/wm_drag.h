@@ -5,6 +5,8 @@
 
 #include "wm_content.h"
 
+#define WM_DRAG_Z_INDEX 50.
+
 struct wm_drag {
     struct wm_content super;
 

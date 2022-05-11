@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import logging
@@ -38,12 +38,12 @@ def _load(path: str) -> np.ndarray:
 
 
 class PyWMBackgroundWidget(PyWMWidget):
-    def __init__(self, wm: PyWM[ViewT], output: PyWMOutput, path: str):
+    def __init__(self, wm: PyWM[ViewT], output: PyWMOutput, path: str, *args: Any, **kwargs: Any):
         """
         transpose == 't': matrix transpose
         transpose == 'f': flip the image
         """
-        super().__init__(wm, output)
+        super().__init__(wm, output, *args, **kwargs)
 
         # Prevent division by zero
         self.width = 1
@@ -59,4 +59,8 @@ class PyWMBackgroundWidget(PyWMWidget):
                             self.width, self.height,
                             im_alpha.tobytes())
         except Exception as e:
-            logger.warn("Unable to load background: %s", str(e))
+            logger.warn("Unable to load background: %s - defaulting to 100x100 black", str(e))
+
+            self.width = 100
+            self.height = 100
+            self.set_primitive("rect", [], [0., 0., 0., 1.])

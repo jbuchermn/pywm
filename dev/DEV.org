@@ -1,32 +1,46 @@
 #+TITLE: pywm developer information
 
 * Development
-** Current (v0.2)
+** Current (v0.3)
+*** Bugs
+**** WAIT Horizontal damage artifacts after closing views
+**** WAIT Lag in fullscreen video on chrome
+
+*** Performance topics / New renderer
+   - Goal: Idle CPU low - comparable between sway and pywm-fullscreen
+   - Issue: newm - pyevdev gestures uses a lot of CPU and spawns lots of threads
+   - Issue: newm - permanent top bar uses a lot of CPU
+   - Goal: No dropped frames in pywm animations or gestures
+   - Issue: (Probably) callbacks occassionally take a long time - dropped frames
+   - Issue: C-Side of view update loop takes a long time (comparable to python) - simplify using constant damage mode?
+**** TODO Performance: Test cases and comparison
+**** TODO Extensively test DEBUG_DAMAGE, WM_CUSTOM_RENDERER, different render modes, switching between render modes, frame damage optimization, damaging and blur 
+**** TODO Build test cases (e.g. damage behind blur by FocusBorder)
+
+*** TODO clang-format
+*** TODO Documentation
+    - Gestures removed
+    - pywm-fullscreen
 
 ** Backlog / Ideas
-*** Try some optimizations of update loop if no state (view nor layout nor widget) changes (most common case) --> bring down idle CPU
-*** wlroots migration to gitlab.freedesktop.org
-*** Layer shell: Keyboard interactivity
-*** wlr_output_manager
+*** wlr-output-management-unstable-v1 (in order to use wdisplays)
+*** If performance-critical: Store wm_composite as texture, better damage handling
+*** If performance-critical: Further optimize (simplification algorithm, incorporate all wm_contents) wm_compose_tree
+*** If necessary: Secondary buffer for blurring should extend beyond primary buffer (however this is very complicated, intervenes with workspace logic, for little reward)
+*** Enable keyboard-exclusive client (e.g. layer shell keyboard_interactivity / use in lock screen)
 *** Complete libinput device config / support for external mouse
 *** Use libseat from python / patched python evdev
-*** Can c gestures make python gestures redundant? (Maybe enable switching)
-*** Configurable gestures (abstraction layer) + possibility to use external "gesture providers" (e.g. detection from webcam video)
 *** Support newm-sidecar (or similar, via ws://) as touchpad
 *** Touch input from yoga or similar
-*** Decorations for floating windows (dialogs) or more general borders
 
 
 * Notes
-- Keep an eye on Chromium bug: https://bugs.chromium.org/p/chromium/issues/detail?id=1246834 So long patch by undoing https://github.com/swaywm/wlroots/commit/d290b13871fa18dcad6cd90d9ee93e7205742124?diff=unified
-
-- Screen record: wf-recorder
-- Screen shot: grim -g "$(slurp)"
-- Firefox: MOZ_ENABLE_WAYLAND=1
-- Chromium: --enable-features=UseOzonePlatform --ozone-platform=wayland
-- Matplotlib / Qt5 on Wayland requires DISPLAY=":0" to be set
-- Apple Trackpad
-        https://medium.com/macoclock/how-to-pair-apple-magic-keyboard-a1314-on-ubuntu-18-04-and-act-as-numpad-42fe4402454c
-        https://wiki.archlinux.org/index.php/Bluetooth
-
-- Screensharing using `xdg-desktop-portal-wlr -r`
+** Screen record: wf-recorder
+** Screen shot: grim -g "$(slurp)"
+** Firefox: MOZ_ENABLE_WAYLAND=1
+** Chromium: --enable-features=UseOzonePlatform --ozone-platform=wayland
+** Matplotlib / Qt5 on Wayland requires DISPLAY=":0" to be set
+** Apple Trackpad
+    - See https://medium.com/macoclock/how-to-pair-apple-magic-keyboard-a1314-on-ubuntu-18-04-and-act-as-numpad-42fe4402454c
+    - See https://wiki.archlinux.org/index.php/Bluetooth
+** Screensharing using xdg-desktop-portal-wlr -r

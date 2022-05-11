@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 200112L
+#define _POSIX_C_SOURCE 200809L
 
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +8,7 @@
 #include "wm/wm_server.h"
 #include "wm/wm_layout.h"
 #include "wm/wm_seat.h"
+#include "wm/wm_renderer.h"
 
 static void xcursor_setenv(struct wm_config* config){
     char cursor_size_fmt[16];
@@ -21,12 +22,13 @@ static void xcursor_setenv(struct wm_config* config){
 void wm_config_init_default(struct wm_config *config) {
     config->enable_xwayland = false;
 
-    config->callback_frequency = 20;
+    config->callback_frequency = 10;
 
     strcpy(config->xkb_model, "");
     strcpy(config->xkb_layout, "");
     strcpy(config->xkb_variant, "");
     strcpy(config->xkb_options, "");
+    strcpy(config->texture_shaders, "basic");
 
     wl_list_init(&config->outputs);
 
@@ -42,7 +44,7 @@ void wm_config_init_default(struct wm_config *config) {
         }
     }
 
-    config->xcursor_theme = cursor_theme;
+    config->xcursor_theme = cursor_theme ? strdup(cursor_theme) : "";
     config->xcursor_size = cursor_size;
 
     config->natural_scroll = true;
@@ -70,6 +72,18 @@ void wm_config_reconfigure(struct wm_config* config, struct wm_server* server){
     wm_server_reconfigure(server);
 
     xcursor_setenv(config);
+    wm_renderer_select_texture_shaders(server->wm_renderer, config->texture_shaders);
+    wm_renderer_ensure_mode(server->wm_renderer, wm_config_get_renderer_mode(config));
+}
+
+enum wm_renderer_mode wm_config_get_renderer_mode(struct wm_config* config){
+    if(!strcmp(config->renderer_mode, "wlr")){
+        return WM_RENDERER_WLR;
+    }else if(!strcmp(config->renderer_mode, "pywm")){
+        return WM_RENDERER_PYWM;
+    } 
+
+    return WM_RENDERER_PYWM;
 }
 
 void wm_config_set_xcursor_theme(struct wm_config* config, const char* xcursor_theme){

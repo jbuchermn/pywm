@@ -1,15 +1,16 @@
-#define _POSIX_C_SOURCE 200112L
+#define _POSIX_C_SOURCE 200809L
 
 #include <assert.h>
 #include <stdlib.h>
 #include <wayland-server.h>
 #include <wlr/backend.h>
 #include <wlr/backend/headless.h>
-#include <wlr/backend/noop.h>
 #include <wlr/backend/multi.h>
 #include <wlr/types/wlr_compositor.h>
+#include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_output.h>
+#include <wlr/render/allocator.h>
 #include <wlr/config.h>
 #include <wlr/types/wlr_data_control_v1.h>
 #include <wlr/types/wlr_export_dmabuf_v1.h>
@@ -21,7 +22,10 @@
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_gamma_control_v1.h>
 #include <wlr/util/log.h>
+
+#ifdef WM_HAS_XWAYLAND
 #include <wlr/xwayland.h>
+#endif
 
 #include "wm/wm_server.h"
 #include "wm/wm_util.h"
@@ -30,7 +34,9 @@
 #include "wm/wm_cursor.h"
 #include "wm/wm_view_xdg.h"
 #include "wm/wm_view_layer.h"
+#ifdef WM_HAS_XWAYLAND
 #include "wm/wm_view_xwayland.h"
+#endif
 #include "wm/wm_layout.h"
 #include "wm/wm_widget.h"
 #include "wm/wm_config.h"
@@ -60,11 +66,11 @@ static void handle_new_virtual_pointer(struct wl_listener* listener, void* data)
     struct wm_server* server = wl_container_of(listener, server, new_virtual_pointer);
     struct wlr_virtual_pointer_v1_new_pointer_event* evt = data;
 
-    wm_seat_add_input_device(server->wm_seat, &evt->new_pointer->input_device);
+    wm_seat_add_input_device(server->wm_seat, &evt->new_pointer->pointer.base);
 
     if(evt->suggested_output){
         wlr_cursor_map_input_to_output(server->wm_seat->wm_cursor->wlr_cursor,
-                                       &evt->new_pointer->input_device, evt->suggested_output);
+                                       &evt->new_pointer->pointer.base, evt->suggested_output);
     }
 }
 
@@ -74,7 +80,7 @@ static void handle_new_virtual_keyboard(struct wl_listener* listener, void* data
     struct wm_server* server = wl_container_of(listener, server, new_virtual_keyboard);
     struct wlr_virtual_keyboard_v1* keyboard = data;
 
-    wm_seat_add_input_device(server->wm_seat, &keyboard->input_device);
+    wm_seat_add_input_device(server->wm_seat, &keyboard->keyboard.base);
 }
 
 static void handle_new_output(struct wl_listener* listener, void* data){
@@ -84,14 +90,6 @@ static void handle_new_output(struct wl_listener* listener, void* data){
     struct wlr_output* output = data;
 
     wm_layout_add_output(server->wm_layout, output);
-
-    /* Start the timer loop once an output is there */
-    if(!server->callback_fallback_timer_started){
-        server->callback_fallback_timer_started = true;
-        wl_event_source_timer_update(
-                server->callback_fallback_timer,
-                1000 / server->wm_config->callback_frequency);
-    }
 }
 
 static void handle_new_xdg_surface(struct wl_listener* listener, void* data){
@@ -122,6 +120,7 @@ static void handle_new_layer_surface(struct wl_listener* listener, void* data){
     wm_view_layer_init(view, server, surface);
 }
 
+#ifdef WM_HAS_XWAYLAND
 static void handle_new_xwayland_surface(struct wl_listener* listener, void* data){
     wlr_log(WLR_DEBUG, "Server: New xwayland surface");
     
@@ -133,6 +132,7 @@ static void handle_new_xwayland_surface(struct wl_listener* listener, void* data
     struct wm_view_xwayland* view = calloc(1, sizeof(struct wm_view_xwayland));
     wm_view_xwayland_init(view, server, surface);
 }
+#endif
 
 static void handle_new_server_decoration(struct wl_listener* listener, void* data){
     struct wm_server* server = wl_container_of(listener, server, new_server_decoration);
@@ -194,52 +194,33 @@ static void handle_ready(struct wl_listener* listener, void* data){
 static int callback_timer_handler(void* data){
     struct wm_server* server = data;
 
-
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-
-    long long ms_diff = now.tv_nsec / 1000000 - server->last_callback.tv_nsec / 1000000;
-    ms_diff += (now.tv_sec - server->last_callback.tv_sec)*1000;
-
-    if(ms_diff > 0.9 * 1000000 / server->wm_layout->fastest_output_mHz){
-        server->last_callback = now;
-
-        TIMER_DEFINE(between_callback_update);
-        TIMER_STOP(between_callback_update);
-        TIMER_PRINT(between_callback_update);
-
-        TIMER_START(callback_update);
-
+    if(server->constant_damage_mode == -1){
+        wm_layout_damage_whole(server->wm_layout);
+        server->constant_damage_mode = 1;
+    }else{
+        DEBUG_PERFORMANCE(py_start, 0);
+        wm_layout_start_update(server->wm_layout);
         wm_callback_update();
-
-        TIMER_STOP(callback_update);
-        TIMER_PRINT(callback_update);
-
-        TIMER_STARTONLY(between_callback_update);
+        if(server->constant_damage_mode == 1 && wm_layout_get_refresh_output(server->wm_layout) < 0){
+            wm_layout_damage_whole(server->wm_layout);
+        }
+        DEBUG_PERFORMANCE(py_finish, 0);
     }
 
     return 0;
 }
 
-static int callback_fallback_timer_handler(void* data){
-    struct wm_server* server = data;
-
-    callback_timer_handler(data);
-
-    /* A bit hacky: Prevent fallback timer from blocking subsequent regular timer. Background:
-     *  1. No more damaging client-side --> no new frames
-     *  2. Fallback timer is triggered, calls Python update
-     *  3. Python updates trigger damages scheduling new frame
-     *  4. Frame is rendered, schedule_update is called
-     *  5. Correct schedule_update is blocked due to last_callback
-     *  6. Next update is triggered again by fallback_timer */
-    server->last_callback.tv_sec -= 1;
-
-    /* Reschedule */
-    wl_event_source_timer_update(
-            server->callback_fallback_timer,
-            1000 / server->wm_config->callback_frequency);
-    return 0;
+void wm_server_set_constant_damage_mode(struct wm_server* server, int mode){
+    if(mode == 1 && server->constant_damage_mode == 0){
+        DEBUG_PERFORMANCE(enter_constant_damage, 0);
+        wl_event_source_timer_update(server->callback_timer, 1);
+        server->constant_damage_mode = -1;
+    }else if(mode == 0 && server->constant_damage_mode != 0){
+        DEBUG_PERFORMANCE(exit_constant_damage, 0);
+        server->constant_damage_mode = 0;
+    }else if(mode == 2){
+        wl_event_source_timer_update(server->callback_timer, 1);
+    }
 }
 
 
@@ -262,6 +243,10 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wm_renderer = calloc(1, sizeof(struct wm_renderer));
     wm_renderer_init(server->wm_renderer, server);
 
+    /* Allocator */
+    server->wlr_allocator = wlr_allocator_autocreate(server->wlr_backend,
+        server->wm_renderer->wlr_renderer);
+
     /* Event loop */
     server->wl_event_loop = 
         wl_display_get_event_loop(server->wl_display);
@@ -272,6 +257,9 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wlr_compositor = 
         wlr_compositor_create(server->wl_display, server->wm_renderer->wlr_renderer);
     assert(server->wlr_compositor);
+
+    server->wlr_subcompositor = 
+        wlr_subcompositor_create(server->wl_display);
 
     server->wlr_data_device_manager = wlr_data_device_manager_create(server->wl_display);
     assert(server->wlr_data_device_manager);
@@ -292,12 +280,15 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     wlr_data_control_manager_v1_create(server->wl_display);
     wlr_primary_selection_v1_device_manager_create(server->wl_display);
     wlr_gamma_control_manager_v1_create(server->wl_display);
+    wlr_viewporter_create(server->wl_display);
 
+#ifdef WM_HAS_XWAYLAND
     server->wlr_xwayland = NULL;
     if(config->enable_xwayland){
         server->wlr_xwayland = wlr_xwayland_create(server->wl_display, server->wlr_compositor, false);
         assert(server->wlr_xwayland);
     }
+#endif
 
     server->wlr_virtual_keyboard_manager = wlr_virtual_keyboard_manager_v1_create(server->wl_display);
     server->wlr_virtual_pointer_manager = wlr_virtual_pointer_manager_v1_create(server->wl_display);
@@ -312,16 +303,18 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->wm_seat = calloc(1, sizeof(struct wm_seat));
     wm_seat_init(server->wm_seat, server, server->wm_layout);
 
+#ifdef WM_HAS_XWAYLAND
     if(server->wlr_xwayland){
         wlr_xwayland_set_seat(server->wlr_xwayland, server->wm_seat->wlr_seat);
     }
+#endif
 
     server->wm_idle_inhibit = calloc(1, sizeof(struct wm_idle_inhibit));
     wm_idle_inhibit_init(server->wm_idle_inhibit, server);
 
 
     /* Additional headless backend for vnc */
-    server->wlr_headless_backend = wlr_headless_backend_create_with_renderer(server->wl_display, server->wm_renderer->wlr_renderer);
+    server->wlr_headless_backend = wlr_headless_backend_create(server->wl_display);
     wlr_multi_backend_add(server->wlr_backend, server->wlr_headless_backend);
 
     /* Handlers */
@@ -350,6 +343,7 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
     server->new_xdg_decoration.notify = handle_new_xdg_decoration;
     wl_signal_add(&server->wlr_xdg_decoration_manager->events.new_toplevel_decoration, &server->new_xdg_decoration);
 
+#ifdef WM_HAS_XWAYLAND
     if(server->wlr_xwayland){
         server->new_xwayland_surface.notify = handle_new_xwayland_surface;
         wl_signal_add(&server->wlr_xwayland->events.new_surface, &server->new_xwayland_surface);
@@ -361,18 +355,17 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
         server->xwayland_ready.notify = handle_ready;
         wl_signal_add(&server->wlr_xwayland->events.ready, &server->xwayland_ready);
     }
+#endif
 
     server->callback_timer = wl_event_loop_add_timer(
         server->wl_event_loop, callback_timer_handler, server);
-    server->callback_fallback_timer = wl_event_loop_add_timer(
-        server->wl_event_loop, callback_fallback_timer_handler, server);
-    server->callback_fallback_timer_started = false;
-    clock_gettime(CLOCK_MONOTONIC, &server->last_callback);
 
     server->lock_perc = 0.0;
 
     server->wlr_xcursor_manager = NULL;
     wm_server_reconfigure(server);
+
+    server->constant_damage_mode = 0;
 }
 
 void wm_server_destroy(struct wm_server* server){
@@ -387,7 +380,9 @@ void wm_server_destroy(struct wm_server* server){
     free(server->wm_seat);
     free(server->wm_idle_inhibit);
 
+#ifdef WM_HAS_XWAYLAND
     wlr_xwayland_destroy(server->wlr_xwayland);
+#endif
     wl_display_destroy_clients(server->wl_display);
     wl_display_destroy(server->wl_display);
 }
@@ -553,15 +548,10 @@ void wm_server_update_contents(struct wm_server* server){
 }
 
 
-void wm_server_schedule_update(struct wm_server* server){
-
-    TIMER_DEFINE(between_schedule_callback);
-    TIMER_STOP(between_schedule_callback);
-    TIMER_PRINT(between_schedule_callback);
-
-    wl_event_source_timer_update(server->callback_timer, 1);
-
-    TIMER_STARTONLY(between_schedule_callback);
+void wm_server_schedule_update(struct wm_server* server, struct wm_output* from_output){
+    if(from_output->key == wm_layout_get_refresh_output(server->wm_layout)){
+        wl_event_source_timer_update(server->callback_timer, 1);
+    }
 }
 
 void wm_server_set_locked(struct wm_server* server, double lock_perc){
@@ -609,11 +599,13 @@ void wm_server_reconfigure(struct wm_server* server){
     server->wlr_xcursor_manager = wlr_xcursor_manager_create(server->wm_config->xcursor_theme, server->wm_config->xcursor_size);
     assert(server->wlr_xcursor_manager);
 
+#ifdef WM_HAS_XWAYLAND
     struct wlr_xcursor* xcursor = wlr_xcursor_manager_get_xcursor(server->wlr_xcursor_manager, "left_ptr", 1);
     if(server->wm_config->enable_xwayland && xcursor){
         struct wlr_xcursor_image* image = xcursor->images[0];
         wlr_xwayland_set_cursor(server->wlr_xwayland,
                 image->buffer, image->width * 4, image->width, image->height, image->hotspot_x, image->hotspot_y);
     }
+#endif
 
 }

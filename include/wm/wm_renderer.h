@@ -2,27 +2,35 @@
 #define WM_RENDERER_H
 
 #include <stdbool.h>
+#include <wlr/types/wlr_compositor.h>
 #include <wlr/render/wlr_renderer.h>
+#include <pixman.h>
 
-#define WM_CUSTOM_RENDERER
-
-struct wm_output;
 
 #ifdef WM_CUSTOM_RENDERER
 
-#include <GLES2/gl2.h>
-struct wm_renderer_shader {
+struct wm_output;
+struct wm_renderer;
+
+#include <GLES3/gl32.h>
+struct wm_renderer_texture_shader {
     GLuint shader;
+
+    /* Basic parameters */
     GLint proj;
-    GLint invert_y;
     GLint tex;
     GLint alpha;
     GLint pos_attrib;
     GLint tex_attrib;
 
+    GLint offset_x;
+    GLint offset_y;
+    GLint scale_x;
+    GLint scale_y;
     GLint width;
     GLint height;
 
+    /* pywm-defined additional parameters */
     GLint padding_l;
     GLint padding_t;
     GLint padding_r;
@@ -31,7 +39,66 @@ struct wm_renderer_shader {
     GLint lock_perc;
 };
 
+struct wm_renderer_texture_shaders {
+    const char* name;
+
+    struct wm_renderer_texture_shader rgba;
+    struct wm_renderer_texture_shader rgbx;
+    struct wm_renderer_texture_shader ext;
+};
+
+struct wm_renderer_primitive_shader {
+    GLuint shader;
+    const char* name;
+
+    /* Basic parameters */
+    GLint proj;
+    GLint alpha;
+    GLint pos_attrib;
+    GLint tex_attrib;
+
+    GLint width;
+    GLint height;
+
+    /* Additional parameters */
+    int n_params_int;
+    int n_params_float;
+    GLint params_float;
+    GLint params_int;
+};
+
+#define WM_RENDERER_DOWNSAMPLE_BUFFERS 4
+
+struct wm_renderer_buffers {
+    int width;
+    int height;
+    struct wm_renderer* parent;
+
+    GLuint frame_buffer;
+    GLuint frame_buffer_rbo;
+    GLuint frame_buffer_tex;
+
+    GLuint downsample_buffers[WM_RENDERER_DOWNSAMPLE_BUFFERS];
+    GLuint downsample_buffers_rbo[WM_RENDERER_DOWNSAMPLE_BUFFERS];
+    GLuint downsample_buffers_tex[WM_RENDERER_DOWNSAMPLE_BUFFERS];
+
+    int downsample_buffers_width[WM_RENDERER_DOWNSAMPLE_BUFFERS];
+    int downsample_buffers_height[WM_RENDERER_DOWNSAMPLE_BUFFERS];
+};
+
+void wm_renderer_buffers_init(struct wm_renderer_buffers* buffers, struct wm_renderer* renderer, int width, int height);
+void wm_renderer_buffers_destroy(struct wm_renderer_buffers* buffers);
+void wm_renderer_buffers_ensure(struct wm_renderer* renderer, struct wm_output* output);
+
 #endif
+
+enum wm_renderer_mode {
+    /* Pass all methods to wlr_renderer */
+    WM_RENDERER_WLR,
+
+    /* Use own shaders */
+    WM_RENDERER_PYWM,
+};
 
 struct wm_renderer {
     struct wm_server* wm_server;
@@ -39,30 +106,108 @@ struct wm_renderer {
 
     struct wm_output* current;
 
-#ifdef WM_CUSTOM_RENDERER
-    /* Custom shaders */
-    struct wm_renderer_shader shader_rgba;
-    struct wm_renderer_shader shader_rgbx;
-    struct wm_renderer_shader shader_ext;
+    enum wm_renderer_mode mode;
 
-    struct wm_renderer_shader shader_blurred_rgba;
-    struct wm_renderer_shader shader_blurred_rgbx;
-    struct wm_renderer_shader shader_blurred_ext;
+#ifdef WM_CUSTOM_RENDERER
+    int n_texture_shaders;
+    struct wm_renderer_texture_shaders* texture_shaders;
+
+    struct {
+        GLuint shader;
+        GLint tex;
+        GLint pos_attrib;
+        GLint tex_attrib;
+    } quad_shader;
+    struct {
+        GLuint shader;
+        GLint tex;
+        GLint pos_attrib;
+        GLint tex_attrib;
+
+        GLint halfpixel;
+        GLint offset;
+    } downsample_shader;
+    struct {
+        GLuint shader;
+        GLint tex;
+        GLint pos_attrib;
+        GLint tex_attrib;
+
+        GLint halfpixel;
+        GLint offset;
+
+        GLint width;
+        GLint height;
+        GLint padding_l;
+        GLint padding_t;
+        GLint padding_r;
+        GLint padding_b;
+        GLint cornerradius;
+    } upsample_shader;
+
+    int n_primitive_shaders;
+    struct wm_renderer_primitive_shader* primitive_shaders;
+
+    struct wm_renderer_texture_shaders* texture_shaders_selected;
+    struct wm_renderer_primitive_shader* primitive_shader_selected;
+
+    unsigned int selected_buffer;
 #endif
 };
 
 void wm_renderer_init(struct wm_renderer *renderer, struct wm_server *server);
 void wm_renderer_destroy(struct wm_renderer *renderer);
+int wm_renderer_init_output(struct wm_renderer* renderer, struct wm_output* output);
+
+#ifdef WM_CUSTOM_RENDERER
+
+void wm_renderer_init_texture_shaders(struct wm_renderer* renderer, int n_shaders);
+void wm_renderer_add_texture_shaders(struct wm_renderer* renderer, const char* name,
+        const GLchar* vert_src,
+        const GLchar* frag_src_rgba,
+        const GLchar* frag_src_rgbx,
+        const GLchar* frag_src_ext);
+
+void wm_renderer_init_primitive_shaders(struct wm_renderer* renderer, int n_shaders);
+void wm_renderer_add_primitive_shader(struct wm_renderer* renderer, const char* name,
+        const GLchar* vert_src, const GLchar* frag_src, int n_params_int, int n_params_float);
+
+#endif
+
+void wm_renderer_select_texture_shaders(struct wm_renderer* renderer, const char* name);
+void wm_renderer_select_primitive_shader(struct wm_renderer* renderer, const char* name);
+bool wm_renderer_check_primitive_params(struct wm_renderer* renderer, int n_int, int n_float);
+
+void wm_renderer_to_buffer(struct wm_renderer* renderer, unsigned int buffer);
 
 void wm_renderer_begin(struct wm_renderer *renderer, struct wm_output *output);
 void wm_renderer_end(struct wm_renderer *renderer, pixman_region32_t *damage,
                      struct wm_output *output);
 void wm_renderer_render_texture_at(struct wm_renderer *renderer,
                                    pixman_region32_t *damage,
+                                   struct wlr_surface* surface,
                                    struct wlr_texture *texture,
                                    struct wlr_box *box, double opacity,
                                    struct wlr_box *mask,
                                    double corner_radius, double lock_perc);
 
+void wm_renderer_render_primitive(struct wm_renderer* renderer,
+                                  pixman_region32_t* damage,
+                                  struct wlr_box* box,
+                                  double opacity, int* params_int, float* params_float);
+
+void wm_renderer_apply_blur(struct wm_renderer* renderer,
+                            pixman_region32_t* damage,
+                            int extend_damage,
+                            struct wlr_box* box,
+                            int radius,
+                            int passes,
+                            double cornerradius);
+
+void wm_renderer_clear(struct wm_renderer* renderer,
+                       pixman_region32_t* damage,
+                       float* color);
+
+void wm_renderer_ensure_mode(struct wm_renderer* renderer, enum wm_renderer_mode mode);
 
 #endif

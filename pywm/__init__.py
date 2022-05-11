@@ -1,5 +1,6 @@
-from .pywm import (  # noqa F401
+from .pywm import (
     PyWM,
+    PyWMModifiers,
     PyWMOutput,
     PyWMDownstreamState,
     PYWM_MOD_SHIFT,
@@ -21,16 +22,20 @@ from .pywm import (  # noqa F401
     PYWM_TRANSFORM_FLIPPED_180,
     PYWM_TRANSFORM_FLIPPED_270,
 )
-from .pywm_view import (  # noqa F401
+from .pywm_view import (
     PyWMView,
     PyWMViewDownstreamState,
     PyWMViewUpstreamState
 )
 
-from .pywm_widget import (  # noqa F401
+from .pywm_widget import (
     PyWMWidget,
     PyWMWidgetDownstreamState
 )
 
-from .pywm_background_widget import PyWMBackgroundWidget  # noqa F401
-from .pywm_cairo_widget import PyWMCairoWidget  # noqa
+from .pywm_background_widget import PyWMBackgroundWidget
+from .pywm_cairo_widget import PyWMCairoWidget
+from .pywm_blur_widget import PyWMBlurWidget
+
+from .damage_tracked import DamageTracked
+from ._pywm import debug_performance

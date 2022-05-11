@@ -27,11 +27,11 @@ else:
     raise Exception("Fatal: Could not find shared library")
 
 setup(name='pywm',
-      version='0.2',
+      version='0.3',
       description='wlroots-based Wayland compositor with Python frontend',
       url="https://github.com/jbuchermn/pywm",
       author='Jonas Bucher',
       author_email='j.bucher.mn@gmail.com',
-      package_data={'pywm': ['_pywm.so', 'py.typed'], 'pywm.touchpad': ['py.typed']},
-      packages=['pywm', 'pywm.touchpad'],
+      package_data={'pywm': ['_pywm.so', 'py.typed']},
+      packages=['pywm'],
       install_requires=['evdev', 'imageio', 'pycairo', 'numpy'])

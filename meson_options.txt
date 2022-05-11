@@ -1,0 +1,2 @@
+option('custom_renderer', type : 'feature', value : 'enabled')
+option('xwayland', type : 'feature', value : 'enabled')

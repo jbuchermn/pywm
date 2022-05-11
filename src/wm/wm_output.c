@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 200112L
+#define _POSIX_C_SOURCE 200809L
 
 #include "wm/wm_output.h"
 #include "wm/wm_config.h"
@@ -10,8 +10,10 @@
 #include "wm/wm_widget.h"
 #include "wm/wm_seat.h"
 #include "wm/wm_cursor.h"
+#include "wm/wm_composite.h"
 #include <assert.h>
 #include <time.h>
+#include <stdlib.h>
 #include <wlr/util/log.h>
 #include <wlr/util/region.h>
 #include <wlr/types/wlr_matrix.h>
@@ -39,18 +41,16 @@ static void handle_mode(struct wl_listener *listener, void *data) {
 
 static void handle_present(struct wl_listener *listener, void *data) {
     struct wm_output *output = wl_container_of(listener, output, present);
-
-    /* 
-     * Synchronous update is best scheduled immediately after
-     * frame present
-     */
-    wm_server_schedule_update(output->wm_server);
 }
+
 
 static void render(struct wm_output *output, struct timespec now, pixman_region32_t *damage) {
     struct wm_renderer *renderer = output->wm_server->wm_renderer;
 
-    /* Ensure z-index */
+    int width, height;
+    wlr_output_transformed_resolution(output->wlr_output, &width, &height);
+
+    /* Ensure z-indes */
     wm_server_update_contents(output->wm_server);
 
     /* Begin render */
@@ -60,6 +60,11 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     wlr_renderer_clear(renderer->wlr_renderer, (float[]){1, 1, 0, 1});
 #endif
 
+    /* 
+     * This does not catch all cases, where clearing is necessary - specifically, if only the texture contains transparency,
+     * but compositor opacaity is set to 1, needs_clear will be false.
+     *
+     * In the end the assumption is there's always a background and this catches a fading out background */
     bool needs_clear = false;
     struct wm_content *r;
     wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
@@ -69,38 +74,46 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
         }
     }
 
-    if(needs_clear){
-        int nrects;
-        pixman_box32_t* rects = pixman_region32_rectangles(damage, &nrects);
-        for(int i=0; i<nrects; i++){
-            struct wlr_box damage_box = {
-                .x = rects[i].x1,
-                .y = rects[i].y1,
-                .width = rects[i].x2 - rects[i].x1,
-                .height = rects[i].y2 - rects[i].y1
-            };
+    struct wm_compose_chain* chain = wm_compose_chain_from_damage(output->wm_server, output, damage);
 
-            float matrix[9];
-            wlr_matrix_project_box(matrix, &damage_box,
-                    WL_OUTPUT_TRANSFORM_NORMAL, 0,
-                    renderer->current->wlr_output->transform_matrix);
-            wlr_render_rect(
-                    renderer->wlr_renderer,
-                    &damage_box, (float[]){0., 0., 0., 1.}, renderer->current->wlr_output->transform_matrix);
+    struct wm_compose_chain* last = chain;
+    while(last->lower) last = last->lower;
+
+    if(needs_clear){
+        wm_renderer_to_buffer(renderer, 0);
+        wm_renderer_clear(renderer, damage, (float[]){ 0., 0., 0., 1.});
+
+        if(last != chain){
+            wm_renderer_to_buffer(renderer, 1);
+            wm_renderer_clear(renderer, &last->damage, (float[]){ 0., 0., 0., 1.});
         }
     }
 
+    if(last != chain){
+        wm_renderer_to_buffer(renderer, 1);
+    }
+
     /* Do render */
-    wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
-        if(wm_content_get_opacity(r) < 0.0001) continue;
-        wm_content_render(r, output, damage, now);
+    for(struct wm_compose_chain* at=last; at; at=at->higher){
+        wl_list_for_each_reverse(r, &output->wm_server->wm_contents, link) {
+            if(at->lower && wm_content_get_z_index(r) < at->lower->z_index) continue;
+            if(wm_content_get_z_index(r) > at->z_index) break;
+
+            if(wm_content_get_opacity(r) < 0.0001) continue;
+            wm_content_render(r, output, &at->damage, now);
+        }
+        if(at->composite){
+            wm_composite_apply(at->composite, output, &at->composite_output, now);
+        }
+    }
+
+    if(last != chain){
+        wm_renderer_to_buffer(renderer, 1);
     }
 
     /* End render */
-    wm_renderer_end(renderer, damage, output);
-
-    int width, height;
-    wlr_output_transformed_resolution(output->wlr_output, &width, &height);
+    wm_renderer_end(renderer, &chain->damage, output);
+    wm_compose_chain_free(chain);
 
     /* Commit */
     pixman_region32_t frame_damage;
@@ -112,8 +125,7 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
                          width, height);
 
 #ifdef DEBUG_DAMAGE_HIGHLIGHT
-    pixman_region32_union_rect(&frame_damage, &frame_damage,
-        0, 0, output->wlr_output->width, output->wlr_output->height);
+    pixman_region32_union_rect(&frame_damage, &frame_damage, 0, 0, width, height);
 #endif
 
     wlr_output_set_damage(output->wlr_output, &frame_damage);
@@ -122,10 +134,24 @@ static void render(struct wm_output *output, struct timespec now, pixman_region3
     if (!wlr_output_commit(output->wlr_output)) {
         wlr_log(WLR_DEBUG, "Commit frame failed");
     }
+
+    /* 
+     * Synchronous update is best scheduled immediately after frame
+     */
+    DEBUG_PERFORMANCE(present_frame, output->key);
+    wm_server_schedule_update(output->wm_server, output);
 }
 
 static void handle_damage_frame(struct wl_listener *listener, void *data) {
     struct wm_output *output = wl_container_of(listener, output, damage_frame);
+
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+
+    double diff = msec_diff(now, output->last_frame);
+    if(output->expecting_frame &&  output->wlr_output->current_mode && diff > 1.5 * 1000000./output->wlr_output->current_mode->refresh){
+        wlr_log(WLR_DEBUG, "Output %d dropped frame (%.2fms)", output->key, diff);
+    }
 
     bool needs_frame;
     pixman_region32_t damage;
@@ -133,24 +159,33 @@ static void handle_damage_frame(struct wl_listener *listener, void *data) {
     if (wlr_output_damage_attach_render(
                 output->wlr_output_damage, &needs_frame, &damage)) {
 #ifdef DEBUG_DAMAGE_RERENDER
-        pixman_region32_union_rect(&damage, &damage, 0, 0, output->wlr_output->width, output->wlr_output->height);
+        int width, height;
+        wlr_output_transformed_resolution(output->wlr_output, &width, &height);
+        pixman_region32_union_rect(&damage, &damage, 0, 0, width, height);
         needs_frame = true;
 #endif
 
         if (needs_frame) {
-            struct timespec now;
-            clock_gettime(CLOCK_MONOTONIC, &now);
-
-            TIMER_START(render)
+            DEBUG_PERFORMANCE(render, output->key);
+            TIMER_START(render);
             render(output, now, &damage);
             TIMER_STOP(render);
             TIMER_PRINT(render);
-        } else {
-            wlr_output_rollback(output->wlr_output);
-        }
 
+            output->expecting_frame = true;
+        } else {
+            DEBUG_PERFORMANCE(skip_frame, output->key);
+            wlr_output_rollback(output->wlr_output);
+
+            output->expecting_frame = false;
+        }
         pixman_region32_fini(&damage);
+
+        output->last_frame = now;
+    }else{
+        wlr_log(WLR_DEBUG, "Attaching to renderer failed");
     }
+
 }
 
 static void handle_damage_destroy(struct wl_listener *listener, void *data) {
@@ -255,12 +290,17 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
         strcpy(out->name, wm_output_overridden_name);
         wm_output_overridden_name = NULL;
     }
-    wlr_log(WLR_INFO, "New output: %s: %s - %s (%s)", out->make, out->model, out->name, out->description);
+    wlr_log(WLR_INFO, "New output: %s: %s (%s) - use name: '%s' to configure", out->make, out->model, out->description, out->name);
     output->wm_server = server;
     output->wm_layout = layout;
     output->wlr_output = out;
     output->layout_x = 0;
     output->layout_y = 0;
+
+    if (!wm_renderer_init_output(server->wm_renderer, output)) {
+        wlr_log(WLR_ERROR, "Failed to init output render");
+        return;
+    }
 
     output->wlr_output_damage = wlr_output_damage_create(output->wlr_output);
 
@@ -288,6 +328,13 @@ void wm_output_init(struct wm_output *output, struct wm_server *server,
 
     /* Let the cursor know we possibly have a new scale */
     wm_cursor_ensure_loaded_for_scale(server->wm_seat->wm_cursor, scale);
+
+#ifdef WM_CUSTOM_RENDERER
+    output->renderer_buffers = NULL;
+#endif
+
+    output->expecting_frame = false;
+    clock_gettime(CLOCK_MONOTONIC, &output->last_frame);
 }
 
 void wm_output_reconfigure(struct wm_output* output){
@@ -302,4 +349,8 @@ void wm_output_destroy(struct wm_output *output) {
     wl_list_remove(&output->present.link);
     wl_list_remove(&output->link);
     wm_layout_remove_output(output->wm_layout, output);
+
+#if WM_CUSTOM_RENDERER
+    wm_renderer_buffers_destroy(output->renderer_buffers);
+#endif
 }

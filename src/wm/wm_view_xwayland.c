@@ -1,10 +1,11 @@
-#define _POSIX_C_SOURCE 200112L
+#define _POSIX_C_SOURCE 200809L
 
 #include <assert.h>
 #include <stdlib.h>
 #include <wayland-server.h>
 #include <wlr/util/log.h>
 #include <wlr/xwayland.h>
+#include <wlr/types/wlr_subcompositor.h>
 
 #include "wm/wm_util.h"
 #include "wm/wm_view_xwayland.h"
@@ -127,8 +128,9 @@ static void handle_request_configure(struct wl_listener* listener, void* data){
     struct wm_view_xwayland* view = wl_container_of(listener, view, request_configure);
     struct wlr_xwayland_surface_configure_event* event = data;
 
-    struct wlr_box* box = wlr_output_layout_get_box(view->super.super.wm_server->wm_layout->wlr_output_layout, NULL);
-    wlr_xwayland_surface_configure(view->wlr_xwayland_surface, box->x, box->y, event->width, event->height);
+    struct wlr_box box;
+    wlr_output_layout_get_box(view->super.super.wm_server->wm_layout->wlr_output_layout, NULL, &box);
+    wlr_xwayland_surface_configure(view->wlr_xwayland_surface, box.x, box.y, event->width, event->height);
 }
 
 static void handle_set_pid(struct wl_listener* listener, void* data){
@@ -285,8 +287,9 @@ static void wm_view_xwayland_get_info(struct wm_view* super, const char** title,
 static void wm_view_xwayland_request_size(struct wm_view* super, int width, int height){
     struct wm_view_xwayland* view = wm_cast(wm_view_xwayland, super);
 
-    struct wlr_box* box = wlr_output_layout_get_box(view->super.super.wm_server->wm_layout->wlr_output_layout, NULL);
-    wlr_xwayland_surface_configure(view->wlr_xwayland_surface, box->x, box->y, width, height);
+    struct wlr_box box;
+    wlr_output_layout_get_box(view->super.super.wm_server->wm_layout->wlr_output_layout, NULL, &box);
+    wlr_xwayland_surface_configure(view->wlr_xwayland_surface, box.x, box.y, width, height);
 }
 
 static void wm_view_xwayland_request_close(struct wm_view* super){

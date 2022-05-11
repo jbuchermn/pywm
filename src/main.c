@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 200112L
+#define _POSIX_C_SOURCE 200809L
 
 #include <assert.h>
 #include <stdlib.h>
@@ -10,7 +10,7 @@
 int main(int argc, char** argv){
     struct wm_config config;
     wm_config_init_default(&config);
-    wm_init();
+    wm_init(&config);
     wm_run();
     wm_destroy();
 

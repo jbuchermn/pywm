@@ -10,99 +10,151 @@
   flake-utils.lib.eachDefaultSystem (
     system:
     let
-      pkgs = nixpkgs.legacyPackages.${system};
+      pkgs = import nixpkgs {
+        inherit system;
+      };
+      has_xwayland = true;
+      inherit (pkgs.lib) optionals;
     in
     {
       packages.pywm = (
-        let
-          a = 1;
-        in (
-          pkgs.python3.pkgs.buildPythonPackage rec {
-            pname = "pywm";
-            version = "0.2";
+        pkgs.python3.pkgs.buildPythonPackage rec {
+          pname = "pywm";
+          version = "0.3alpha";
 
-            # BEGIN Fucking suubprojects bug workaround for 'src = ./.'
-            srcs = [
-              ./.
-              (builtins.fetchGit {
-                url = "https://github.com/swaywm/wlroots";
-                rev = "3d6ca9942db43ca182d91b115597a4ca7f367eef";
-                submodules = true;
-              })
-            ];
+          # BEGIN Fucking subprojects bug workaround for 'src = ./.'
+          srcs = [
+            ./.
+            (builtins.fetchGit {
+              url = "https://gitlab.freedesktop.org/wlroots/wlroots";
+              rev = "e279266f714c7122e9ad97d56d047313f78cfdbe";
+              submodules = true;
+            })
+          ];
 
-            setSourceRoot = ''
-              for i in ./*; do
-                if [ -f "$i/wlroots.syms" ]; then
-                  wlrootsDir=$i
-                fi
-                if [ -f "$i/pywm/pywm.py" ]; then
-                  sourceRoot=$i
-                fi
-              done
-            '';
+          setSourceRoot = ''
+            for i in ./*; do
+              if [ -f "$i/wlroots.syms" ]; then
+                wlrootsDir=$i
+              fi
+              if [ -f "$i/pywm/pywm.py" ]; then
+                sourceRoot=$i
+              fi
+            done
+          '';
 
-            preConfigure = ''
-              echo "--- Pre-configure --------------"
-              echo "  wlrootsDir=$wlrootsDir"
-              echo "  sourceRoot=$sourceRoot"
-              echo "--- ls -------------------------"
-              ls -al
-              echo "--- ls ../wlrootsDir -----------"
-              ls -al ../$wlrootsDir
+          preConfigure = ''
+            echo "--- Pre-configure --------------"
+            echo "  wlrootsDir=$wlrootsDir"
+            echo "  sourceRoot=$sourceRoot"
+            echo "--- ls -------------------------"
+            ls -al
+            echo "--- ls ../wlrootsDir -----------"
+            ls -al ../$wlrootsDir
 
-              rm -rf ./subprojects/wlroots 2> /dev/null
-              cp -r ../$wlrootsDir ./subprojects/wlroots
-              rm -rf ./build
+            rm -rf ./subprojects/wlroots 2> /dev/null
+            cp -r ../$wlrootsDir ./subprojects/wlroots
+            rm -rf ./build
 
-              echo "--- ls ./subprojects/wlroots ---"
-              ls -al ./subprojects/wlroots/
-              echo "--------------------------------"
-            '';
-            # END Fucking suubprojects bug workaround
+            echo "--- ls ./subprojects/wlroots ---"
+            ls -al ./subprojects/wlroots/
+            echo "--------------------------------"
+          '';
+          # END Fucking subprojects bug workaround
 
-            nativeBuildInputs = with pkgs; [
-              meson_0_60
-              ninja
-              pkg-config
-              wayland-scanner
-              glslang
-            ];
+          mesonFlags = if has_xwayland then "-Dxwayland=enabled" else "";
 
-            preBuild = "cd ..";
+          nativeBuildInputs = with pkgs; [
+            meson
+            ninja
+            pkg-config
+            wayland-scanner
+            glslang
+          ];
 
-            buildInputs = with pkgs; [
-              libGL
-              wayland
-              wayland-protocols
-              libinput
-              libxkbcommon
-              pixman
-              xorg.xcbutilwm
-              xorg.xcbutilrenderutil
-              xorg.xcbutilerrors
-              xorg.xcbutilimage
-              xorg.libX11
-              seatd
-              xwayland
-              vulkan-loader
-              mesa
+          preBuild = "cd ..";
 
-              libpng
-              ffmpeg
-              libcap
-            ];
+          buildInputs = with pkgs; [
+            libGL
+            wayland
+            wayland-protocols
+            libinput
+            libxkbcommon
+            pixman
+            vulkan-loader
+            mesa
+            seatd
 
-            propagatedBuildInputs = with pkgs.python3Packages; [
-              imageio
-              numpy
-              pycairo
-              evdev
-              matplotlib
-            ];
-          }
-        )
+            libpng
+            ffmpeg
+            libcap
+
+            xorg.xcbutilwm
+            xorg.xcbutilrenderutil
+            xorg.xcbutilerrors
+            xorg.xcbutilimage
+            xorg.libX11
+          ] ++ optionals has_xwayland [
+            xwayland
+          ];
+
+          propagatedBuildInputs = with pkgs.python3Packages; [
+            imageio
+            numpy
+            pycairo
+            evdev
+          ];
+        }
       );
+
+      devShell = let
+        my-python = pkgs.python3;
+        python-with-my-packages = my-python.withPackages (ps: with ps; [
+          imageio
+          numpy
+          pycairo
+          evdev
+          matplotlib
+
+          python-lsp-server
+          (pylsp-mypy.overrideAttrs (old: { pytestCheckPhase = "true"; }))
+          mypy
+        ]);
+      in
+        pkgs.mkShell {
+          nativeBuildInputs = with pkgs; [ 
+            meson
+            ninja
+            pkg-config
+            wayland-scanner
+            glslang
+          ];
+
+          buildInputs = with pkgs; [ 
+            libGL
+            wayland
+            wayland-protocols
+            libinput
+            libxkbcommon
+            pixman
+            seatd
+            vulkan-loader
+            mesa
+
+            libpng
+            ffmpeg
+            libcap
+            python-with-my-packages 
+
+            xorg.xcbutilwm
+            xorg.xcbutilrenderutil
+            xorg.xcbutilerrors
+            xorg.xcbutilimage
+            xorg.libX11
+            xwayland
+          ];
+
+        };
     }
   );
 }

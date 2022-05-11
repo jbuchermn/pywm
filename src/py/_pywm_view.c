@@ -6,7 +6,9 @@
 #include "wm/wm.h"
 #include "wm/wm_view.h"
 #include "wm/wm_output.h"
+#ifdef WM_HAS_XWAYLAND
 #include "wm/wm_view_xwayland.h"
+#endif
 #include "wm/wm_util.h"
 
 #include "py/_pywm_view.h"
@@ -52,7 +54,11 @@ void _pywm_view_update(struct _pywm_view* view){
             view->update_cnt--;
         }
 
+#ifdef WM_HAS_XWAYLAND
         bool xwayland = wm_view_is_xwayland(view->view);
+#else
+        bool xwayland = false;
+#endif
 
         args_general = Py_BuildValue(
                 "(lOisss)",
@@ -93,9 +99,10 @@ void _pywm_view_update(struct _pywm_view* view){
     int offset_x, offset_y;
     wm_view_get_offset(view->view, &offset_x, &offset_y);
 
+    bool shows_csd = wm_view_shows_csd(view->view);
 
     PyObject* args = Py_BuildValue(
-            "(lOiiOOOOOOOOiii)",
+            "(lOiiOOOOOOOOiiOi)",
 
             view->handle,
             args_general,
@@ -115,6 +122,7 @@ void _pywm_view_update(struct _pywm_view* view){
 
             offset_x,
             offset_y,
+            shows_csd ? Py_True : Py_False,
             fixed_output_key);
 
 
@@ -132,13 +140,14 @@ void _pywm_view_update(struct _pywm_view* view){
         double corner_radius;
         int floating, focus_pending, resizing_pending, fullscreen_pending, maximized_pending, close_pending;
         int width_pending, height_pending;
-        int accepts_input, z_index;
+        int accepts_input;
+        double z_index;
         int lock_enabled;
         int new_fixed_output_key;
         double workspace_x, workspace_y, workspace_w, workspace_h;
         
         if(!PyArg_ParseTuple(res, 
-                    "(dddd)(dddd)ddippi(ii)iiiiii(dddd)",
+                    "(dddd)(dddd)dddppi(ii)iiiiii(dddd)",
                     &x, &y, &w, &h,
                     &mask_x, &mask_y, &mask_w, &mask_h,
                     &opacity,
@@ -250,7 +259,10 @@ long _pywm_views_get_handle(struct wm_view* view){
 
 void _pywm_views_update(){
     for(struct _pywm_view* view=views.first_view; view; view=view->next_view){
+        TIMER_START(callback_update_views_single);
         _pywm_view_update(view);
+        TIMER_STOP(callback_update_views_single);
+        TIMER_PRINT(callback_update_views_single);
     }
 }
 

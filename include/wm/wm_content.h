@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <wayland-server.h>
 #include <pixman.h>
-#include <wlr/types/wlr_surface.h>
+#include <wlr/types/wlr_compositor.h>
 #include <wlr/util/log.h>
 
 struct wm_output;
@@ -38,7 +38,7 @@ struct wm_content {
     double mask_h;
     double corner_radius;
 
-    int z_index;
+    double z_index;
     double opacity;
 
     /* Accepts input and is displayed clearly during lock - careful */
@@ -63,8 +63,8 @@ void wm_content_get_mask(struct wm_content* content, double* mask_x, double* mas
 void wm_content_set_corner_radius(struct wm_content* content, double corner_radius);
 double wm_content_get_corner_radius(struct wm_content* content);
 
-void wm_content_set_z_index(struct wm_content* content, int z_index);
-int wm_content_get_z_index(struct wm_content* content);
+void wm_content_set_z_index(struct wm_content* content, double z_index);
+double wm_content_get_z_index(struct wm_content* content);
 
 void wm_content_set_opacity(struct wm_content* content, double opacity);
 double wm_content_get_opacity(struct wm_content* content);
@@ -81,15 +81,20 @@ struct wm_content_vtable {
     void (*printf)(FILE* file, struct wm_content* content);
 };
 
-static inline void wm_content_destroy(struct wm_content* content){
-    (*content->vtable->destroy)(content);
-}
+void wm_content_destroy(struct wm_content* content);
 
 void wm_content_render(struct wm_content* content, struct wm_output* output, pixman_region32_t* output_damage, struct timespec now);
 
+void wm_content_damage_output_base(struct wm_content* content, struct wm_output* output, struct wlr_surface* origin);
+
 static inline void wm_content_damage_output(struct wm_content* content, struct wm_output* output, struct wlr_surface* origin){
-    (*content->vtable->damage_output)(content, output, origin);
+    if(content->vtable->damage_output){
+        (*content->vtable->damage_output)(content, output, origin);
+    }else{
+        wm_content_damage_output_base(content, output, origin);
+    }
 }
+
 static inline void wm_content_printf(FILE* file, struct wm_content* content){
     (*content->vtable->printf)(file, content);
 }

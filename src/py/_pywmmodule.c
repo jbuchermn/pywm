@@ -8,6 +8,8 @@
 #include "wm/wm.h"
 #include "wm/wm_config.h"
 #include "wm/wm_server.h"
+#include "wm/wm_layout.h"
+#include "wm/wm_util.h"
 #include "py/_pywm_callbacks.h"
 #include "py/_pywm_view.h"
 #include "py/_pywm_widget.h"
@@ -59,6 +61,9 @@ static void set_config(struct wm_config* conf, PyObject* dict, int reconfigure){
     o = PyDict_GetItemString(dict, "xkb_variant"); if(o){ strncpy(conf->xkb_variant, PyBytes_AsString(o), WM_CONFIG_STRLEN-1); }
     o = PyDict_GetItemString(dict, "xkb_options"); if(o){ strncpy(conf->xkb_options, PyBytes_AsString(o), WM_CONFIG_STRLEN-1); }
 
+    o = PyDict_GetItemString(dict, "texture_shaders"); if(o){ strncpy(conf->texture_shaders, PyBytes_AsString(o), WM_CONFIG_STRLEN-1); }
+    o = PyDict_GetItemString(dict, "renderer_mode"); if(o){ strncpy(conf->renderer_mode, PyBytes_AsString(o), WM_CONFIG_STRLEN-1); }
+
     o = PyDict_GetItemString(dict, "xcursor_theme"); if(o){ wm_config_set_xcursor_theme(conf, PyBytes_AsString(o)); }
     o = PyDict_GetItemString(dict, "xcursor_size"); if(o){ wm_config_set_xcursor_size(conf, PyLong_AsLong(o)); }
 
@@ -83,12 +88,15 @@ static void set_config(struct wm_config* conf, PyObject* dict, int reconfigure){
 static void handle_update_view(struct wm_view* view){
     PyGILState_STATE gil = PyGILState_Ensure();
     _pywm_views_update_single(view);
+    /* Decoration widgets might depend on the view state */
+    _pywm_widgets_update();
     PyGILState_Release(gil);
 }
 
 static void handle_update(){
     PyGILState_STATE gil = PyGILState_Ensure();
 
+    TIMER_START(callback_update_pywm);
     PyObject* args = Py_BuildValue("()");
     PyObject* res = PyObject_Call(_pywm_callbacks_get_all()->update, args, NULL);
     Py_XDECREF(args);
@@ -133,10 +141,19 @@ static void handle_update(){
     }
     Py_XDECREF(res);
 
+    TIMER_STOP(callback_update_pywm);
+    TIMER_PRINT(callback_update_pywm);
 
-    _pywm_widgets_update();
-
+    TIMER_START(callback_update_views);
     _pywm_views_update();
+    TIMER_STOP(callback_update_views);
+    TIMER_PRINT(callback_update_views);
+
+    /* State of widgets (e.g. decorations) might depend on views - other way round not possible, as widgets have no upstream state */
+    TIMER_START(callback_update_widgets);
+    _pywm_widgets_update();
+    TIMER_STOP(callback_update_widgets);
+    TIMER_PRINT(callback_update_widgets);
 
 
     PyGILState_Release(gil);
@@ -206,10 +223,40 @@ static PyObject* _pywm_register(PyObject* self, PyObject* args){
     return Py_None;
 }
 
+static PyObject* _pywm_damage(PyObject* self, PyObject* args){
+    int code;
+
+    if(!PyArg_ParseTuple(args, "i", &code)){
+        PyErr_SetString(PyExc_TypeError, "Invalid parameters");
+        return NULL;
+    }
+
+    wm_server_set_constant_damage_mode(get_wm()->server, code);
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static PyObject* _pywm_debugperformance(PyObject* self, PyObject* args){
+    const char* key;
+
+    if(!PyArg_ParseTuple(args, "s", &key)){
+        PyErr_SetString(PyExc_TypeError, "Invalid parameters");
+        return NULL;
+    }
+
+    DEBUG_PERFORMANCE_PTR(key, 0);
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 
 static PyMethodDef _pywm_methods[] = {
     { "run",                       (PyCFunction)_pywm_run,           METH_VARARGS | METH_KEYWORDS,   "Start the compositor in this thread" },
     { "register",                  _pywm_register,                   METH_VARARGS,                   "Register callback"  },
+    { "damage",                    _pywm_damage,                     METH_VARARGS,                   "Track damage, or set mode to continuous damage"  },
+    { "debug_performance",         _pywm_debugperformance,           METH_VARARGS,                   "Debug uitlity - uses DEBUG_PERFORMANCE macro"  },
 
     { NULL, NULL, 0, NULL }
 };

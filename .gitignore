@@ -1,3 +1,4 @@
+.projectile
 .ccls-cache
 result
 build/*
@@ -8,4 +9,4 @@ pywm/touchpad/tmp.png
 subprojects
 .mypy_cache
 pywm.egg-info
-flake.lock
+_pywm.so

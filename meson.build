@@ -20,11 +20,16 @@ add_project_arguments(
 	language: 'c',
 )
 
+if get_option('custom_renderer').enabled()
+    add_project_arguments(
+        '-DWM_CUSTOM_RENDERER',
+        language: 'c',
+    )
+endif
+
 
 # Dependencies
 
-wlroots        = subproject('wlroots', default_options: ['default_library=static']).get_variable('wlroots')
-# wlroots        = dependency('wlroots')
 wayland_server = dependency('wayland-server')
 wayland_client = dependency('wayland-client')
 wayland_cursor = dependency('wayland-cursor')
@@ -33,11 +38,26 @@ wayland_protos = dependency('wayland-protocols', version: '>=1.14')
 xkbcommon      = dependency('xkbcommon')
 libinput       = dependency('libinput')
 pixman         = dependency('pixman-1')
+xwayland       = dependency('xwayland', required: false)
 pthread        = meson.get_compiler('c').find_library('pthread')
 math           = meson.get_compiler('c').find_library('m')
 
+has_xwayland = xwayland.found() and get_option('xwayland').enabled()
+
+wlroots        = subproject('wlroots', default_options: ['default_library=static']).get_variable('wlroots')
+
+if has_xwayland
+    add_project_arguments(
+        '-DWM_HAS_XWAYLAND',
+        language: 'c',
+    )
+endif
 
 subdir('protocols')
+
+if get_option('custom_renderer').enabled()
+    subdir('src/wm/shaders')
+endif
 
 
 deps = [
@@ -47,10 +67,10 @@ deps = [
     xkbcommon,
     libinput,
     pixman,
+    xwayland,
     pthread,
     math
 ]
-
 
 sources = [
     'src/wm/wm.c',
@@ -66,12 +86,26 @@ sources = [
     'src/wm/wm_view.c',
     'src/wm/wm_view_xdg.c',
     'src/wm/wm_view_layer.c',
-    'src/wm/wm_view_xwayland.c',
     'src/wm/wm_widget.c',
     'src/wm/wm_config.c',
     'src/wm/wm_idle_inhibit.c',
     'src/wm/wm_drag.c',
+    'src/wm/wm_composite.c',
 ]
+
+if get_option('custom_renderer').enabled()
+    sources += [
+        texture_shaders_c,
+        primitive_shaders_c,
+        quad_shaders_c
+    ]
+endif
+
+if has_xwayland
+    sources += [
+        'src/wm/wm_view_xwayland.c',
+    ]
+endif
 
 py_sources = [
     'src/py/_pywmmodule.c',
@@ -87,7 +121,7 @@ executable(
 	'pywm',
 	sources + ['src/main.c'],
     include_directories: incs,
-	dependencies: deps
+	dependencies: deps,
 )
 
 python = import('python').find_installation('python3')
@@ -96,5 +130,5 @@ python.extension_module(
     '_pywm',
     sources + py_sources,
     include_directories: incs,
-    dependencies: deps + [python.dependency()]
+    dependencies: deps + [python.dependency()],
 )

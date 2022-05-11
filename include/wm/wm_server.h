@@ -16,6 +16,7 @@ struct wm_config;
 struct wm_seat;
 struct wm_layout;
 struct wm_renderer;
+struct wm_output;
 struct wm_idle_inhibit;
 
 struct wm_server{
@@ -27,12 +28,17 @@ struct wm_server{
     struct wlr_backend* wlr_backend;
     struct wlr_backend* wlr_headless_backend;
 
+    struct wlr_allocator* wlr_allocator;
+
     struct wlr_compositor* wlr_compositor;
+    struct wlr_subcompositor* wlr_subcompositor;
     struct wlr_data_device_manager* wlr_data_device_manager;
     struct wlr_xdg_shell* wlr_xdg_shell;
     struct wlr_server_decoration_manager* wlr_server_decoration_manager;
     struct wlr_xdg_decoration_manager_v1* wlr_xdg_decoration_manager;
+#ifdef WM_HAS_XWAYLAND
     struct wlr_xwayland* wlr_xwayland;
+#endif
     struct wlr_xcursor_manager* wlr_xcursor_manager;
     struct wlr_virtual_keyboard_manager_v1* wlr_virtual_keyboard_manager;
     struct wlr_virtual_pointer_manager_v1* wlr_virtual_pointer_manager;
@@ -57,12 +63,10 @@ struct wm_server{
     struct wl_listener xwayland_ready;
     struct wl_listener new_xwayland_surface;
 
-    struct timespec last_callback;
-    struct wl_event_source* callback_timer;
-    struct wl_event_source* callback_fallback_timer;
-    bool callback_fallback_timer_started;
-
     double lock_perc;
+
+    int constant_damage_mode;
+    struct wl_event_source* callback_timer;
 };
 
 void wm_server_init(struct wm_server* server, struct wm_config* config);
@@ -74,18 +78,14 @@ struct wm_view* wm_server_view_for_surface(struct wm_server* server, struct wlr_
 
 void wm_server_update_contents(struct wm_server* server);
 
-/* passes ownership to caller, no need to unregister, simply destroy */
-struct wm_widget* wm_server_create_widget(struct wm_server* server);
-
 void wm_server_open_virtual_output(struct wm_server* server, const char* name);
 void wm_server_close_virtual_output(struct wm_server* server, const char* name);
 
+void wm_server_set_constant_damage_mode(struct wm_server* server, int mode);
 /*
- * Schedule wm_callback_update() assuming now is a good time (e.g. after frame)
- *
- * Calling the update this way is preferred over callback_timer
+ * Schedule wm_callback_update() after frame present
  */
-void wm_server_schedule_update(struct wm_server* server);
+void wm_server_schedule_update(struct wm_server* server, struct wm_output* from_output);
 
 void wm_server_set_locked(struct wm_server* server, double lock_perc);
 bool wm_server_is_locked(struct wm_server* server);

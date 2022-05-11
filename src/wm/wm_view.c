@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 200112L
+#define _POSIX_C_SOURCE 200809L
 
 #include <assert.h>
 #include <stdlib.h>
@@ -6,13 +6,13 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 #include <wlr/util/region.h>
-#include <wlr/xwayland.h>
 
 #include "wm/wm_view.h"
 #include "wm/wm_seat.h"
 #include "wm/wm_output.h"
 #include "wm/wm_renderer.h"
 #include "wm/wm_server.h"
+#include "wm/wm_layout.h"
 #include "wm/wm.h"
 
 #include "wm/wm_util.h"
@@ -31,6 +31,8 @@ void wm_view_base_init(struct wm_view* view, struct wm_server* server){
     view->mapped = false;
     view->inhibiting_idle = false;
     view->accepts_input = true;
+
+    view->shows_csd = false;
 }
 
 static void wm_view_base_destroy(struct wm_content* super){
@@ -42,6 +44,10 @@ static void wm_view_base_destroy(struct wm_content* super){
 
 bool wm_content_is_view(struct wm_content* content){
     return content->vtable == &wm_view_vtable;
+}
+
+bool wm_view_shows_csd(struct wm_view* view){
+    return view->shows_csd;
 }
 
 void wm_view_set_inhibiting_idle(struct wm_view* view, bool inhibiting_idle){
@@ -116,7 +122,7 @@ static void render_surface(struct wlr_surface *surface, int sx, int sy,
         return;
     }
 
-    wm_renderer_render_texture_at(output->wm_server->wm_renderer, rdata->damage, texture, &box,
+    wm_renderer_render_texture_at(output->wm_server->wm_renderer, rdata->damage, surface, texture, &box,
                                   rdata->opacity,
                                   &mask,
                                   corner_radius, rdata->lock_perc);
@@ -171,6 +177,7 @@ static void wm_view_render(struct wm_content* super, struct wm_output* output, p
 
 
 struct damage_data {
+    struct wm_content *owner;
     struct wm_output *output;
     double x;
     double y;
@@ -206,8 +213,14 @@ static void damage_surface(struct wlr_surface *surface, int sx, int sy,
         .width = ceil(x + width) - floor(x),
         .height = ceil(y + height) - floor(y)};
 
-    /* origin == NULL means damage everything */
-    if(!ddata->origin){
+    pixman_region32_t region;
+    pixman_region32_init(&region);
+
+    wlr_surface_get_effective_damage(surface, &region);
+
+    /* origin == NULL means damage everything
+     * Also clients occasionally send empty damages (Firefox, Kitty e.g.) - take this to mean damage everything */
+    if(!ddata->origin || !pixman_region32_not_empty(&region)){
         pixman_region32_t region;
         pixman_region32_init(&region);
 
@@ -222,19 +235,13 @@ static void damage_surface(struct wlr_surface *surface, int sx, int sy,
                                            ceil(ws_y + ws_h) - floor(ws_y));
         }
 
-        wlr_output_damage_add(output->wlr_output_damage, &region);
+        wm_layout_damage_output(output->wm_layout, output, &region, ddata->owner);
         pixman_region32_fini(&region);
     }
 
 
-
     /* effective damage might go beyond box, so do this even if origin == NULL */
-    if (pixman_region32_not_empty(&surface->buffer_damage)) {
-        pixman_region32_t region;
-        pixman_region32_init(&region);
-
-        wlr_surface_get_effective_damage(surface, &region);
-
+    if(pixman_region32_not_empty(&region)){
         wlr_region_scale_xy(&region, &region,
                             ddata->x_scale * output->wlr_output->scale,
                             ddata->y_scale * output->wlr_output->scale);
@@ -248,13 +255,8 @@ static void damage_surface(struct wlr_surface *surface, int sx, int sy,
                                            ceil(ws_x + ws_w) - floor(ws_x),
                                            ceil(ws_y + ws_h) - floor(ws_y));
         }
-
-        wlr_output_damage_add(output->wlr_output_damage, &region);
+        wm_layout_damage_output(output->wm_layout, output, &region, ddata->owner);
         pixman_region32_fini(&region);
-    }
-
-    if (!wl_list_empty(&surface->current.frame_callback_list)) {
-        wlr_output_schedule_frame(output->wlr_output);
     }
 }
 
@@ -278,6 +280,7 @@ static void wm_view_damage_output(struct wm_content* super, struct wm_output* ou
     }
 
     struct damage_data ddata = {
+        .owner = super,
         .output = output,
         .x = display_x - output->layout_x,
         .y = display_y - output->layout_y,
