@@ -6,6 +6,9 @@ Basically this is a very tiny compositor built on top of [wlroots](https://githu
 
 Check the Python class `PyWM` and c struct `wm_server` for a start, as well as newms `Layout`. 
 
+## Attention
+
+v0.3 with a better renderer implementation supporting blur has been merged into master. Unfortunately, documentation is missing on a lot of new features. This is *WIP*.
 
 ## Installing
 
@@ -33,7 +36,7 @@ Prerequisites for PyWM, apart from Python, are given by [wlroots](https://github
 
 ### Install
 
-Compilation is handled by meson and started automatically via pip:
+Compilation is handled by meson and started automatically via pip (you need to install prerequisites first):
 
 ```
 pip3 install git+https://github.com/jbuchermn/pywm
