@@ -6,6 +6,8 @@ Basically this is a very tiny compositor built on top of [wlroots](https://githu
 
 Check the Python class `PyWM` and c struct `wm_server` for a start, as well as newms `Layout`. 
 
+See also [pywm-fullscreen](https://github.com/jbuchermn/pywm-fullscreen) for a trivial implementation opening one application in fullscreen.
+
 ## Attention
 
 v0.3 with a better renderer implementation supporting blur has been merged into master. There are still some bugs around but I consider it an alpha stage.
@@ -76,22 +78,6 @@ Configuration is handled via key-value pairs given to the `PyWM` contructor:
 
 
 ### Troubleshooting
-
-#### Touchpads
-
-Ensure that your user is in the correct group
-
-```
-ls -al /dev/input/event*
-```
-
-As a sidenote, this is not necessary for a Wayland compositor in general as the devices can be accessed through `systemd-logind` or `seatd` or similar.
-However the python `evdev` module does not allow instantiation given a file descriptor (only a path which it then opens itself),
-so usage of that module would no longer be possible in this case (plus at first sight there is no easy way of getting that file descriptor to the 
-Python side). Also `wlroots` (`libinput` in the backend) does not expose touchpads as what they are (`touch-down`, `touch-up`, `touch-motion` for any
-number of parallel slots), but only as pointers (`motion` / `axis`), so gesture detection around `libinput`-events is not possible as well.
-
-Therefore, we're stuck with the less secure (and a lot easier) way of using the (probably named `input`) group.
 
 #### seatd
 

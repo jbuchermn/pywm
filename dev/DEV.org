@@ -18,9 +18,7 @@
 **** TODO Build test cases (e.g. damage behind blur by FocusBorder)
 
 *** TODO clang-format
-*** TODO Documentation
-    - Gestures removed
-    - pywm-fullscreen
+*** DONE Documentation
 
 ** Backlog / Ideas
 *** wlr-output-management-unstable-v1 (in order to use wdisplays)
