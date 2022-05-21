@@ -35,6 +35,8 @@ struct wm_view_vtable wm_view_xdg_vtable;
 static void subsurface_handle_map(struct wl_listener* listener, void* data){
     struct wm_xdg_subsurface* subsurface = wl_container_of(listener, subsurface, map);
 
+    if(!subsurface->toplevel) return;
+
     wm_layout_damage_from(
         subsurface->toplevel->super.super.wm_server->wm_layout,
         &subsurface->toplevel->super.super,
@@ -44,6 +46,7 @@ static void subsurface_handle_map(struct wl_listener* listener, void* data){
 static void subsurface_handle_unmap(struct wl_listener* listener, void* data){
     struct wm_xdg_subsurface* subsurface = wl_container_of(listener, subsurface, unmap);
 
+    if(!subsurface->toplevel) return;
     wm_layout_damage_whole(subsurface->toplevel->super.super.wm_server->wm_layout);
 }
 
@@ -57,6 +60,8 @@ static void subsurface_handle_new_subsurface(struct wl_listener* listener, void*
     struct wm_xdg_subsurface* subsurface = wl_container_of(listener, subsurface, new_subsurface);
     struct wlr_subsurface* wlr_subsurface = data;
 
+    if(!subsurface->toplevel) return;
+
     struct wm_xdg_subsurface* new_subsurface = calloc(1, sizeof(struct wm_xdg_subsurface));
     wm_xdg_subsurface_init(new_subsurface, subsurface->toplevel, wlr_subsurface);
     wl_list_insert(&subsurface->subsurfaces, &new_subsurface->link);
@@ -64,6 +69,8 @@ static void subsurface_handle_new_subsurface(struct wl_listener* listener, void*
 
 static void subsurface_handle_surface_commit(struct wl_listener* listener, void* data){
     struct wm_xdg_subsurface* subsurface = wl_container_of(listener, subsurface, surface_commit);
+
+    if(!subsurface->toplevel) return;
 
     wm_layout_damage_from(
             subsurface->toplevel->super.super.wm_server->wm_layout,
@@ -74,6 +81,8 @@ static void subsurface_handle_surface_commit(struct wl_listener* listener, void*
 static void popup_handle_map(struct wl_listener* listener, void* data){
     struct wm_popup_xdg* popup = wl_container_of(listener, popup, map);
 
+    if(!popup->toplevel) return;
+
     wm_layout_damage_from(
         popup->toplevel->super.super.wm_server->wm_layout,
         &popup->toplevel->super.super,
@@ -83,6 +92,7 @@ static void popup_handle_map(struct wl_listener* listener, void* data){
 static void popup_handle_unmap(struct wl_listener* listener, void* data){
     struct wm_popup_xdg* popup = wl_container_of(listener, popup, unmap);
 
+    if(!popup->toplevel) return;
     wm_layout_damage_whole(popup->toplevel->super.super.wm_server->wm_layout);
 }
 
@@ -96,6 +106,8 @@ static void popup_handle_new_popup(struct wl_listener* listener, void* data){
     struct wm_popup_xdg* popup = wl_container_of(listener, popup, new_popup);
     struct wlr_xdg_popup* wlr_xdg_popup = data;
 
+    if(!popup->toplevel) return;
+
     struct wm_popup_xdg* new_popup = calloc(1, sizeof(struct wm_popup_xdg));
     wm_popup_xdg_init(new_popup, popup->toplevel, wlr_xdg_popup);
     wl_list_insert(&popup->popups, &new_popup->link);
@@ -105,6 +117,8 @@ static void popup_handle_new_subsurface(struct wl_listener* listener, void* data
     struct wm_popup_xdg* popup = wl_container_of(listener, popup, new_subsurface);
     struct wlr_subsurface* wlr_subsurface = data;
 
+    if(!popup->toplevel) return;
+
     struct wm_xdg_subsurface* subsurface = calloc(1, sizeof(struct wm_xdg_subsurface));
     wm_xdg_subsurface_init(subsurface, popup->toplevel, wlr_subsurface);
     wl_list_insert(&popup->subsurfaces, &subsurface->link);
@@ -112,6 +126,8 @@ static void popup_handle_new_subsurface(struct wl_listener* listener, void* data
 
 static void popup_handle_surface_commit(struct wl_listener* listener, void* data){
     struct wm_popup_xdg* popup = wl_container_of(listener, popup, surface_commit);
+
+    if(!popup->toplevel) return;
 
     wm_layout_damage_from(
             popup->toplevel->super.super.wm_server->wm_layout,
@@ -518,6 +534,16 @@ void wm_view_xdg_init(struct wm_view_xdg* view, struct wm_server* server, struct
 
 static void wm_view_xdg_destroy(struct wm_view* super){
     struct wm_view_xdg* view = wm_cast(wm_view_xdg, super);
+
+    struct wm_xdg_subsurface* subsurface;
+    wl_list_for_each(subsurface, &view->subsurfaces, link){
+        subsurface->toplevel = NULL;
+    }
+
+    struct wm_popup_xdg* popup;
+    wl_list_for_each(popup, &view->popups, link){
+        popup->toplevel = NULL;
+    }
 
     wl_list_remove(&view->subsurfaces);
     wl_list_remove(&view->popups);
