@@ -52,7 +52,7 @@ void wm_content_set_output(struct wm_content* content, int key, struct wlr_outpu
     }
 
     if(!res && (outp || key>=0)){
-        wlr_log(WLR_ERROR, "Invalid output given to wm_content_set_output");
+        wlr_log(WLR_ERROR, "Invalid output (%d) given to wm_content_set_output", key);
     }
 
     if(res == content->fixed_output){
