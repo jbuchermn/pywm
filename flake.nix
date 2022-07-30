@@ -62,7 +62,7 @@
           '';
           # END Fucking subprojects bug workaround
 
-          mesonFlags = if has_xwayland then "-Dxwayland=enabled" else "";
+          mesonFlags = if has_xwayland then [ "-Dxwayland=enabled" ] else [];
 
           nativeBuildInputs = with pkgs; [
             meson
