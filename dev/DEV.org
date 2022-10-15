@@ -6,19 +6,10 @@
 **** WAIT Horizontal damage artifacts after closing views
 **** WAIT Lag in fullscreen video on chrome
 
-*** Performance topics / New renderer
-   - Goal: Idle CPU low - comparable between sway and pywm-fullscreen
-   - Issue: newm - pyevdev gestures uses a lot of CPU and spawns lots of threads
-   - Issue: newm - permanent top bar uses a lot of CPU
-   - Goal: No dropped frames in pywm animations or gestures
-   - Issue: (Probably) callbacks occassionally take a long time - dropped frames
-   - Issue: C-Side of view update loop takes a long time (comparable to python) - simplify using constant damage mode?
-**** TODO Performance: Test cases and comparison
-**** TODO Extensively test DEBUG_DAMAGE, WM_CUSTOM_RENDERER, different render modes, switching between render modes, frame damage optimization, damaging and blur 
-**** TODO Build test cases (e.g. damage behind blur by FocusBorder)
+*** Improvements
+**** TODO implement ext-session-lock-v1
 
 *** TODO clang-format
-*** DONE Documentation
 
 ** Backlog / Ideas
 *** wlr-output-management-unstable-v1 (in order to use wdisplays)
