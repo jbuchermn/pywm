@@ -23,7 +23,6 @@ static void try_to_find_parent(struct wm_view_xwayland* view){
     
     if(view->wlr_xwayland_surface->parent){
         unsigned int parent_id = view->wlr_xwayland_surface->parent->window_id;
-        wlr_log(WLR_DEBUG, "Trying to find parent using window id %u", parent_id);
         struct wm_content* it;
         wl_list_for_each(it, &view->super.super.wm_server->wm_contents, link){
             if(it->vtable != view->super.super.vtable) continue;
