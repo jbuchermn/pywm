@@ -1,4 +1,5 @@
 #define _POSIX_C_SOURCE 200809L
+#include "xwayland/xwm.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -22,6 +23,7 @@ static void try_to_find_parent(struct wm_view_xwayland* view){
     
     if(view->wlr_xwayland_surface->parent){
         unsigned int parent_id = view->wlr_xwayland_surface->parent->window_id;
+        wlr_log(WLR_DEBUG, "Trying to find parent using window id %u", parent_id);
         struct wm_content* it;
         wl_list_for_each(it, &view->super.super.wm_server->wm_contents, link){
             if(it->vtable != view->super.super.vtable) continue;
@@ -42,8 +44,28 @@ static void try_to_find_parent(struct wm_view_xwayland* view){
             }
         }
     }
+    
+    // pid matching is necessary for override-redirect windows like dropdown menus
+    // and tooltips. sometimes this is conveyed using the window type hint as well
+    bool window_type_needs_parent = view->wlr_xwayland_surface->override_redirect;
+    if(!window_type_needs_parent)
+    {
+        struct wm_server* xwm = view->super.super.wm_server;
+        for (size_t i = 0; i < view->wlr_xwayland_surface->window_type_len; i++) {
+            xcb_atom_t type = view->wlr_xwayland_surface->window_type[i];
+            if (type == xwm->xcb_atoms[WINDOW_TYPE_DOCK] ||
+                type == xwm->xcb_atoms[WINDOW_TYPE_TOOLBAR] ||
+                type == xwm->xcb_atoms[WINDOW_TYPE_MENU] ||
+                type == xwm->xcb_atoms[WINDOW_TYPE_UTILITY] ||
+                type == xwm->xcb_atoms[WINDOW_TYPE_DIALOG])
+                {
+                    window_type_needs_parent = true;
+                    break;
+                }
+        }
+    }
 
-    if(view->wlr_xwayland_surface->pid){
+    if(window_type_needs_parent && view->wlr_xwayland_surface->pid){
         struct wm_content* it;
         wl_list_for_each(it, &view->super.super.wm_server->wm_contents, link){
             if(it->vtable != view->super.super.vtable) continue;
@@ -58,6 +80,7 @@ static void try_to_find_parent(struct wm_view_xwayland* view){
                 parent = it_xwayland;
                 goto Found;
             }
+            
         }
     }
 
