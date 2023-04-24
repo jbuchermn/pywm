@@ -1,5 +1,7 @@
 # pywm - backend for [newm](https://github.com/jbuchermn/newm)
 
+Unfortunately, newm as well as pywm are currently unmaintained.
+
 pywm is an abstraction layer for [newm](https://github.com/jbuchermn/newm) encapsulating all c code.
 
 Basically this is a very tiny compositor built on top of [wlroots](https://github.com/swaywm/wlroots), making all the assumptions that wlroots does not. On the Python side pywm exposes Wayland clients (XDG and XWayland) as so-called views and passes along all input. This way, handling the positioning of views, animating their movement, ... based on keystrokes or touchpad inputs (i.e. the logical, not performance-critical part of any compositor) is possible Python-side, whereas rendering and all other performance-critical aspects are handled by c code.
