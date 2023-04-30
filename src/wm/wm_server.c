@@ -47,6 +47,14 @@
 #include "wm/wm_view.h"
 #include "wm/wm_drag.h"
 
+static const char *wm_atom_map[WM_ATOM_LAST] = {
+    [WINDOW_TYPE_NORMAL] = "_NET_WM_WINDOW_TYPE_NORMAL",
+    [WINDOW_TYPE_DIALOG] = "_NET_WM_WINDOW_TYPE_DIALOG",
+	[WINDOW_TYPE_UTILITY] = "_NET_WM_WINDOW_TYPE_UTILITY",
+    [WINDOW_TYPE_TOOLBAR] = "_NET_WM_WINDOW_TYPE_TOOLBAR",
+	[WINDOW_TYPE_MENU] = "_NET_WM_WINDOW_TYPE_MENU",
+    [WINDOW_TYPE_DOCK] = "_NET_WM_WINDOW_TYPE_DOCK",
+};
 
 /*
  * Callbacks
@@ -121,6 +129,43 @@ static void handle_new_layer_surface(struct wl_listener* listener, void* data){
 }
 
 #ifdef WM_HAS_XWAYLAND
+static void handle_xwayland_ready(struct wl_listener* listener, void* data)
+{
+    wlr_log(WLR_DEBUG, "Server: XWayland ready");
+
+    struct wm_server* server = wl_container_of(listener, server, xwayland_ready);
+
+    xcb_connection_t *xcb_conn = xcb_connect(NULL, NULL);
+    int err = xcb_connection_has_error(xcb_conn);
+    if (err) {
+        wlr_log(WLR_ERROR, "XCB connect failed: %d", err);
+        return;
+    }
+
+    xcb_intern_atom_cookie_t cookies[WM_ATOM_LAST];
+    for (size_t i = 0; i < WM_ATOM_LAST; i++)
+    {
+        cookies[i] = xcb_intern_atom(xcb_conn, 0, strlen(wm_atom_map[i]), wm_atom_map[i]);
+    }
+    for (size_t i = 0; i < WM_ATOM_LAST; i++)
+    {
+        xcb_generic_error_t *error = NULL;
+		xcb_intern_atom_reply_t *reply =
+			xcb_intern_atom_reply(xcb_conn, cookies[i], &error);
+		if (reply != NULL && error == NULL) {
+			server->xcb_atoms[i] = reply->atom;
+		}
+		free(reply);
+
+		if (error != NULL) {
+			wlr_log(WLR_ERROR, "could not resolve atom %s, X11 error code %d",
+				atom_map[i], error->error_code);
+			free(error);
+			break;
+		}
+    }
+    wm_callback_ready();
+}
 static void handle_new_xwayland_surface(struct wl_listener* listener, void* data){
     wlr_log(WLR_DEBUG, "Server: New xwayland surface");
     
@@ -183,12 +228,6 @@ static void handle_new_xdg_decoration(struct wl_listener* listener, void* data){
                 WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
     }
 
-}
-
-static void handle_ready(struct wl_listener* listener, void* data){
-    wlr_log(WLR_DEBUG, "Server: Ready");
-
-    wm_callback_ready();
 }
 
 static int callback_timer_handler(void* data){
@@ -352,7 +391,7 @@ void wm_server_init(struct wm_server* server, struct wm_config* config){
         * Due to the unfortunate handling of XWayland forks via SIGUSR1, we need to be sure not
         * to create any threads before the XWayland server is ready
         */
-        server->xwayland_ready.notify = handle_ready;
+        server->xwayland_ready.notify = handle_xwayland_ready;
         wl_signal_add(&server->wlr_xwayland->events.ready, &server->xwayland_ready);
     }
 #endif

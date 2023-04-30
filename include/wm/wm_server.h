@@ -1,6 +1,7 @@
 #ifndef WM_SERVER_H
 #define WM_SERVER_H
 
+#include "xwayland/xwm.h"
 #include <time.h>
 #include <wayland-server.h>
 #include <wlr/backend.h>
@@ -12,12 +13,29 @@
 #include <wlr/types/wlr_virtual_pointer_v1.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 
+#ifdef WM_HAS_XWAYLAND
+#include <xcb/xproto.h>
+#endif
+
 struct wm_config;
 struct wm_seat;
 struct wm_layout;
 struct wm_renderer;
 struct wm_output;
 struct wm_idle_inhibit;
+
+#ifdef WM_HAS_XWAYLAND
+// wlroots defines an enum with some of the same names so strip the prefix
+enum wm_atom_name {
+	WINDOW_TYPE_NORMAL,
+	WINDOW_TYPE_DIALOG,
+	WINDOW_TYPE_UTILITY,
+	WINDOW_TYPE_TOOLBAR,
+	WINDOW_TYPE_MENU,
+    WINDOW_TYPE_DOCK,
+    WM_ATOM_LAST
+};
+#endif
 
 struct wm_server{
     struct wm_config* wm_config;
@@ -38,6 +56,7 @@ struct wm_server{
     struct wlr_xdg_decoration_manager_v1* wlr_xdg_decoration_manager;
 #ifdef WM_HAS_XWAYLAND
     struct wlr_xwayland* wlr_xwayland;
+    xcb_atom_t xcb_atoms[WM_ATOM_LAST];
 #endif
     struct wlr_xcursor_manager* wlr_xcursor_manager;
     struct wlr_virtual_keyboard_manager_v1* wlr_virtual_keyboard_manager;
